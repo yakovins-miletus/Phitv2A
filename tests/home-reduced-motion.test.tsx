@@ -1,0 +1,66 @@
+import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
+import { screen, within } from "@testing-library/react";
+
+import { routeTree } from "@/routeTree.gen";
+
+import { makeTestQueryClient, renderWithProviders } from "./test-utils";
+
+// setup.ts stubs matchMedia with prefers-reduced-motion: reduce by default —
+// these tests are the deterministic reduced-motion evidence.
+
+async function renderHome() {
+  const queryClient = makeTestQueryClient();
+  const router = createRouter({
+    routeTree,
+    context: { queryClient },
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
+  renderWithProviders(<RouterProvider router={router} />, queryClient);
+  await screen.findByRole("heading", { level: 1, name: "Phitopolis" });
+}
+
+test("reduced motion: no preloader overlay mounts, hero text is present immediately", async () => {
+  await renderHome();
+
+  expect(screen.queryByTestId("preloader")).not.toBeInTheDocument();
+  expect(
+    screen.getByText("Making tomorrow's technology available today."),
+  ).toBeInTheDocument();
+});
+
+test("reduced motion: stat strip renders final values instantly", async () => {
+  await renderHome();
+
+  expect(screen.getByText("R&D offices")).toBeInTheDocument();
+  expect(screen.getByText("Core disciplines")).toBeInTheDocument();
+  // Scoped to the stats stage: the Signal Lab HUD and the market ticker also
+  // render small numbers elsewhere on the page.
+  const stats = document.getElementById("stats");
+  expect(stats).not.toBeNull();
+  const strip = within(stats as HTMLElement);
+  // Both "2"-valued stats show their final value with no count-up.
+  expect(strip.getAllByText("2")).toHaveLength(2);
+  expect(strip.getByText("4")).toBeInTheDocument();
+  expect(strip.getByText("6")).toBeInTheDocument();
+});
+
+test("reduced motion: spectacle layer degrades — no particle canvas", async () => {
+  await renderHome();
+
+  // ParticleField renders nothing under reduce. (The Signal Lab's static
+  // canvas is legitimate under reduce, so scope to the hero.)
+  expect(document.querySelector("#hero canvas")).toBeNull();
+});
+
+test("reduced motion: use-case narrative stacks vertically, all slides reachable", async () => {
+  await renderHome();
+
+  // The pinned horizontal scrub never runs under reduce; every slide and its
+  // diagram must still be present in the document.
+  expect(screen.getByText("Algorithmic Signal Generation")).toBeInTheDocument();
+  expect(screen.getByText("Cloud-Native Infrastructure")).toBeInTheDocument();
+  expect(screen.getByText("High-Frequency Trading Support")).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /noise to alpha/i })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /cloud-native data pipeline/i })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /follow-the-sun coverage/i })).toBeInTheDocument();
+});
