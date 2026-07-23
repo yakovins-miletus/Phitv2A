@@ -371,7 +371,7 @@ export function ServiceSuperStage({ index }: { index: number }) {
             }}
           >
             <Box sx={{ width: "100%", maxWidth: { xs: 380, sm: 460, md: 540 }, height: { xs: 300, sm: 360, md: 420 } }}>
-              <ServiceVector id={SERVICE_IDS[index]} />
+              <ServiceVector id={sectionId} />
             </Box>
           </Box>
         </Grid>

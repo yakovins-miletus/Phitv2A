@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
@@ -17,16 +16,16 @@ import { useQuery } from "@tanstack/react-query";
 import { CONTENT } from "@/shared/content";
 import { blogPostsQuery } from "@/features/blog/api";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
-import { ServiceDrawer } from "@/features/services/components/ServiceDrawer";
+
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { Reveal } from "@/shared/components/Reveal";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { usePreloaderReady, useReducedMotion } from "@/shared/motion";
+import { useReducedMotion } from "@/shared/motion";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
 import { AboutTransitionGateway } from "@/shared/components/AboutTransitionGateway";
-import { HeroSignalP } from "@/shared/components/HeroSignalP";
+
 import { ReachMap } from "@/shared/components/ReachMap";
 import { RouterButton } from "@/shared/components/RouterLink";
 import { ProcessDiagram } from "@/shared/components/diagrams/ProcessDiagram";
@@ -52,72 +51,7 @@ import { alpha } from "@mui/material/styles";
 
 gsap.registerPlugin(ScrollTrigger);
 
-function ServiceChipHover({ service, onOpen }: { service: any; onOpen: () => void }) {
-  return (
-    <Box sx={{ position: 'relative', display: 'inline-block', '&:hover .dropdown': { height: 36, opacity: 1, visibility: 'visible', transform: 'translateY(0)' } }}>
-      <Chip
-        label={service.title}
-        variant="outlined"
-        color="primary"
-        onClick={onOpen}
-        sx={{
-          px: 2,
-          py: 3,
-          fontSize: '1rem',
-          fontFamily: MONO,
-          borderRadius: 2,
-          borderColor: alpha(NOIR.navyField, 0.2),
-          bgcolor: "transparent",
-          backgroundColor: "transparent",
-          background: "none",
-          backgroundImage: "none",
-          color: "text.primary",
-          transition: "all 0.2s ease",
-          position: "relative",
-          zIndex: 2,
-          "&&:hover": {
-            borderColor: "primary.main",
-            bgcolor: alpha(NOIR.gold, 0.08),
-            backgroundColor: alpha(NOIR.gold, 0.08),
-            background: alpha(NOIR.gold, 0.08),
-            backgroundImage: "none",
-          },
-        }}
-      />
-      <Box
-        className="dropdown"
-        onClick={onOpen}
-        sx={{
-          position: 'absolute',
-          top: '100%',
-          left: '10%',
-          right: '10%',
-          height: 0,
-          mt: -1, // Pull it up slightly so it slides from behind
-          pt: 1, // Add padding to account for the negative margin
-          opacity: 0,
-          visibility: 'hidden',
-          transform: 'translateY(-10px)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          zIndex: 1,
-          bgcolor: 'primary.dark',
-          color: 'background.default',
-          borderBottomLeftRadius: 8,
-          borderBottomRightRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-        }}
-      >
-        <Typography variant="caption" sx={{ fontWeight: 'bold', letterSpacing: 1 }}>
-          SHOW MORE
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
+
 
 
 // NOTE: no gsap/lenis imports at route-module scope — the route file's module

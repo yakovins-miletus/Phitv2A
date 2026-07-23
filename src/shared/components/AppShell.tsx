@@ -275,8 +275,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
   }, [isLiquid, reduced, resetLiquidSpacing]);
 
   const navTextColor = isNotch || isImmersiveDark ? "#FFFFFF" : "text.primary";
-  const _navHoverBg = isNotch || isImmersiveDark ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.03)";
-  const _navActiveBg = isNotch || isImmersiveDark ? "rgba(255,255,255,0.12)" : "rgba(0, 0, 0, 0.03)";
 
   return (
     <EntrancePhaseContext.Provider value={phase}>
