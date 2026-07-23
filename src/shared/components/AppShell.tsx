@@ -33,7 +33,7 @@ import { NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
 // Removed Magnetic imports
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
 import type { LoadSignal } from "./Preloader";
-import { TopNavMegaDrawer, MEGA_NAV_ITEMS } from "./TopNavMegaDrawer";
+import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
 import { RouterButton, RouterLink } from "./RouterLink";
 import PhitopolisLogo from "./PhitopolisLogo";
 
@@ -275,8 +275,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
   }, [isLiquid, reduced, resetLiquidSpacing]);
 
   const navTextColor = isNotch || isImmersiveDark ? "#FFFFFF" : "text.primary";
-  const navHoverBg = isNotch || isImmersiveDark ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.03)";
-  const navActiveBg = isNotch || isImmersiveDark ? "rgba(255,255,255,0.12)" : "rgba(0, 0, 0, 0.03)";
+  const _navHoverBg = isNotch || isImmersiveDark ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.03)";
+  const _navActiveBg = isNotch || isImmersiveDark ? "rgba(255,255,255,0.12)" : "rgba(0, 0, 0, 0.03)";
 
   return (
     <EntrancePhaseContext.Provider value={phase}>

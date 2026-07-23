@@ -74,7 +74,7 @@ export function useSectionPaging(containerRef: RefObject<HTMLElement | null>): v
       const y = window.scrollY;
       const vh = window.innerHeight;
       const ucRect = useCases.getBoundingClientRect();
-      const ucStart = ucRect.top + y; // pin start ("top top")
+      const _ucStart = ucRect.top + y; // pin start ("top top")
 
       const cRect = container.getBoundingClientRect();
       const containerBottom = cRect.bottom + y;

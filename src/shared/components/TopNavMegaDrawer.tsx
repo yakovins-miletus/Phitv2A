@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
@@ -72,7 +72,7 @@ interface TopNavMegaDrawerProps {
 }
 
 export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
-  const [activeItem, setActiveItem] = useState<NavSectionItem>(MEGA_NAV_ITEMS[0]);
+  const [activeItem, setActiveItem] = useState<NavSectionItem>(MEGA_NAV_ITEMS[0]!);
   const router = useRouter();
   const location = useLocation();
 

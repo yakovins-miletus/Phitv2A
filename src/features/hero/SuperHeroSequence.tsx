@@ -1,12 +1,9 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import Grid from "@mui/material/Grid";
-import Chip from "@mui/material/Chip";
 import { alpha } from "@mui/material/styles";
-import { motion } from "motion/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -17,7 +14,7 @@ import { StageSection, useStagePresence } from "@/shared/components/StageSection
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { usePreloaderReady, useReducedMotion } from "@/shared/motion";
+import { useReducedMotion } from "@/shared/motion";
 import { ServiceVector } from "@/features/services/components/ServiceDrawer";
 import MemoryIcon from "@mui/icons-material/Memory";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
@@ -41,34 +38,7 @@ const SERVICE_IDS = [
   "service-ops",
 ] as const;
 
-function TechChip({ label }: { label: string }) {
-  return (
-    <Chip
-      label={label}
-      size="small"
-      variant="outlined"
-      sx={{
-        fontFamily: MONO,
-        fontSize: "0.72rem",
-        letterSpacing: "0.08em",
-        color: "text.primary",
-        borderColor: alpha(NOIR.gold, 0.3),
-        bgcolor: alpha(NOIR.panel, 0.6),
-        backdropFilter: "blur(8px)",
-        borderRadius: 1,
-        py: 1.5,
-        px: 0.5,
-        transition: "all 0.25s ease",
-        "&:hover": {
-          borderColor: NOIR.gold,
-          bgcolor: alpha(NOIR.gold, 0.12),
-          color: NOIR.gold,
-          transform: "translateY(-2px)",
-        },
-      }}
-    />
-  );
-}
+
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
 export function HeroSignalCore() {
@@ -306,9 +276,11 @@ export function HeroDescriptionSection() {
 // Stage Sub-Component for Service Display Inline
 export function ServiceSuperStage({ index }: { index: number }) {
   const service = CONTENT.services[index];
-  const sectionId = SERVICE_IDS[index];
+  const sectionId = SERVICE_IDS[index] ?? "service-dev";
   const Icon = SERVICE_ICONS[index] || MemoryIcon;
   const sectionDef = homeSection(sectionId);
+
+  if (!service) return null;
 
   return (
     <StageSection section={sectionDef} muted={index % 2 === 1}>
