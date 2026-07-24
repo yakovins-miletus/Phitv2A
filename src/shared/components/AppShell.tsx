@@ -8,7 +8,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CloseIcon from "@mui/icons-material/Close";
-import MenuIcon from "@mui/icons-material/Menu";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TwitterIcon from "@mui/icons-material/Twitter";
@@ -528,14 +527,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
     let startTouchY = 0;
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length > 0) {
-        startTouchY = e.touches[0].clientY;
+        startTouchY = e.touches[0]!.clientY;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 25;
       if (isAtBottom && e.touches.length > 0) {
-        const currentTouchY = e.touches[0].clientY;
+        const currentTouchY = e.touches[0]!.clientY;
         const diffY = startTouchY - currentTouchY;
         if (diffY > 0) {
           window.clearInterval(resetTimer);
@@ -635,7 +634,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
     if (!isLiquid) resetLiquidSpacing(reduced !== true);
   }, [isLiquid, reduced, resetLiquidSpacing]);
 
-  const navTextColor = isNotch || isImmersiveDark ? "#FFFFFF" : "text.primary";
 
   return (
     <EntrancePhaseContext.Provider value={phase}>
