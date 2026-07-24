@@ -1,5 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import { AppShell } from "@/shared/components/AppShell";
 import { ErrorPanel } from "@/shared/components/ErrorPanel";
@@ -25,6 +27,8 @@ function RootLayout() {
     <AppShell>
       <HeadContent />
       <Outlet />
+      <Analytics />
+      <SpeedInsights />
     </AppShell>
   );
 }
