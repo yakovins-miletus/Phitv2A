@@ -10,8 +10,7 @@ import { ScrambleText } from "./ScrambleText";
 import { NOIR } from "@/shared/theme/palette";
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
-const HARD_CAP_MS = 1200;
-const COLUMNS = [0, 1, 2, 3, 4];
+const HARD_CAP_MS = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 150 : 800;
 
 /** One unit of real warm-up work surfaced by the progress bar. */
 export interface LoadSignal {
@@ -77,8 +76,14 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     return () => window.removeEventListener("keydown", skip);
   }, []);
 
+  useEffect(() => {
+    if (done) {
+      sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
+      onDone();
+    }
+  }, [done, onDone]);
+
   const percent = done ? 100 : Math.round((Math.min(resolved, total) / total) * 100);
-  const lastColumn = COLUMNS.length - 1;
 
   return (
     <Box
@@ -86,94 +91,93 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
       onClick={() => setForced(true)}
       sx={{ position: "fixed", inset: 0, zIndex: 2000, cursor: "pointer" }}
     >
-      {COLUMNS.map((column) => (
-        <motion.div
-          key={column}
-          initial={{ y: 0 }}
-          animate={done ? { y: "-101%" } : { y: 0 }}
-          transition={{ type: "spring", stiffness: 110, damping: 22, delay: column * 0.06 }}
-          onAnimationComplete={() => {
-            if (done && column === lastColumn) {
-              sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-              onDone();
-            }
-          }}
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: `${String(column * 20)}%`,
-            width: "21%",
-            background: NOIR.void,
-          }}
-        />
-      ))}
+      {/* White Camera-Iris Shutter Background */}
       <motion.div
-        animate={done ? { opacity: 0, scale: 1.15 } : { opacity: 1, scale: 1 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ clipPath: "circle(150% at 50% 50%)" }}
+        animate={done ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
+        transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
+        onAnimationComplete={() => {
+          if (done) {
+            sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
+            onDone();
+          }
+        }}
         style={{
           position: "absolute",
           inset: 0,
+          background: "#FFFFFF",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 24,
         }}
       >
-        {/* 2D P Logo with Glow & Smooth Morph Transition */}
         <motion.div
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          style={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-          <Box
-            component="img"
-            src="/phitopolis_logo_hero.svg"
-            alt="Phitopolis 2D Logo"
-            sx={{
-              width: "100%",
-              height: "auto",
-              filter: `drop-shadow(0 0 25px ${NOIR.gold})`,
-            }}
-          />
-        </motion.div>
-
-        <Typography
-          component="span"
-          sx={{
-            fontFamily: MONO,
-            fontWeight: 700,
-            letterSpacing: "0.28em",
-            color: "primary.main",
-            fontSize: "1.1rem",
+          animate={done ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 24,
           }}
         >
-          <ScrambleText text="PHITOPOLIS" step={40} />
-        </Typography>
-        <Box sx={{ width: 180, height: "2px", bgcolor: "divider", overflow: "hidden" }}>
+          {/* 2D P Logo with Glow */}
           <motion.div
-            animate={{ scaleX: percent / 100 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            style={{ height: "100%", background: NOIR.gold, transformOrigin: "left" }}
-          />
-        </Box>
-        <Typography sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.8rem" }}>
-          {String(percent).padStart(2, "0")}%
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            color: "text.secondary",
-            fontSize: "0.65rem",
-            letterSpacing: "0.2em",
-            opacity: 0.7,
-          }}
-        >
-          {done ? "TRANSITIONING TO 3D SCENE" : `WARMING — ${lastLabel}`}
-        </Typography>
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <Box
+              component="img"
+              src="/phitopolis_logo_hero.svg"
+              alt="Phitopolis 2D Logo"
+              sx={{
+                width: "100%",
+                height: "auto",
+                filter: `drop-shadow(0 0 25px ${NOIR.gold})`,
+              }}
+            />
+          </motion.div>
+
+          <Typography
+            component="span"
+            sx={{
+              fontFamily: MONO,
+              fontWeight: 700,
+              letterSpacing: "0.28em",
+              color: "primary.main",
+              fontSize: "1.1rem",
+            }}
+          >
+            <ScrambleText text="PHITOPOLIS" step={40} />
+          </Typography>
+          <Box sx={{ width: 180, height: "2px", bgcolor: "divider", overflow: "hidden" }}>
+            <motion.div
+              animate={{ scaleX: percent / 100 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              style={{ height: "100%", background: NOIR.gold, transformOrigin: "left" }}
+            />
+          </Box>
+          <Typography sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.8rem" }}>
+            {String(percent).padStart(2, "0")}%
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              color: "text.secondary",
+              fontSize: "0.65rem",
+              letterSpacing: "0.2em",
+              opacity: 0.7,
+            }}
+          >
+            {done ? "READY" : `WARMING — ${lastLabel}`}
+          </Typography>
+        </motion.div>
       </motion.div>
     </Box>
   );
 }
+

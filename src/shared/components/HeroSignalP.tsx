@@ -391,7 +391,6 @@ function ElevatedServiceNode({
   const size = 60;
   const sideOpacity = Math.max(0, 1 - progress * 1.8);
   const currentElevation = Math.max(0, elevation * (1 - progress));
-  const numLayers = Math.max(1, Math.round(16 * (1 - progress)));
   const shadowOffset = Math.round(currentElevation * 0.45);
 
   return (
@@ -433,9 +432,9 @@ function ElevatedServiceNode({
       />
 
       {/* Solid Rounded 3D Extrusion Slabs (Hidden when progress reaches 1) */}
-      {sideOpacity > 0.01 && numLayers > 1 && Array.from({ length: numLayers }).map((_, i) => {
-        const z = (i / (numLayers - 1)) * currentElevation;
-        const ratio = i / (numLayers - 1);
+      {sideOpacity > 0.01 && [0, 1, 2, 3].map((i) => {
+        const ratio = i / 3;
+        const z = ratio * currentElevation;
         const r = Math.round(6 + (10 - 6) * ratio);
         const g = Math.round(14 + (24 - 14) * ratio);
         const b = Math.round(32 + (51 - 32) * ratio);
@@ -450,6 +449,7 @@ function ElevatedServiceNode({
               bgcolor: `rgb(${r}, ${g}, ${b})`,
               opacity: sideOpacity,
               transform: `translateZ(${z.toFixed(1)}px)`,
+              willChange: "transform, opacity",
               pointerEvents: "none",
             }}
           />
@@ -494,7 +494,6 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
   const rotZ = -45 * (1 - progress3dTo2d);
   const wrapperScale = 1.25 - 0.25 * progress3dTo2d;
   const sideOpacity = Math.max(0, 1 - progress3dTo2d * 1.8);
-  const logoLayers = Math.max(1, Math.round(12 * (1 - progress3dTo2d)));
 
   return (
     <Box
@@ -766,8 +765,9 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
                 transition: "transform 0.05s linear",
               }}
             >
-              {Array.from({ length: logoLayers }).map((_, i) => {
-                const isTop = i === logoLayers - 1;
+              {[0, 1, 2, 3, 4].map((i) => {
+                const isTop = i === 4;
+                const layerZ = (i - 4) * (1 - progress3dTo2d);
                 return (
                   <img
                     key={i}
@@ -781,8 +781,10 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
                       width: "100%",
                       height: "auto",
                       display: "block",
-                      transform: `translateZ(${i - (logoLayers - 1)}px)`,
+                      opacity: isTop ? 1 : Math.max(0, 1 - progress3dTo2d * 1.5),
+                      transform: `translateZ(${layerZ.toFixed(1)}px)`,
                       filter: isTop ? "none" : "brightness(0.85)",
+                      willChange: "transform, opacity",
                     }}
                   />
                 );

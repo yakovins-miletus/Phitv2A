@@ -24,7 +24,7 @@ import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
-import { AboutTransitionGateway } from "@/shared/components/AboutTransitionGateway";
+import { StatStrip } from "@/shared/components/StatStrip";
 
 import { ReachMap } from "@/shared/components/ReachMap";
 import { RouterButton } from "@/shared/components/RouterLink";
@@ -925,6 +925,9 @@ function HomePage() {
       <EyeFlow />
       <Box ref={pageRef} sx={{ position: 'relative', overflowX: 'clip' }}>
         <SuperHeroSequence />
+        <Box id="stats">
+          <StatStrip stats={CONTENT.stats} />
+        </Box>
         <Divider />
         <Box ref={useCasesRef} id="use-cases">
           <UseCasesNarrative />
@@ -936,7 +939,6 @@ function HomePage() {
           <DailyLifeSection />
           <CandidatesAndCareersSection />
           <BlogSection />
-          <AboutTransitionGateway />
         </Box>
       </Box>
       <FooterSection />

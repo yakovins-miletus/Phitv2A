@@ -12,7 +12,7 @@ test("PageHeader renders the quant-noir display heading", () => {
 
   const heading = screen.getByRole("heading", { level: 1, name: "Notes from the lab floor." });
   expect(heading).toBeInTheDocument();
-  expect(window.getComputedStyle(heading).fontFamily).toContain("Space Grotesk");
+  expect(window.getComputedStyle(heading).fontFamily).toContain("Outfit");
 });
 
 test("MetricCard formats units and deltas", () => {

@@ -47,6 +47,8 @@ export function HeroSignalCore() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const reduced = useReducedMotion();
 
+  const lastProgressRef = useRef(0);
+
   useStagePresence(containerRef, "hero");
 
   useGSAP(
@@ -60,7 +62,10 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         onUpdate: (self) => {
-          setScrollProgress(self.progress);
+          if (Math.abs(self.progress - lastProgressRef.current) > 0.005 || self.progress === 0 || self.progress === 1) {
+            lastProgressRef.current = self.progress;
+            setScrollProgress(self.progress);
+          }
         },
       });
     },
@@ -93,26 +98,29 @@ export function HeroSignalCore() {
         </Box>
 
         {/* PHITOPOLIS Word Transition — Phase 3 */}
-        {(reduced || scrollProgress > 0.6) && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
-              left: { xs: "50%", sm: "calc(50% - 60px)", md: "calc(50% - 80px)" },
-              width: "auto",
-              textAlign: { xs: "center", sm: "left" },
-              zIndex: 3,
-              overflow: "visible",
-              transform: {
-                xs: "translate(-50%, -50%)",
-                sm: "translate(0, -50%)",
-              },
-            }}
-          >
+        <Box
+          sx={{
+            position: "absolute",
+            top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
+            left: { xs: "50%", sm: "calc(50% - 60px)", md: "calc(50% - 80px)" },
+            width: "auto",
+            textAlign: { xs: "center", sm: "left" },
+            zIndex: 3,
+            overflow: "visible",
+            opacity: 1,
+            pointerEvents: "auto",
+            transition: "opacity 0.2s ease-out",
+            transform: {
+              xs: "translate(-50%, -50%)",
+              sm: "translate(0, -50%)",
+            },
+          }}
+        >
             <Box sx={{ position: "relative", overflow: "visible" }}>
               <Typography
                 variant="h1"
                 component="h1"
+                aria-label="Phitopolis"
                 sx={{
                   fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
                   fontWeight: 900,
@@ -145,7 +153,6 @@ export function HeroSignalCore() {
               )}
             </Box>
           </Box>
-        )}
 
         {/* Ultra-Subtle Corner Vignette */}
         <Box
@@ -183,11 +190,10 @@ export function HeroSignalCore() {
             opacity: Math.max(0, 1 - scrollProgress * 3),
             pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
             "&:hover": {
-              borderColor: NOIR.gold,
-              color: NOIR.gold,
-              bgcolor: alpha(NOIR.gold, 0.12),
-              transform: "translateY(-3px)",
-              boxShadow: `0 12px 30px ${alpha(NOIR.gold, 0.2)}`,
+              bgcolor: alpha(NOIR.panel, 0.92),
+              "& .btn-arrow": {
+                color: NOIR.gold,
+              },
             },
           }}
         >
@@ -201,7 +207,7 @@ export function HeroSignalCore() {
               textTransform: "uppercase",
             }}
           >
-            WHAT WE DO →
+            WHAT WE DO <Box component="span" className="btn-arrow" sx={{ transition: "color 0.3s ease" }}>→</Box>
           </Typography>
         </Box>
 

@@ -44,7 +44,7 @@ export function FollowTheSunDiagram() {
         viewBox="0 0 640 320"
         width="100%"
         role="img"
-        aria-label="24/7 Global Operational Coverage. Multi-region shift handover around a 24-hour dial centered on the Philippine hubs, while a flat line below shows constant millisecond-level latency."
+        aria-label="Follow-the-sun coverage. Multi-region shift handover around a 24-hour dial centered on the Philippine hubs, while a flat line below shows constant millisecond-level latency."
         style={{ display: "block" }}
       >
         <defs>

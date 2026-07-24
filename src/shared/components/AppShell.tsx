@@ -47,6 +47,15 @@ const NAV_ITEMS = [
   { to: "/innovation-hub", label: "Innovation Lab" },
 ] as const;
 
+const NARRATION_FLOW: Record<string, { next: string; label: string }> = {
+  "/": { next: "/about", label: "ABOUT PHITOPOLIS" },
+  "/about": { next: "/services", label: "CAPABILITIES & SERVICES" },
+  "/services": { next: "/blog", label: "RESEARCH & ARTICLES" },
+  "/blog": { next: "/innovation-hub", label: "INNOVATION LAB" },
+  "/innovation-hub": { next: "/contact", label: "GET IN TOUCH" },
+  "/contact": { next: "/", label: "HOME" },
+};
+
 function shouldShowPreloader(reduced: boolean): boolean {
   if (reduced) return false;
   try {
@@ -213,6 +222,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const router = useRouter();
+  const [transitionState, setTransitionState] = useState<"idle" | "closing" | "opening">("idle");
+  const transitionTargetRef = useRef<string | null>(null);
+  const currentNarration = NARRATION_FLOW[pathname] ?? NARRATION_FLOW["/"]!;
+
   useEffect(() => {
     // Reset body overflow on route change to guarantee scroll is never blocked on new pages
     if (typeof document !== "undefined") {
@@ -222,6 +236,38 @@ function AppShellInner({ children }: { children: ReactNode }) {
       (window as any).ScrollTrigger.refresh();
     }
   }, [pathname]);
+
+  // Continuous overscroll below footer -> transition to next narration page
+  useEffect(() => {
+    if (reduced || transitionState !== "idle" || showPreloader) return;
+
+    let accumulated = 0;
+    let resetTimer: number;
+
+    const handleWheel = (e: WheelEvent) => {
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 15;
+      if (isAtBottom && e.deltaY > 0) {
+        accumulated += e.deltaY;
+        window.clearTimeout(resetTimer);
+        resetTimer = window.setTimeout(() => {
+          accumulated = 0;
+        }, 300);
+
+        if (accumulated > 90) {
+          accumulated = 0;
+          const target = currentNarration.next;
+          transitionTargetRef.current = target;
+          setTransitionState("closing");
+        }
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.clearTimeout(resetTimer);
+    };
+  }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
 
   const headerReleased = phase === "header" || phase === "open";
   const { overrideMode, derivedIsCompact, isImmersiveDark, autohideEnabled } = useNavbar();
@@ -529,6 +575,31 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
 
 
+        {/* Next Chapter Continuous Scroll Banner */}
+        <Box
+          sx={{
+            bgcolor: NOIR.navyField,
+            color: "#FFFFFF",
+            py: 2.5,
+            px: 2,
+            textAlign: "center",
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.72rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: NOIR.gold,
+              fontWeight: 600,
+            }}
+          >
+            [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER: {currentNarration.label} ↓ ]
+          </Typography>
+        </Box>
+
         <Box
           component="footer"
           ref={footerAnchorRef}
@@ -667,6 +738,36 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <CommandPalette />
         <GrainOverlay />
 
+        {/* Global White Camera-Iris Page Transition Overlay */}
+        <AnimatePresence>
+          {transitionState !== "idle" && (
+            <motion.div
+              key="page-iris-transition"
+              initial={{ clipPath: "circle(150% at 50% 50%)" }}
+              animate={transitionState === "closing" ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
+              transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
+              onAnimationComplete={() => {
+                if (transitionState === "closing" && transitionTargetRef.current) {
+                  const nextRoute = transitionTargetRef.current;
+                  void router.navigate({ to: nextRoute }).then(() => {
+                    window.scrollTo(0, 0);
+                    setTransitionState("opening");
+                  });
+                } else if (transitionState === "opening") {
+                  setTransitionState("idle");
+                  transitionTargetRef.current = null;
+                }
+              }}
+              style={{
+                position: "fixed",
+                inset: 0,
+                backgroundColor: "#FFFFFF",
+                zIndex: 3000,
+                pointerEvents: "none",
+              }}
+            />
+          )}
+        </AnimatePresence>
       </Box>
     </EntrancePhaseContext.Provider>
   );
