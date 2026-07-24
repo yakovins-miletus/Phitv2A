@@ -47,8 +47,6 @@ export function HeroSignalCore() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const reduced = useReducedMotion();
 
-  const lastProgressRef = useRef(0);
-
   useStagePresence(containerRef, "hero");
 
   useGSAP(
@@ -62,10 +60,7 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         onUpdate: (self) => {
-          if (Math.abs(self.progress - lastProgressRef.current) > 0.005 || self.progress === 0 || self.progress === 1) {
-            lastProgressRef.current = self.progress;
-            setScrollProgress(self.progress);
-          }
+          setScrollProgress(self.progress);
         },
       });
     },
@@ -181,7 +176,7 @@ export function HeroSignalCore() {
             px: 3,
             py: 1.2,
             borderRadius: "6px",
-            textDecoration: "none",
+            textDecoration: "none !important",
             border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
             bgcolor: alpha(NOIR.panel, 0.75),
             backdropFilter: "blur(12px)",
@@ -189,15 +184,21 @@ export function HeroSignalCore() {
             transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
             opacity: Math.max(0, 1 - scrollProgress * 3),
             pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
+            "&, & *": {
+              textDecoration: "none !important",
+            },
             "&:hover": {
-              bgcolor: alpha(NOIR.panel, 0.92),
-              "& .btn-arrow": {
-                color: NOIR.gold,
+              bgcolor: NOIR.navyField,
+              borderColor: NOIR.navyField,
+              boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+              "& .btn-text, & .btn-arrow": {
+                color: "#FFFFFF !important",
               },
             },
           }}
         >
           <Typography
+            className="btn-text"
             sx={{
               fontFamily: MONO,
               fontSize: "0.78rem",
@@ -205,9 +206,10 @@ export function HeroSignalCore() {
               letterSpacing: "0.14em",
               color: "text.primary",
               textTransform: "uppercase",
+              transition: "color 0.3s ease",
             }}
           >
-            WHAT WE DO <Box component="span" className="btn-arrow" sx={{ transition: "color 0.3s ease" }}>→</Box>
+            WHAT WE DO <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
           </Typography>
         </Box>
 

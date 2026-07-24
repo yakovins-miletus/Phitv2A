@@ -109,6 +109,11 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasOpacity = Math.max(0, 1 - progress * 2.2);
 
+  const progressRef = useRef(progress);
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
   useEffect(() => {
     if (reduced === true) return;
     const canvas = canvasRef.current;
@@ -140,7 +145,7 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
     const start = performance.now();
 
     const draw = (now: number) => {
-      if (!isVisible) {
+      if (!isVisible || progressRef.current > 0.45) {
         raf = requestAnimationFrame(draw);
         return;
       }
@@ -209,6 +214,38 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
           }
           ctx.stroke();
           ctx.shadowBlur = 0;
+
+          // Draw subtle node glow interaction when Loop 1 pulses are close to node centers
+          if (loop.color === NOIR.goldRgb) {
+            const side = 12 * GRID_CELL;
+            const nodePositions = [
+              { x: 5 * GRID_CELL, y: 5 * GRID_CELL, dist: 0 },
+              { x: 17 * GRID_CELL, y: 5 * GRID_CELL, dist: side },
+              { x: 17 * GRID_CELL, y: 17 * GRID_CELL, dist: 2 * side },
+              { x: 5 * GRID_CELL, y: 17 * GRID_CELL, dist: 3 * side },
+            ];
+
+            for (const node of nodePositions) {
+              const distDiff = Math.abs(headD - node.dist);
+              const distToNode = Math.min(distDiff, totalL - distDiff);
+
+              if (distToNode < 90) {
+                const intensity = (1 - distToNode / 90) * 0.42 * canvasOpacity;
+                if (intensity > 0.01) {
+                  ctx.save();
+                  ctx.beginPath();
+                  const grad = ctx.createRadialGradient(node.x, node.y, 10, node.x, node.y, 48);
+                  grad.addColorStop(0, `rgba(255, 199, 44, ${intensity * 0.8})`);
+                  grad.addColorStop(0.4, `rgba(255, 199, 44, ${intensity * 0.28})`);
+                  grad.addColorStop(1, "rgba(255, 199, 44, 0)");
+                  ctx.fillStyle = grad;
+                  ctx.arc(node.x, node.y, 48, 0, Math.PI * 2);
+                  ctx.fill();
+                  ctx.restore();
+                }
+              }
+            }
+          }
         }
       }
 
@@ -373,10 +410,10 @@ function IsometricCube({
   );
 }
 
-function ElevatedServiceNode({
+export function ElevatedServiceNode({
   x,
   y,
-  elevation = 28,
+  elevation = 20,
   color,
   children,
   progress = 0,
@@ -391,6 +428,7 @@ function ElevatedServiceNode({
   const size = 60;
   const sideOpacity = Math.max(0, 1 - progress * 1.8);
   const currentElevation = Math.max(0, elevation * (1 - progress));
+  const numLayers = Math.max(1, Math.round(16 * (1 - progress)));
   const shadowOffset = Math.round(currentElevation * 0.45);
 
   return (
@@ -432,9 +470,9 @@ function ElevatedServiceNode({
       />
 
       {/* Solid Rounded 3D Extrusion Slabs (Hidden when progress reaches 1) */}
-      {sideOpacity > 0.01 && [0, 1, 2, 3].map((i) => {
-        const ratio = i / 3;
-        const z = ratio * currentElevation;
+      {sideOpacity > 0.01 && numLayers > 1 && Array.from({ length: numLayers }).map((_, i) => {
+        const z = (i / (numLayers - 1)) * currentElevation;
+        const ratio = i / (numLayers - 1);
         const r = Math.round(6 + (10 - 6) * ratio);
         const g = Math.round(14 + (24 - 14) * ratio);
         const b = Math.round(32 + (51 - 32) * ratio);
@@ -449,14 +487,13 @@ function ElevatedServiceNode({
               bgcolor: `rgb(${r}, ${g}, ${b})`,
               opacity: sideOpacity,
               transform: `translateZ(${z.toFixed(1)}px)`,
-              willChange: "transform, opacity",
               pointerEvents: "none",
             }}
           />
         );
       })}
 
-      {/* Elevated Top Face (Icon Card with Accent Border) — fades out during 3D→2D */}
+      {/* Elevated Top Face (Icon Card with Accent Border) — elevated clearly above top slab to prevent coplanar clipping */}
       <Box
         sx={{
           position: "absolute",
@@ -468,11 +505,14 @@ function ElevatedServiceNode({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transform: `translateZ(${currentElevation}px)`,
+          transform: `translateZ(${(currentElevation + 4.5).toFixed(1)}px)`,
+          transformStyle: "preserve-3d",
           opacity: Math.max(0, 1 - progress * 2),
         }}
       >
-        {children}
+        <Box sx={{ position: "relative", transform: "translateZ(3px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );
@@ -494,6 +534,7 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
   const rotZ = -45 * (1 - progress3dTo2d);
   const wrapperScale = 1.25 - 0.25 * progress3dTo2d;
   const sideOpacity = Math.max(0, 1 - progress3dTo2d * 1.8);
+  const logoLayers = Math.max(1, Math.round(12 * (1 - progress3dTo2d)));
 
   return (
     <Box
@@ -600,78 +641,80 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
             <GridSignals reduced={reduced ?? undefined} progress={progress3dTo2d} />
 
             {/* 3D Cubes & Service Cards Layer */}
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                transformStyle: "preserve-3d",
-                zIndex: 1,
-              }}
-            >
-              {CUBE_POSITIONS.map((pos, i) => (
-                <IsometricCube
-                  key={i}
-                  x={pos.c * GRID_CELL}
-                  y={pos.r * GRID_CELL}
-                  size={GRID_CELL}
-                  height={pos.h}
-                  type={pos.type}
+            {progress3dTo2d < 0.95 && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  transformStyle: "preserve-3d",
+                  zIndex: 1,
+                }}
+              >
+                {CUBE_POSITIONS.map((pos, i) => (
+                  <IsometricCube
+                    key={i}
+                    x={pos.c * GRID_CELL}
+                    y={pos.r * GRID_CELL}
+                    size={GRID_CELL}
+                    height={pos.h}
+                    type={pos.type}
+                    progress={progress3dTo2d}
+                  />
+                ))}
+
+                {/* Elevated 3D Isometric IT Service Nodes */}
+                <ElevatedServiceNode
+                  x={5 * GRID_CELL - 30}
+                  y={5 * GRID_CELL - 30}
+                  elevation={28}
+                  color={NOIR.gold}
                   progress={progress3dTo2d}
-                />
-              ))}
+                >
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                </ElevatedServiceNode>
 
-              {/* Elevated 3D Isometric IT Service Nodes */}
-              <ElevatedServiceNode
-                x={5 * GRID_CELL - 30}
-                y={5 * GRID_CELL - 30}
-                elevation={28}
-                color={NOIR.gold}
-                progress={progress3dTo2d}
-              >
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              </ElevatedServiceNode>
+                <ElevatedServiceNode
+                  x={17 * GRID_CELL - 30}
+                  y={5 * GRID_CELL - 30}
+                  elevation={28}
+                  color={NOIR.gold}
+                  progress={progress3dTo2d}
+                >
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                  </svg>
+                </ElevatedServiceNode>
 
-              <ElevatedServiceNode
-                x={17 * GRID_CELL - 30}
-                y={5 * GRID_CELL - 30}
-                elevation={28}
-                color={NOIR.gold}
-                progress={progress3dTo2d}
-              >
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="16 18 22 12 16 6" />
-                  <polyline points="8 6 2 12 8 18" />
-                </svg>
-              </ElevatedServiceNode>
+                <ElevatedServiceNode
+                  x={5 * GRID_CELL - 30}
+                  y={17 * GRID_CELL - 30}
+                  elevation={28}
+                  color={NOIR.gold}
+                  progress={progress3dTo2d}
+                >
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
+                </ElevatedServiceNode>
 
-              <ElevatedServiceNode
-                x={5 * GRID_CELL - 30}
-                y={17 * GRID_CELL - 30}
-                elevation={28}
-                color={NOIR.gold}
-                progress={progress3dTo2d}
-              >
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-              </ElevatedServiceNode>
-
-              <ElevatedServiceNode
-                x={17 * GRID_CELL - 30}
-                y={17 * GRID_CELL - 30}
-                elevation={28}
-                color={NOIR.gold}
-                progress={progress3dTo2d}
-              >
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </ElevatedServiceNode>
-            </Box>
+                <ElevatedServiceNode
+                  x={17 * GRID_CELL - 30}
+                  y={17 * GRID_CELL - 30}
+                  elevation={28}
+                  color={NOIR.gold}
+                  progress={progress3dTo2d}
+                >
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={NOIR.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </ElevatedServiceNode>
+              </Box>
+            )}
 
             {/* Ground Cast Shadow Base for P Logo (Fades out as scene flattens) */}
             {sideOpacity > 0.01 && (
@@ -765,9 +808,8 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
                 transition: "transform 0.05s linear",
               }}
             >
-              {[0, 1, 2, 3, 4].map((i) => {
-                const isTop = i === 4;
-                const layerZ = (i - 4) * (1 - progress3dTo2d);
+              {Array.from({ length: logoLayers }).map((_, i) => {
+                const isTop = i === logoLayers - 1;
                 return (
                   <img
                     key={i}
@@ -781,10 +823,8 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
                       width: "100%",
                       height: "auto",
                       display: "block",
-                      opacity: isTop ? 1 : Math.max(0, 1 - progress3dTo2d * 1.5),
-                      transform: `translateZ(${layerZ.toFixed(1)}px)`,
+                      transform: `translateZ(${i - (logoLayers - 1)}px)`,
                       filter: isTop ? "none" : "brightness(0.85)",
-                      willChange: "transform, opacity",
                     }}
                   />
                 );

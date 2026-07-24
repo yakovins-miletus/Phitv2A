@@ -177,6 +177,241 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
   );
 }
 
+/** Custom 3-Bar Icon with spreading animation on hover. */
+function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: string }) {
+  return (
+    <Box
+      sx={{
+        width: 20,
+        height: 14,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "center",
+        pointerEvents: "none",
+      }}
+    >
+      <Box
+        sx={{
+          width: 18,
+          height: 2,
+          bgcolor: color,
+          borderRadius: "1px",
+          transform: isHovered ? "translateY(-2px)" : "translateY(0)",
+          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      />
+      <Box
+        sx={{
+          width: 18,
+          height: 2,
+          bgcolor: color,
+          borderRadius: "1px",
+          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      />
+      <Box
+        sx={{
+          width: 18,
+          height: 2,
+          bgcolor: color,
+          borderRadius: "1px",
+          transform: isHovered ? "translateY(2px)" : "translateY(0)",
+          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      />
+    </Box>
+  );
+}
+
+/** 3-Bar Menu Icon Button matching Contact Button hover behavior. */
+function AnimatedMenuButton({
+  active,
+  onClick,
+  isNotch,
+  isImmersiveDark,
+  ariaLabel,
+  sx,
+}: {
+  active: boolean;
+  onClick: () => void;
+  isNotch: boolean;
+  isImmersiveDark: boolean;
+  ariaLabel: string;
+  sx?: object;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  const isPrimary = hovered || active;
+  const bgColor = isPrimary
+    ? NOIR.navyField
+    : isNotch || isImmersiveDark
+    ? "transparent"
+    : "#FFFFFF";
+  const borderColor = isPrimary
+    ? NOIR.navyField
+    : isNotch || isImmersiveDark
+    ? "rgba(255,255,255,0.25)"
+    : NOIR.navyField;
+  const iconColor = isPrimary
+    ? "#FFFFFF"
+    : isNotch || isImmersiveDark
+    ? "#FFFFFF"
+    : NOIR.navyField;
+
+  return (
+    <Box
+      component="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "6px",
+        border: `1px solid ${borderColor}`,
+        backgroundColor: bgColor,
+        height: "42px",
+        width: "42px",
+        p: 0,
+        cursor: "pointer",
+        outline: "none",
+        boxShadow: hovered ? `0 6px 20px ${alpha(NOIR.navyField, 0.25)}` : "none",
+        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        ...sx,
+      }}
+    >
+      <ThreeBarMenuIcon isHovered={hovered} color={iconColor} />
+    </Box>
+  );
+}
+
+/** Full White Loading Screen Display shown during continuous page transitions. */
+function TransitionLoadingDisplay({
+  targetLabel,
+  onComplete,
+}: {
+  targetLabel: string;
+  onComplete: () => void;
+}) {
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<"loading" | "hold" | "fadeout" | "blank">("loading");
+
+  useEffect(() => {
+    const startTime = performance.now();
+    const duration = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 50 : 650;
+
+    let animFrame: number;
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
+      setProgress(pct);
+      if (pct < 100) {
+        animFrame = requestAnimationFrame(tick);
+      } else {
+        // Hold for 300ms, then fadeout, then blank screen for 300ms, then open page
+        setPhase("hold");
+        setTimeout(() => {
+          setPhase("fadeout");
+          setTimeout(() => {
+            setPhase("blank");
+            setTimeout(() => {
+              onComplete();
+            }, 300);
+          }, 300);
+        }, 300);
+      }
+    };
+
+    animFrame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animFrame);
+  }, [onComplete]);
+
+  const isVisible = phase === "loading" || phase === "hold";
+
+  return (
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "#FFFFFF",
+        zIndex: 3001,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2.5,
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.98 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}
+      >
+        <Box sx={{ width: 90, height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <img
+            src="/phitopolis_logo_hero.svg"
+            alt="Phitopolis Logo"
+            style={{ width: "100%", height: "auto", display: "block" }}
+          />
+        </Box>
+
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: "0.85rem",
+            fontWeight: 800,
+            letterSpacing: "0.22em",
+            color: NOIR.navyField,
+            textTransform: "uppercase",
+          }}
+        >
+          PHITOPOLIS
+        </Typography>
+
+        <Box sx={{ width: 220, height: 3, bgcolor: alpha(NOIR.navyField, 0.12), borderRadius: "2px", overflow: "hidden", mt: 1 }}>
+          <Box
+            sx={{
+              height: "100%",
+              bgcolor: NOIR.gold,
+              width: `${progress}%`,
+              transition: "width 0.04s linear",
+            }}
+          />
+        </Box>
+
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: "0.82rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            color: NOIR.gold,
+          }}
+        >
+          {progress}%
+        </Typography>
+
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: "0.68rem",
+            fontWeight: 600,
+            letterSpacing: "0.18em",
+            color: alpha(NOIR.navyField, 0.55),
+            textTransform: "uppercase",
+          }}
+        >
+          LOADING — {targetLabel}
+        </Typography>
+      </motion.div>
+    </Box>
+  );
+}
+
 /** Delay before the entrance plays when there is no preloader to cover it
     (repeat visits) — lets the first paint commit so nothing moves mid-layout. */
 const SETTLE_MS = 80;
@@ -223,8 +458,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
   }, []);
 
   const router = useRouter();
-  const [transitionState, setTransitionState] = useState<"idle" | "closing" | "opening">("idle");
+  const [transitionState, setTransitionState] = useState<"idle" | "triggered" | "closing" | "loading" | "opening">("idle");
   const transitionTargetRef = useRef<string | null>(null);
+  const [scrollPressure, setScrollPressure] = useState(0);
   const currentNarration = NARRATION_FLOW[pathname] ?? NARRATION_FLOW["/"]!;
 
   useEffect(() => {
@@ -239,32 +475,111 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   // Continuous overscroll below footer -> transition to next narration page
   useEffect(() => {
-    if (reduced || transitionState !== "idle" || showPreloader) return;
+    if (reduced || transitionState !== "idle" || showPreloader) {
+      // Don't clear pressure if we are triggered/holding
+      if (transitionState !== "triggered") {
+        setScrollPressure(0);
+      }
+      return;
+    }
 
     let accumulated = 0;
+    const threshold = 240; // threshold scroll pressure to trigger next page
     let resetTimer: number;
 
-    const handleWheel = (e: WheelEvent) => {
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 15;
-      if (isAtBottom && e.deltaY > 0) {
-        accumulated += e.deltaY;
-        window.clearTimeout(resetTimer);
-        resetTimer = window.setTimeout(() => {
-          accumulated = 0;
-        }, 300);
+    const drainPressure = () => {
+      resetTimer = window.setInterval(() => {
+        accumulated = Math.max(0, accumulated - 15);
+        setScrollPressure(Math.round((accumulated / threshold) * 100));
+        if (accumulated === 0) {
+          window.clearInterval(resetTimer);
+        }
+      }, 30);
+    };
 
-        if (accumulated > 90) {
-          accumulated = 0;
+    const handleWheel = (e: WheelEvent) => {
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 25;
+      if (isAtBottom && e.deltaY > 0) {
+        window.clearInterval(resetTimer);
+        accumulated = Math.min(threshold, accumulated + e.deltaY * 0.7);
+        setScrollPressure(Math.round((accumulated / threshold) * 100));
+
+        if (accumulated >= threshold) {
+          setScrollPressure(100);
           const target = currentNarration.next;
           transitionTargetRef.current = target;
-          setTransitionState("closing");
+          setTransitionState("triggered");
+          
+          window.clearTimeout(resetTimer);
+          window.clearInterval(resetTimer);
+
+          setTimeout(() => {
+            setScrollPressure(0);
+            setTransitionState("closing");
+          }, 3000);
+        } else {
+          // start draining when user stops scrolling
+          window.clearTimeout(resetTimer);
+          resetTimer = window.setTimeout(drainPressure, 150);
         }
       }
     };
 
+    let startTouchY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        startTouchY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 25;
+      if (isAtBottom && e.touches.length > 0) {
+        const currentTouchY = e.touches[0].clientY;
+        const diffY = startTouchY - currentTouchY;
+        if (diffY > 0) {
+          window.clearInterval(resetTimer);
+          accumulated = Math.min(threshold, accumulated + diffY * 0.85);
+          setScrollPressure(Math.round((accumulated / threshold) * 100));
+          startTouchY = currentTouchY;
+
+          if (accumulated >= threshold) {
+            setScrollPressure(100);
+            const target = currentNarration.next;
+            transitionTargetRef.current = target;
+            setTransitionState("triggered");
+            
+            window.clearTimeout(resetTimer);
+            window.clearInterval(resetTimer);
+
+            setTimeout(() => {
+              setScrollPressure(0);
+              setTransitionState("closing");
+            }, 3000);
+          } else {
+            window.clearTimeout(resetTimer);
+            resetTimer = window.setTimeout(drainPressure, 200);
+          }
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(drainPressure, 50);
+    };
+
     window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
     return () => {
       window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.clearInterval(resetTimer);
       window.clearTimeout(resetTimer);
     };
   }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
@@ -472,43 +787,25 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   }}
                 />
 
-                {/* Rightmost 3-Bar Menu — Click-only Mega Drawer trigger */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: "6px",
-                    border: `1px solid ${megaNavOpen ? NOIR.gold : (isNotch || isImmersiveDark ? "rgba(255,255,255,0.25)" : NOIR.navyField)}`,
-                    backgroundColor: megaNavOpen ? alpha(NOIR.navyField, 0.94) : (isNotch || isImmersiveDark ? "transparent" : "#FFFFFF"),
-                    height: "42px",
-                    width: "42px",
-                    justifyContent: "center",
-                    transition: "border-color 0.3s ease, background-color 0.3s ease",
-                  }}
-                >
-                  <IconButton
-                    aria-label="Open navigation menu"
-                    onClick={() => setMegaNavOpen(!megaNavOpen)}
-                    sx={{
-                      color: megaNavOpen ? NOIR.gold : (isNotch || isImmersiveDark ? "#FFFFFF" : "primary.main"),
-                      p: 0,
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "6px",
-                    }}
-                  >
-                    <MenuIcon sx={{ fontSize: 24 }} />
-                  </IconButton>
-                </Box>
+                {/* Desktop 3-Bar Menu Button */}
+                <AnimatedMenuButton
+                  active={megaNavOpen}
+                  onClick={() => setMegaNavOpen(!megaNavOpen)}
+                  isNotch={isNotch}
+                  isImmersiveDark={isImmersiveDark}
+                  ariaLabel="Open navigation menu"
+                  sx={{ display: { xs: "none", md: "inline-flex" } }}
+                />
 
-                {/* Mobile 3-Bar Menu Icon */}
-                <IconButton
-                  aria-label="Open mobile navigation menu"
+                {/* Mobile 3-Bar Menu Button */}
+                <AnimatedMenuButton
+                  active={mobileNavOpen}
                   onClick={() => setMobileNavOpen(true)}
-                  sx={{ display: { xs: "inline-flex", md: "none" }, color: navTextColor, transition: "color 0.4s ease" }}
-                >
-                  <MenuIcon />
-                </IconButton>
+                  isNotch={isNotch}
+                  isImmersiveDark={isImmersiveDark}
+                  ariaLabel="Open mobile navigation menu"
+                  sx={{ display: { xs: "inline-flex", md: "none" } }}
+                />
               </Box>
             </Toolbar>
           </Container>
@@ -580,24 +877,94 @@ function AppShellInner({ children }: { children: ReactNode }) {
           sx={{
             bgcolor: NOIR.navyField,
             color: "#FFFFFF",
-            py: 2.5,
+            py: 3,
             px: 2,
             textAlign: "center",
             borderTop: "1px solid rgba(255,255,255,0.12)",
+            position: "relative",
+            overflow: "hidden",
+            minHeight: "56px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.72rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: NOIR.gold,
-              fontWeight: 600,
-            }}
-          >
-            [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER: {currentNarration.label} ↓ ]
-          </Typography>
+          {/* Scroll Pressure Progress Line */}
+          {scrollPressure > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                height: "4px",
+                bgcolor: NOIR.gold,
+                width: `${scrollPressure}%`,
+                transition: "width 0.08s ease-out",
+              }}
+            />
+          )}
+
+          <AnimatePresence mode="wait">
+            {(transitionState === "triggered" || transitionState === "closing" || transitionState === "loading") ? (
+              <motion.div
+                key="now-transitioning"
+                initial={{ y: -15, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 15, opacity: 0 }}
+                transition={{ duration: 0.65, ease: "easeOut" }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "1.05rem",
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                  }}
+                >
+                  Now transitioning to {currentNarration.label}
+                </Typography>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="scroll-cue"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                    color: NOIR.gold,
+                    fontWeight: 600,
+                    mb: scrollPressure > 0 ? 0.8 : 0,
+                    transition: "margin 0.2s ease",
+                  }}
+                >
+                  [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER: {currentNarration.label} ↓ ]
+                </Typography>
+                {scrollPressure > 0 && (
+                  <Typography
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: "0.62rem",
+                      letterSpacing: "0.1em",
+                      color: "rgba(255,255,255,0.6)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Transition Pressure: {scrollPressure}%
+                  </Typography>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Box>
 
         <Box
@@ -738,34 +1105,43 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <CommandPalette />
         <GrainOverlay />
 
-        {/* Global White Camera-Iris Page Transition Overlay */}
+        {/* Global White Camera-Iris & Full White Loading Screen Overlay */}
         <AnimatePresence>
           {transitionState !== "idle" && (
-            <motion.div
-              key="page-iris-transition"
-              initial={{ clipPath: "circle(150% at 50% 50%)" }}
-              animate={transitionState === "closing" ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
-              transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
-              onAnimationComplete={() => {
-                if (transitionState === "closing" && transitionTargetRef.current) {
-                  const nextRoute = transitionTargetRef.current;
-                  void router.navigate({ to: nextRoute }).then(() => {
-                    window.scrollTo(0, 0);
-                    setTransitionState("opening");
-                  });
-                } else if (transitionState === "opening") {
-                  setTransitionState("idle");
-                  transitionTargetRef.current = null;
-                }
-              }}
-              style={{
-                position: "fixed",
-                inset: 0,
-                backgroundColor: "#FFFFFF",
-                zIndex: 3000,
-                pointerEvents: "none",
-              }}
-            />
+            <>
+              <motion.div
+                key="page-iris-transition"
+                initial={{ clipPath: "circle(0% at 50% 50%)" }}
+                animate={(transitionState === "closing" || transitionState === "loading") ? { clipPath: "circle(150% at 50% 50%)" } : { clipPath: "circle(0% at 50% 50%)" }}
+                transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1] }}
+                onAnimationComplete={() => {
+                  if (transitionState === "closing" && transitionTargetRef.current) {
+                    const nextRoute = transitionTargetRef.current;
+                    void router.navigate({ to: nextRoute }).then(() => {
+                      window.scrollTo(0, 0);
+                      setTransitionState("loading");
+                    });
+                  } else if (transitionState === "opening") {
+                    setTransitionState("idle");
+                    transitionTargetRef.current = null;
+                  }
+                }}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  backgroundColor: "#FFFFFF",
+                  zIndex: 3000,
+                  pointerEvents: "none",
+                }}
+              />
+
+              {transitionState === "loading" && (
+                <TransitionLoadingDisplay
+                  targetLabel={currentNarration.label}
+                  onComplete={() => setTransitionState("opening")}
+                />
+              )}
+            </>
           )}
         </AnimatePresence>
       </Box>
