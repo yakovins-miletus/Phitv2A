@@ -70,7 +70,7 @@ export function EcotowerMap() {
         </Button>
       </Box>
 
-      {/* Simple Static Google Maps Embed with Pin Overlay */}
+      {/* Simple Static Google Maps Embed */}
       <Box sx={{ position: "relative", width: "100%", height: 380, overflow: "hidden" }}>
         <iframe
           title="Phitopolis Ecotower BGC Google Map"
@@ -81,60 +81,6 @@ export function EcotowerMap() {
           allowFullScreen
           src={googleMapsEmbedUrl}
         />
-
-        {/* Custom Animated Ecotower BGC Pin Overlay */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: "46%",
-            left: "50%",
-            transform: "translate(-50%, -100%)",
-            pointerEvents: "none",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: NOIR.navyField,
-              color: "#FFFFFF",
-              px: 2,
-              py: 0.8,
-              borderRadius: "8px",
-              boxShadow: "0 8px 24px rgba(10,42,102,0.35)",
-              border: `1px solid ${NOIR.gold}`,
-              textAlign: "center",
-              mb: 1,
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Typography sx={{ fontSize: "0.8rem", fontWeight: 800, color: NOIR.gold }}>
-              PHITOPOLIS HQ
-            </Typography>
-            <Typography sx={{ fontFamily: MONO, fontSize: "0.62rem", color: "rgba(255,255,255,0.85)" }}>
-              27/F Ecotower · BGC Taguig
-            </Typography>
-          </Box>
-
-          <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Box
-              sx={{
-                position: "absolute",
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                bgcolor: alpha(NOIR.gold, 0.4),
-                animation: "pulseRing 2s infinite ease-out",
-                "@keyframes pulseRing": {
-                  "0%": { transform: "scale(0.5)", opacity: 1 },
-                  "100%": { transform: "scale(2.2)", opacity: 0 },
-                },
-              }}
-            />
-            <PlaceIcon sx={{ fontSize: 34, color: NOIR.gold, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.35))" }} />
-          </Box>
-        </Box>
       </Box>
     </Box>
   );
