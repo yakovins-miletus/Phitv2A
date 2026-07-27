@@ -11,6 +11,7 @@ import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import CardActionArea from "@mui/material/CardActionArea";
+import Slider from "@mui/material/Slider";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CONTENT } from "@/shared/content";
@@ -113,34 +114,82 @@ function ProcessSection() {
 
 // Section 6: Global Reach
 function ReachSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+
+  useGSAP(
+    () => {
+      if (reducedMotion || !containerRef.current || !cardRef.current) return;
+
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 65%",
+          end: "bottom 25%",
+          scrub: 1,
+        },
+      })
+      .fromTo(
+        cardRef.current,
+        { scale: 0.95 },
+        { scale: 1.08, ease: "power1.out", duration: 0.5 }
+      )
+      .to(
+        cardRef.current,
+        { scale: 1.0, ease: "power1.in", duration: 0.5 }
+      );
+    },
+    { scope: containerRef, dependencies: [reducedMotion] }
+  );
+
   return (
-    <StageSection section={homeSection("reach")} muted>
-      <Reveal>
-        <Typography variant="h2" component="h2">
-          International presence
-        </Typography>
-      </Reveal>
-      <Reveal delay={0.1}>
-        <Box sx={{
-          border: 1, borderColor: "divider", borderRadius: 2, overflow: "hidden", bgcolor: "background.paper",
-        }}>
-          <ReachMap />
-        </Box>
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.7rem",
-            letterSpacing: "0.14em",
-            color: "text.secondary",
-            mt: 2,
-          }}
-        >
-          ARCS DENOTE CLIENTS AND INVESTORS
-        </Typography>
-      </Reveal>
-    </StageSection>
+    <Box ref={containerRef}>
+      <StageSection section={homeSection("reach")} muted>
+        <Reveal>
+          <Typography variant="h2" component="h2">
+            International presence
+          </Typography>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <Box
+            ref={cardRef}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+              transformOrigin: "center center",
+              willChange: "transform",
+            }}
+          >
+            <ReachMap />
+          </Box>
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.7rem",
+              letterSpacing: "0.14em",
+              color: "text.secondary",
+              mt: 2,
+            }}
+          >
+            ARCS DENOTE CLIENTS AND INVESTORS
+          </Typography>
+        </Reveal>
+      </StageSection>
+    </Box>
   );
 }
+
+// Helper to format video durations
+const formatTime = (seconds: number) => {
+  if (isNaN(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+};
 
 // Section 7: Daily Life Video Section
 function DailyLifeSection() {
@@ -150,9 +199,14 @@ function DailyLifeSection() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const reducedMotion = useReducedMotion();
 
   useStagePresence(sectionRef, "daily-life");
+  const videoAnchorRef = useNavbarAnchor("daily-life-video", { dark: true, rootMargin: "-250px 0px 0px 0px" });
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -253,8 +307,43 @@ function DailyLifeSection() {
 
   const toggleMute = () => {
     if (!videoRef.current) return;
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
+    const nextMuted = !isMuted;
+    videoRef.current.muted = nextMuted;
+    setIsMuted(nextMuted);
+    if (!nextMuted && volume === 0) {
+      setVolume(0.5);
+      videoRef.current.volume = 0.5;
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  };
+
+  const handleSeek = (_event: any, newValue: number | number[]) => {
+    const time = newValue as number;
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
+  const handleVolumeChange = (_event: any, newValue: number | number[]) => {
+    const val = newValue as number;
+    setVolume(val);
+    if (videoRef.current) {
+      videoRef.current.volume = val;
+      videoRef.current.muted = val === 0;
+      setIsMuted(val === 0);
+    }
   };
 
   return (
@@ -277,6 +366,7 @@ function DailyLifeSection() {
         borderColor: "divider",
       }}
     >
+      <Box ref={videoAnchorRef} sx={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
       <Box
         ref={cardRef}
         sx={{
@@ -300,6 +390,8 @@ function DailyLifeSection() {
           muted
           loop
           playsInline
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
           sx={{
             width: "100%",
             height: "100%",
@@ -323,67 +415,189 @@ function DailyLifeSection() {
           }}
         >
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-            <Box>
-              <StageKicker index="09" label="Behind the Code" />
+            <Box sx={{ mt: { xs: 1, sm: 2, md: 3 } }}>
+              <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                <Typography variant="overline" sx={{ color: "secondary.main", fontWeight: 700 }}>
+                  Daily Life
+                </Typography>
+                <Box
+                  className="stage-kicker-line"
+                  sx={{
+                    height: "1px",
+                    width: { xs: 60, sm: 120 },
+                    background: "rgba(255, 255, 255, 0.3)",
+                    transformOrigin: "left center",
+                  }}
+                />
+              </Stack>
               <Typography
                 variant="h3"
                 component="h3"
                 sx={{
                   color: "common.white",
-                  mt: 1,
                   fontWeight: 700,
                   fontSize: { xs: "1.5rem", sm: "2.2rem", md: "3rem" },
                   letterSpacing: "-0.02em",
                 }}
               >
-                Behind the Code
+                People Behind the Innovation
               </Typography>
             </Box>
-
-            {/* Controls */}
-            <Stack direction="row" spacing={1.5} sx={{ pointerEvents: "auto" }}>
-              <IconButton
-                onClick={togglePlay}
-                aria-label={isPlaying ? "Pause Video" : "Play Video"}
-                sx={{
-                  color: "white",
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  backdropFilter: "blur(16px)",
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  p: { xs: 1, md: 1.5 },
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.3)" },
-                }}
-              >
-                {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-              </IconButton>
-              <IconButton
-                onClick={toggleMute}
-                aria-label={isMuted ? "Unmute Video" : "Mute Video"}
-                sx={{
-                  color: "white",
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  backdropFilter: "blur(16px)",
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  p: { xs: 1, md: 1.5 },
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.3)" },
-                }}
-              >
-                {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-              </IconButton>
-            </Stack>
           </Stack>
 
-          <Typography
-            variant="body1"
-            sx={{
-              color: "rgba(255,255,255,0.9)",
-              maxWidth: 640,
-              fontSize: { xs: "0.85rem", sm: "1rem", md: "1.15rem" },
-              lineHeight: 1.5,
-            }}
-          >
-            Experience our culture, collaborative R&D spirit, and the everyday moments that fuel technology breakthroughs.
-          </Typography>
+          <Stack spacing={2} sx={{ width: "100%" }}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "rgba(255,255,255,0.9)",
+                maxWidth: 640,
+                fontSize: { xs: "0.85rem", sm: "1rem", md: "1.15rem" },
+                lineHeight: 1.5,
+              }}
+            >
+              Experience our culture, collaborative R&D spirit, and the everyday moments that fuel technology breakthroughs.
+            </Typography>
+
+            {/* Control Bar */}
+            <Stack
+              direction="row"
+              spacing={1.5}
+              alignItems="center"
+              sx={{
+                pointerEvents: "auto",
+                width: "100%",
+                boxSizing: "border-box",
+                mt: 1,
+              }}
+            >
+              <IconButton
+                onClick={togglePlay}
+                size="small"
+                sx={{
+                  color: "white",
+                  bgcolor: "rgba(255,255,255,0.1)",
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+                }}
+              >
+                {isPlaying ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+              </IconButton>
+
+              {/* Progress Slider */}
+              <Slider
+                size="small"
+                value={currentTime}
+                min={0}
+                max={duration || 100}
+                onChange={handleSeek}
+                sx={{
+                  color: NOIR.gold,
+                  flexGrow: 1,
+                  mx: { xs: 0.5, md: 1 },
+                  py: 1,
+                  "& .MuiSlider-thumb": {
+                    width: 8,
+                    height: 8,
+                    backgroundColor: NOIR.gold,
+                    "&:hover, &.Mui-focusVisible": {
+                      boxShadow: "0px 0px 0px 6px rgba(255, 199, 44, 0.12)",
+                    },
+                  },
+                  "& .MuiSlider-rail": {
+                    opacity: 0.3,
+                    bgcolor: "rgba(255, 255, 255, 0.5)",
+                  },
+                  "& .MuiSlider-track": {
+                    bgcolor: NOIR.gold,
+                    border: "none",
+                  },
+                }}
+              />
+
+              {/* Time display */}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "rgba(255,255,255,0.8)",
+                  fontFamily: MONO,
+                  fontSize: "0.75rem",
+                  minWidth: "90px",
+                  whiteSpace: "nowrap",
+                  textAlign: "right",
+                }}
+              >
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </Typography>
+
+              <Divider orientation="vertical" flexItem sx={{ borderColor: "rgba(255,255,255,0.15)", mx: 0.5 }} />
+
+              {/* Volume Control (Hover Vertical Popover) */}
+              <Box
+                onMouseEnter={() => setShowVolumeSlider(true)}
+                onMouseLeave={() => setShowVolumeSlider(false)}
+                sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: "36px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    height: 90,
+                    bgcolor: "rgba(0, 0, 0, 0.8)",
+                    backdropFilter: "blur(8px)",
+                    borderRadius: "8px",
+                    py: 1.5,
+                    px: 1,
+                    display: showVolumeSlider ? "flex" : "none",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 10,
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                  }}
+                >
+                  <Slider
+                    size="small"
+                    orientation="vertical"
+                    value={isMuted ? 0 : volume}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onChange={handleVolumeChange}
+                    sx={{
+                      color: "white",
+                      height: 60,
+                      "& .MuiSlider-thumb": {
+                        width: 8,
+                        height: 8,
+                        backgroundColor: "white",
+                      },
+                      "& .MuiSlider-rail": {
+                        opacity: 0.3,
+                        bgcolor: "rgba(255, 255, 255, 0.5)",
+                      },
+                      "& .MuiSlider-track": {
+                        bgcolor: "white",
+                        border: "none",
+                      },
+                    }}
+                  />
+                </Box>
+
+                <IconButton
+                  onClick={toggleMute}
+                  size="small"
+                  sx={{
+                    color: "white",
+                    bgcolor: "rgba(255,255,255,0.1)",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+                  }}
+                >
+                  {isMuted ? <VolumeOffIcon fontSize="small" /> : <VolumeUpIcon fontSize="small" />}
+                </IconButton>
+              </Box>
+            </Stack>
+          </Stack>
         </Box>
       </Box>
     </Box>
@@ -458,7 +672,7 @@ function CandidatesAndCareersSection() {
         .fromTo(
           panel2Ref.current,
           {
-            yPercent: 100,
+            yPercent: -100,
             autoAlpha: 0,
           },
           {
@@ -471,9 +685,9 @@ function CandidatesAndCareersSection() {
         )
         // Phase 3: Dwell on Technical Graduate Program & Open Positions (0.7 -> 0.85)
         .to({}, { duration: 0.25 })
-        // Phase 4: Soft Exit Recede into BlogSection (0.85 -> 1.0)
+        // Phase 4: Soft Exit Slide Downward (0.85 -> 1.0)
         .to(panel2Ref.current, {
-          yPercent: -20,
+          yPercent: 100,
           autoAlpha: 0.2,
           ease: "power1.in",
           duration: 0.15,

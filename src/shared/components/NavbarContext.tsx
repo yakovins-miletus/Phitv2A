@@ -87,11 +87,14 @@ export function useNavbar() {
   return context;
 }
 
-export function useNavbarAnchor(id: string, options?: { dark?: boolean }) {
+export function useNavbarAnchor(id: string, options?: { dark?: boolean; rootMargin?: string; threshold?: number | number[] }) {
   const { registerAnchor } = useNavbar();
   const ref = useRef<HTMLDivElement>(null);
   const darkRef = useRef(options?.dark ?? false);
   darkRef.current = options?.dark ?? false;
+
+  const customMargin = options?.rootMargin;
+  const customThreshold = options?.threshold;
 
   useEffect(() => {
     const el = ref.current;
@@ -106,8 +109,8 @@ export function useNavbarAnchor(id: string, options?: { dark?: boolean }) {
       },
       {
         root: null,
-        rootMargin: "-80px 0px 0px 0px", // Trigger slightly after it scrolls into view (below navbar)
-        threshold: 0,
+        rootMargin: customMargin ?? "-80px 0px 0px 0px", // Trigger slightly after it scrolls into view (below navbar)
+        threshold: customThreshold ?? 0,
       }
     );
 
@@ -116,7 +119,7 @@ export function useNavbarAnchor(id: string, options?: { dark?: boolean }) {
       observer.disconnect();
       registerAnchor(id, false);
     };
-  }, [id, registerAnchor]);
+  }, [id, registerAnchor, customMargin, customThreshold]);
 
   return ref;
 }

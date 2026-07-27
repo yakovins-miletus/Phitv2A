@@ -584,7 +584,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
 
   const headerReleased = phase === "header" || phase === "open";
-  const { overrideMode, derivedIsCompact, isImmersiveDark, autohideEnabled } = useNavbar();
+  const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled } = useNavbar();
   const [navHidden, setNavHidden] = useState(false);
   const lastScrollY = useRef(0);
   const scrollAccumulator = useRef(0);
@@ -622,6 +622,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isMinimal = overrideMode === "minimal";
   const isLiquid = overrideMode === "liquid";
   const isNotch = overrideMode === "notch";
+  const onDark = isNotch || isOverDarkSection;
   const isImmersive = overrideMode === "immersive";
   const pointerFine = usePointerFine();
   const { insetX: liquidInsetX, insetY: liquidInsetY, setInset: setLiquidInset, reset: resetLiquidSpacing } = useLiquidSpacing();
@@ -681,16 +682,22 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   "max-width 0.6s cubic-bezier(0.16,1,0.3,1), " +
                   "backdrop-filter 0.6s cubic-bezier(0.16,1,0.3,1), " +
                   "gap 0.6s cubic-bezier(0.16,1,0.3,1)",
-                bgcolor: isNotch
+                bgcolor: isMinimal
+                  ? "transparent"
+                  : isNotch
                   ? NOIR.navyField
-                  : isImmersiveDark
+                  : isOverDarkSection
                     ? `rgba(${NOIR.navyFieldRgb}, 0.28)`
                     : (derivedIsCompact ? "#FFFFFF" : "transparent"),
-                backdropFilter: isImmersiveDark ? "blur(16px) saturate(140%)" : "none",
+                backdropFilter: isMinimal
+                  ? "none"
+                  : isOverDarkSection
+                    ? "blur(16px) saturate(140%)"
+                    : "none",
                 border: isMinimal || isNotch ? "none" : "1px solid",
                 borderColor: isMinimal || isNotch
                   ? "transparent"
-                  : isImmersiveDark
+                  : isOverDarkSection
                     ? "rgba(255,255,255,0.14)"
                     : (derivedIsCompact ? "divider" : "transparent"),
                 borderRadius: isNotch
@@ -703,9 +710,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   : isImmersive
                     ? "10px 24px"
                     : (derivedIsCompact ? "2px 32px" : "8px 0px"),
-                boxShadow: isNotch
+                boxShadow: isMinimal
+                  ? "none"
+                  : isNotch
                   ? "0 8px 24px rgba(10,42,102,0.35)"
-                  : isImmersiveDark
+                  : isOverDarkSection
                     ? "0 8px 32px rgba(0,0,0,0.25)"
                     : (derivedIsCompact ? "0 4px 24px rgba(0,0,0,0.04)" : "none"),
                 display: "flex",
@@ -734,7 +743,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   borderRadius: "8px",
                 }}
               >
-                <Box sx={{ color: isNotch || isImmersiveDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
+                <Box sx={{ color: onDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
                     style={{ height: 42, width: 'auto' }}
                     color="currentColor"
@@ -750,7 +759,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: isNotch || isImmersiveDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: "1.4rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease" }}
+                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: "1.4rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
@@ -759,7 +768,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                         fontFamily: MONO,
                         fontSize: "0.58rem",
                         letterSpacing: "0.12em",
-                        color: isNotch || isImmersiveDark ? "rgba(255,255,255,0.7)" : "text.secondary",
+                        color: onDark ? "rgba(255,255,255,0.7)" : "text.secondary",
                         fontWeight: 600,
                         textTransform: "uppercase",
                         whiteSpace: "nowrap",
@@ -777,7 +786,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 <AnimatedContactButton
                   label="Contact"
                   isActive={onContactPage}
-                  variant={isNotch || isImmersiveDark ? "onDark" : "default"}
+                  variant={onDark ? "onDark" : "default"}
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
@@ -789,8 +798,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 <AnimatedMenuButton
                   active={megaNavOpen}
                   onClick={() => setMegaNavOpen(!megaNavOpen)}
-                  isNotch={isNotch}
-                  isImmersiveDark={isImmersiveDark}
+                  isNotch={false}
+                  isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
                   sx={{ display: { xs: "none", md: "inline-flex" } }}
                 />
@@ -799,8 +808,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 <AnimatedMenuButton
                   active={mobileNavOpen}
                   onClick={() => setMobileNavOpen(true)}
-                  isNotch={isNotch}
-                  isImmersiveDark={isImmersiveDark}
+                  isNotch={false}
+                  isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
                   sx={{ display: { xs: "inline-flex", md: "none" } }}
                 />
@@ -870,236 +879,246 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
 
 
-        {/* Next Chapter Continuous Scroll Banner */}
-        <Box
-          sx={{
-            bgcolor: NOIR.navyField,
-            color: "#FFFFFF",
-            py: 3,
-            px: 2,
-            textAlign: "center",
-            borderTop: "1px solid rgba(255,255,255,0.12)",
-            position: "relative",
-            overflow: "hidden",
-            minHeight: "56px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {/* Scroll Pressure Progress Line */}
-          {scrollPressure > 0 && (
+        {/* Dynamic unified footer with scroll adaptation */}
+        {(() => {
+          const r = scrollPressure / 100;
+          // Interpolate background from Navy (#0A2A66) to Gold (#FFC72C)
+          const footerBgColor = `rgb(${Math.round(10 + (255 - 10) * r)}, ${Math.round(42 + (199 - 42) * r)}, ${Math.round(102 + (44 - 102) * r)})`;
+          const footerTextColor = scrollPressure > 50 ? NOIR.ink : "#FFFFFF";
+          const footerMutedTextColor = scrollPressure > 50 ? "rgba(10, 42, 102, 0.75)" : "rgba(255, 255, 255, 0.7)";
+          const footerBorderColor = scrollPressure > 50 ? "rgba(10, 42, 102, 0.15)" : "rgba(255, 255, 255, 0.12)";
+          const footerLinkHoverColor = scrollPressure > 50 ? "#000000" : NOIR.gold;
+          const footerLogoAccent = scrollPressure > 50 ? NOIR.ink : NOIR.gold;
+
+          return (
             <Box
+              component="footer"
+              ref={footerAnchorRef}
               sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                height: "4px",
-                bgcolor: NOIR.gold,
-                width: `${scrollPressure}%`,
-                transition: "width 0.08s ease-out",
+                bgcolor: footerBgColor,
+                borderTop: 1,
+                borderColor: footerBorderColor,
+                color: footerTextColor,
+                pt: { xs: 8, md: 12 },
+                pb: { xs: 4, md: 6 },
+                mt: "auto",
+                position: 'relative',
+                minHeight: "100vh",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out",
               }}
-            />
-          )}
-
-          <AnimatePresence mode="wait">
-            {(transitionState === "triggered" || transitionState === "closing" || transitionState === "loading") ? (
-              <motion.div
-                key="now-transitioning"
-                initial={{ y: -15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 15, opacity: 0 }}
-                transition={{ duration: 0.65, ease: "easeOut" }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "1.05rem",
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                  }}
-                >
-                  Now transitioning to {currentNarration.label}
-                </Typography>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="scroll-cue"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.72rem",
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: NOIR.gold,
-                    fontWeight: 600,
-                    mb: scrollPressure > 0 ? 0.8 : 0,
-                    transition: "margin 0.2s ease",
-                  }}
-                >
-                  [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER: {currentNarration.label} ↓ ]
-                </Typography>
-                {scrollPressure > 0 && (
-                  <Typography
-                    sx={{
-                      fontFamily: MONO,
-                      fontSize: "0.62rem",
-                      letterSpacing: "0.1em",
-                      color: "rgba(255,255,255,0.6)",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Transition Pressure: {scrollPressure}%
-                  </Typography>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Box>
-
-        <Box
-          component="footer"
-          ref={footerAnchorRef}
-          sx={{ bgcolor: "primary.main", borderTop: 1, borderColor: "primary.light", color: "white", pt: { xs: 8, md: 12 }, pb: { xs: 4, md: 6 }, mt: "auto", position: 'relative' }}
-        >
-          <Container maxWidth="lg" sx={{ display: 'flex', flexDirection: 'column', minHeight: '50vh', justifyContent: 'space-between' }}>
-            <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={{ xs: 8, md: 4 }}>
-              
-              {/* Left Column: Logo & Socials */}
-              <Box sx={{ maxWidth: 300 }}>
-                <Stack spacing={3}>
-                  <Box>
-                    <PhitopolisLogo
-                      style={{ height: 48, width: 'auto' }}
-                      color="#FFFFFF"
-                      accentColor={NOIR.gold}
-                    />
-                    <Typography variant="h5" sx={{ fontFamily: FONT, fontWeight: 700, mt: 2, textTransform: 'uppercase', color: 'white' }}>
-                      Phitopolis
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
-                    Making tomorrow's technology available today.
-                  </Typography>
-                  <Stack direction="row" spacing={2}>
-                    <IconButton component="a" href="#" sx={{ color: "white", "&:hover": { color: "secondary.main" } }}>
-                      <GitHubIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton component="a" href="#" sx={{ color: "white", "&:hover": { color: "secondary.main" } }}>
-                      <LinkedInIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton component="a" href="#" sx={{ color: "white", "&:hover": { color: "secondary.main" } }}>
-                      <TwitterIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                </Stack>
-              </Box>
-
-              {/* Right Columns container */}
-              <Box sx={{ flexGrow: 1, maxWidth: { md: "60%" } }}>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 6, sm: 12 }} justifyContent={{ md: "flex-end" }}>
-                  
-                  {/* Company Column */}
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: "secondary.main", fontWeight: 700, mb: 3 }}>
-                      Company
-                    </Typography>
-                    <Stack spacing={2}>
-                      {[
-                        { label: 'About Us', to: '/about' },
-                        { label: 'Careers', to: '/services', badge: "We're hiring" },
-                        { label: 'Contact', to: '/contact' },
-                      ].map(({ label, to, badge }) => (
-                        <Box key={to} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <RouterLink 
-                            to={to} 
-                            variant="body2" 
-                            sx={{ 
-                              color: "rgba(255,255,255,0.8)", 
-                              textDecoration: "none", 
-                              display: "flex", 
-                              alignItems: "center", 
-                              gap: 1,
-                              "&:hover": { color: "secondary.main" },
-                              "&:hover .arrow-icon": { opacity: 1, transform: "translateX(0)" }
+            >
+              <Container maxWidth="lg" sx={{ display: 'flex', flexDirection: 'column', minHeight: '80vh', justifyContent: 'space-between' }}>
+                
+                {/* Unified continuous scroll indicator */}
+                {currentNarration && (
+                  <Box sx={{ mb: 6, borderBottom: 1, borderColor: footerBorderColor, pb: 4, textAlign: 'center' }}>
+                    <AnimatePresence mode="wait">
+                      {(transitionState === "triggered" || transitionState === "closing" || transitionState === "loading") ? (
+                        <motion.div
+                          key="now-transitioning"
+                          initial={{ y: -15, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: 15, opacity: 0 }}
+                          transition={{ duration: 0.65, ease: "easeOut" }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: MONO,
+                              fontSize: "1.05rem",
+                              letterSpacing: "0.22em",
+                              textTransform: "uppercase",
+                              color: footerTextColor,
+                              fontWeight: 700,
                             }}
                           >
-                            {label}
-                            {badge && (
-                              <Box component="span" sx={{ px: 1, py: 0.5, borderRadius: 1, fontSize: "0.6rem", fontWeight: 600, bgcolor: "secondary.main", color: "primary.main", lineHeight: 1 }}>
-                                {badge}
-                              </Box>
-                            )}
-                            <ArrowForwardIcon className="arrow-icon" sx={{ fontSize: 14, opacity: 0, transform: "translateX(-4px)", transition: "all 0.2s ease" }} />
-                          </RouterLink>
-                        </Box>
-                      ))}
-                    </Stack>
+                            Now transitioning to {currentNarration.label}
+                          </Typography>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="scroll-cue"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: MONO,
+                              fontSize: "0.75rem",
+                              letterSpacing: "0.2em",
+                              textTransform: "uppercase",
+                              color: scrollPressure > 50 ? NOIR.ink : NOIR.gold,
+                              fontWeight: 700,
+                              mb: scrollPressure > 0 ? 0.8 : 0,
+                              transition: "color 0.3s ease",
+                            }}
+                          >
+                            [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER: {currentNarration.label} ↓ ]
+                          </Typography>
+                          {scrollPressure > 0 && (
+                            <Typography
+                              sx={{
+                                fontFamily: MONO,
+                                fontSize: "0.65rem",
+                                letterSpacing: "0.15em",
+                                color: footerMutedTextColor,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              Transition Pressure: {scrollPressure}%
+                            </Typography>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </Box>
+                )}
 
-                  {/* Contact Column */}
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: "secondary.main", fontWeight: 700, mb: 3 }}>
-                      Contact
-                    </Typography>
-                    <Stack spacing={2} sx={{ color: "rgba(255,255,255,0.8)" }}>
-                      <Box component="a" href="mailto:info@phitopolis.com" sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, color: "inherit", textDecoration: "none", "&:hover": { color: "secondary.main" } }}>
-                        <MailIcon sx={{ fontSize: 18, color: `rgba(${NOIR.goldRgb},0.7)`, mt: 0.2 }} />
-                        <Typography variant="body2">info@phitopolis.com</Typography>
-                      </Box>
-                      <Box component="a" href="https://maps.google.com/?q=27F+Ecotower+Building,+32nd+St,+Bonifacio+Global+City,+Taguig,+Philippines" target="_blank" rel="noopener noreferrer" sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, color: "inherit", textDecoration: "none", "&:hover": { color: "secondary.main" } }}>
-                        <PlaceIcon sx={{ fontSize: 18, color: `rgba(${NOIR.goldRgb},0.7)`, mt: 0.2 }} />
-                        <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                          27/F Ecotower Building, 32nd St. cor. 9th Avenue,<br />Bonifacio Global City, Taguig, Philippines, 1634
+                <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={{ xs: 8, md: 4 }}>
+                  
+                  {/* Left Column: Logo & Socials */}
+                  <Box sx={{ maxWidth: 300 }}>
+                    <Stack spacing={3}>
+                      <Box>
+                        <PhitopolisLogo
+                          style={{ height: 48, width: 'auto' }}
+                          color={footerTextColor}
+                          accentColor={footerLogoAccent}
+                        />
+                        <Typography variant="h5" sx={{ fontFamily: FONT, fontWeight: 700, mt: 2, textTransform: 'uppercase', color: footerTextColor }}>
+                          Phitopolis
                         </Typography>
                       </Box>
+                      <Typography variant="body2" sx={{ color: footerMutedTextColor, lineHeight: 1.6 }}>
+                        Making tomorrow's technology available today.
+                      </Typography>
+                      <Stack direction="row" spacing={2}>
+                        <IconButton component="a" href="#" sx={{ color: footerTextColor, "&:hover": { color: "secondary.main" } }}>
+                          <GitHubIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton component="a" href="#" sx={{ color: footerTextColor, "&:hover": { color: "secondary.main" } }}>
+                          <LinkedInIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton component="a" href="#" sx={{ color: footerTextColor, "&:hover": { color: "secondary.main" } }}>
+                          <TwitterIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
                     </Stack>
-                    
-                    <RouterButton
-                      to="/contact"
-                      variant="outlined"
-                      color="secondary"
-                      sx={{ mt: 4, borderRadius: 1, textTransform: 'none', borderColor: 'secondary.main', color: 'secondary.main', "&:hover": { bgcolor: 'secondary.main', color: 'primary.main' } }}
-                    >
-                      Contact us <ArrowForwardIcon sx={{ ml: 1, fontSize: 16 }} />
-                    </RouterButton>
                   </Box>
+
+                  {/* Right Columns container */}
+                  <Box sx={{ flexGrow: 1, maxWidth: { md: "60%" } }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 6, sm: 12 }} justifyContent={{ md: "flex-end" }}>
+                      
+                      {/* Company Column */}
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ color: scrollPressure > 50 ? NOIR.ink : "secondary.main", fontWeight: 700, mb: 3 }}>
+                          Company
+                        </Typography>
+                        <Stack spacing={2}>
+                          {[
+                            { label: 'About Us', to: '/about' },
+                            { label: 'Careers', to: '/services', badge: "We're hiring" },
+                            { label: 'Contact', to: '/contact' },
+                          ].map(({ label, to, badge }) => (
+                            <Box key={to} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <RouterLink 
+                                to={to} 
+                                variant="body2" 
+                                sx={{ 
+                                  color: footerMutedTextColor, 
+                                  textDecoration: "none", 
+                                  display: "flex", 
+                                  alignItems: "center", 
+                                  gap: 1,
+                                  "&:hover": { color: footerLinkHoverColor },
+                                  "&:hover .arrow-icon": { opacity: 1, transform: "translateX(0)" }
+                                }}
+                              >
+                                {label}
+                                {badge && (
+                                  <Box component="span" sx={{ px: 1, py: 0.5, borderRadius: 1, fontSize: "0.6rem", fontWeight: 600, bgcolor: scrollPressure > 50 ? NOIR.ink : "secondary.main", color: scrollPressure > 50 ? "#FFFFFF" : "primary.main", lineHeight: 1 }}>
+                                    {badge}
+                                  </Box>
+                                )}
+                                <ArrowForwardIcon className="arrow-icon" sx={{ fontSize: 14, opacity: 0, transform: "translateX(-4px)", transition: "all 0.2s ease" }} />
+                              </RouterLink>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+
+                      {/* Contact Column */}
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ color: scrollPressure > 50 ? NOIR.ink : "secondary.main", fontWeight: 700, mb: 3 }}>
+                          Contact
+                        </Typography>
+                        <Stack spacing={2} sx={{ color: footerMutedTextColor }}>
+                          <Box component="a" href="mailto:info@phitopolis.com" sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, color: "inherit", textDecoration: "none", "&:hover": { color: footerLinkHoverColor } }}>
+                            <MailIcon sx={{ fontSize: 18, color: scrollPressure > 50 ? NOIR.ink : `rgba(${NOIR.goldRgb},0.7)`, mt: 0.2 }} />
+                            <Typography variant="body2">info@phitopolis.com</Typography>
+                          </Box>
+                          <Box component="a" href="https://maps.google.com/?q=27F+Ecotower+Building,+32nd+St,+Bonifacio+Global+City,+Taguig,+Philippines" target="_blank" rel="noopener noreferrer" sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, color: "inherit", textDecoration: "none", "&:hover": { color: footerLinkHoverColor } }}>
+                            <PlaceIcon sx={{ fontSize: 18, color: scrollPressure > 50 ? NOIR.ink : `rgba(${NOIR.goldRgb},0.7)`, mt: 0.2 }} />
+                            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
+                              27/F Ecotower Building, 32nd St. cor. 9th Avenue,<br />Bonifacio Global City, Taguig, Philippines, 1634
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        
+                        <RouterButton
+                          to="/contact"
+                          variant="outlined"
+                          sx={{
+                            mt: 4,
+                            borderRadius: 1,
+                            textTransform: 'none',
+                            borderColor: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
+                            color: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
+                            "&:hover": {
+                              bgcolor: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
+                              color: scrollPressure > 50 ? '#FFFFFF' : 'primary.main',
+                              borderColor: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
+                            }
+                          }}
+                        >
+                          Contact us <ArrowForwardIcon sx={{ ml: 1, fontSize: 16 }} />
+                        </RouterButton>
+                      </Box>
+                    </Stack>
+                  </Box>
+
                 </Stack>
-              </Box>
 
-            </Stack>
+                {/* Bottom Row */}
+                <Stack 
+                  direction={{ xs: "column", md: "row" }} 
+                  justifyContent="space-between" 
+                  alignItems={{ xs: "flex-start", md: "center" }}
+                  spacing={3}
+                  sx={{ mt: 8, pt: 4, borderTop: 1, borderColor: footerBorderColor, color: footerMutedTextColor }}
+                >
+                  <Typography variant="caption">
+                    © 2026 Phitopolis Private Limited. All rights reserved.
+                  </Typography>
+                  <Stack direction="row" spacing={4}>
+                    <Typography component="a" href="/privacy" variant="caption" sx={{ color: "inherit", textDecoration: "none", "&:hover": { color: scrollPressure > 50 ? "#000000" : "white" } }}>
+                      Privacy Policy
+                    </Typography>
+                    <Typography component="a" href="/terms" variant="caption" sx={{ color: "inherit", textDecoration: "none", "&:hover": { color: scrollPressure > 50 ? "#000000" : "white" } }}>
+                      Terms of Service
+                    </Typography>
+                  </Stack>
+                </Stack>
 
-            {/* Bottom Row */}
-            <Stack 
-              direction={{ xs: "column", md: "row" }} 
-              justifyContent="space-between" 
-              alignItems={{ xs: "flex-start", md: "center" }}
-              spacing={3}
-              sx={{ mt: 8, pt: 4, borderTop: 1, borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}
-            >
-              <Typography variant="caption">
-                © 2026 Phitopolis Private Limited. All rights reserved.
-              </Typography>
-              <Stack direction="row" spacing={4}>
-                <Typography component="a" href="/privacy" variant="caption" sx={{ color: "inherit", textDecoration: "none", "&:hover": { color: "white" } }}>
-                  Privacy Policy
-                </Typography>
-                <Typography component="a" href="/terms" variant="caption" sx={{ color: "inherit", textDecoration: "none", "&:hover": { color: "white" } }}>
-                  Terms of Service
-                </Typography>
-              </Stack>
-            </Stack>
-
-          </Container>
-        </Box>
+              </Container>
+            </Box>
+          );
+        })()}
         <CommandPalette />
         <GrainOverlay />
 
