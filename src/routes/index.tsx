@@ -33,7 +33,6 @@ import { ProcessDiagram } from "@/shared/components/diagrams/ProcessDiagram";
 import { SmoothScroll, stopLenis, startLenis } from "@/shared/components/SmoothScroll";
 import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
-import { useSectionPaging } from "@/shared/components/SectionPaging";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { STAGE_ENTER_DURATION, STAGE_HOLD_DURATION, STAGE_EXIT_DURATION } from "@/shared/components/stageChoreo";
 import { StageKicker, StageSection, useStagePresence } from "@/shared/components/StageSection";
@@ -146,38 +145,44 @@ function ReachSection() {
   return (
     <Box ref={containerRef}>
       <StageSection section={homeSection("reach")} muted>
-        <Reveal>
-          <Typography variant="h2" component="h2">
-            International presence
-          </Typography>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <Box
-            ref={cardRef}
-            sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 2,
-              overflow: "hidden",
-              bgcolor: "background.paper",
-              transformOrigin: "center center",
-              willChange: "transform",
-            }}
-          >
-            <ReachMap />
-          </Box>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.7rem",
-              letterSpacing: "0.14em",
-              color: "text.secondary",
-              mt: 2,
-            }}
-          >
-            ARCS DENOTE CLIENTS AND INVESTORS
-          </Typography>
-        </Reveal>
+        <Box
+          ref={cardRef}
+          sx={{
+            transformOrigin: "center center",
+            willChange: "transform",
+            width: "100%",
+          }}
+        >
+          <Reveal>
+            <Typography variant="h2" component="h2" sx={{ mb: 4 }}>
+              International presence
+            </Typography>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Box
+              sx={{
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 2,
+                overflow: "hidden",
+                bgcolor: "background.paper",
+              }}
+            >
+              <ReachMap />
+            </Box>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.7rem",
+                letterSpacing: "0.14em",
+                color: "text.secondary",
+                mt: 2,
+              }}
+            >
+              ARCS DENOTE CLIENTS AND INVESTORS
+            </Typography>
+          </Reveal>
+        </Box>
       </StageSection>
     </Box>
   );
@@ -1131,7 +1136,6 @@ function HomePage() {
   const useCasesRef = useRef<HTMLElement>(null);
   const compactZoneRef = useNavbarAnchor("home-compact");
   useStagePresence(useCasesRef, "use-cases");
-  useSectionPaging(pageRef);
 
   return (
     <>

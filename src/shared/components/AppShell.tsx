@@ -12,8 +12,6 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import MailIcon from "@mui/icons-material/Mail";
-import PlaceIcon from "@mui/icons-material/Place";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { alpha } from "@mui/material/styles";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -21,7 +19,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { EntrancePhaseContext, useReducedMotion, usePointerFine } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
-import { FONT, MONO } from "@/shared/theme/theme";
+import { MONO } from "@/shared/theme/theme";
 import { motion, AnimatePresence } from "motion/react";
 
 import { CommandPalette } from "./CommandPalette";
@@ -409,6 +407,187 @@ function TransitionLoadingDisplay({
       </motion.div>
     </Box>
   );
+}
+
+// Renders dynamic, themed progress bars based on the target page theme
+function renderNextPageIndicator(nextPath: string, progress: number) {
+  switch (nextPath) {
+    case "/about": // Wavelength / Soundwave / Pulse
+      return (
+        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', justifyContent: 'center', height: 40 }}>
+          {Array.from({ length: 24 }).map((_, i) => {
+            const active = (i / 24) * 100 <= progress;
+            const waveHeight = 6 + 22 * Math.abs(Math.sin(i * 0.4));
+            return (
+              <Box
+                key={i}
+                sx={{
+                  width: 3,
+                  height: waveHeight,
+                  borderRadius: 1,
+                  bgcolor: active ? NOIR.gold : "rgba(255,255,255,0.15)",
+                  transition: "background-color 0.1s ease, transform 0.2s ease",
+                  transform: active ? "scaleY(1.15)" : "scaleY(1)",
+                }}
+              />
+            );
+          })}
+        </Box>
+      );
+    case "/services": // LED Matrix / Binary Grid
+      return (
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
+          {Array.from({ length: 16 }).map((_, i) => {
+            const active = (i / 16) * 100 <= progress;
+            return (
+              <Box
+                key={i}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: "2px",
+                  border: "1px solid",
+                  borderColor: active ? NOIR.gold : "rgba(255,255,255,0.2)",
+                  bgcolor: active ? NOIR.gold : "transparent",
+                  boxShadow: active ? `0 0 8px ${NOIR.gold}` : "none",
+                  transition: "all 0.1s ease",
+                  fontFamily: MONO,
+                  fontSize: "7px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: active ? "primary.main" : "rgba(255,255,255,0.3)",
+                }}
+              >
+                {i % 2 === 0 ? "1" : "0"}
+              </Box>
+            );
+          })}
+        </Box>
+      );
+    case "/blog": // Highlighted Book/Text lines
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: 200, mx: 'auto' }}>
+          {[0, 1, 2].map((lineIndex) => {
+            const start = lineIndex * 33.3;
+            const lineProgress = Math.max(0, Math.min(100, ((progress - start) / 33.3) * 100));
+            return (
+              <Box
+                key={lineIndex}
+                sx={{
+                  width: lineIndex === 2 ? "70%" : "100%",
+                  height: 4,
+                  borderRadius: 1,
+                  position: "relative",
+                  bgcolor: "rgba(255,255,255,0.15)",
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    width: `${lineProgress}%`,
+                    bgcolor: NOIR.gold,
+                  }}
+                />
+              </Box>
+            );
+          })}
+        </Box>
+      );
+    case "/innovation-hub": // Quantum Orbit / Particle Core
+      return (
+        <Box sx={{ position: "relative", width: 60, height: 60, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto" }}>
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              bgcolor: progress > 30 ? NOIR.gold : "rgba(255,255,255,0.2)",
+              boxShadow: progress > 30 ? `0 0 10px ${NOIR.gold}` : "none",
+              transition: "all 0.3s",
+            }}
+          />
+          {[1, 2, 3].map((ring) => {
+            const active = progress >= ring * 33;
+            return (
+              <Box
+                key={ring}
+                sx={{
+                  position: "absolute",
+                  width: 16 + ring * 12,
+                  height: 16 + ring * 12,
+                  borderRadius: "50%",
+                  border: "1px solid",
+                  borderColor: active ? NOIR.gold : "rgba(255,255,255,0.1)",
+                  transform: `rotate(${progress * (ring === 2 ? -1.5 : 1.2)}deg)`,
+                  transition: "border-color 0.2s, transform 0.1s linear",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {active && (
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 4,
+                      borderRadius: "50%",
+                      bgcolor: NOIR.gold,
+                      boxShadow: `0 0 6px ${NOIR.gold}`,
+                    }}
+                  />
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      );
+    case "/contact": // WiFi / Signal Bar
+      return (
+        <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'flex-end', justifyContent: 'center', height: 32 }}>
+          {Array.from({ length: 5 }).map((_, i) => {
+            const active = (i / 5) * 100 <= progress;
+            const barHeight = 6 + i * 6;
+            return (
+              <Box
+                key={i}
+                sx={{
+                  width: 5,
+                  height: barHeight,
+                  borderRadius: "2px 2px 0 0",
+                  bgcolor: active ? NOIR.gold : "rgba(255,255,255,0.15)",
+                  boxShadow: active ? `0 0 6px ${NOIR.gold}` : "none",
+                  transition: "all 0.15s ease",
+                }}
+              />
+            );
+          })}
+        </Box>
+      );
+    default: // Circular / Loop
+      return (
+        <Box sx={{ width: 60, height: 30, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto" }}>
+          <svg width="60" height="30" viewBox="0 0 60 30" fill="none">
+            <path
+              d="M15 5 C 5 5, 5 25, 15 25 C 25 25, 35 5, 45 5 C 55 5, 55 25, 45 25 C 35 25, 25 5, 15 5 Z"
+              stroke="rgba(255,255,255,0.15)"
+              strokeWidth="2"
+            />
+            <path
+              d="M15 5 C 5 5, 5 25, 15 25 C 25 25, 35 5, 45 5 C 55 5, 55 25, 45 25 C 35 25, 25 5, 15 5 Z"
+              stroke={NOIR.gold}
+              strokeWidth="2.5"
+              strokeDasharray="140"
+              strokeDashoffset={140 - (progress / 100) * 140}
+              style={{ transition: "stroke-dashoffset 0.1s linear" }}
+            />
+          </svg>
+        </Box>
+      );
+  }
 }
 
 /** Delay before the entrance plays when there is no preloader to cover it
@@ -881,14 +1060,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
         {/* Dynamic unified footer with scroll adaptation */}
         {(() => {
-          const r = scrollPressure / 100;
-          // Interpolate background from Navy (#0A2A66) to Gold (#FFC72C)
-          const footerBgColor = `rgb(${Math.round(10 + (255 - 10) * r)}, ${Math.round(42 + (199 - 42) * r)}, ${Math.round(102 + (44 - 102) * r)})`;
-          const footerTextColor = scrollPressure > 50 ? NOIR.ink : "#FFFFFF";
-          const footerMutedTextColor = scrollPressure > 50 ? "rgba(10, 42, 102, 0.75)" : "rgba(255, 255, 255, 0.7)";
-          const footerBorderColor = scrollPressure > 50 ? "rgba(10, 42, 102, 0.15)" : "rgba(255, 255, 255, 0.12)";
-          const footerLinkHoverColor = scrollPressure > 50 ? "#000000" : NOIR.gold;
-          const footerLogoAccent = scrollPressure > 50 ? NOIR.ink : NOIR.gold;
+          const footerBgColor = NOIR.navyField;
+          const footerTextColor = "#FFFFFF";
+          const footerMutedTextColor = "rgba(255, 255, 255, 0.7)";
+          const footerBorderColor = "rgba(255, 255, 255, 0.12)";
+          const footerLinkHoverColor = NOIR.gold;
 
           return (
             <Box
@@ -896,10 +1072,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
               ref={footerAnchorRef}
               sx={{
                 bgcolor: footerBgColor,
+                color: footerTextColor,
                 borderTop: 1,
                 borderColor: footerBorderColor,
-                color: footerTextColor,
-                pt: { xs: 8, md: 12 },
+                pt: { xs: 8, md: 10 },
                 pb: { xs: 4, md: 6 },
                 mt: "auto",
                 position: 'relative',
@@ -907,14 +1083,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
-                transition: "background-color 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out",
               }}
             >
               <Container maxWidth="lg" sx={{ display: 'flex', flexDirection: 'column', minHeight: '80vh', justifyContent: 'space-between' }}>
                 
                 {/* Unified continuous scroll indicator */}
                 {currentNarration && (
-                  <Box sx={{ mb: 6, borderBottom: 1, borderColor: footerBorderColor, pb: 4, textAlign: 'center' }}>
+                  <Box sx={{ textAlign: 'center', my: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                     <AnimatePresence mode="wait">
                       {(transitionState === "triggered" || transitionState === "closing" || transitionState === "loading") ? (
                         <motion.div
@@ -943,7 +1118,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}
                         >
                           <Typography
                             sx={{
@@ -951,167 +1126,117 @@ function AppShellInner({ children }: { children: ReactNode }) {
                               fontSize: "0.75rem",
                               letterSpacing: "0.2em",
                               textTransform: "uppercase",
-                              color: scrollPressure > 50 ? NOIR.ink : NOIR.gold,
+                              color: NOIR.gold,
                               fontWeight: 700,
-                              mb: scrollPressure > 0 ? 0.8 : 0,
-                              transition: "color 0.3s ease",
                             }}
                           >
-                            [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER: {currentNarration.label} ↓ ]
+                            [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER ↓ ]
                           </Typography>
-                          {scrollPressure > 0 && (
-                            <Typography
-                              sx={{
-                                fontFamily: MONO,
-                                fontSize: "0.65rem",
-                                letterSpacing: "0.15em",
-                                color: footerMutedTextColor,
-                                textTransform: "uppercase",
-                              }}
-                            >
-                              Transition Pressure: {scrollPressure}%
-                            </Typography>
-                          )}
+
+                          {/* Dynamic thematic progression bar */}
+                          {renderNextPageIndicator(currentNarration.next, scrollPressure)}
+
+                          <Typography
+                            sx={{
+                              fontFamily: MONO,
+                              fontSize: "0.65rem",
+                              letterSpacing: "0.15em",
+                              color: footerMutedTextColor,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Next Page: {currentNarration.label} - {scrollPressure}%
+                          </Typography>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </Box>
                 )}
 
-                <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={{ xs: 8, md: 4 }}>
-                  
-                  {/* Left Column: Logo & Socials */}
-                  <Box sx={{ maxWidth: 300 }}>
-                    <Stack spacing={3}>
-                      <Box>
-                        <PhitopolisLogo
-                          style={{ height: 48, width: 'auto' }}
-                          color={footerTextColor}
-                          accentColor={footerLogoAccent}
-                        />
-                        <Typography variant="h5" sx={{ fontFamily: FONT, fontWeight: 700, mt: 2, textTransform: 'uppercase', color: footerTextColor }}>
-                          Phitopolis
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" sx={{ color: footerMutedTextColor, lineHeight: 1.6 }}>
-                        Making tomorrow's technology available today.
-                      </Typography>
-                      <Stack direction="row" spacing={2}>
-                        <IconButton component="a" href="#" sx={{ color: footerTextColor, "&:hover": { color: "secondary.main" } }}>
-                          <GitHubIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton component="a" href="#" sx={{ color: footerTextColor, "&:hover": { color: "secondary.main" } }}>
-                          <LinkedInIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton component="a" href="#" sx={{ color: footerTextColor, "&:hover": { color: "secondary.main" } }}>
-                          <TwitterIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    </Stack>
-                  </Box>
-
-                  {/* Right Columns container */}
-                  <Box sx={{ flexGrow: 1, maxWidth: { md: "60%" } }}>
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 6, sm: 12 }} justifyContent={{ md: "flex-end" }}>
-                      
-                      {/* Company Column */}
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ color: scrollPressure > 50 ? NOIR.ink : "secondary.main", fontWeight: 700, mb: 3 }}>
-                          Company
-                        </Typography>
-                        <Stack spacing={2}>
-                          {[
-                            { label: 'About Us', to: '/about' },
-                            { label: 'Careers', to: '/services', badge: "We're hiring" },
-                            { label: 'Contact', to: '/contact' },
-                          ].map(({ label, to, badge }) => (
-                            <Box key={to} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <RouterLink 
-                                to={to} 
-                                variant="body2" 
-                                sx={{ 
-                                  color: footerMutedTextColor, 
-                                  textDecoration: "none", 
-                                  display: "flex", 
-                                  alignItems: "center", 
-                                  gap: 1,
-                                  "&:hover": { color: footerLinkHoverColor },
-                                  "&:hover .arrow-icon": { opacity: 1, transform: "translateX(0)" }
-                                }}
-                              >
-                                {label}
-                                {badge && (
-                                  <Box component="span" sx={{ px: 1, py: 0.5, borderRadius: 1, fontSize: "0.6rem", fontWeight: 600, bgcolor: scrollPressure > 50 ? NOIR.ink : "secondary.main", color: scrollPressure > 50 ? "#FFFFFF" : "primary.main", lineHeight: 1 }}>
-                                    {badge}
-                                  </Box>
-                                )}
-                                <ArrowForwardIcon className="arrow-icon" sx={{ fontSize: 14, opacity: 0, transform: "translateX(-4px)", transition: "all 0.2s ease" }} />
-                              </RouterLink>
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Box>
-
-                      {/* Contact Column */}
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ color: scrollPressure > 50 ? NOIR.ink : "secondary.main", fontWeight: 700, mb: 3 }}>
-                          Contact
-                        </Typography>
-                        <Stack spacing={2} sx={{ color: footerMutedTextColor }}>
-                          <Box component="a" href="mailto:info@phitopolis.com" sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, color: "inherit", textDecoration: "none", "&:hover": { color: footerLinkHoverColor } }}>
-                            <MailIcon sx={{ fontSize: 18, color: scrollPressure > 50 ? NOIR.ink : `rgba(${NOIR.goldRgb},0.7)`, mt: 0.2 }} />
-                            <Typography variant="body2">info@phitopolis.com</Typography>
-                          </Box>
-                          <Box component="a" href="https://maps.google.com/?q=27F+Ecotower+Building,+32nd+St,+Bonifacio+Global+City,+Taguig,+Philippines" target="_blank" rel="noopener noreferrer" sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, color: "inherit", textDecoration: "none", "&:hover": { color: footerLinkHoverColor } }}>
-                            <PlaceIcon sx={{ fontSize: 18, color: scrollPressure > 50 ? NOIR.ink : `rgba(${NOIR.goldRgb},0.7)`, mt: 0.2 }} />
-                            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                              27/F Ecotower Building, 32nd St. cor. 9th Avenue,<br />Bonifacio Global City, Taguig, Philippines, 1634
-                            </Typography>
-                          </Box>
-                        </Stack>
-                        
-                        <RouterButton
-                          to="/contact"
-                          variant="outlined"
+                {/* 1-2 Row Horizontal Content Footer */}
+                <Stack spacing={3} sx={{ borderTop: 1, borderColor: footerBorderColor, pt: 4 }}>
+                  {/* Row 1: Navigation Links, Contact Link, and Social Icons */}
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "flex-start", md: "center" }}
+                    spacing={3}
+                  >
+                    {/* Inline Link List */}
+                    <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+                      {[
+                        { label: 'About Us', to: '/about' },
+                        { label: 'Services', to: '/services' },
+                        { label: 'Blog', to: '/blog' },
+                        { label: 'Contact', to: '/contact' },
+                      ].map(({ label, to }) => (
+                        <RouterLink
+                          key={to}
+                          to={to}
+                          variant="body2"
                           sx={{
-                            mt: 4,
-                            borderRadius: 1,
-                            textTransform: 'none',
-                            borderColor: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
-                            color: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
-                            "&:hover": {
-                              bgcolor: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
-                              color: scrollPressure > 50 ? '#FFFFFF' : 'primary.main',
-                              borderColor: scrollPressure > 50 ? NOIR.ink : 'secondary.main',
-                            }
+                            color: footerMutedTextColor,
+                            textDecoration: "none",
+                            fontSize: "0.85rem",
+                            "&:hover": { color: footerLinkHoverColor },
                           }}
                         >
-                          Contact us <ArrowForwardIcon sx={{ ml: 1, fontSize: 16 }} />
-                        </RouterButton>
-                      </Box>
+                          {label}
+                        </RouterLink>
+                      ))}
+                      {/* Email contact inline */}
+                      <Typography
+                        component="a"
+                        href="mailto:info@phitopolis.com"
+                        variant="body2"
+                        sx={{
+                          color: footerMutedTextColor,
+                          textDecoration: "none",
+                          fontSize: "0.85rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.8,
+                          "&:hover": { color: footerLinkHoverColor },
+                        }}
+                      >
+                        <MailIcon sx={{ fontSize: 16, color: NOIR.gold }} />
+                        info@phitopolis.com
+                      </Typography>
                     </Stack>
-                  </Box>
 
-                </Stack>
+                    {/* Social links inline */}
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <IconButton component="a" href="#" sx={{ color: footerTextColor, p: 0.5, "&:hover": { color: "secondary.main" } }}>
+                        <GitHubIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton component="a" href="#" sx={{ color: footerTextColor, p: 0.5, "&:hover": { color: "secondary.main" } }}>
+                        <LinkedInIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton component="a" href="#" sx={{ color: footerTextColor, p: 0.5, "&:hover": { color: "secondary.main" } }}>
+                        <TwitterIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </Stack>
 
-                {/* Bottom Row */}
-                <Stack 
-                  direction={{ xs: "column", md: "row" }} 
-                  justifyContent="space-between" 
-                  alignItems={{ xs: "flex-start", md: "center" }}
-                  spacing={3}
-                  sx={{ mt: 8, pt: 4, borderTop: 1, borderColor: footerBorderColor, color: footerMutedTextColor }}
-                >
-                  <Typography variant="caption">
-                    © 2026 Phitopolis Private Limited. All rights reserved.
-                  </Typography>
-                  <Stack direction="row" spacing={4}>
-                    <Typography component="a" href="/privacy" variant="caption" sx={{ color: "inherit", textDecoration: "none", "&:hover": { color: scrollPressure > 50 ? "#000000" : "white" } }}>
-                      Privacy Policy
+                  {/* Row 2: Copyright & Legal */}
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "flex-start", md: "center" }}
+                    spacing={2}
+                    sx={{ color: footerMutedTextColor }}
+                  >
+                    <Typography variant="caption">
+                      © 2026 Phitopolis Private Limited. All rights reserved.
                     </Typography>
-                    <Typography component="a" href="/terms" variant="caption" sx={{ color: "inherit", textDecoration: "none", "&:hover": { color: scrollPressure > 50 ? "#000000" : "white" } }}>
-                      Terms of Service
-                    </Typography>
+                    <Stack direction="row" spacing={3}>
+                      <Typography component="a" href="/privacy" variant="caption" sx={{ color: "white", textDecoration: "none", "&:hover": { color: "secondary.main" } }}>
+                        Privacy Policy
+                      </Typography>
+                      <Typography component="a" href="/terms" variant="caption" sx={{ color: "white", textDecoration: "none", "&:hover": { color: "secondary.main" } }}>
+                        Terms of Service
+                      </Typography>
+                    </Stack>
                   </Stack>
                 </Stack>
 
@@ -1122,15 +1247,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <CommandPalette />
         <GrainOverlay />
 
-        {/* Global White Camera-Iris & Full White Loading Screen Overlay */}
+        {/* Global Left-to-Right Swipe Curtain & Full White Loading Screen Overlay */}
         <AnimatePresence>
           {transitionState !== "idle" && (
             <>
               <motion.div
-                key="page-iris-transition"
-                initial={{ clipPath: "circle(0% at 50% 50%)" }}
-                animate={(transitionState === "closing" || transitionState === "loading") ? { clipPath: "circle(150% at 50% 50%)" } : { clipPath: "circle(0% at 50% 50%)" }}
-                transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1] }}
+                key="page-slide-transition"
+                initial={{ x: "-100%" }}
+                animate={(transitionState === "closing" || transitionState === "loading") ? { x: "0%" } : { x: "100%" }}
+                transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
                 onAnimationComplete={() => {
                   if (transitionState === "closing" && transitionTargetRef.current) {
                     const nextRoute = transitionTargetRef.current;

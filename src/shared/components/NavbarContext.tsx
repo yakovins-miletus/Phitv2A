@@ -109,7 +109,7 @@ export function useNavbarAnchor(id: string, options?: { dark?: boolean; rootMarg
       },
       {
         root: null,
-        rootMargin: customMargin ?? "-80px 0px 0px 0px", // Trigger slightly after it scrolls into view (below navbar)
+        rootMargin: customMargin ?? "-80px 0px -90% 0px", // Trigger only when section crosses the navbar height
         threshold: customThreshold ?? 0,
       }
     );
