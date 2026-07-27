@@ -161,56 +161,230 @@ export function HeroSignalCore() {
           }}
         />
 
-        {/* Bottom Left "WHAT WE DO" Button */}
+        {/* Top Left "WHO WE ARE" Button with Description */}
         <Box
-          component={RouterLink}
-          to="/services"
           sx={{
             position: "absolute",
-            bottom: { xs: 28, md: 44 },
-            left: { xs: 24, md: 56 },
+            top: { xs: 60, md: 76 },
+            left: { xs: 32, md: 72 },
             zIndex: 5,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.2,
-            px: 3,
-            py: 1.2,
-            borderRadius: "6px",
-            textDecoration: "none !important",
-            border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-            bgcolor: alpha(NOIR.panel, 0.75),
-            backdropFilter: "blur(12px)",
-            boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+            display: { xs: "none", sm: "flex" },
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 0.8,
             opacity: Math.max(0, 1 - scrollProgress * 3),
             pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
-            "&, & *": {
-              textDecoration: "none !important",
-            },
-            "&:hover": {
-              bgcolor: NOIR.navyField,
-              borderColor: NOIR.navyField,
-              boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-              "& .btn-text, & .btn-arrow": {
-                color: "#FFFFFF !important",
-              },
-            },
+            transition: "opacity 0.3s ease",
           }}
         >
           <Typography
-            className="btn-text"
             sx={{
               fontFamily: MONO,
-              fontSize: "0.78rem",
+              fontSize: "0.65rem",
               fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: "text.primary",
+              letterSpacing: "0.16em",
+              color: alpha(NOIR.navyField, 0.88),
               textTransform: "uppercase",
-              transition: "color 0.3s ease",
             }}
           >
-            WHAT WE DO <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
+            WHO WE ARE // R&D FIRM MANILA
           </Typography>
+
+          <Box
+            component={RouterLink}
+            to="/about"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.2,
+              px: 3,
+              py: 1.2,
+              borderRadius: "6px",
+              textDecoration: "none !important",
+              border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
+              bgcolor: alpha(NOIR.panel, 0.75),
+              backdropFilter: "blur(12px)",
+              boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
+              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              "&, & *": {
+                textDecoration: "none !important",
+              },
+              "&:hover": {
+                bgcolor: NOIR.navyField,
+                borderColor: NOIR.navyField,
+                boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+                "& .btn-text, & .btn-arrow": {
+                  color: "#FFFFFF !important",
+                },
+              },
+            }}
+          >
+            <Typography
+              className="btn-text"
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                color: "text.primary",
+                textTransform: "uppercase",
+                transition: "color 0.3s ease",
+              }}
+            >
+              ABOUT PHITOPOLIS <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Top Right "EXPLORE OUR COMMUNITY" Button with Description */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: { xs: 60, md: 76 },
+            right: { xs: 32, md: 72 },
+            zIndex: 5,
+            display: { xs: "none", sm: "flex" },
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 0.8,
+            opacity: Math.max(0, 1 - scrollProgress * 3),
+            pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
+            transition: "opacity 0.3s ease",
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.16em",
+              color: alpha(NOIR.navyField, 0.88),
+              textTransform: "uppercase",
+              textAlign: "right",
+            }}
+          >
+            LATEST INSIGHTS & ENGINEERING BLOG
+          </Typography>
+
+          <Box
+            component={RouterLink}
+            to="/blog"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.2,
+              px: 3,
+              py: 1.2,
+              borderRadius: "6px",
+              textDecoration: "none !important",
+              border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
+              bgcolor: alpha(NOIR.panel, 0.75),
+              backdropFilter: "blur(12px)",
+              boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
+              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              "&, & *": {
+                textDecoration: "none !important",
+              },
+              "&:hover": {
+                bgcolor: NOIR.navyField,
+                borderColor: NOIR.navyField,
+                boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+                "& .btn-text, & .btn-arrow": {
+                  color: "#FFFFFF !important",
+                },
+              },
+            }}
+          >
+            <Typography
+              className="btn-text"
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                color: "text.primary",
+                textTransform: "uppercase",
+                transition: "color 0.3s ease",
+              }}
+            >
+              EXPLORE OUR COMMUNITY <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Bottom Left "WHAT WE DO" Button with Description */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: { xs: 28, md: 44 },
+            left: { xs: 32, md: 72 },
+            zIndex: 5,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 0.8,
+            opacity: Math.max(0, 1 - scrollProgress * 3),
+            pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
+            transition: "opacity 0.3s ease",
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.16em",
+              color: alpha(NOIR.navyField, 0.88),
+              textTransform: "uppercase",
+            }}
+          >
+            HIGH-PERFORMANCE R&D & FINTECH PLATFORMS
+          </Typography>
+
+          <Box
+            component={RouterLink}
+            to="/services"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.2,
+              px: 3,
+              py: 1.2,
+              borderRadius: "6px",
+              textDecoration: "none !important",
+              border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
+              bgcolor: alpha(NOIR.panel, 0.75),
+              backdropFilter: "blur(12px)",
+              boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
+              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              "&, & *": {
+                textDecoration: "none !important",
+              },
+              "&:hover": {
+                bgcolor: NOIR.navyField,
+                borderColor: NOIR.navyField,
+                boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+                "& .btn-text, & .btn-arrow": {
+                  color: "#FFFFFF !important",
+                },
+              },
+            }}
+          >
+            <Typography
+              className="btn-text"
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                color: "text.primary",
+                textTransform: "uppercase",
+                transition: "color 0.3s ease",
+              }}
+            >
+              WHAT WE DO <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
+            </Typography>
+          </Box>
         </Box>
 
         {/* Bottom Scroll Cue */}

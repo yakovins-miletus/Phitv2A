@@ -28,6 +28,7 @@ const COMMANDS = [
   { id: "sys-nav-liquid", group: "SYSTEM", label: "Navbar: Liquid Mode", keywords: "navbar liquid morph drag corners shape squircle", run: { kind: "navbar-mode", mode: "liquid" } },
   { id: "sys-nav-notch", group: "SYSTEM", label: "Navbar: Notch Mode", keywords: "navbar notch macbook camera capsule dark island", run: { kind: "navbar-mode", mode: "notch" } },
   { id: "sys-nav-autohide", group: "SYSTEM", label: "Toggle Navigation Autohide", keywords: "navigation autohide navbar scroll hide show toggle", run: { kind: "toggle-autohide" } },
+  { id: "sys-toggle-motto", group: "SYSTEM", label: "Toggle Logo Motto", keywords: "motto slogan tagline company header show hide toggle brand text", run: { kind: "toggle-motto" } },
 ] as const;
 
 type Cmd = (typeof COMMANDS)[number];
@@ -44,7 +45,7 @@ const isEditableTarget = (t: EventTarget | null): boolean => {
 export function CommandPalette() {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
-  const { setOverrideMode, toggleAutohide } = useNavbar();
+  const { setOverrideMode, toggleAutohide, toggleMotto } = useNavbar();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -167,9 +168,13 @@ export function CommandPalette() {
           handleClose();
           toggleAutohide();
           break;
+        case "toggle-motto":
+          handleClose();
+          toggleMotto();
+          break;
       }
     },
-    [handleClose, navigate, copyAddress, runSignal, setOverrideMode, toggleAutohide],
+    [handleClose, navigate, copyAddress, runSignal, setOverrideMode, toggleAutohide, toggleMotto],
   );
 
   const onInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {

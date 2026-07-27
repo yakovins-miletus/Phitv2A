@@ -109,70 +109,91 @@ export function ContactForm() {
   }
 
   return (
-    <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
-      {mutation.isError ? (
-        <Alert severity="error">{messageFromError(mutation.error)}</Alert>
-      ) : null}
-      <TextField
-        label="Name"
-        value={values.name}
-        onChange={setField("name")}
-        error={errors.name !== undefined}
-        helperText={errors.name ?? " "}
-        required
-      />
-      <TextField
-        label="Email"
-        type="email"
-        value={values.email}
-        onChange={setField("email")}
-        error={errors.email !== undefined}
-        helperText={errors.email ?? " "}
-        required
-      />
-      <TextField
-        label="Subject"
-        value={values.subject}
-        onChange={setField("subject")}
-        error={errors.subject !== undefined}
-        helperText={errors.subject ?? " "}
-        required
-      />
-      <TextField
-        label="Message"
-        value={values.message}
-        onChange={setField("message")}
-        error={errors.message !== undefined}
-        helperText={errors.message ?? " "}
-        multiline
-        minRows={5}
-        required
-      />
-      {/* Honeypot: humans never see or fill this; bots that do get a decoy
-          success. Off-screen rather than display:none so naive bots still
-          treat it as fillable. */}
-      <Box
-        aria-hidden
-        sx={{ position: "absolute", left: "-10000px", width: "1px", overflow: "hidden" }}
-      >
-        <TextField
-          label="Company website"
-          value={values.company_website}
-          onChange={setField("company_website")}
-          tabIndex={-1}
-          autoComplete="off"
-        />
-      </Box>
-      <Box>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={mutation.isPending}
-          startIcon={mutation.isPending ? <CircularProgress size={18} color="inherit" /> : null}
-        >
-          {mutation.isPending ? "Sending…" : "Send message"}
-        </Button>
-      </Box>
-    </Stack>
+    <Box
+      sx={{
+        borderRadius: "16px",
+        overflow: "hidden",
+        border: "1px solid rgba(10, 42, 102, 0.12)",
+        bgcolor: "#FFFFFF",
+        boxShadow: "0 12px 32px rgba(10, 42, 102, 0.06)",
+        p: { xs: 3, md: 5 },
+      }}
+    >
+      <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
+          {mutation.isError ? (
+            <Alert severity="error">{messageFromError(mutation.error)}</Alert>
+          ) : null}
+          <TextField
+            label="Name"
+            value={values.name}
+            onChange={setField("name")}
+            error={errors.name !== undefined}
+            helperText={errors.name ?? " "}
+            required
+            fullWidth
+          />
+          <TextField
+            label="Email"
+            type="email"
+            value={values.email}
+            onChange={setField("email")}
+            error={errors.email !== undefined}
+            helperText={errors.email ?? " "}
+            required
+            fullWidth
+          />
+          <TextField
+            label="Subject"
+            value={values.subject}
+            onChange={setField("subject")}
+            error={errors.subject !== undefined}
+            helperText={errors.subject ?? " "}
+            required
+            fullWidth
+          />
+          <TextField
+            label="Message"
+            value={values.message}
+            onChange={setField("message")}
+            error={errors.message !== undefined}
+            helperText={errors.message ?? " "}
+            multiline
+            minRows={5}
+            required
+            fullWidth
+          />
+          {/* Honeypot */}
+          <Box
+            aria-hidden
+            sx={{ position: "absolute", left: "-10000px", width: "1px", overflow: "hidden" }}
+          >
+            <TextField
+              label="Company website"
+              value={values.company_website}
+              onChange={setField("company_website")}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </Box>
+          <Box>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={mutation.isPending}
+              startIcon={mutation.isPending ? <CircularProgress size={18} color="inherit" /> : null}
+              sx={{
+                borderRadius: "8px",
+                px: 4,
+                py: 1.2,
+                textTransform: "none",
+                fontWeight: 700,
+              }}
+            >
+              {mutation.isPending ? "Sending…" : "Send message"}
+            </Button>
+          </Box>
+        </Stack>
+    </Box>
   );
 }

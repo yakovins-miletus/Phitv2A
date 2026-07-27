@@ -110,16 +110,16 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
       onClick={handleClick}
       sx={{
         borderRadius: "6px",
-        borderColor: onDark ? "#FFFFFF" : "primary.main",
+        borderColor: onDark ? (hovered ? NOIR.gold : "#FFFFFF") : "primary.main",
         color: onDark ? "#FFFFFF" : "primary.main",
-        bgcolor: isActive ? (onDark ? "rgba(255,255,255,0.14)" : "rgba(10,42,102,0.05)") : (onDark ? "transparent" : "#FFFFFF"),
+        bgcolor: isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(10,42,102,0.05)") : (onDark ? "transparent" : "#FFFFFF"),
         boxShadow: isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : "none",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         transform: clicked ? "scale(0.95)" : "scale(1)",
         "&:hover": {
-          bgcolor: isActive ? (onDark ? "rgba(255,255,255,0.14)" : "rgba(0, 0, 0, 0.03)") : (onDark ? "#FFFFFF" : "primary.main"),
-          color: isActive ? (onDark ? "#FFFFFF" : "primary.main") : (onDark ? "primary.main" : "primary.contrastText"),
-          borderColor: isActive ? (onDark ? "#FFFFFF" : "primary.main") : (onDark ? "primary.main" : "primary.main"),
+          bgcolor: isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(0, 0, 0, 0.03)") : (onDark ? NOIR.gold : "primary.main"),
+          color: "#FFFFFF",
+          borderColor: isActive ? (onDark ? NOIR.gold : "primary.main") : (onDark ? NOIR.gold : "primary.main"),
         },
         ...sx,
       }}
@@ -240,21 +240,31 @@ function AnimatedMenuButton({
   const [hovered, setHovered] = useState(false);
 
   const isPrimary = hovered || active;
-  const bgColor = isPrimary
-    ? NOIR.navyField
-    : isNotch || isImmersiveDark
-    ? "transparent"
-    : "#FFFFFF";
-  const borderColor = isPrimary
-    ? NOIR.navyField
-    : isNotch || isImmersiveDark
-    ? "rgba(255,255,255,0.25)"
-    : NOIR.navyField;
-  const iconColor = isPrimary
-    ? "#FFFFFF"
-    : isNotch || isImmersiveDark
-    ? "#FFFFFF"
-    : NOIR.navyField;
+  let bgColor: string;
+  let borderColor: string;
+  let iconColor: string;
+
+  if (isImmersiveDark) {
+    if (isPrimary) {
+      bgColor = NOIR.gold;
+      borderColor = NOIR.gold;
+      iconColor = "#FFFFFF";
+    } else {
+      bgColor = "transparent";
+      borderColor = "#FFFFFF";
+      iconColor = "#FFFFFF";
+    }
+  } else {
+    if (isPrimary) {
+      bgColor = NOIR.navyField;
+      borderColor = NOIR.navyField;
+      iconColor = "#FFFFFF";
+    } else {
+      bgColor = isNotch ? "transparent" : "#FFFFFF";
+      borderColor = isNotch ? "rgba(255,255,255,0.25)" : NOIR.navyField;
+      iconColor = isNotch ? "#FFFFFF" : NOIR.navyField;
+    }
+  }
 
   return (
     <Box
@@ -308,7 +318,7 @@ function TransitionLoadingDisplay({
       if (pct < 100) {
         animFrame = requestAnimationFrame(tick);
       } else {
-        // Hold for 300ms, then fadeout, then blank screen for 300ms, then open page
+        // Hold for 1 second, then fade out indicator, then complete
         setPhase("hold");
         setTimeout(() => {
           setPhase("fadeout");
@@ -318,7 +328,7 @@ function TransitionLoadingDisplay({
               onComplete();
             }, 300);
           }, 300);
-        }, 300);
+        }, 1000);
       }
     };
 
@@ -662,8 +672,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
     }
 
     let accumulated = 0;
-    const threshold = 240; // threshold scroll pressure to trigger next page
+    const threshold = 280; // threshold scroll pressure to trigger next page
     let resetTimer: number;
+
+    const checkIsAtBottom = () => {
+      const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+      const viewportHeight = window.innerHeight;
+      const fullHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        document.documentElement.offsetHeight
+      );
+      return scrollY + viewportHeight >= fullHeight - 60;
+    };
 
     const drainPressure = () => {
       resetTimer = window.setInterval(() => {
@@ -676,8 +697,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const handleWheel = (e: WheelEvent) => {
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 25;
+      const isAtBottom = checkIsAtBottom();
       if (isAtBottom && e.deltaY > 0) {
+        if (e.cancelable) e.preventDefault();
         window.clearInterval(resetTimer);
         accumulated = Math.min(threshold, accumulated + e.deltaY * 0.7);
         setScrollPressure(Math.round((accumulated / threshold) * 100));
@@ -694,7 +716,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           setTimeout(() => {
             setScrollPressure(0);
             setTransitionState("closing");
-          }, 3000);
+          }, 1000);
         } else {
           // start draining when user stops scrolling
           window.clearTimeout(resetTimer);
@@ -711,11 +733,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 25;
+      const isAtBottom = checkIsAtBottom();
       if (isAtBottom && e.touches.length > 0) {
         const currentTouchY = e.touches[0]!.clientY;
         const diffY = startTouchY - currentTouchY;
         if (diffY > 0) {
+          if (e.cancelable) e.preventDefault();
           window.clearInterval(resetTimer);
           accumulated = Math.min(threshold, accumulated + diffY * 0.85);
           setScrollPressure(Math.round((accumulated / threshold) * 100));
@@ -733,7 +756,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             setTimeout(() => {
               setScrollPressure(0);
               setTransitionState("closing");
-            }, 3000);
+            }, 1000);
           } else {
             window.clearTimeout(resetTimer);
             resetTimer = window.setTimeout(drainPressure, 200);
@@ -747,9 +770,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
       resetTimer = window.setTimeout(drainPressure, 50);
     };
 
-    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
     window.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
@@ -763,7 +786,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
 
   const headerReleased = phase === "header" || phase === "open";
-  const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled } = useNavbar();
+  const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled, showMotto, toggleMotto } = useNavbar();
   const [navHidden, setNavHidden] = useState(false);
   const lastScrollY = useRef(0);
   const scrollAccumulator = useRef(0);
@@ -797,6 +820,25 @@ function AppShellInner({ children }: { children: ReactNode }) {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [autohideEnabled]);
+
+  // Global keyboard shortcut to toggle company motto (Alt+M / Option+M)
+  useEffect(() => {
+    const handleMottoKey = (e: KeyboardEvent) => {
+      // Toggle motto only if not inside editable text elements
+      const activeEl = document.activeElement;
+      const isEditable = activeEl && (
+        activeEl.tagName === "INPUT" || 
+        activeEl.tagName === "TEXTAREA" || 
+        (activeEl as HTMLElement).isContentEditable
+      );
+      if (!isEditable && e.altKey && e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        toggleMotto();
+      }
+    };
+    window.addEventListener("keydown", handleMottoKey);
+    return () => window.removeEventListener("keydown", handleMottoKey);
+  }, [toggleMotto]);
 
   const isMinimal = overrideMode === "minimal";
   const isLiquid = overrideMode === "liquid";
@@ -942,20 +984,22 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
-                    <Typography
-                      sx={{
-                        fontFamily: MONO,
-                        fontSize: "0.58rem",
-                        letterSpacing: "0.12em",
-                        color: onDark ? "rgba(255,255,255,0.7)" : "text.secondary",
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        whiteSpace: "nowrap",
-                        opacity: 0.85,
-                      }}
-                    >
-                      MAKING TOMORROW'S TECHNOLOGY AVAILABLE TODAY
-                    </Typography>
+                    {showMotto && (
+                      <Typography
+                        sx={{
+                          fontFamily: MONO,
+                          fontSize: "0.58rem",
+                          letterSpacing: "0.12em",
+                          color: onDark ? "rgba(255,255,255,0.7)" : "text.secondary",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          whiteSpace: "nowrap",
+                          opacity: 0.85,
+                        }}
+                      >
+                        MAKING TOMORROW'S TECHNOLOGY AVAILABLE TODAY
+                      </Typography>
+                    )}
                   </Stack>
                 </motion.div>
               </RouterLink>
@@ -1249,7 +1293,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
         {/* Global Left-to-Right Swipe Curtain & Full White Loading Screen Overlay */}
         <AnimatePresence>
-          {transitionState !== "idle" && (
+          {(transitionState !== "idle" && transitionState !== "triggered") && (
             <>
               <motion.div
                 key="page-slide-transition"

@@ -113,78 +113,38 @@ function ProcessSection() {
 
 // Section 6: Global Reach
 function ReachSection() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
-
-  useGSAP(
-    () => {
-      if (reducedMotion || !containerRef.current || !cardRef.current) return;
-
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 65%",
-          end: "bottom 25%",
-          scrub: 1,
-        },
-      })
-      .fromTo(
-        cardRef.current,
-        { scale: 0.95 },
-        { scale: 1.08, ease: "power1.out", duration: 0.5 }
-      )
-      .to(
-        cardRef.current,
-        { scale: 1.0, ease: "power1.in", duration: 0.5 }
-      );
-    },
-    { scope: containerRef, dependencies: [reducedMotion] }
-  );
-
   return (
-    <Box ref={containerRef}>
-      <StageSection section={homeSection("reach")} muted>
+    <StageSection section={homeSection("reach")} muted>
+      <Reveal>
+        <Typography variant="h2" component="h2" sx={{ mb: 4 }}>
+          International presence
+        </Typography>
+      </Reveal>
+      <Reveal delay={0.1}>
         <Box
-          ref={cardRef}
           sx={{
-            transformOrigin: "center center",
-            willChange: "transform",
-            width: "100%",
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+            overflow: "hidden",
+            bgcolor: "background.paper",
           }}
         >
-          <Reveal>
-            <Typography variant="h2" component="h2" sx={{ mb: 4 }}>
-              International presence
-            </Typography>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 2,
-                overflow: "hidden",
-                bgcolor: "background.paper",
-              }}
-            >
-              <ReachMap />
-            </Box>
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.7rem",
-                letterSpacing: "0.14em",
-                color: "text.secondary",
-                mt: 2,
-              }}
-            >
-              ARCS DENOTE CLIENTS AND INVESTORS
-            </Typography>
-          </Reveal>
+          <ReachMap />
         </Box>
-      </StageSection>
-    </Box>
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: "0.7rem",
+            letterSpacing: "0.14em",
+            color: "text.secondary",
+            mt: 2,
+          }}
+        >
+          ARCS DENOTE CLIENTS AND INVESTORS
+        </Typography>
+      </Reveal>
+    </StageSection>
   );
 }
 
@@ -211,7 +171,7 @@ function DailyLifeSection() {
   const reducedMotion = useReducedMotion();
 
   useStagePresence(sectionRef, "daily-life");
-  const videoAnchorRef = useNavbarAnchor("daily-life-video", { dark: true, rootMargin: "-250px 0px 0px 0px" });
+  const videoAnchorRef = useNavbarAnchor("daily-life-video", { dark: true });
 
   useEffect(() => {
     const el = sectionRef.current;

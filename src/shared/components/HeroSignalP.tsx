@@ -4,11 +4,13 @@ import { alpha } from "@mui/material/styles";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 
-// 1 unified speed constant for all signals across all loops (pixels per millisecond).
-const SIGNAL_SPEED_PX_PER_MS = 0.25;
-
 // Grid cell base dimension in pixels (enlarged from 32px to 42px)
 const GRID_CELL = 42;
+
+interface Point2D {
+  x: number;
+  y: number;
+}
 
 const CUBE_POSITIONS = [
   // Outer perimeter cubes
@@ -36,12 +38,10 @@ function getCubeBaseRgb(type: string) {
   return type === "navy" ? NOIR.navyFieldRgb : NOIR.goldRgb;
 }
 
-// ── Continuous closed-loop signal circuits (1 speed constant, 0% overlapping)
-interface Point2D {
-  x: number;
-  y: number;
-}
+// 1 unified speed constant for all signals across all loops (pixels per millisecond).
+const SIGNAL_SPEED_PX_PER_MS = 0.25;
 
+// ── Continuous closed-loop signal circuits (1 speed constant, 0% overlapping)
 interface SignalLoop {
   waypoints: Point2D[];
   color: string;

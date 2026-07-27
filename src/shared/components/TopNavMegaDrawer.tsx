@@ -215,68 +215,69 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
 
               {/* Right Column: Dynamic Site Preview Card */}
               <Grid size={{ xs: 12, md: 6 }}>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeItem.to}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.35, ease: "easeOut" }}
-                  >
-                    <Box
-                      onClick={() => handleNavigate(activeItem.to)}
-                      sx={{
-                        borderRadius: "16px",
-                        overflow: "hidden",
-                        border: `1px solid ${alpha(NOIR.gold, 0.4)}`,
-                        bgcolor: "rgba(10, 42, 102, 0.6)",
-                        boxShadow: `0 20px 50px ${alpha(NOIR.navyField, 0.6)}`,
-                        cursor: "pointer",
-                        position: "relative",
-                        "&:hover img": { transform: "scale(1.06)" },
-                      }}
-                    >
-                      <Box sx={{ position: "relative", width: "100%", height: 380, overflow: "hidden" }}>
+                <Box
+                  onClick={() => handleNavigate(activeItem.to)}
+                  sx={{
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    border: `1px solid ${alpha(NOIR.gold, 0.4)}`,
+                    bgcolor: "rgba(10, 42, 102, 0.6)",
+                    boxShadow: `0 20px 50px ${alpha(NOIR.navyField, 0.6)}`,
+                    cursor: "pointer",
+                    position: "relative",
+                  }}
+                >
+                  <Box sx={{ position: "relative", width: "100%", height: 380, overflow: "hidden" }}>
+                    {MEGA_NAV_ITEMS.map((item) => {
+                      const isSelected = activeItem.to === item.to;
+                      return (
                         <Box
+                          key={item.to}
                           component="img"
-                          src={activeItem.preview}
-                          alt={activeItem.label}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
-                          }}
-                        />
-                        <Box
+                          src={item.preview}
+                          alt={item.label}
+                          loading="eager"
                           sx={{
                             position: "absolute",
                             inset: 0,
-                            background: "linear-gradient(to top, rgba(10,42,102,0.9) 0%, rgba(10,42,102,0.2) 60%, transparent 100%)",
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            opacity: isSelected ? 1 : 0,
+                            transform: isSelected ? "scale(1)" : "scale(1.05)",
+                            transition: "opacity 0.22s ease-out, transform 0.4s ease-out",
+                            willChange: "opacity, transform",
                           }}
                         />
+                      );
+                    })}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        background: "linear-gradient(to top, rgba(10,42,102,0.9) 0%, rgba(10,42,102,0.2) 60%, transparent 100%)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  </Box>
 
-                      </Box>
-
-                      <Box sx={{ p: 3, bgcolor: "#FFFFFF", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="h4" sx={{ color: NOIR.navyField, fontWeight: 700, mb: 0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            Explore {activeItem.label}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: alpha(NOIR.navyField, 0.65) }}>
-                            {activeItem.sub}
-                          </Typography>
-                        </Box>
-                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: NOIR.navyField, flexShrink: 0 }}>
-                          <Typography sx={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", whiteSpace: "nowrap" }}>
-                            JUMP TO SECTION
-                          </Typography>
-                          <ArrowForwardIcon fontSize="small" />
-                        </Stack>
-                      </Box>
+                  <Box sx={{ p: 3, bgcolor: "#FFFFFF", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="h4" sx={{ color: NOIR.navyField, fontWeight: 700, mb: 0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        Explore {activeItem.label}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: alpha(NOIR.navyField, 0.65) }}>
+                        {activeItem.sub}
+                      </Typography>
                     </Box>
-                  </motion.div>
-                </AnimatePresence>
+                    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: NOIR.navyField, flexShrink: 0 }}>
+                      <Typography sx={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", whiteSpace: "nowrap" }}>
+                        JUMP TO SECTION
+                      </Typography>
+                      <ArrowForwardIcon fontSize="small" />
+                    </Stack>
+                  </Box>
+                </Box>
               </Grid>
             </Grid>
           </Container>

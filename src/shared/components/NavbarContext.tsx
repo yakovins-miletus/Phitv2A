@@ -13,6 +13,9 @@ interface NavbarContextValue {
   derivedIsCompact: boolean;
   isOverDarkSection: boolean;
   isImmersiveDark: boolean;
+  showMotto: boolean;
+  setShowMotto: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleMotto: () => void;
 }
 
 const NavbarContext = createContext<NavbarContextValue | null>(null);
@@ -20,11 +23,16 @@ const NavbarContext = createContext<NavbarContextValue | null>(null);
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
   const [overrideMode, setOverrideMode] = useState<NavbarMode>('minimal');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
+  const [showMotto, setShowMotto] = useState(true);
   const [activeAnchors, setActiveAnchors] = useState<Set<string>>(new Set());
   const [darkAnchors, setDarkAnchors] = useState<Set<string>>(new Set());
 
   const toggleAutohide = useCallback(() => {
     setAutohideEnabled((prev) => !prev);
+  }, []);
+
+  const toggleMotto = useCallback(() => {
+    setShowMotto((prev) => !prev);
   }, []);
 
   const registerAnchor = useCallback((id: string, isIntersecting: boolean, dark = false) => {
@@ -73,6 +81,9 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
       derivedIsCompact,
       isOverDarkSection,
       isImmersiveDark,
+      showMotto,
+      setShowMotto,
+      toggleMotto,
     }}>
       {children}
     </NavbarContext.Provider>
