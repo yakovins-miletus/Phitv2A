@@ -8,6 +8,10 @@ import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** GSAP's own lagSmoothing defaults, restored when Lenis tears down. */
+const GSAP_LAG_THRESHOLD_MS = 500;
+const GSAP_LAG_ADJUSTED_MS = 33;
+
 // The live Lenis instance, for programmatic scrolls (section paging) that
 // must run through Lenis rather than fight it. Null when smoothing is off
 // (reduced motion, preloader, unmounted).
@@ -51,6 +55,9 @@ export function SmoothScroll() {
       lenis.raf(time * 1000);
     };
     gsap.ticker.add(onTick);
+    // Lenis owns the frame loop while it lives, so GSAP must not compensate for
+    // dropped frames underneath it. Restored on cleanup — this used to leak,
+    // leaving lag smoothing off for the rest of the session on every route.
     gsap.ticker.lagSmoothing(0);
 
     // Recompute trigger positions once painted: layout may have shifted while
@@ -68,6 +75,7 @@ export function SmoothScroll() {
         activeLenis = null;
       }
       gsap.ticker.remove(onTick);
+      gsap.ticker.lagSmoothing(GSAP_LAG_THRESHOLD_MS, GSAP_LAG_ADJUSTED_MS);
       lenis.off("scroll", ScrollTrigger.update);
       if (typeof document !== "undefined") {
         document.body.style.overflow = "";

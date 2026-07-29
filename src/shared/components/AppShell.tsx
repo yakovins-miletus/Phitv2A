@@ -651,6 +651,22 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [scrollPressure, setScrollPressure] = useState(0);
   const currentNarration = NARRATION_FLOW[pathname] ?? NARRATION_FLOW["/"]!;
 
+  // The 1s hold between arming the transition and closing the curtain. It has
+  // to live outside the pressure effect below: arming sets `transitionState`,
+  // which is one of that effect's deps, so the effect tears down and re-runs
+  // immediately — and a cleanup owned by it would cancel the very timer that
+  // drives triggered -> closing, freezing the machine. (Before this it was an
+  // uncaptured setTimeout, so nothing could cancel it; the leak was what made
+  // it work, at the cost of firing after unmount.) Component-scoped ref plus an
+  // unmount-only cleanup fixes the leak without breaking the hold.
+  const triggerHoldRef = useRef<number | undefined>(undefined);
+  useEffect(
+    () => () => {
+      if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     // Reset body overflow on route change to guarantee scroll is never blocked on new pages
     if (typeof document !== "undefined") {
@@ -673,7 +689,32 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
     let accumulated = 0;
     const threshold = 280; // threshold scroll pressure to trigger next page
-    let resetTimer: number;
+    // Two distinct handles. These used to share one `resetTimer` variable that
+    // held either a setInterval or a setTimeout id depending on the code path,
+    // so every call site had to fire both clearInterval and clearTimeout and
+    // hope. `armTimer` is the delay before draining starts; `drainTimer` is the
+    // drain itself. Both are correctly scoped to this effect. The 1s post-arm
+    // hold is NOT — see triggerHoldRef above.
+    let armTimer: number | undefined;
+    let drainTimer: number | undefined;
+
+    const clearArm = () => {
+      if (armTimer !== undefined) {
+        window.clearTimeout(armTimer);
+        armTimer = undefined;
+      }
+    };
+    const clearDrain = () => {
+      if (drainTimer !== undefined) {
+        window.clearInterval(drainTimer);
+        drainTimer = undefined;
+      }
+    };
+    /** Cancel any pending drain, however far along it is. */
+    const cancelDraining = () => {
+      clearArm();
+      clearDrain();
+    };
 
     const checkIsAtBottom = () => {
       const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
@@ -687,40 +728,49 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const drainPressure = () => {
-      resetTimer = window.setInterval(() => {
+      // Behaviour change, deliberate: this used to start a new interval without
+      // clearing a running one, so a fast scroll burst left N orphans all
+      // decrementing `accumulated` and the pressure fell N times too fast. The
+      // arm-time was therefore a function of how many strays happened to be
+      // alive. Now exactly one drain runs and the rate is the designed 15/30ms.
+      clearDrain();
+      drainTimer = window.setInterval(() => {
         accumulated = Math.max(0, accumulated - 15);
         setScrollPressure(Math.round((accumulated / threshold) * 100));
         if (accumulated === 0) {
-          window.clearInterval(resetTimer);
+          clearDrain();
         }
       }, 30);
+    };
+
+    /** Arm the page transition and hold a beat before the curtain closes. */
+    const armTransition = () => {
+      setScrollPressure(100);
+      transitionTargetRef.current = currentNarration.next;
+      setTransitionState("triggered");
+      cancelDraining();
+      if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
+      triggerHoldRef.current = window.setTimeout(() => {
+        triggerHoldRef.current = undefined;
+        setScrollPressure(0);
+        setTransitionState("closing");
+      }, 1000);
     };
 
     const handleWheel = (e: WheelEvent) => {
       const isAtBottom = checkIsAtBottom();
       if (isAtBottom && e.deltaY > 0) {
         if (e.cancelable) e.preventDefault();
-        window.clearInterval(resetTimer);
+        clearDrain();
         accumulated = Math.min(threshold, accumulated + e.deltaY * 0.7);
         setScrollPressure(Math.round((accumulated / threshold) * 100));
 
         if (accumulated >= threshold) {
-          setScrollPressure(100);
-          const target = currentNarration.next;
-          transitionTargetRef.current = target;
-          setTransitionState("triggered");
-          
-          window.clearTimeout(resetTimer);
-          window.clearInterval(resetTimer);
-
-          setTimeout(() => {
-            setScrollPressure(0);
-            setTransitionState("closing");
-          }, 1000);
+          armTransition();
         } else {
           // start draining when user stops scrolling
-          window.clearTimeout(resetTimer);
-          resetTimer = window.setTimeout(drainPressure, 150);
+          clearArm();
+          armTimer = window.setTimeout(drainPressure, 150);
         }
       }
     };
@@ -739,35 +789,24 @@ function AppShellInner({ children }: { children: ReactNode }) {
         const diffY = startTouchY - currentTouchY;
         if (diffY > 0) {
           if (e.cancelable) e.preventDefault();
-          window.clearInterval(resetTimer);
+          clearDrain();
           accumulated = Math.min(threshold, accumulated + diffY * 0.85);
           setScrollPressure(Math.round((accumulated / threshold) * 100));
           startTouchY = currentTouchY;
 
           if (accumulated >= threshold) {
-            setScrollPressure(100);
-            const target = currentNarration.next;
-            transitionTargetRef.current = target;
-            setTransitionState("triggered");
-            
-            window.clearTimeout(resetTimer);
-            window.clearInterval(resetTimer);
-
-            setTimeout(() => {
-              setScrollPressure(0);
-              setTransitionState("closing");
-            }, 1000);
+            armTransition();
           } else {
-            window.clearTimeout(resetTimer);
-            resetTimer = window.setTimeout(drainPressure, 200);
+            clearArm();
+            armTimer = window.setTimeout(drainPressure, 200);
           }
         }
       }
     };
 
     const handleTouchEnd = () => {
-      window.clearTimeout(resetTimer);
-      resetTimer = window.setTimeout(drainPressure, 50);
+      clearArm();
+      armTimer = window.setTimeout(drainPressure, 50);
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
@@ -780,8 +819,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
-      window.clearInterval(resetTimer);
-      window.clearTimeout(resetTimer);
+      cancelDraining();
     };
   }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
 
@@ -796,6 +834,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
       setNavHidden(false);
       return;
     }
+
+    // Re-baseline on route change. Without this the first scroll event after a
+    // navigation computes `diff` against the *previous* page's offset — leaving
+    // a tall page for a short one produced a large positive diff and hid the
+    // nav for one frame before the next event corrected it. Deliberate visible
+    // change: it removes a flicker, it does not move any threshold.
+    lastScrollY.current = window.scrollY;
+    scrollAccumulator.current = 0;
 
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -819,7 +865,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [autohideEnabled]);
+  }, [autohideEnabled, pathname]);
 
   // Global keyboard shortcut to toggle company motto (Alt+M / Option+M)
   useEffect(() => {
