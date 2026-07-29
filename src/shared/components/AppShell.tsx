@@ -8,10 +8,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CloseIcon from "@mui/icons-material/Close";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import TwitterIcon from "@mui/icons-material/Twitter";
-import MailIcon from "@mui/icons-material/Mail";
 import { alpha } from "@mui/material/styles";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -31,6 +27,7 @@ import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./Navba
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
+import { SiteFooter } from "./SiteFooter";
 import { RouterButton, RouterLink } from "./RouterLink";
 import PhitopolisLogo from "./PhitopolisLogo";
 
@@ -684,22 +681,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   // Continuous overscroll below footer -> transition to next narration page
   useEffect(() => {
-    if (reduced || transitionState !== "idle" || showPreloader) {
-      // Don't clear pressure if we are triggered/holding
-      if (transitionState !== "triggered") {
-        setScrollPressure(0);
-      }
+    if (reduced || showPreloader || (transitionState !== "idle" && transitionState !== "triggered")) {
       return;
     }
 
     let accumulated = 0;
     const threshold = 280; // threshold scroll pressure to trigger next page
-    // Two distinct handles. These used to share one `resetTimer` variable that
-    // held either a setInterval or a setTimeout id depending on the code path,
-    // so every call site had to fire both clearInterval and clearTimeout and
-    // hope. `armTimer` is the delay before draining starts; `drainTimer` is the
-    // drain itself. Both are correctly scoped to this effect. The 1s post-arm
-    // hold is NOT — see triggerHoldRef above.
     let armTimer: number | undefined;
     let drainTimer: number | undefined;
 
@@ -733,11 +720,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const drainPressure = () => {
-      // Behaviour change, deliberate: this used to start a new interval without
-      // clearing a running one, so a fast scroll burst left N orphans all
-      // decrementing `accumulated` and the pressure fell N times too fast. The
-      // arm-time was therefore a function of how many strays happened to be
-      // alive. Now exactly one drain runs and the rate is the designed 15/30ms.
       clearDrain();
       drainTimer = window.setInterval(() => {
         accumulated = Math.max(0, accumulated - 15);
@@ -748,6 +730,17 @@ function AppShellInner({ children }: { children: ReactNode }) {
       }, 30);
     };
 
+    const cancelArmTransition = () => {
+      if (triggerHoldRef.current !== undefined) {
+        window.clearTimeout(triggerHoldRef.current);
+        triggerHoldRef.current = undefined;
+      }
+      setTransitionState("idle");
+      transitionTargetRef.current = null;
+      accumulated = 0;
+      setScrollPressure(0);
+    };
+
     /** Arm the page transition and hold a beat before the curtain closes. */
     const armTransition = () => {
       setScrollPressure(100);
@@ -755,14 +748,23 @@ function AppShellInner({ children }: { children: ReactNode }) {
       setTransitionState("triggered");
       cancelDraining();
       if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
+      // 1.5s delay phase where users can cancel by scrolling back or pressing Esc
       triggerHoldRef.current = window.setTimeout(() => {
         triggerHoldRef.current = undefined;
         setScrollPressure(0);
         setTransitionState("closing");
-      }, 1000);
+      }, 1500);
     };
 
     const handleWheel = (e: WheelEvent) => {
+      if (transitionState === "triggered") {
+        if (e.deltaY < 0) {
+          if (e.cancelable) e.preventDefault();
+          cancelArmTransition();
+        }
+        return;
+      }
+
       const isAtBottom = checkIsAtBottom();
       if (isAtBottom && e.deltaY > 0) {
         if (e.cancelable) e.preventDefault();
@@ -773,7 +775,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
         if (accumulated >= threshold) {
           armTransition();
         } else {
-          // start draining when user stops scrolling
           clearArm();
           armTimer = window.setTimeout(drainPressure, 150);
         }
@@ -788,11 +789,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      const isAtBottom = checkIsAtBottom();
-      if (isAtBottom && e.touches.length > 0) {
+      if (e.touches.length > 0) {
         const currentTouchY = e.touches[0]!.clientY;
         const diffY = startTouchY - currentTouchY;
-        if (diffY > 0) {
+
+        if (transitionState === "triggered") {
+          if (diffY < 0) {
+            cancelArmTransition();
+          }
+          return;
+        }
+
+        const isAtBottom = checkIsAtBottom();
+        if (isAtBottom && diffY > 0) {
           if (e.cancelable) e.preventDefault();
           clearDrain();
           accumulated = Math.min(threshold, accumulated + diffY * 0.85);
@@ -810,20 +819,30 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const handleTouchEnd = () => {
-      clearArm();
-      armTimer = window.setTimeout(drainPressure, 50);
+      if (transitionState !== "triggered") {
+        clearArm();
+        armTimer = window.setTimeout(drainPressure, 50);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && transitionState === "triggered") {
+        cancelArmTransition();
+      }
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: false });
     window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("keydown", handleKeyDown);
       cancelDraining();
     };
   }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
@@ -1113,192 +1132,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
 
 
-        {/* Dynamic unified footer with scroll adaptation */}
-        {(() => {
-          const footerBgColor = NOIR.navyField;
-          const footerTextColor = "#FFFFFF";
-          const footerMutedTextColor = "rgba(255, 255, 255, 0.7)";
-          const footerBorderColor = "rgba(255, 255, 255, 0.12)";
-          const footerLinkHoverColor = NOIR.gold;
-
-          return (
-            <Box
-              component="footer"
-              ref={footerAnchorRef}
-              sx={{
-                bgcolor: footerBgColor,
-                color: footerTextColor,
-                borderTop: 1,
-                borderColor: footerBorderColor,
-                pt: { xs: 8, md: 10 },
-                pb: { xs: 4, md: 6 },
-                mt: "auto",
-                position: 'relative',
-                minHeight: "100vh",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }}
-            >
-              <Container maxWidth="lg" sx={{ display: 'flex', flexDirection: 'column', minHeight: '80vh', justifyContent: 'space-between' }}>
-                
-                {/* Unified continuous scroll indicator */}
-                {currentNarration && (
-                  <Box sx={{ textAlign: 'center', my: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                    <AnimatePresence mode="wait">
-                      {(transitionState === "triggered" || transitionState === "closing" || transitionState === "loading") ? (
-                        <motion.div
-                          key="now-transitioning"
-                          initial={{ y: -15, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ y: 15, opacity: 0 }}
-                          transition={{ duration: 0.65, ease: "easeOut" }}
-                        >
-                          <Typography
-                            sx={{
-                              fontFamily: MONO,
-                              fontSize: "1.05rem",
-                              letterSpacing: "0.22em",
-                              textTransform: "uppercase",
-                              color: footerTextColor,
-                              fontWeight: 700,
-                            }}
-                          >
-                            Now transitioning to {currentNarration.label}
-                          </Typography>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="scroll-cue"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}
-                        >
-                          <Typography
-                            sx={{
-                              fontFamily: MONO,
-                              fontSize: "0.75rem",
-                              letterSpacing: "0.2em",
-                              textTransform: "uppercase",
-                              color: NOIR.gold,
-                              fontWeight: 700,
-                            }}
-                          >
-                            [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER ↓ ]
-                          </Typography>
-
-                          {/* Dynamic thematic progression bar */}
-                          {renderNextPageIndicator(currentNarration.next, scrollPressure)}
-
-                          <Typography
-                            sx={{
-                              fontFamily: MONO,
-                              fontSize: "0.65rem",
-                              letterSpacing: "0.15em",
-                              color: footerMutedTextColor,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Next Page: {currentNarration.label} - {scrollPressure}%
-                          </Typography>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Box>
-                )}
-
-                {/* 1-2 Row Horizontal Content Footer */}
-                <Stack spacing={3} sx={{ borderTop: 1, borderColor: footerBorderColor, pt: 4 }}>
-                  {/* Row 1: Navigation Links, Contact Link, and Social Icons */}
-                  <Stack
-                    direction={{ xs: "column", md: "row" }}
-                    justifyContent="space-between"
-                    alignItems={{ xs: "flex-start", md: "center" }}
-                    spacing={3}
-                  >
-                    {/* Inline Link List */}
-                    <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
-                      {[
-                        { label: 'About Us', to: '/about' },
-                        { label: 'Services', to: '/services' },
-                        { label: 'Blog', to: '/blog' },
-                        { label: 'Contact', to: '/contact' },
-                      ].map(({ label, to }) => (
-                        <RouterLink
-                          key={to}
-                          to={to}
-                          variant="body2"
-                          sx={{
-                            color: footerMutedTextColor,
-                            textDecoration: "none",
-                            fontSize: "0.85rem",
-                            "&:hover": { color: footerLinkHoverColor },
-                          }}
-                        >
-                          {label}
-                        </RouterLink>
-                      ))}
-                      {/* Email contact inline */}
-                      <Typography
-                        component="a"
-                        href="mailto:info@phitopolis.com"
-                        variant="body2"
-                        sx={{
-                          color: footerMutedTextColor,
-                          textDecoration: "none",
-                          fontSize: "0.85rem",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.8,
-                          "&:hover": { color: footerLinkHoverColor },
-                        }}
-                      >
-                        <MailIcon sx={{ fontSize: 16, color: NOIR.gold }} />
-                        info@phitopolis.com
-                      </Typography>
-                    </Stack>
-
-                    {/* Social links inline */}
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <IconButton component="a" href="#" sx={{ color: footerTextColor, p: 0.5, "&:hover": { color: "secondary.main" } }}>
-                        <GitHubIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton component="a" href="#" sx={{ color: footerTextColor, p: 0.5, "&:hover": { color: "secondary.main" } }}>
-                        <LinkedInIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton component="a" href="#" sx={{ color: footerTextColor, p: 0.5, "&:hover": { color: "secondary.main" } }}>
-                        <TwitterIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </Stack>
-
-                  {/* Row 2: Copyright & Legal */}
-                  <Stack
-                    direction={{ xs: "column", md: "row" }}
-                    justifyContent="space-between"
-                    alignItems={{ xs: "flex-start", md: "center" }}
-                    spacing={2}
-                    sx={{ color: footerMutedTextColor }}
-                  >
-                    <Typography variant="caption">
-                      © 2026 Phitopolis Private Limited. All rights reserved.
-                    </Typography>
-                    <Stack direction="row" spacing={3}>
-                      <Typography component="a" href="/privacy" variant="caption" sx={{ color: "white", textDecoration: "none", "&:hover": { color: "secondary.main" } }}>
-                        Privacy Policy
-                      </Typography>
-                      <Typography component="a" href="/terms" variant="caption" sx={{ color: "white", textDecoration: "none", "&:hover": { color: "secondary.main" } }}>
-                        Terms of Service
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Stack>
-
-              </Container>
-            </Box>
-          );
-        })()}
+        <SiteFooter
+          footerAnchorRef={footerAnchorRef}
+          currentNarration={currentNarration}
+          transitionState={transitionState}
+          scrollPressure={scrollPressure}
+          renderNextPageIndicator={renderNextPageIndicator}
+        />
         <CommandPalette />
         <GrainOverlay />
 

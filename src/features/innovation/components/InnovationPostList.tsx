@@ -6,8 +6,14 @@ import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Masonry from "@mui/lab/Masonry";
-import { alpha } from "@mui/material/styles";
 import { useNavigate } from "@tanstack/react-router";
+
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import LanguageIcon from "@mui/icons-material/Language";
+import CloudQueueIcon from "@mui/icons-material/CloudQueue";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import ScienceIcon from "@mui/icons-material/Science";
+import TerminalIcon from "@mui/icons-material/Terminal";
 
 import type { InnovationPostPage, InnovationPostSummary } from "../api";
 
@@ -16,6 +22,28 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "numeric",
 });
+
+function get2DIconForCategory(category: string, title: string) {
+  const catLower = category.toLowerCase();
+  const titleLower = title.toLowerCase();
+
+  if (catLower.includes("quant") || titleLower.includes("llm") || titleLower.includes("ai")) {
+    return <AutoAwesomeIcon sx={{ fontSize: "2.6rem", color: "#FFC72C" }} />;
+  }
+  if (catLower.includes("systems") || titleLower.includes("rust") || titleLower.includes("c++")) {
+    return <TerminalIcon sx={{ fontSize: "2.6rem", color: "#00E676" }} />;
+  }
+  if (catLower.includes("web") || titleLower.includes("webgl") || titleLower.includes("3d")) {
+    return <LanguageIcon sx={{ fontSize: "2.6rem", color: "#29B6F6" }} />;
+  }
+  if (catLower.includes("devops") || catLower.includes("cloud") || titleLower.includes("kube")) {
+    return <CloudQueueIcon sx={{ fontSize: "2.6rem", color: "#AB47BC" }} />;
+  }
+  if (catLower.includes("data")) {
+    return <BarChartIcon sx={{ fontSize: "2.6rem", color: "#FF7043" }} />;
+  }
+  return <ScienceIcon sx={{ fontSize: "2.6rem", color: "#FFC72C" }} />;
+}
 
 interface InnovationPostCardProps {
   post: InnovationPostSummary;
@@ -34,57 +62,82 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
       }}
       sx={{
         cursor: "pointer",
-        transition: "background-color 0.2s ease-in-out",
-        backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: "blur(12px)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        backgroundColor: "background.paper",
+        borderRadius: "16px",
+        overflow: "hidden",
         border: "1px solid",
-        borderColor: (theme) => alpha(theme.palette.divider, 0.2),
+        borderColor: "rgba(10, 42, 102, 0.12)",
+        boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
         "&:hover": {
-          backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+          transform: "translateY(-4px)",
+          borderColor: "#FFC72C",
+          boxShadow: "0 12px 32px rgba(10, 42, 102, 0.1)",
         }
       }}
     >
-      {post.image_url ? (
+      {/* 2D Icon Emblem Banner Stage (No Photos) */}
+      <Box
+        sx={{
+          width: "100%",
+          aspectRatio: isHero ? "21/9" : "16/9",
+          background: "linear-gradient(135deg, #06183B 0%, #0A2A66 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          overflow: "hidden",
+          borderBottom: "1px solid rgba(255, 199, 44, 0.15)",
+        }}
+      >
+        {/* Subtle Tech Grid Pattern */}
         <Box
-          component="img"
-          src={post.image_url}
-          alt=""
-          loading="lazy"
           sx={{
-            width: "100%",
-            aspectRatio: isHero ? "21/9" : "16/9",
-            objectFit: "cover",
-            display: "block",
-            borderBottom: 1,
-            borderColor: "divider",
+            position: "absolute",
+            inset: 0,
+            opacity: 0.15,
+            backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)",
+            backgroundSize: "16px 16px",
           }}
         />
-      ) : (
+
+        {/* 2D Icon Emblem Container */}
         <Box
           sx={{
-            width: "100%",
-            aspectRatio: isHero ? "21/9" : "16/9",
-            background: (theme) => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.2)} 100%)`,
-            display: "block",
-            borderBottom: 1,
-            borderColor: "divider",
+            width: 68,
+            height: 68,
+            borderRadius: "18px",
+            bgcolor: "rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
+            position: "relative",
+            zIndex: 1,
           }}
-        />
-      )}
+        >
+          {get2DIconForCategory(post.category, post.title)}
+        </Box>
+      </Box>
       <CardContent sx={{ p: 3, pb: 0 }}>
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
               {DATE_FORMAT.format(new Date(post.published_on))}
             </Typography>
+            {post.author ? (
+              <Chip label={`Built by ${post.author}`} size="small" sx={{ bgcolor: "rgba(10, 42, 102, 0.06)", color: "#0A2A66", fontWeight: 700, fontSize: "0.68rem" }} />
+            ) : null}
             {post.featured ? (
-              <Chip label="Featured" size="small" color="primary" variant="outlined" />
+              <Chip label="Featured Experiment" size="small" sx={{ bgcolor: "#FFC72C", color: "#0A2A66", fontWeight: 800, fontSize: "0.68rem" }} />
             ) : null}
           </Stack>
           <Typography 
             variant={isHero ? "h3" : "h4"} 
             component="h3"
             sx={{
+              fontWeight: 800,
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
@@ -100,6 +153,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
             variant="body2"
             color="text.secondary"
             sx={{
+              lineHeight: 1.6,
               display: "-webkit-box",
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
@@ -121,6 +175,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
             e.stopPropagation();
             onCategoryChange(post.category === activeCategory ? null : post.category);
           }}
+          sx={{ fontWeight: 700, borderRadius: "6px" }}
         />
       </Box>
     </Card>

@@ -31,6 +31,8 @@ export const NAV_ANCHORS = {
   ABOUT_HERO: 'about-hero',
   /** The About page's journey timeline. */
   ABOUT_TIMELINE: 'timeline',
+  /** The About page's values section. */
+  ABOUT_VALUES: 'about-values',
   /** AppShell's footer, on every route. */
   SITE_FOOTER: 'site-footer',
 } as const;

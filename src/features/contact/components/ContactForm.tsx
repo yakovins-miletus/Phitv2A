@@ -111,89 +111,105 @@ export function ContactForm() {
   return (
     <Box
       sx={{
-        borderRadius: "16px",
+        height: "100%",
+        borderRadius: "24px",
         overflow: "hidden",
         border: "1px solid rgba(10, 42, 102, 0.12)",
-        bgcolor: "#FFFFFF",
-        boxShadow: "0 12px 32px rgba(10, 42, 102, 0.06)",
-        p: { xs: 3, md: 5 },
+        bgcolor: "background.paper",
+        boxShadow: "0 20px 50px rgba(10, 42, 102, 0.06)",
+        p: { xs: 3.5, md: 4.5 },
+        display: "flex",
+        flexDirection: "column",
+        justify: "space-between",
       }}
     >
-      <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
+      <Stack component="form" spacing={2.5} onSubmit={handleSubmit} noValidate sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <Box>
           {mutation.isError ? (
-            <Alert severity="error">{messageFromError(mutation.error)}</Alert>
+            <Alert severity="error" sx={{ mb: 2 }}>{messageFromError(mutation.error)}</Alert>
           ) : null}
-          <TextField
-            label="Name"
-            value={values.name}
-            onChange={setField("name")}
-            error={errors.name !== undefined}
-            helperText={errors.name ?? " "}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Email"
-            type="email"
-            value={values.email}
-            onChange={setField("email")}
-            error={errors.email !== undefined}
-            helperText={errors.email ?? " "}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Subject"
-            value={values.subject}
-            onChange={setField("subject")}
-            error={errors.subject !== undefined}
-            helperText={errors.subject ?? " "}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Message"
-            value={values.message}
-            onChange={setField("message")}
-            error={errors.message !== undefined}
-            helperText={errors.message ?? " "}
-            multiline
-            minRows={5}
-            required
-            fullWidth
-          />
-          {/* Honeypot */}
-          <Box
-            aria-hidden
-            sx={{ position: "absolute", left: "-10000px", width: "1px", overflow: "hidden" }}
-          >
+          <Stack spacing={2.5}>
             <TextField
-              label="Company website"
-              value={values.company_website}
-              onChange={setField("company_website")}
-              tabIndex={-1}
-              autoComplete="off"
+              label="Name"
+              value={values.name}
+              onChange={setField("name")}
+              error={errors.name !== undefined}
+              helperText={errors.name ?? " "}
+              required
+              fullWidth
             />
-          </Box>
-          <Box>
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={mutation.isPending}
-              startIcon={mutation.isPending ? <CircularProgress size={18} color="inherit" /> : null}
-              sx={{
-                borderRadius: "8px",
-                px: 4,
-                py: 1.2,
-                textTransform: "none",
-                fontWeight: 700,
-              }}
-            >
-              {mutation.isPending ? "Sending…" : "Send message"}
-            </Button>
-          </Box>
-        </Stack>
+            <TextField
+              label="Email"
+              type="email"
+              value={values.email}
+              onChange={setField("email")}
+              error={errors.email !== undefined}
+              helperText={errors.email ?? " "}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Subject"
+              value={values.subject}
+              onChange={setField("subject")}
+              error={errors.subject !== undefined}
+              helperText={errors.subject ?? " "}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Message"
+              value={values.message}
+              onChange={setField("message")}
+              error={errors.message !== undefined}
+              helperText={errors.message ?? " "}
+              multiline
+              minRows={6}
+              required
+              fullWidth
+            />
+          </Stack>
+        </Box>
+
+        {/* Honeypot */}
+        <Box
+          aria-hidden
+          sx={{ position: "absolute", left: "-10000px", width: "1px", overflow: "hidden" }}
+        >
+          <TextField
+            label="Company website"
+            value={values.company_website}
+            onChange={setField("company_website")}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+        </Box>
+
+        <Box sx={{ pt: 1 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={mutation.isPending}
+            startIcon={mutation.isPending ? <CircularProgress size={18} color="inherit" /> : null}
+            fullWidth
+            sx={{
+              borderRadius: "12px",
+              py: 1.6,
+              fontSize: "1rem",
+              textTransform: "none",
+              fontWeight: 800,
+              bgcolor: "#0A2A66",
+              color: "#FFFFFF",
+              "&:hover": {
+                bgcolor: "#06183B",
+              },
+            }}
+          >
+            {mutation.isPending ? "Sending Inquiry..." : "Send Message"}
+          </Button>
+        </Box>
+      </Stack>
     </Box>
   );
 }

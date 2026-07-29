@@ -1,3 +1,4 @@
+import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -7,8 +8,8 @@ import { innovationPostsQuery } from "@/features/innovation/api";
 import type { InnovationListParams, InnovationSort } from "@/features/innovation/api";
 import { InnovationPostList } from "@/features/innovation/components/InnovationPostList";
 import { InnovationToolbar } from "@/features/innovation/components/InnovationToolbar";
+import { InnovationHero } from "@/features/innovation/components/InnovationHero";
 import { FALLBACK_INNOVATION_PAGE } from "@/features/innovation/fallback";
-import { PageHeader } from "@/shared/components/PageHeader";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 
@@ -99,38 +100,52 @@ function InnovationPage() {
   };
 
   return (
-    <Section>
-      <PageHeader
-        overline="Innovation Lab"
-        title="Where engineering meets research."
-        lead="Labs and experiments from the Phitopolis team across data science, engineering, and infrastructure."
-      />
-      <InnovationToolbar
-        q={search.q ?? ""}
-        sort={search.sort ?? "newest"}
-        onQChange={(q: string | null) => {
-          // replace: keystrokes shouldn't stack up in browser history.
-          void navigate({
-            search: buildSearch({ q: q ?? undefined }),
-            replace: true,
-          });
+    <Box sx={{ width: "100%", bgcolor: "#06183B", minHeight: "100vh" }}>
+      {/* ── High-Impact Video Hero Stage ── */}
+      <InnovationHero />
+
+      {/* ── Parallax Overlapping Pet Projects Sheet ── */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          bgcolor: "background.default",
+          borderTopLeftRadius: { xs: 28, md: 48 },
+          borderTopRightRadius: { xs: 28, md: 48 },
+          boxShadow: "0 -24px 60px rgba(0, 0, 0, 0.45)",
+          pt: { xs: 6, md: 10 },
+          pb: { xs: 12, md: 16 },
         }}
-        onSortChange={(sort: InnovationSort) => {
-          void navigate({ search: buildSearch({ sort }), replace: true });
-        }}
-      />
-      <InnovationPostList
-        page={data}
-        isRefreshing={page.isPlaceholderData}
-        activeCategory={search.category ?? null}
-        onCategoryChange={(category: string | null) => {
-          void navigate({ search: buildSearch({ category: category ?? undefined }) });
-        }}
-        onPageChange={(pageNumber: number) => {
-          const offset = (pageNumber - 1) * PAGE_SIZE;
-          void navigate({ search: buildSearch({ offset }) });
-        }}
-      />
-    </Section>
+      >
+        <Section>
+          <InnovationToolbar
+            q={search.q ?? ""}
+            sort={search.sort ?? "newest"}
+            onQChange={(q: string | null) => {
+              // replace: keystrokes shouldn't stack up in browser history.
+              void navigate({
+                search: buildSearch({ q: q ?? undefined }),
+                replace: true,
+              });
+            }}
+            onSortChange={(sort: InnovationSort) => {
+              void navigate({ search: buildSearch({ sort }), replace: true });
+            }}
+          />
+          <InnovationPostList
+            page={data}
+            isRefreshing={page.isPlaceholderData}
+            activeCategory={search.category ?? null}
+            onCategoryChange={(category: string | null) => {
+              void navigate({ search: buildSearch({ category: category ?? undefined }) });
+            }}
+            onPageChange={(pageNumber: number) => {
+              const offset = (pageNumber - 1) * PAGE_SIZE;
+              void navigate({ search: buildSearch({ offset }) });
+            }}
+          />
+        </Section>
+      </Box>
+    </Box>
   );
 }

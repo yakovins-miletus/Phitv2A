@@ -1,3 +1,4 @@
+import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -7,8 +8,8 @@ import { blogPostsQuery } from "@/features/blog/api";
 import type { BlogListParams, BlogSort } from "@/features/blog/api";
 import { BlogPostList } from "@/features/blog/components/BlogPostList";
 import { BlogToolbar } from "@/features/blog/components/BlogToolbar";
+import { BlogVideoHero } from "@/features/blog/components/BlogVideoHero";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
-import { PageHeader } from "@/shared/components/PageHeader";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 
@@ -99,38 +100,52 @@ function BlogPage() {
   };
 
   return (
-    <Section>
-      <PageHeader
-        overline="Blog"
-        title="Logs from the team."
-        lead="What we shipped, learned, and broke — written by the people doing the work, newest first."
-      />
-      <BlogToolbar
-        q={search.q ?? ""}
-        sort={search.sort ?? "newest"}
-        onQChange={(q: string | null) => {
-          // replace: keystrokes shouldn't stack up in browser history.
-          void navigate({
-            search: buildSearch({ q: q ?? undefined }),
-            replace: true,
-          });
+    <Box sx={{ width: "100%", bgcolor: "#06183B", minHeight: "100vh" }}>
+      {/* ── High-Impact Video Hero Stage ── */}
+      <BlogVideoHero />
+
+      {/* ── Parallax Overlapping Article Sheet ── */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          bgcolor: "background.default",
+          borderTopLeftRadius: { xs: 28, md: 48 },
+          borderTopRightRadius: { xs: 28, md: 48 },
+          boxShadow: "0 -24px 60px rgba(0, 0, 0, 0.45)",
+          pt: { xs: 6, md: 10 },
+          pb: { xs: 12, md: 16 },
         }}
-        onSortChange={(sort: BlogSort) => {
-          void navigate({ search: buildSearch({ sort }), replace: true });
-        }}
-      />
-      <BlogPostList
-        page={data}
-        isRefreshing={page.isPlaceholderData}
-        activeCategory={search.category ?? null}
-        onCategoryChange={(category: string | null) => {
-          void navigate({ search: buildSearch({ category: category ?? undefined }) });
-        }}
-        onPageChange={(pageNumber: number) => {
-          const offset = (pageNumber - 1) * PAGE_SIZE;
-          void navigate({ search: buildSearch({ offset }) });
-        }}
-      />
-    </Section>
+      >
+        <Section>
+          <BlogToolbar
+            q={search.q ?? ""}
+            sort={search.sort ?? "newest"}
+            onQChange={(q: string | null) => {
+              // replace: keystrokes shouldn't stack up in browser history.
+              void navigate({
+                search: buildSearch({ q: q ?? undefined }),
+                replace: true,
+              });
+            }}
+            onSortChange={(sort: BlogSort) => {
+              void navigate({ search: buildSearch({ sort }), replace: true });
+            }}
+          />
+          <BlogPostList
+            page={data}
+            isRefreshing={page.isPlaceholderData}
+            activeCategory={search.category ?? null}
+            onCategoryChange={(category: string | null) => {
+              void navigate({ search: buildSearch({ category: category ?? undefined }) });
+            }}
+            onPageChange={(pageNumber: number) => {
+              const offset = (pageNumber - 1) * PAGE_SIZE;
+              void navigate({ search: buildSearch({ offset }) });
+            }}
+          />
+        </Section>
+      </Box>
+    </Box>
   );
 }

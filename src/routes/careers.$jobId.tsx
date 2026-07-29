@@ -11,6 +11,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import WorkIcon from "@mui/icons-material/Work";
 import SendIcon from "@mui/icons-material/Send";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CAREER_POSITIONS } from "@/shared/careersData";
@@ -19,6 +20,7 @@ import { Section } from "@/shared/components/Section";
 import { RouterButton } from "@/shared/components/RouterLink";
 import { pageHead } from "@/shared/seo";
 import { MONO } from "@/shared/theme/theme";
+import { useSubmitContactMessage } from "@/features/contact/api";
 
 export const Route = createFileRoute("/careers/$jobId")({
   head: ({ params }) => {
@@ -41,6 +43,8 @@ function JobDetailPage() {
   const [university, setUniversity] = useState("");
   const [coverNote, setCoverNote] = useState("");
 
+  const mutation = useSubmitContactMessage();
+
   if (!job) {
     return (
       <Section>
@@ -57,6 +61,14 @@ function JobDetailPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName || !email || !university) return;
+    mutation.mutate({
+      name: fullName.trim(),
+      email: email.trim(),
+      subject: `Application: ${job.title}`,
+      message: `Applicant: ${fullName.trim()}\nInstitution/Company: ${university.trim()}\nPosition: ${job.title}\n\nCover Note:\n${coverNote.trim()}`,
+      company_website: "",
+    });
     setFormSubmitted(true);
   };
 
@@ -294,6 +306,29 @@ function JobDetailPage() {
                       }}
                     >
                       SUBMIT APPLICATION
+                    </Button>
+
+                    <Button
+                      href="https://forms.gle/niyMK6Wkc4v5yfLm7"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="outlined"
+                      endIcon={<OpenInNewIcon />}
+                      sx={{
+                        py: 1.5,
+                        borderColor: "rgba(10, 42, 102, 0.3)",
+                        color: "#0A2A66",
+                        fontFamily: MONO,
+                        fontWeight: 700,
+                        fontSize: "0.78rem",
+                        borderRadius: 3,
+                        "&:hover": {
+                          borderColor: "#0A2A66",
+                          bgcolor: "rgba(10, 42, 102, 0.05)",
+                        },
+                      }}
+                    >
+                      OR APPLY VIA OFFICIAL GOOGLE FORM
                     </Button>
                   </Stack>
                 )}

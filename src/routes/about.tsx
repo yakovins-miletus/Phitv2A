@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -9,17 +8,6 @@ import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import CodeIcon from "@mui/icons-material/Code";
 import GroupWorkIcon from "@mui/icons-material/GroupWork";
-import ShieldIcon from "@mui/icons-material/Shield";
-import VerifiedIcon from "@mui/icons-material/Verified";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-
-const VALUE_ICONS: Record<string, React.ComponentType<any>> = {
-  "Integrity": ShieldIcon,
-  "Accountability": VerifiedIcon,
-  "Forward Thinking": TrendingUpIcon,
-  "Excellence": WorkspacePremiumIcon,
-};
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CONTENT } from "@/shared/content";
@@ -37,6 +25,7 @@ import { PoweredBySection } from "@/features/about/components/PoweredBySection";
 import { GraduateHallOfFameSection } from "@/features/about/components/GraduateHallOfFameSection";
 import { InternshipProgramSection } from "@/features/about/components/InternshipProgramSection";
 import { CertificationsSection } from "@/features/about/components/CertificationsSection";
+import { PrinciplesValuesShowcase } from "@/features/about/components/PrinciplesValuesShowcase";
 import { pageHead } from "@/shared/seo";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
@@ -50,135 +39,6 @@ export const Route = createFileRoute("/about")({
   component: AboutPage,
 });
 
-
-// Section 1: The four values.
-function PrinciplesSection() {
-  const { values } = CONTENT.principles;
-  return (
-    <Section muted>
-      <Stack spacing={{ xs: 6, md: 8 }}>
-        <Stack spacing={3}>
-          <Reveal>
-            <Typography variant="h2" component="h2">
-              Rooted in values
-            </Typography>
-          </Reveal>
-          <StaggerGroup>
-            <Stack divider={<Divider />} sx={{ borderTop: 1, borderBottom: 1, borderColor: "divider" }}>
-              {values.map((value) => {
-                const Icon = VALUE_ICONS[value.label] || ShieldIcon;
-                return (
-                  <StaggerItem key={value.label}>
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={{ xs: 1.5, md: 6 }}
-                      sx={{ 
-                        py: 3, px: 2, borderRadius: 2, alignItems: { md: "baseline" },
-                        position: "relative",
-                        overflow: "hidden",
-                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                        "&:hover .value-title": { 
-                          color: "transparent", 
-                          backgroundImage: "linear-gradient(135deg, #FFC72C 35%, #FFF6D6 50%, #FFC72C 65%)",
-                          backgroundSize: "200% 100%",
-                          animation: "valueShimmer 1.8s infinite linear",
-                          transition: "color 0.3s ease",
-                        },
-                        "&:hover .value-def": { 
-                          color: "transparent", 
-                          backgroundImage: "linear-gradient(135deg, #0A2A66 35%, #3B5585 50%, #0A2A66 65%)",
-                          backgroundSize: "200% 100%",
-                          animation: "valueShimmer 1.8s infinite linear",
-                          transition: "color 0.3s ease",
-                        },
-                        "&:hover .value-client": { 
-                          color: "transparent", 
-                          backgroundImage: "linear-gradient(135deg, #6B7FA8 35%, #A2B2D1 50%, #6B7FA8 65%)",
-                          backgroundSize: "200% 100%",
-                          animation: "valueShimmer 1.8s infinite linear",
-                          transition: "color 0.3s ease",
-                        },
-                        "&:hover .value-icon-container": { width: { xs: "28px", md: "36px" }, opacity: 1, marginRight: { xs: "8px", md: "12px" } },
-                        "@keyframes valueShimmer": {
-                          "0%": { backgroundPosition: "150% 0" },
-                          "100%": { backgroundPosition: "-50% 0" }
-                        }
-                      }}
-                    >
-                      {/* Left header group (Icon + Title) */}
-                      <Box sx={{ display: "flex", alignItems: "center", flexBasis: { md: 260 }, flexShrink: 0 }}>
-                        {/* Inline Push Icon */}
-                        <Box
-                          className="value-icon-container"
-                          sx={{
-                            width: 0,
-                            opacity: 0,
-                            overflow: "hidden",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "secondary.main",
-                            transition: "all 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
-                            pointerEvents: "none",
-                            "& svg": {
-                              fontSize: { xs: "24px", md: "28px" },
-                            }
-                          }}
-                        >
-                          <Icon />
-                        </Box>
-
-                        <Typography
-                          variant="h4"
-                          className="value-title"
-                          sx={{ 
-                            color: "primary.main",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            transition: "none",
-                          }}
-                        >
-                          {value.label}
-                        </Typography>
-                      </Box>
-
-                      <Stack spacing={1.5} sx={{ position: "relative", zIndex: 1 }}>
-                        <Typography 
-                          variant="body1" 
-                          className="value-def"
-                          sx={{
-                            color: "text.primary",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            transition: "none",
-                          }}
-                        >
-                          {value.definition}
-                        </Typography>
-                        <Typography 
-                          variant="body2" 
-                          className="value-client"
-                          sx={{
-                            color: "text.secondary",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            transition: "none",
-                          }}
-                        >
-                          {value.valueToClient}
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                  </StaggerItem>
-                );
-              })}
-            </Stack>
-          </StaggerGroup>
-        </Stack>
-      </Stack>
-    </Section>
-  );
-}
 
 // Section 2: Core Culture — moved here from the Home page, underneath Values.
 const CULTURE_ICONS = [
@@ -477,9 +337,7 @@ function AboutPage() {
           <PoweredBySection />
         </SmoothSection>
         
-        <SmoothSection>
-          <PrinciplesSection />
-        </SmoothSection>
+        <PrinciplesValuesShowcase />
         
         <SmoothSection>
           <CultureSection />
