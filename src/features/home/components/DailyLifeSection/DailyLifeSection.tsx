@@ -23,13 +23,13 @@ import {
   STAGE_EXIT_DURATION,
   STAGE_HOLD_DURATION,
 } from "@/shared/components/stageChoreo";
-import { STAGE_ATTR } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 
 import Divider from "@mui/material/Divider";
 
 import { formatTime, useDailyLifeVideo } from "./useDailyLifeVideo";
+import { RawStage } from "../RawStage";
 
 /** How far the daily-life card stays pinned, as a multiple of viewport height.
  *  Sized to its three-phase timeline; unrelated to the other sections' pins. */
@@ -126,25 +126,7 @@ export function DailyLifeSection() {
 
 
   return (
-    <Box
-      component="section"
-      ref={sectionRef}
-      id="daily-life"
-      {...{ [STAGE_ATTR]: "" }}
-      sx={{
-        position: "relative",
-        width: "100%",
-        height: "100vh",
-        bgcolor: "primary.main",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderTop: 1,
-        borderBottom: 1,
-        borderColor: "divider",
-      }}
-    >
+    <RawStage id="daily-life" bgcolor="primary.main" ref={sectionRef}>
       <Box ref={videoAnchorRef} sx={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
       <Box
         ref={cardRef}
@@ -355,6 +337,6 @@ export function DailyLifeSection() {
           </Stack>
         </Box>
       </Box>
-    </Box>
+    </RawStage>
   );
 }

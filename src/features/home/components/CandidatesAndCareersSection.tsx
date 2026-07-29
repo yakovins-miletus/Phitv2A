@@ -21,9 +21,9 @@ import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
 import { SectionLede } from "@/shared/components/SectionLede";
 import { StageKicker, useStagePresence } from "@/shared/components/StageSection";
 import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
-import { STAGE_ATTR } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
+import { RawStage } from "./RawStage";
 
 function TechChip({ label }: { label: string }) {
   return (
@@ -147,25 +147,7 @@ export function CandidatesAndCareersSection() {
   );
 
   return (
-    <Box
-      component="section"
-      ref={sectionRef}
-      id="candidates"
-      {...{ [STAGE_ATTR]: "" }}
-      sx={{
-        position: "relative",
-        width: "100%",
-        height: "100vh",
-        bgcolor: "background.paper",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderTop: 1,
-        borderBottom: 1,
-        borderColor: "divider",
-      }}
-    >
+    <RawStage id="candidates" bgcolor="background.paper" ref={sectionRef}>
       <Container maxWidth="lg" sx={{ position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
 
         {/* Panel 1: Who We Look For */}
@@ -384,6 +366,6 @@ export function CandidatesAndCareersSection() {
         jobTitle={selectedJobTitle}
         onClose={closeJobDetails}
       />
-    </Box>
+    </RawStage>
   );
 }
