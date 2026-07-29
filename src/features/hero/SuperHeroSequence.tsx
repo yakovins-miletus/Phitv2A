@@ -43,6 +43,25 @@ export function HeroSignalCore() {
         end: HERO_PIN_DISTANCE,
         scrub: 0.6,
         pin: true,
+        // PARITY-LOCKED, and the obvious fix does not work — measured, not assumed.
+        //
+        // This fires on every scrub frame, so the whole hero subtree re-renders
+        // and emotion re-serialises every `sx` that interpolates the value. One
+        // pass of this pin at 1440x900 injects ~2,648 new CSS rules and pushes
+        // p95 frame time to ~46ms.
+        //
+        // The textbook fix — write the continuous values as CSS custom
+        // properties instead of state — was implemented and measured here. It
+        // removed only 485 of those 2,648 rules (18%) and left frame times
+        // unchanged, because the cost is not in this file. It is in
+        // HeroSignalP, which interpolates `progress` into its own sx at a dozen
+        // sites AND is structurally dependent on it: numLayers is
+        // round(16 * (1 - progress)), so the hero subtree goes from 241 DOM
+        // nodes to 33 across the pin. No custom property can express that.
+        //
+        // A real fix has to change how HeroSignalP renders its extrusion
+        // layers. That is a redesign of that component, not a refactor of this
+        // one, so it was reverted rather than shipped as a half-measure.
         onUpdate: (self) => {
           setScrollProgress(self.progress);
         },
