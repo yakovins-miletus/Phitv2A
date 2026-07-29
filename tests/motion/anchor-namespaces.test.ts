@@ -54,6 +54,6 @@ test("every anchor id is registered in NAV_ANCHORS, none left as bare strings", 
     }),
   );
   const calls = sources.flatMap((src) => [...src.matchAll(/useNavbarAnchor\(([^,)]+)/g)].map((m) => m[1]!.trim()));
-  expect(calls.length).toBe(4);
+  expect(calls.length).toBe(5);
   for (const call of calls) expect(call).toMatch(/^NAV_ANCHORS\./);
 });

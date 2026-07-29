@@ -45,6 +45,13 @@ export const MEGA_NAV_ITEMS: NavSectionItem[] = [
     tag: "CORE DISCIPLINES",
   },
   {
+    to: "/careers",
+    label: "Careers",
+    sub: "Graduate Fellowships & Internships",
+    preview: "/images/grads/FocusedProgramming.JPG",
+    tag: "TALENT PATHWAYS",
+  },
+  {
     to: "/blog",
     label: "Blog",
     sub: "Latest Insights, People & CSR",

@@ -15,26 +15,26 @@ export function HeroGallery() {
       sx={{
         position: "relative",
         width: "100%",
-        maxWidth: 620,
-        height: { xs: 440, sm: 500, md: 540 },
+        maxWidth: 820,
+        height: { xs: 520, sm: 580, md: 640 },
         mx: "auto",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      {/* ── Image 2: Secondary Background Card (Top-Left) ── */}
+      {/* ── Image 2: Secondary Background Card (Spread Far Top-Left) ── */}
       <motion.div
-        initial={{ opacity: 0, y: 30, rotate: -8 }}
-        animate={{ opacity: 1, y: 0, rotate: -4 }}
+        initial={{ opacity: 0, y: 30, rotate: -12 }}
+        animate={{ opacity: 1, y: 0, rotate: -8 }}
         transition={{ duration: 1.2, ease: EASE_OUT_EXPO, delay: 0.15 }}
-        whileHover={{ scale: 1.04, rotate: -2, zIndex: 4 }}
+        whileHover={{ scale: 1.04, rotate: -4, zIndex: 4 }}
         style={{
           position: "absolute",
-          top: "4%",
-          left: "4%",
-          width: "55%",
-          maxWidth: 320,
+          top: "-4%",
+          left: "-12%",
+          width: "60%",
+          maxWidth: 390,
           aspectRatio: "4/3",
           zIndex: 1,
         }}
@@ -46,8 +46,8 @@ export function HeroGallery() {
             borderRadius: 4,
             overflow: "hidden",
             position: "relative",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            boxShadow: "0 16px 36px rgba(0, 0, 0, 0.4)",
+            border: "1px solid rgba(255, 255, 255, 0.25)",
+            boxShadow: "0 20px 44px rgba(0, 0, 0, 0.45)",
             backdropFilter: "blur(12px)",
             bgcolor: "rgba(10, 42, 102, 0.4)",
           }}
@@ -63,7 +63,6 @@ export function HeroGallery() {
               filter: "brightness(0.92) contrast(1.05)",
             }}
           />
-          {/* Subtle gradient overlay & Pill */}
           <Box
             sx={{
               position: "absolute",
@@ -77,8 +76,8 @@ export function HeroGallery() {
             size="small"
             sx={{
               position: "absolute",
-              top: 12,
-              left: 12,
+              top: 14,
+              left: 14,
               bgcolor: "rgba(10, 42, 102, 0.85)",
               color: "common.white",
               backdropFilter: "blur(8px)",
@@ -100,8 +99,8 @@ export function HeroGallery() {
         whileHover={{ scale: 1.03, zIndex: 5 }}
         style={{
           position: "relative",
-          width: "75%",
-          maxWidth: 420,
+          width: "82%",
+          maxWidth: 490,
           aspectRatio: "16/11",
           zIndex: 3,
         }}
@@ -113,8 +112,8 @@ export function HeroGallery() {
             borderRadius: 5,
             overflow: "hidden",
             position: "relative",
-            border: "2px solid rgba(255, 199, 44, 0.75)",
-            boxShadow: "0 24px 50px rgba(0, 0, 0, 0.55), 0 0 30px rgba(255, 199, 44, 0.2)",
+            border: "2.5px solid rgba(255, 199, 44, 0.8)",
+            boxShadow: "0 28px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 199, 44, 0.25)",
             bgcolor: "rgba(10, 42, 102, 0.6)",
           }}
         >
@@ -142,58 +141,45 @@ export function HeroGallery() {
           <Box
             sx={{
               position: "absolute",
-              bottom: 16,
-              left: 16,
-              right: 16,
+              bottom: 18,
+              left: 18,
+              right: 18,
               display: "flex",
               alignItems: "center",
               justify: "space-between",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <VerifiedIcon sx={{ color: "#FFC72C", fontSize: "1.1rem" }} />
+              <VerifiedIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
               <Typography
                 sx={{
                   color: "common.white",
-                  fontSize: "0.82rem",
+                  fontSize: "0.85rem",
                   fontWeight: 700,
                   fontFamily: MONO,
                   letterSpacing: "0.08em",
                   textShadow: "0 2px 4px rgba(0,0,0,0.8)",
                 }}
               >
-                PHITOPOLIS R&D HUB
+                PHITOPOLIS R&D FIRM
               </Typography>
             </Box>
-            <Chip
-              label="PRIMARY"
-              size="small"
-              sx={{
-                bgcolor: "#FFC72C",
-                color: "#0A2A66",
-                fontFamily: MONO,
-                fontSize: "0.65rem",
-                fontWeight: 800,
-                letterSpacing: "0.12em",
-                height: 22,
-              }}
-            />
           </Box>
         </Box>
       </motion.div>
 
-      {/* ── Image 3: Tertiary Overlay Card (Bottom-Right) ── */}
+      {/* ── Image 3: Tertiary Overlay Card (Spread Far Bottom-Right) ── */}
       <motion.div
-        initial={{ opacity: 0, y: 40, rotate: 6 }}
-        animate={{ opacity: 1, y: 0, rotate: 3 }}
+        initial={{ opacity: 0, y: 40, rotate: 10 }}
+        animate={{ opacity: 1, y: 0, rotate: 7 }}
         transition={{ duration: 1.2, ease: EASE_OUT_EXPO, delay: 0.45 }}
-        whileHover={{ scale: 1.05, rotate: 1, zIndex: 6 }}
+        whileHover={{ scale: 1.05, rotate: 3, zIndex: 6 }}
         style={{
           position: "absolute",
-          bottom: "6%",
-          right: "2%",
-          width: "48%",
-          maxWidth: 270,
+          bottom: "-4%",
+          right: "-10%",
+          width: "55%",
+          maxWidth: 350,
           aspectRatio: "4/3",
           zIndex: 4,
         }}
@@ -214,7 +200,7 @@ export function HeroGallery() {
           <Box
             component="img"
             src="/images/AteneoQR.jpg"
-            alt="Academic Partnership & Ateneo Engagement"
+            alt="Academic Engagement & Ateneo"
             sx={{
               width: "100%",
               height: "100%",
@@ -230,7 +216,7 @@ export function HeroGallery() {
           />
           <Chip
             icon={<SchoolIcon sx={{ fontSize: "0.9rem !important", color: "#FFC72C !important" }} />}
-            label="ACADEMIC PARTNERSHIP"
+            label="ACADEMIC ENGAGEMENT"
             size="small"
             sx={{
               position: "absolute",

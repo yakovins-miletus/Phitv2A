@@ -14,8 +14,10 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InnovationHubIndexRouteImport } from './routes/innovation-hub.index'
+import { Route as CareersIndexRouteImport } from './routes/careers.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as InnovationHubSlugRouteImport } from './routes/innovation-hub.$slug'
+import { Route as CareersJobIdRouteImport } from './routes/careers.$jobId'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 
 const ServicesRoute = ServicesRouteImport.update({
@@ -43,6 +45,11 @@ const InnovationHubIndexRoute = InnovationHubIndexRouteImport.update({
   path: '/innovation-hub/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CareersIndexRoute = CareersIndexRouteImport.update({
+  id: '/careers/',
+  path: '/careers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -51,6 +58,11 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
 const InnovationHubSlugRoute = InnovationHubSlugRouteImport.update({
   id: '/innovation-hub/$slug',
   path: '/innovation-hub/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CareersJobIdRoute = CareersJobIdRouteImport.update({
+  id: '/careers/$jobId',
+  path: '/careers/$jobId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
@@ -65,8 +77,10 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/careers/$jobId': typeof CareersJobIdRoute
   '/innovation-hub/$slug': typeof InnovationHubSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/careers/': typeof CareersIndexRoute
   '/innovation-hub/': typeof InnovationHubIndexRoute
 }
 export interface FileRoutesByTo {
@@ -75,8 +89,10 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/careers/$jobId': typeof CareersJobIdRoute
   '/innovation-hub/$slug': typeof InnovationHubSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/careers': typeof CareersIndexRoute
   '/innovation-hub': typeof InnovationHubIndexRoute
 }
 export interface FileRoutesById {
@@ -86,8 +102,10 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/careers/$jobId': typeof CareersJobIdRoute
   '/innovation-hub/$slug': typeof InnovationHubSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/careers/': typeof CareersIndexRoute
   '/innovation-hub/': typeof InnovationHubIndexRoute
 }
 export interface FileRouteTypes {
@@ -98,8 +116,10 @@ export interface FileRouteTypes {
     | '/contact'
     | '/services'
     | '/blog/$slug'
+    | '/careers/$jobId'
     | '/innovation-hub/$slug'
     | '/blog/'
+    | '/careers/'
     | '/innovation-hub/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,8 +128,10 @@ export interface FileRouteTypes {
     | '/contact'
     | '/services'
     | '/blog/$slug'
+    | '/careers/$jobId'
     | '/innovation-hub/$slug'
     | '/blog'
+    | '/careers'
     | '/innovation-hub'
   id:
     | '__root__'
@@ -118,8 +140,10 @@ export interface FileRouteTypes {
     | '/contact'
     | '/services'
     | '/blog/$slug'
+    | '/careers/$jobId'
     | '/innovation-hub/$slug'
     | '/blog/'
+    | '/careers/'
     | '/innovation-hub/'
   fileRoutesById: FileRoutesById
 }
@@ -129,8 +153,10 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ServicesRoute: typeof ServicesRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  CareersJobIdRoute: typeof CareersJobIdRoute
   InnovationHubSlugRoute: typeof InnovationHubSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  CareersIndexRoute: typeof CareersIndexRoute
   InnovationHubIndexRoute: typeof InnovationHubIndexRoute
 }
 
@@ -171,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InnovationHubIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/careers/': {
+      id: '/careers/'
+      path: '/careers'
+      fullPath: '/careers/'
+      preLoaderRoute: typeof CareersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -183,6 +216,13 @@ declare module '@tanstack/react-router' {
       path: '/innovation-hub/$slug'
       fullPath: '/innovation-hub/$slug'
       preLoaderRoute: typeof InnovationHubSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/careers/$jobId': {
+      id: '/careers/$jobId'
+      path: '/careers/$jobId'
+      fullPath: '/careers/$jobId'
+      preLoaderRoute: typeof CareersJobIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -201,8 +241,10 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ServicesRoute: ServicesRoute,
   BlogSlugRoute: BlogSlugRoute,
+  CareersJobIdRoute: CareersJobIdRoute,
   InnovationHubSlugRoute: InnovationHubSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
+  CareersIndexRoute: CareersIndexRoute,
   InnovationHubIndexRoute: InnovationHubIndexRoute,
 }
 export const routeTree = rootRouteImport

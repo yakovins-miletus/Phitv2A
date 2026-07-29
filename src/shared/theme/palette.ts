@@ -4,7 +4,7 @@ import type { PaletteOptions } from "@mui/material/styles";
     can't take theme callbacks (motion.div style, canvas) import NOIR directly
     so no raw hex ever lives outside this file. */
 export const NOIR = {
-  void: "#FFFFFF", // Light mode background (now white)
+  void: "#F4F7FC", // Soft cool off-white with subtle primary blue hue
   panel: "#F8FAFC", // Surface (cool off-white, matches brand reference)
   gold: "#FFC72C",
   goldLight: "#FFD966",
@@ -14,7 +14,7 @@ export const NOIR = {
   hairline: "#D1D5DB", // Divider/Border
   /** rgb triplets for rgba() composition */
   goldRgb: "255, 199, 44",
-  voidRgb: "255, 255, 255",
+  voidRgb: "244, 247, 252",
   /** Phitopolis brand navy — the sitewide primary color. */
   navyField: "#0A2A66",
   navyFieldRgb: "10, 42, 102",

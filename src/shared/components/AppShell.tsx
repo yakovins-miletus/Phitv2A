@@ -43,6 +43,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
   { to: "/services", label: "Services" },
+  { to: "/careers", label: "Careers" },
   { to: "/blog", label: "Blog" },
   { to: "/innovation-hub", label: "Innovation Lab" },
 ] as const;
@@ -50,7 +51,8 @@ const NAV_ITEMS = [
 const NARRATION_FLOW: Record<string, { next: string; label: string }> = {
   "/": { next: "/about", label: "ABOUT PHITOPOLIS" },
   "/about": { next: "/services", label: "CAPABILITIES & SERVICES" },
-  "/services": { next: "/blog", label: "RESEARCH & ARTICLES" },
+  "/services": { next: "/careers", label: "CAREERS & POSITIONS" },
+  "/careers": { next: "/blog", label: "RESEARCH & ARTICLES" },
   "/blog": { next: "/innovation-hub", label: "INNOVATION LAB" },
   "/innovation-hub": { next: "/contact", label: "GET IN TOUCH" },
   "/contact": { next: "/", label: "HOME" },
