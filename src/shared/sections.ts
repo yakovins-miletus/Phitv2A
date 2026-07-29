@@ -29,10 +29,10 @@ export const SNAP_STOP_SECTION_ID = "reach";
 export const HOME_SECTIONS: readonly SectionDef[] = [
   { id: "hero", label: "Signal Core", chapter: 0 },
   { id: "hero-desc", label: "Core Mission", chapter: 0 },
-  { id: "service-dev", label: "Full-Stack Platforms", chapter: 0 },
-  { id: "service-quant", label: "Quantitative Research", chapter: 0 },
-  { id: "service-data", label: "Data Science & ETL", chapter: 0 },
-  { id: "service-ops", label: "Operational Continuity", chapter: 0 },
+  // One stage, not four: the capabilities used to be four near-identical
+  // full-viewport templates in a row. CapabilityRack collapses them into a
+  // single stage whose rows expand in place — see CapabilityRack.tsx.
+  { id: "services", label: "Capabilities", chapter: 0 },
   { id: "use-cases", label: "Architectural Use-Cases", chapter: 1 },
   { id: "process", label: "Process Pipeline", chapter: 1 },
   { id: "reach", label: "Global Footprint", chapter: 2, choreo: "spotlight-clip" },

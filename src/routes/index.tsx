@@ -24,8 +24,10 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
+import { CapabilityRack } from "@/features/services/components/CapabilityRack";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
 import { StatStrip } from "@/shared/components/StatStrip";
+import { SectionLede } from "@/shared/components/SectionLede";
 
 import { ReachMap } from "@/shared/components/ReachMap";
 import { RouterButton } from "@/shared/components/RouterLink";
@@ -115,11 +117,13 @@ function ProcessSection() {
 function ReachSection() {
   return (
     <StageSection section={homeSection("reach")} muted>
-      <Reveal>
-        <Typography variant="h2" component="h2" sx={{ mb: 4 }}>
-          International presence
-        </Typography>
-      </Reveal>
+      <Box sx={{ mb: 4 }}>
+        <SectionLede
+          gunshot={CONTENT.ledes.reach.gunshot}
+          tracer={CONTENT.ledes.reach.tracer}
+          eyebrow="Global Footprint"
+        />
+      </Box>
       <Reveal delay={0.1}>
         <Box
           sx={{
@@ -132,17 +136,6 @@ function ReachSection() {
         >
           <ReachMap />
         </Box>
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.7rem",
-            letterSpacing: "0.14em",
-            color: "text.secondary",
-            mt: 2,
-          }}
-        >
-          ARCS DENOTE CLIENTS AND INVESTORS
-        </Typography>
       </Reveal>
     </StageSection>
   );
@@ -337,6 +330,12 @@ function DailyLifeSection() {
         sx={{
           position: "relative",
           overflow: "hidden",
+          // Base size in CSS, not only in the GSAP fromTo: under reduced
+          // motion the timeline never runs, and without this the card
+          // collapsed to its content (~302x152) and squeezed the overlay
+          // copy into a column eight lines deep.
+          width: "100%",
+          height: "100%",
           bgcolor: "primary.main",
           display: "flex",
           alignItems: "center",
@@ -379,50 +378,20 @@ function DailyLifeSection() {
             p: { xs: 3, sm: 5, md: 7 },
           }}
         >
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-            <Box sx={{ mt: { xs: 1, sm: 2, md: 3 } }}>
-              <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                <Typography variant="overline" sx={{ color: "secondary.main", fontWeight: 700 }}>
-                  Daily Life
-                </Typography>
-                <Box
-                  className="stage-kicker-line"
-                  sx={{
-                    height: "1px",
-                    width: { xs: 60, sm: 120 },
-                    background: "rgba(255, 255, 255, 0.3)",
-                    transformOrigin: "left center",
-                  }}
-                />
-              </Stack>
-              <Typography
-                variant="h3"
-                component="h3"
-                sx={{
-                  color: "common.white",
-                  fontWeight: 700,
-                  fontSize: { xs: "1.5rem", sm: "2.2rem", md: "3rem" },
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                People Behind the Innovation
-              </Typography>
-            </Box>
-          </Stack>
+          {/* The page's voice turns here: everything above addresses the
+              client, everything below addresses the recruit. The video was
+              already that pivot — this line says so. */}
+          <Box sx={{ mt: { xs: 1, sm: 2, md: 3 }, maxWidth: 720 }}>
+            <SectionLede
+              gunshot={CONTENT.ledes.dailyLife.gunshot}
+              tracer={CONTENT.ledes.dailyLife.tracer}
+              eyebrow="Daily Life"
+              component="h3"
+              tone="dark"
+            />
+          </Box>
 
           <Stack spacing={2} sx={{ width: "100%" }}>
-            <Typography
-              variant="body1"
-              sx={{
-                color: "rgba(255,255,255,0.9)",
-                maxWidth: 640,
-                fontSize: { xs: "0.85rem", sm: "1rem", md: "1.15rem" },
-                lineHeight: 1.5,
-              }}
-            >
-              Experience our culture, collaborative R&D spirit, and the everyday moments that fuel technology breakthroughs.
-            </Typography>
-
             {/* Control Bar */}
             <Stack
               direction="row"
@@ -790,10 +759,11 @@ function CandidatesAndCareersSection() {
           <Stack spacing={3.5}>
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "flex-end" }} spacing={2}>
               <Box>
-                <StageKicker index="10" label="Technical Graduate Program" />
-                <Typography variant="h2" component="h2" sx={{ mt: 1, fontSize: { xs: "1.5rem", sm: "2.1rem", md: "2.5rem" }, fontWeight: 700 }}>
-                  Join our Technical Graduate Program
-                </Typography>
+                <SectionLede
+                  gunshot={CONTENT.ledes.careers.gunshot}
+                  tracer={CONTENT.ledes.careers.tracer}
+                  eyebrow="Technical Graduate Program"
+                />
               </Box>
 
               {/* Brochure PDF Full-Page Drawer Trigger Button */}
@@ -963,9 +933,13 @@ function BlogSection() {
   return (
     <StageSection section={homeSection("blog")} muted>
       <Reveal>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-          <Typography variant="h2" component="h2">Our Blog</Typography>
-          <Stack direction="row" spacing={1} sx={{ display: { xs: "none", md: "flex" } }}>
+        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
+          <SectionLede
+            gunshot={CONTENT.ledes.blog.gunshot}
+            tracer={CONTENT.ledes.blog.tracer}
+            eyebrow="Intelligence Feed"
+          />
+          <Stack direction="row" spacing={1} sx={{ flexShrink: 0, display: { xs: "none", md: "flex" } }}>
             <IconButton disabled={!canScrollLeft} onClick={scrollLeft} aria-label="Previous posts" sx={{ border: 1, borderColor: "divider", bgcolor: "background.paper", "&:hover": { bgcolor: "action.hover" } }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
             </IconButton>
@@ -1103,10 +1077,14 @@ function HomePage() {
       <EyeFlow />
       <Box ref={pageRef} sx={{ position: 'relative', overflowX: 'clip' }}>
         <SuperHeroSequence />
+        {/* CONTENT.impact, not CONTENT.stats: the strip is the page's first
+            hard claim, and "2 R&D offices / 6 open roles" spent it on filler
+            while the real numbers (100x latency, 99.4% accuracy) sat unused. */}
         <Box id="stats">
-          <StatStrip stats={CONTENT.stats} />
+          <StatStrip stats={CONTENT.impact} />
         </Box>
         <Divider />
+        <CapabilityRack />
         <Box ref={useCasesRef} id="use-cases">
           <UseCasesNarrative />
         </Box>

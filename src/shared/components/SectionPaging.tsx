@@ -90,7 +90,7 @@ export function useSectionPaging(containerRef: RefObject<HTMLElement | null>): v
 
       // ── Free-scroll zone: hero + hero-desc ────────────────────────
       // Paging only activates once the user reaches the services.
-      const firstService = document.getElementById("service-dev");
+      const firstService = document.getElementById("services");
       if (firstService) {
         const serviceStart =
           firstService.getBoundingClientRect().top + y - measureHeaderOffset();

@@ -1,12 +1,56 @@
 /** Site copy, sourced from sourceoftruthv2.md (Phitsite workspace root).
  *  Voice: cinematic but precise. One register: confident, declarative,
  *  quant-noir. Service and use-case ids are lookup keys for ServiceDrawer
- *  and UseCasesNarrative diagrams; never change them without updating both. */
+ *  and UseCasesNarrative diagrams; never change them without updating both.
+ *
+ *  THREE-LAYER CONTENT CONTRACT (home page). Every home section delivers:
+ *    L0 `gunshot` — one claim, <=12 words, carries a number or a named
+ *       specific. Set at display size. The only thing a scrolling reader is
+ *       guaranteed to consume.
+ *    L1 `tracer`  — 25-40 words naming the mechanism or the evidence that
+ *       makes L0 survivable.
+ *    L2 the existing `details` / drawer copy — never rendered on first pass.
+ *  `gunshot`/`tracer` are ADDITIVE: /services and /about still read `summary`
+ *  and `details`, so their copy is unaffected by home-page edits. */
 export const CONTENT = {
   hero: {
     tagline: "Making tomorrow's technology available today",
     description:
       "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and the latest in AI trends"
+  },
+  /** Home-page section ledes (L0/L1). Chapters 0-2 address the institutional
+   *  client; chapter 3 addresses the engineering recruit. `dailyLife` is the
+   *  handover between the two voices. */
+  ledes: {
+    mission: {
+      gunshot: "We took two milliseconds down to eighteen microseconds.",
+      tracer:
+        "Global markets are the hardest engineering problem on offer. We build what survives them.",
+    },
+    services: {
+      gunshot: "Four disciplines. One delivery contract.",
+      tracer:
+        "Research, platforms, pipelines, and the people who keep them running — open a row for what each one actually ships.",
+    },
+    reach: {
+      gunshot: "Two offices. Two client regions. One clock that never stops.",
+      tracer: "Arcs denote clients and investors.",
+    },
+    dailyLife: {
+      gunshot: "That is the work. These are the people who do it.",
+      tracer:
+        "Our culture, our R&D floor, and the ordinary days that produce the things above.",
+    },
+    careers: {
+      gunshot: "Six open roles. One intake a year.",
+      tracer:
+        "The Technical Graduate Program takes engineers straight into production systems — not a rotation, not a shadowing track.",
+    },
+    blog: {
+      gunshot: "What the team actually did last quarter.",
+      tracer:
+        "Community work, onboarding weeks, and the occasional office tournament — written by the people who were there.",
+    },
   },
   /** Above-the-fold trust signals — investor backing and named partners. */
   trust: {
@@ -144,6 +188,9 @@ export const CONTENT = {
     {
       id: "development",
       title: "Full-Stack Development",
+      gunshot: "Billion-dollar portfolios, watched in real time.",
+      tracer:
+        "OmniDashboard puts institutional investors inside their own book — event-driven, cloud-native, quiet under load.",
       summary: "Cloud-native platforms that make petabyte-scale systems feel invisible, intuitive, and effortlessly fast",
       details:
         "We architect secure, event-driven SaaS platforms with modern stacks, engineered for enterprise-grade scale and relentless uptime. Flagship work like the OmniDashboard portal lets institutional investors watch billion-dollar portfolios move in real time",
@@ -152,6 +199,9 @@ export const CONTENT = {
     {
       id: "quant-research",
       title: "Quantitative Research",
+      gunshot: "Petabytes of ticks in. One tradeable signal out.",
+      tracer:
+        "Project Clairvoyant reads historical ticks, satellite imagery, and sentiment to call short-term moves with stated confidence.",
       summary: "Market analysis treated as a strict science: statistics, machine learning, and AI over massive datasets",
       details:
         "Our researchers turn raw, noisy market data into actionable intelligence and trading signals. Pipelines like Project Clairvoyant digest petabytes of historical ticks and alternative data, from satellite imagery to sentiment, to call short-term moves with statistical confidence",
@@ -160,6 +210,9 @@ export const CONTENT = {
     {
       id: "data-science",
       title: "Data Science",
+      gunshot: "The pipeline every downstream signal stands on.",
+      tracer:
+        "ETL backbones with quality gates at each stage, so a bad row never reaches a research notebook.",
       summary: "The pipelines and data lakes that fuel financial sciences at petabyte scale",
       details:
         "We design the ETL backbones and data products that researchers and quantitative traders live on, with rigorous quality gates at every stage so that each downstream signal stands on data that can be trusted",
@@ -168,6 +221,9 @@ export const CONTENT = {
     {
       id: "support",
       title: "Ops Support",
+      gunshot: "Every trading session, every day, no gap.",
+      tracer:
+        "An SRE matrix with anomaly detection catches the bottleneck before a client feels it.",
       summary: "24/7 global operational continuity for high-frequency systems that demand mission-critical uptime",
       details:
         "Our global engineering teams keep high-frequency trading platforms, market-data pipelines, and cloud infrastructure running flawlessly around the clock. An automated SRE matrix with AI-driven anomaly detection catches bottlenecks before clients ever feel them",

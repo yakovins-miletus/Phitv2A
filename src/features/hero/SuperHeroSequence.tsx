@@ -1,43 +1,21 @@
 import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import Grid from "@mui/material/Grid";
 import { alpha } from "@mui/material/styles";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { CONTENT } from "@/shared/content";
 import { HeroSignalP } from "@/shared/components/HeroSignalP";
-import { RouterButton, RouterLink } from "@/shared/components/RouterLink";
+import { RouterLink } from "@/shared/components/RouterLink";
+import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
-import { ServiceVector } from "@/features/services/components/ServiceDrawer";
-import MemoryIcon from "@mui/icons-material/Memory";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
-import StorageIcon from "@mui/icons-material/Storage";
-import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-const SERVICE_ICONS = [
-  MemoryIcon,
-  QueryStatsIcon,
-  StorageIcon,
-  SettingsSuggestIcon,
-];
-
-const SERVICE_IDS = [
-  "service-dev",
-  "service-quant",
-  "service-data",
-  "service-ops",
-] as const;
-
 
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
@@ -423,153 +401,36 @@ export function HeroSignalCore() {
   );
 }
 
-// Appended Section right after the hero page presenting the core mission statement
+/** Core mission, as L0 + L1.
+ *
+ *  This used to set CONTENT.hero.description — a 40-word sentence — at
+ *  3.4rem/800. Nothing that long is readable at display size, so the reader
+ *  either scrubbed past it or stopped. The claim now leads with a number the
+ *  site already owns (CONTENT.impact: 2ms → 18µs) and the reasoning drops to
+ *  body size behind it. */
 export function HeroDescriptionSection() {
   const sectionDef = homeSection("hero-desc");
   return (
     <StageSection section={sectionDef} muted>
-      <Box sx={{ py: { xs: 6, md: 10 }, textAlign: "center", maxWidth: 980, mx: "auto", px: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <Typography
-          variant="h2"
-          component="h2"
-          sx={{
-            fontSize: { xs: "1.8rem", sm: "2.6rem", md: "3.4rem" },
-            fontWeight: 800,
-            lineHeight: 1.3,
-            letterSpacing: "-0.02em",
-            color: "text.primary",
-          }}
-        >
-          {CONTENT.hero.description.split(/(R&D firm)/g).map((part, i) =>
-            /^(R&D firm)$/.test(part) ? (
-              <Box key={i} component="span" sx={{ color: NOIR.gold, fontWeight: 800 }}>
-                {part}
-              </Box>
-            ) : (
-              part
-            )
-          )}
-        </Typography>
+      <Box sx={{ py: { xs: 6, md: 10 }, maxWidth: 980, mx: "auto", px: 2 }}>
+        <SectionLede
+          gunshot={CONTENT.ledes.mission.gunshot}
+          tracer={CONTENT.ledes.mission.tracer}
+          eyebrow="Core Mission"
+          align="center"
+        />
       </Box>
     </StageSection>
   );
 }
 
-// Stage Sub-Component for Service Display Inline
-export function ServiceSuperStage({ index }: { index: number }) {
-  const service = CONTENT.services[index];
-  const sectionId = SERVICE_IDS[index] ?? "service-dev";
-  const Icon = SERVICE_ICONS[index] || MemoryIcon;
-  const sectionDef = homeSection(sectionId);
-
-  if (!service) return null;
-
-  return (
-    <StageSection section={sectionDef} muted={index % 2 === 1}>
-      <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
-        {/* Left Column: Stage Identification & Core Story */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Stack spacing={3}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Box
-                sx={{
-                  p: 1.8,
-                  borderRadius: 2,
-                  bgcolor: alpha(NOIR.gold, 0.1),
-                  color: NOIR.gold,
-                  border: `1px solid ${alpha(NOIR.gold, 0.3)}`,
-                  display: "flex",
-                }}
-              >
-                <Icon sx={{ fontSize: 36 }} />
-              </Box>
-              <Typography
-                variant="h2"
-                component="h2"
-                sx={{
-                  fontSize: { xs: "2rem", sm: "2.8rem", md: "3.4rem" },
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {service.title}
-              </Typography>
-            </Stack>
-
-            <Typography
-              variant="h5"
-              sx={{
-                color: "text.secondary",
-                fontWeight: 500,
-                lineHeight: 1.4,
-                fontSize: { xs: "1.1rem", md: "1.35rem" },
-              }}
-            >
-              {service.summary}
-            </Typography>
-
-            <Typography
-              variant="body1"
-              sx={{
-                color: "text.secondary",
-                fontSize: { xs: "0.95rem", md: "1.05rem" },
-                lineHeight: 1.7,
-              }}
-            >
-              {service.details}
-            </Typography>
-
-            <Box sx={{ pt: 1 }}>
-              <RouterButton
-                to="/contact"
-                variant="outlined"
-                color="primary"
-                endIcon={<ArrowForwardIcon />}
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.82rem",
-                  letterSpacing: "0.1em",
-                  px: 3,
-                  py: 1.2,
-                  borderRadius: "4px",
-                }}
-              >
-                DISCUSS {service.title.toUpperCase()}
-              </RouterButton>
-            </Box>
-          </Stack>
-        </Grid>
-
-        {/* Right Column: Clean Animated Service Vector Visualization */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: { xs: 260, md: 320 },
-              width: "100%",
-            }}
-          >
-            <Box sx={{ width: "100%", maxWidth: { xs: 380, sm: 460, md: 540 }, height: { xs: 300, sm: 360, md: 420 } }}>
-              <ServiceVector id={sectionId} />
-            </Box>
-          </Box>
-        </Grid>
-      </Grid>
-    </StageSection>
-  );
-}
-
+/** Hero + core mission. The four per-service stages that used to trail this
+ *  sequence now live in CapabilityRack, mounted directly by HomePage. */
 export function SuperHeroSequence() {
   return (
     <>
       <HeroSignalCore />
       <HeroDescriptionSection />
-      {CONTENT.services.map((_, index) => (
-        <ServiceSuperStage key={SERVICE_IDS[index]} index={index} />
-      ))}
     </>
   );
 }

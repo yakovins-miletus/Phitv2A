@@ -11,6 +11,7 @@ import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
+import { MONO } from "@/shared/theme/theme";
 import { SignalDiagram } from "@/shared/components/diagrams/SignalDiagram";
 import { PipelineDiagram } from "@/shared/components/diagrams/PipelineDiagram";
 import { FollowTheSunDiagram } from "@/shared/components/diagrams/FollowTheSunDiagram";
@@ -245,9 +246,45 @@ export function UseCasesNarrative() {
                     <Typography variant="overline" color="primary" sx={{ display: "block" }}>
                       0{index + 1} — {uc.tag}
                     </Typography>
-                    <Typography variant="h3" sx={{ mt: 1.5 }}>
+                    {/* L0: the title carries the slide, so it reads at display
+                        weight rather than sharing the stage with the body. */}
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        mt: 1.5,
+                        fontSize: { xs: "1.5rem", md: "2.1rem" },
+                        fontWeight: 800,
+                        lineHeight: 1.12,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
                       {uc.title}
                     </Typography>
+                    {/* L1: the `stats` rail was already in content.ts and had
+                        never been rendered — it is the evidence line. */}
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      justifyContent="center"
+                      useFlexGap
+                      flexWrap="wrap"
+                      sx={{ mt: 1.5 }}
+                    >
+                      {uc.stats.map((stat) => (
+                        <Typography
+                          key={stat}
+                          sx={{
+                            fontFamily: MONO,
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.14em",
+                            color: NOIR.goldDark,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {stat}
+                        </Typography>
+                      ))}
+                    </Stack>
                     <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5, maxWidth: "58ch", mx: 'auto' }}>
                       {uc.line}
                     </Typography>
