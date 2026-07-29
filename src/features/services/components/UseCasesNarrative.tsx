@@ -52,7 +52,6 @@ function SlideFade({ children, disabled, scaleOnFocus = false }: { children: Rea
     1/(1+PAUSE) of total progress and the pin lasts distance*(1+PAUSE) px —
     scroll pixels map 1:1 to translated pixels at every viewport size. */
 const PAUSE = 0.1;
-const TRANSLATION_RATIO = 1 / (1 + PAUSE);
 
 export function UseCasesNarrative() {
   const wrap = useRef<HTMLDivElement>(null);
@@ -69,35 +68,6 @@ export function UseCasesNarrative() {
       const distance = () => (track.current?.scrollWidth ?? 0) - window.innerWidth;
       if (distance() <= 0) return;
 
-      // Recomputed on every ScrollTrigger refresh (initial + window resize +
-      // the "load" autoRefreshEvent) so slide positions measured before late
-      // layout shifts (font swap, SVG diagram sizing) settle don't stick
-      // around as stale/collapsed progress values.
-      const computeSnapPoints = () => {
-        if (!track.current) return;
-        const slides = Array.from(track.current.querySelectorAll('.snap-slide')) as HTMLElement[];
-        const currentX = Number(gsap.getProperty(track.current, "x")) || 0;
-        const snapPoints = slides.map(slide => {
-          const rect = slide.getBoundingClientRect();
-          const leftAtZero = rect.left - currentX;
-          const targetX = leftAtZero - (window.innerWidth - rect.width) / 2;
-          const clamped = Math.min(Math.max(targetX, 0), distance());
-          return (clamped / distance()) * TRANSLATION_RATIO;
-        });
-        snapPoints.push(0);
-        // Deliberately no push(1): progress 1 is the end-of-dwell pin
-        // boundary (the PAUSE tween above), not a visible slide — treating
-        // it as its own paging stop meant one gesture landed on the
-        // invisible dwell (no visual change) and a second was needed to
-        // actually reach the next section. Leaving it out lets the last
-        // real slide's stop page straight through the dwell to whatever
-        // comes next.
-        // SectionPaging reads this off the ancestor Box with id="use-cases"
-        // (routes/index.tsx), not this component's own root.
-        const ucRoot = wrap.current?.closest("#use-cases") ?? wrap.current;
-        (ucRoot as any)._ucProgressPoints = [...new Set(snapPoints)].sort((a, b) => a - b);
-      };
-
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: wrap.current,
@@ -105,9 +75,7 @@ export function UseCasesNarrative() {
           end: () => `+=${String(distance() * (1 + PAUSE))}`,
           pin: true,
           scrub: SCROLL_SPEED,
-          id: "uc-pin",
           invalidateOnRefresh: true,
-          onRefresh: computeSnapPoints,
         },
       });
 
@@ -127,8 +95,6 @@ export function UseCasesNarrative() {
 
       // Add a slight pause at the end
       tl.to({}, { duration: PAUSE });
-
-      computeSnapPoints();
     },
     { scope: wrap, dependencies: [reduce] },
   );

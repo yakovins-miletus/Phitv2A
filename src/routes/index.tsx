@@ -93,13 +93,12 @@ function TechChip({ label }: { label: string }) {
   );
 }
 
-// Section 2 removed per user request
 
 
 
 
 
-// Section 4: How We Work
+// How We Work — the process pipeline.
 function ProcessSection() {
   return (
     <StageSection section={homeSection("process")} muted>
@@ -113,7 +112,7 @@ function ProcessSection() {
   );
 }
 
-// Section 6: Global Reach
+// Global Reach — the footprint map.
 function ReachSection() {
   return (
     <StageSection section={homeSection("reach")} muted>
@@ -149,7 +148,7 @@ const formatTime = (seconds: number) => {
   return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 };
 
-// Section 7: Daily Life Video Section
+// Behind The Code — the daily-life film, with its own player chrome.
 function DailyLifeSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -538,7 +537,7 @@ function DailyLifeSection() {
   );
 }
 
-// Section 8: Target Candidates — reticle frame, short line.
+// Reticle corner marks framing the candidates panel.
 const CORNERS = [
   { top: -1, left: -1, borderTop: 2, borderLeft: 2 },
   { top: -1, right: -1, borderTop: 2, borderRight: 2 },
@@ -546,7 +545,8 @@ const CORNERS = [
   { bottom: -1, right: -1, borderBottom: 2, borderRight: 2 },
 ] as const;
 
-// Section 8 & 9 Merged: Who We Look For & Technical Graduate Program
+// Talent & Careers — Who We Look For and the Technical Graduate Program,
+// swapped as two panels across one pinned scrub.
 function CandidatesAndCareersSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const panel1Ref = useRef<HTMLDivElement>(null);
@@ -873,7 +873,7 @@ function CandidatesAndCareersSection() {
 }
 
 
-// Section 12: Blog
+// Intelligence Feed — the blog rail.
 function BlogSection() {
   const page = useQuery(blogPostsQuery({ limit: 10, offset: 0 }));
   const posts = page.data?.items ?? FALLBACK_BLOG_PAGE.items;
@@ -1054,7 +1054,7 @@ function BlogSection() {
   );
 }
 
-// Section 15: Footer
+// Home-page footer.
 function FooterSection() {
   return (
     <Box component="footer" sx={{ py: 4, px: 3, borderTop: 1, borderColor: "divider", textAlign: "center" }}>
@@ -1066,7 +1066,6 @@ function FooterSection() {
 }
 
 function HomePage() {
-  const pageRef = useRef<HTMLElement>(null);
   const useCasesRef = useRef<HTMLElement>(null);
   const compactZoneRef = useNavbarAnchor("home-compact");
   useStagePresence(useCasesRef, "use-cases");
@@ -1075,7 +1074,7 @@ function HomePage() {
     <>
       <SmoothScroll />
       <EyeFlow />
-      <Box ref={pageRef} sx={{ position: 'relative', overflowX: 'clip' }}>
+      <Box sx={{ position: 'relative', overflowX: 'clip' }}>
         <SuperHeroSequence />
         {/* CONTENT.impact, not CONTENT.stats: the strip is the page's first
             hard claim, and "2 R&D offices / 6 open roles" spent it on filler
