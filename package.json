@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
     "typegen": "openapi-typescript ../docs/api/openapi.json -o src/shared/api/schema.d.ts",
