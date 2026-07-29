@@ -1054,17 +1054,6 @@ function BlogSection() {
   );
 }
 
-// Home-page footer.
-function FooterSection() {
-  return (
-    <Box component="footer" sx={{ py: 4, px: 3, borderTop: 1, borderColor: "divider", textAlign: "center" }}>
-      <Typography sx={{ fontFamily: MONO, fontSize: "0.75rem", color: "text.secondary" }}>
-        © {new Date().getFullYear()} Phitopolis. Making tomorrow's technology available today
-      </Typography>
-    </Box>
-  );
-}
-
 function HomePage() {
   const useCasesRef = useRef<HTMLElement>(null);
   const compactZoneRef = useNavbarAnchor("home-compact");
@@ -1096,7 +1085,8 @@ function HomePage() {
           <BlogSection />
         </Box>
       </Box>
-      <FooterSection />
+      {/* No footer here: AppShell renders the site footer for every route, and
+          this page used to stack a second one directly on top of it. */}
     </>
   );
 }
