@@ -16,7 +16,7 @@ export const CONTENT = {
   hero: {
     tagline: "Making tomorrow's technology available today",
     description:
-      "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and the latest in AI trends"
+      "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and latest trends in Artificial Intelligence."
   },
   /** Home-page section ledes (L0/L1). Chapters 0-2 address the institutional
    *  client; chapter 3 addresses the engineering recruit. `dailyLife` is the
