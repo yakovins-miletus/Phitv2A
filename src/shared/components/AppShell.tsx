@@ -36,6 +36,7 @@ import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home" },
@@ -673,9 +674,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
     if (typeof document !== "undefined") {
       document.body.style.overflow = "";
     }
-    if (typeof window !== "undefined" && (window as any).ScrollTrigger) {
-      (window as any).ScrollTrigger.refresh();
-    }
+    // No-op until the lazy home chunk has loaded — see scrollTriggerBridge.ts
+    // for why AppShell cannot import gsap directly.
+    refreshScrollTriggers();
   }, [pathname]);
 
   // Continuous overscroll below footer -> transition to next narration page
