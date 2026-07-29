@@ -30,6 +30,7 @@ import { StatStrip } from "@/shared/components/StatStrip";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { JourneyTimeline } from "@/features/about/components/JourneyTimeline";
 import { BackgroundReveal } from "@/features/about/components/BackgroundReveal";
+import { HeroGallery } from "@/features/about/components/HeroGallery";
 import { MetaLabel } from "@/features/about/components/MetaLabel";
 import { SmoothSection } from "@/features/about/components/SmoothSection";
 import { PoweredBySection } from "@/features/about/components/PoweredBySection";
@@ -495,37 +496,91 @@ function CertificationsSection() {
 }
 
 function AboutPage() {
+  const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
   const timelineAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TIMELINE, { dark: true });
 
   return (
     <Box sx={{ pt: 0, pb: { xs: 12, md: 16 }, display: "flex", flexDirection: "column", gap: { xs: 8, md: 20 } }}>
       <SmoothSection>
-        <Box sx={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "flex-end", overflow: "hidden" }}>
+        <Box
+          ref={heroAnchorRef}
+          sx={{
+            position: "relative",
+            minHeight: "100vh",
+            height: { xs: "auto", md: "100vh" },
+            display: "flex",
+            alignItems: "center",
+            overflow: "hidden",
+            pt: { xs: 12, md: 8 },
+            pb: { xs: 8, md: 8 },
+            px: { xs: 3, sm: 6, md: 8, lg: 12 },
+          }}
+        >
           <BackgroundReveal />
-          <Box
-            sx={{
-              position: "absolute",
-              left: { xs: 40, sm: 100, md: 280 },
-              bottom: { xs: 24, sm: 40, md: 64 },
-              zIndex: 2,
-              p: 0,
-              maxWidth: { xs: "calc(100% - 80px)", sm: 500, md: 720 },
-            }}
+          <Grid
+            container
+            spacing={{ xs: 6, md: 8 }}
+            alignItems="center"
+            sx={{ position: "relative", zIndex: 2, width: "100%", mx: "auto" }}
           >
-            <Reveal>
-              <Stack spacing={2.5}>
-                <Typography variant="overline" sx={{ color: "secondary.main", fontWeight: 700, letterSpacing: "0.15em" }}>
-                  {CONTENT.about.overline}
-                </Typography>
-                <Typography variant="h2" component="h1" sx={{ fontWeight: 800, color: "common.white" }}>
-                  {CONTENT.about.heading}
-                </Typography>
-                <Typography variant="subtitle1" sx={{ color: "rgba(255, 255, 255, 0.85)" }}>
-                  {CONTENT.about.lead}
-                </Typography>
-              </Stack>
-            </Reveal>
-          </Box>
+            {/* Left Column: Centralized Left-Aligned Text Block */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Reveal>
+                <Stack spacing={3} sx={{ textAlign: "left", maxWidth: 620 }}>
+                  <Box sx={{ display: "inline-flex" }}>
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        color: "#FFC72C",
+                        fontWeight: 800,
+                        letterSpacing: "0.18em",
+                        fontSize: "0.8rem",
+                        fontFamily: MONO,
+                        bgcolor: "rgba(255, 199, 44, 0.12)",
+                        px: 2,
+                        py: 0.6,
+                        borderRadius: 10,
+                        border: "1px solid rgba(255, 199, 44, 0.3)",
+                      }}
+                    >
+                      {CONTENT.about.overline}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="h2"
+                    component="h1"
+                    sx={{
+                      fontWeight: 800,
+                      color: "common.white",
+                      fontSize: { xs: "2.2rem", sm: "2.8rem", md: "3.4rem" },
+                      lineHeight: 1.15,
+                      letterSpacing: "-0.02em",
+                    }}
+                  >
+                    {CONTENT.about.heading}
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      color: "rgba(255, 255, 255, 0.85)",
+                      fontSize: { xs: "1rem", md: "1.15rem" },
+                      lineHeight: 1.65,
+                      fontWeight: 400,
+                    }}
+                  >
+                    {CONTENT.about.lead}
+                  </Typography>
+                </Stack>
+              </Reveal>
+            </Grid>
+
+            {/* Right Column: 3-Image Dynamic Composition */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Reveal delay={0.2}>
+                <HeroGallery />
+              </Reveal>
+            </Grid>
+          </Grid>
         </Box>
       </SmoothSection>
 

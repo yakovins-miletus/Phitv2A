@@ -27,6 +27,8 @@ export const NAV_ANCHORS = {
   HOME_COMPACT: 'home-compact',
   /** The daily-life film, which the navbar must go light over. */
   DAILY_LIFE_VIDEO: 'daily-life-video',
+  /** The About page's hero section. */
+  ABOUT_HERO: 'about-hero',
   /** The About page's journey timeline. */
   ABOUT_TIMELINE: 'timeline',
   /** AppShell's footer, on every route. */
