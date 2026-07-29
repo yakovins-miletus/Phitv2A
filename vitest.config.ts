@@ -35,6 +35,12 @@ export default defineConfig({
           environment: "jsdom",
           globals: true,
           env,
+          // The contact-mutation tests drive a real form submission through MSW
+          // and react-query and take 2-3.5s each in jsdom. Against vitest's 5s
+          // default they pass in isolation and flip to "timed out in 5000ms"
+          // whenever the other files are running in parallel. Raised so a red
+          // suite means a real failure rather than a busy machine.
+          testTimeout: 20_000,
           setupFiles: ["./tests/setup.ts"],
           include: ["tests/*.test.{ts,tsx}"],
         },
@@ -46,6 +52,12 @@ export default defineConfig({
           environment: "jsdom",
           globals: true,
           env,
+          // The contact-mutation tests drive a real form submission through MSW
+          // and react-query and take 2-3.5s each in jsdom. Against vitest's 5s
+          // default they pass in isolation and flip to "timed out in 5000ms"
+          // whenever the other files are running in parallel. Raised so a red
+          // suite means a real failure rather than a busy machine.
+          testTimeout: 20_000,
           setupFiles: ["./tests/setup.ts", "./tests/setup.motion.ts"],
           include: ["tests/motion/**/*.test.{ts,tsx}"],
         },
