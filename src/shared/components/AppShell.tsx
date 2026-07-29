@@ -35,6 +35,7 @@ import { RouterButton, RouterLink } from "./RouterLink";
 import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home" },
@@ -195,7 +196,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
           bgcolor: color,
           borderRadius: "1px",
           transform: isHovered ? "translateY(-2px)" : "translateY(0)",
-          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         }}
       />
       <Box
@@ -204,7 +205,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
           height: 2,
           bgcolor: color,
           borderRadius: "1px",
-          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         }}
       />
       <Box
@@ -214,7 +215,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
           bgcolor: color,
           borderRadius: "1px",
           transform: isHovered ? "translateY(2px)" : "translateY(0)",
-          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         }}
       />
     </Box>
@@ -286,7 +287,7 @@ function AnimatedMenuButton({
         cursor: "pointer",
         outline: "none",
         boxShadow: hovered ? `0 6px 20px ${alpha(NOIR.navyField, 0.25)}` : "none",
-        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
       }}
     >
@@ -926,7 +927,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             pointerEvents: showPreloader ? "none" : "none",
             transform: navHidden || showPreloader ? "translateY(-120%)" : "translateY(0%)",
             opacity: showPreloader ? 0 : 1,
-            transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease",
+            transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease`,
           }}
         >
           <Container maxWidth={isMinimal ? false : "xl"} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined }}>
@@ -1345,7 +1346,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 key="page-slide-transition"
                 initial={{ x: "-100%" }}
                 animate={(transitionState === "closing" || transitionState === "loading") ? { x: "0%" } : { x: "100%" }}
-                transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+                transition={{ duration: 0.8, ease: EASE_IN_OUT_QUART }}
                 onAnimationComplete={() => {
                   if (transitionState === "closing" && transitionTargetRef.current) {
                     const nextRoute = transitionTargetRef.current;

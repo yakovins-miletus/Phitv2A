@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import {
   PHASE_FLATTEN_END,
   flattenProgress,
@@ -572,7 +573,7 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
           justifyContent: "center",
           perspective: "1600px",
           transformStyle: "preserve-3d",
-          animation: reduced === true ? "none" : "sceneExpand 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          animation: reduced === true ? "none" : `sceneExpand 1.6s ${EASE_OUT_EXPO_CSS} forwards`,
           "@keyframes sceneExpand": {
             "0%": { transform: "scale(0.65)", opacity: 0 },
             "100%": { transform: "scale(1)", opacity: 1 },

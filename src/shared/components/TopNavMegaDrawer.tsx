@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useRouter, useLocation } from "@tanstack/react-router";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
+import { EASE_OUT_EXPO, EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 export interface NavSectionItem {
   to: string;
@@ -88,7 +89,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
           initial={{ y: "-100%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
           exit={{ y: "-100%", opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.5, ease: EASE_OUT_EXPO }}
           style={{
             position: "fixed",
             top: 0,
@@ -164,7 +165,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                           px: 3,
                           borderRadius: "8px",
                           cursor: "pointer",
-                          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
                           bgcolor: isSelected ? alpha(NOIR.gold, 0.12) : "transparent",
                           borderLeft: isSelected ? `4px solid ${NOIR.gold}` : "4px solid transparent",
                           "&:hover": {

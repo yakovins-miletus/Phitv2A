@@ -15,8 +15,13 @@ import { panelOpacity, panelPointerEvents, wordLiftPercent } from "./heroPhases"
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+/** The hero holds for three viewport heights, which is what gives the three
+ *  phases in heroPhases.ts room to read as distinct beats rather than a blur. */
+const HERO_PIN_DISTANCE = "+=300%";
 
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
@@ -35,7 +40,7 @@ export function HeroSignalCore() {
       ScrollTrigger.create({
         trigger: pinRef.current,
         start: "top top",
-        end: "+=300%",
+        end: HERO_PIN_DISTANCE,
         scrub: 0.6,
         pin: true,
         onUpdate: (self) => {
@@ -184,7 +189,7 @@ export function HeroSignalCore() {
               bgcolor: alpha(NOIR.panel, 0.75),
               backdropFilter: "blur(12px)",
               boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               "&, & *": {
                 textDecoration: "none !important",
               },
@@ -260,7 +265,7 @@ export function HeroSignalCore() {
               bgcolor: alpha(NOIR.panel, 0.75),
               backdropFilter: "blur(12px)",
               boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               "&, & *": {
                 textDecoration: "none !important",
               },
@@ -335,7 +340,7 @@ export function HeroSignalCore() {
               bgcolor: alpha(NOIR.panel, 0.75),
               backdropFilter: "blur(12px)",
               boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               "&, & *": {
                 textDecoration: "none !important",
               },

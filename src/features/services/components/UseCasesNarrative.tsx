@@ -15,6 +15,7 @@ import { MONO } from "@/shared/theme/theme";
 import { SignalDiagram } from "@/shared/components/diagrams/SignalDiagram";
 import { PipelineDiagram } from "@/shared/components/diagrams/PipelineDiagram";
 import { FollowTheSunDiagram } from "@/shared/components/diagrams/FollowTheSunDiagram";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -38,7 +39,7 @@ function SlideFade({ children, disabled, scaleOnFocus = false }: { children: Rea
         opacity: disabled || inView ? 1 : 0.2,
         scale: disabled || inView ? 1 : (scaleOnFocus ? 0.85 : 1)
       }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
       style={{ display: "flex", flexGrow: 1, width: "100%", flexDirection: "column", justifyContent: "center" }}
     >
       {children}

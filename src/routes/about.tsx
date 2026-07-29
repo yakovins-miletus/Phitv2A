@@ -34,6 +34,7 @@ import { pageHead } from "@/shared/seo";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, FONT } from "@/shared/theme/theme";
 import { usePreloaderReady } from "@/shared/motion";
+import { EASE_IN_OUT_QUART, EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 export const Route = createFileRoute("/about")({
   head: () =>
@@ -525,7 +526,7 @@ function SmoothSection({ children }: { children: React.ReactNode }) {
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-10%" }}
-      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 1.2, ease: EASE_OUT_EXPO }}
     >
       {children}
     </motion.div>
@@ -552,7 +553,7 @@ function BackgroundReveal() {
         animate={ready ? { scale: 1, opacity: 1 } : { scale: 1.1, opacity: 0 }}
         transition={{
           duration: 1.8,
-          ease: [0.16, 1, 0.3, 1], // easeOutExpo
+          ease: EASE_OUT_EXPO, // easeOutExpo
           delay: 0.1,
         }}
         style={{
@@ -571,7 +572,7 @@ function BackgroundReveal() {
         animate={ready ? { clipPath: "polygon(100% 100%, 100% 100%, 100% 100%, 100% 100%)" } : {}}
         transition={{
           duration: 1.6,
-          ease: [0.76, 0, 0.24, 1], // Custom cubic-bezier for curtain reveal
+          ease: EASE_IN_OUT_QUART, // Custom cubic-bezier for curtain reveal
           delay: 0.1,
         }}
         style={{
@@ -588,7 +589,7 @@ function BackgroundReveal() {
         animate={ready ? { clipPath: "polygon(100% 100%, 100% 100%, 100% 100%, 100% 100%)" } : {}}
         transition={{
           duration: 1.6,
-          ease: [0.76, 0, 0.24, 1],
+          ease: EASE_IN_OUT_QUART,
           delay: 0.22, // Lagged behind Navy
         }}
         style={{

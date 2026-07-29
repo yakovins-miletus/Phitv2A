@@ -19,10 +19,10 @@ import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { ServiceDrawer, ServiceVector } from "./ServiceDrawer";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 const SERVICE_ICONS = [MemoryIcon, QueryStatsIcon, StorageIcon, SettingsSuggestIcon];
 
-const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 /** The four capabilities as one stage instead of four near-identical ones.
  *

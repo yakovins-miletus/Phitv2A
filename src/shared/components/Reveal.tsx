@@ -3,8 +3,8 @@ import { useRef } from "react";
 import type { ReactNode } from "react";
 
 import { useEntranceSettled, useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
-const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 /** Shared scroll-into-view reveal. Animate ONLY transform+opacity.
  *  Content is visible by default via CSS; the JS animation enhances. */

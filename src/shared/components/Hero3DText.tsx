@@ -3,6 +3,7 @@ import { useRef } from "react";
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import { usePreloaderReady, useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 interface Hero3DTextProps {
   children: ReactNode;
@@ -52,7 +53,7 @@ export function Hero3DText({ children, delay = 0 }: Hero3DTextProps) {
         } : {}}
         transition={{ 
           duration: 1.6, 
-          ease: [0.16, 1, 0.3, 1], // Custom smooth ease
+          ease: EASE_OUT_EXPO, // Custom smooth ease
           delay 
         }}
         style={{ transformOrigin: "left center" }}

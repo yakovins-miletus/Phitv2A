@@ -11,6 +11,7 @@ import { alpha } from "@mui/material/styles";
 
 import { NOIR } from "@/shared/theme/palette";
 import { FONT, MONO } from "@/shared/theme/theme";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 /** Subtle animated grid lines — pure CSS, no canvas, GPU-friendly. */
 function GridBackground() {
@@ -101,7 +102,7 @@ export function NotFoundPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.85 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+        transition={{ duration: 0.7, ease: EASE_OUT_EXPO, delay: 0.05 }}
         style={{ position: "relative", zIndex: 1 }}
       >
         <Typography

@@ -148,6 +148,10 @@ const formatTime = (seconds: number) => {
   return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 };
 
+/** How far the daily-life card stays pinned, as a multiple of viewport height.
+ *  Sized to its three-phase timeline; unrelated to the other sections' pins. */
+const DAILY_LIFE_PIN_DISTANCE = "+=140%";
+
 // Behind The Code — the daily-life film, with its own player chrome.
 function DailyLifeSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -203,7 +207,7 @@ function DailyLifeSection() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=140%",
+          end: DAILY_LIFE_PIN_DISTANCE,
           pin: true,
           scrub: SCROLL_SPEED,
           anticipatePin: 1,
@@ -545,6 +549,10 @@ const CORNERS = [
   { bottom: -1, right: -1, borderBottom: 2, borderRight: 2 },
 ] as const;
 
+/** Pin distance for the two-panel careers swap. Longer than daily-life's
+ *  because it drives four phases across two panels, not three across one. */
+const CAREERS_PIN_DISTANCE = "+=200%";
+
 // Talent & Careers — Who We Look For and the Technical Graduate Program,
 // swapped as two panels across one pinned scrub.
 function CandidatesAndCareersSection() {
@@ -582,7 +590,7 @@ function CandidatesAndCareersSection() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=200%",
+          end: CAREERS_PIN_DISTANCE,
           pin: true,
           scrub: SCROLL_SPEED,
           anticipatePin: 1,

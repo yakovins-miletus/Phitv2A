@@ -8,6 +8,7 @@ import { MONO } from "@/shared/theme/theme";
 import { ScrambleText } from "./ScrambleText";
 
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_IN_OUT_QUART } from "@/shared/motion/easing";
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
 const HARD_CAP_MS = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 150 : 800;
@@ -95,7 +96,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
       <motion.div
         initial={{ clipPath: "circle(150% at 50% 50%)" }}
         animate={done ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
-        transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
+        transition={{ duration: 0.55, ease: EASE_IN_OUT_QUART }}
         onAnimationComplete={() => {
           if (done) {
             sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
