@@ -39,6 +39,12 @@ export function SmoothScroll() {
     if (reduced === true || !ready) return;
     const lenis = new Lenis({ duration: SCROLL_SPEED, easing: scrollEase });
     activeLenis = lenis;
+    // Dev-only handle for the parity ladder in tests/e2e/. The probe must
+    // drive Lenis rather than fight its rAF loop, or every recorded scroll
+    // offset is whatever Lenis animated back to. Stripped from production.
+    if (import.meta.env.DEV) {
+      (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
+    }
 
     lenis.on("scroll", ScrollTrigger.update);
     const onTick = (time: number) => {
@@ -53,6 +59,9 @@ export function SmoothScroll() {
 
     return () => {
       cancelAnimationFrame(refreshId);
+      if (import.meta.env.DEV) {
+        delete (window as unknown as { __lenis?: Lenis }).__lenis;
+      }
       if (activeLenis) {
         activeLenis.start();
         activeLenis.destroy();
