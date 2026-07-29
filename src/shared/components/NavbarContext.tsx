@@ -2,13 +2,46 @@ import React, { createContext, useContext, useState, useEffect, useRef, useMemo,
 
 export type NavbarMode = 'minimal' | 'dynamic' | 'compact' | 'immersive' | 'liquid' | 'notch';
 
+/**
+ * Navbar anchors — the SECOND of the page's "what is on screen" registries, and
+ * deliberately not the same one as HOME_SECTIONS in @/shared/sections.
+ *
+ * The two answer different questions with different machinery:
+ *
+ *   HOME_SECTIONS  ScrollTrigger, top-50%/bottom-50% boundaries. Drives the
+ *                  EyeFlow rail: "which chapter is the reader in".
+ *   NAV_ANCHORS    IntersectionObserver, rootMargin "-80px 0px -90% 0px".
+ *                  Drives navbar compact/dark: "is something under the navbar
+ *                  right now", which is a strip 80px tall, not a section.
+ *
+ * Unifying them would mean swapping one set of thresholds for the other and
+ * retiming the navbar. They stay separate on purpose.
+ *
+ * What was NOT on purpose is that both took a bare `string`, so nothing stopped
+ * someone passing "daily-life" (a section id) where "daily-life-video" (an
+ * anchor id) was meant — silently registering an anchor that never intersects.
+ * Anchor ids now live here and useNavbarAnchor only accepts one of them.
+ */
+export const NAV_ANCHORS = {
+  /** The home page's post-hero content zone. */
+  HOME_COMPACT: 'home-compact',
+  /** The daily-life film, which the navbar must go light over. */
+  DAILY_LIFE_VIDEO: 'daily-life-video',
+  /** The About page's journey timeline. */
+  ABOUT_TIMELINE: 'timeline',
+  /** AppShell's footer, on every route. */
+  SITE_FOOTER: 'site-footer',
+} as const;
+
+export type NavAnchorId = (typeof NAV_ANCHORS)[keyof typeof NAV_ANCHORS];
+
 interface NavbarContextValue {
   overrideMode: NavbarMode;
   setOverrideMode: (mode: NavbarMode) => void;
   autohideEnabled: boolean;
   setAutohideEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   toggleAutohide: () => void;
-  registerAnchor: (id: string, isIntersecting: boolean, dark?: boolean) => void;
+  registerAnchor: (id: NavAnchorId, isIntersecting: boolean, dark?: boolean) => void;
   isAutoCompact: boolean;
   derivedIsCompact: boolean;
   isOverDarkSection: boolean;
@@ -35,7 +68,7 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
     setShowMotto((prev) => !prev);
   }, []);
 
-  const registerAnchor = useCallback((id: string, isIntersecting: boolean, dark = false) => {
+  const registerAnchor = useCallback((id: NavAnchorId, isIntersecting: boolean, dark = false) => {
     setActiveAnchors((prev) => {
       const next = new Set(prev);
       if (isIntersecting) {
@@ -98,7 +131,7 @@ export function useNavbar() {
   return context;
 }
 
-export function useNavbarAnchor(id: string, options?: { dark?: boolean; rootMargin?: string; threshold?: number | number[] }) {
+export function useNavbarAnchor(id: NavAnchorId, options?: { dark?: boolean; rootMargin?: string; threshold?: number | number[] }) {
   const { registerAnchor } = useNavbar();
   const ref = useRef<HTMLDivElement>(null);
   const darkRef = useRef(options?.dark ?? false);

@@ -26,7 +26,7 @@ import { CommandPalette } from "./CommandPalette";
 
 import { GrainOverlay } from "./GrainOverlay";
 import { LiquidNavHandle, useLiquidSpacing } from "./LiquidNavHandle";
-import { NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
+import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
 // Removed Magnetic imports
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
 import type { LoadSignal } from "./Preloader";
@@ -35,6 +35,9 @@ import { RouterButton, RouterLink } from "./RouterLink";
 import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
+import { useNavAutohide } from "./useNavAutohide";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home" },
@@ -195,7 +198,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
           bgcolor: color,
           borderRadius: "1px",
           transform: isHovered ? "translateY(-2px)" : "translateY(0)",
-          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         }}
       />
       <Box
@@ -204,7 +207,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
           height: 2,
           bgcolor: color,
           borderRadius: "1px",
-          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         }}
       />
       <Box
@@ -214,7 +217,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
           bgcolor: color,
           borderRadius: "1px",
           transform: isHovered ? "translateY(2px)" : "translateY(0)",
-          transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         }}
       />
     </Box>
@@ -286,7 +289,7 @@ function AnimatedMenuButton({
         cursor: "pointer",
         outline: "none",
         boxShadow: hovered ? `0 6px 20px ${alpha(NOIR.navyField, 0.25)}` : "none",
-        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
       }}
     >
@@ -651,14 +654,30 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [scrollPressure, setScrollPressure] = useState(0);
   const currentNarration = NARRATION_FLOW[pathname] ?? NARRATION_FLOW["/"]!;
 
+  // The 1s hold between arming the transition and closing the curtain. It has
+  // to live outside the pressure effect below: arming sets `transitionState`,
+  // which is one of that effect's deps, so the effect tears down and re-runs
+  // immediately — and a cleanup owned by it would cancel the very timer that
+  // drives triggered -> closing, freezing the machine. (Before this it was an
+  // uncaptured setTimeout, so nothing could cancel it; the leak was what made
+  // it work, at the cost of firing after unmount.) Component-scoped ref plus an
+  // unmount-only cleanup fixes the leak without breaking the hold.
+  const triggerHoldRef = useRef<number | undefined>(undefined);
+  useEffect(
+    () => () => {
+      if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     // Reset body overflow on route change to guarantee scroll is never blocked on new pages
     if (typeof document !== "undefined") {
       document.body.style.overflow = "";
     }
-    if (typeof window !== "undefined" && (window as any).ScrollTrigger) {
-      (window as any).ScrollTrigger.refresh();
-    }
+    // No-op until the lazy home chunk has loaded — see scrollTriggerBridge.ts
+    // for why AppShell cannot import gsap directly.
+    refreshScrollTriggers();
   }, [pathname]);
 
   // Continuous overscroll below footer -> transition to next narration page
@@ -673,7 +692,32 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
     let accumulated = 0;
     const threshold = 280; // threshold scroll pressure to trigger next page
-    let resetTimer: number;
+    // Two distinct handles. These used to share one `resetTimer` variable that
+    // held either a setInterval or a setTimeout id depending on the code path,
+    // so every call site had to fire both clearInterval and clearTimeout and
+    // hope. `armTimer` is the delay before draining starts; `drainTimer` is the
+    // drain itself. Both are correctly scoped to this effect. The 1s post-arm
+    // hold is NOT — see triggerHoldRef above.
+    let armTimer: number | undefined;
+    let drainTimer: number | undefined;
+
+    const clearArm = () => {
+      if (armTimer !== undefined) {
+        window.clearTimeout(armTimer);
+        armTimer = undefined;
+      }
+    };
+    const clearDrain = () => {
+      if (drainTimer !== undefined) {
+        window.clearInterval(drainTimer);
+        drainTimer = undefined;
+      }
+    };
+    /** Cancel any pending drain, however far along it is. */
+    const cancelDraining = () => {
+      clearArm();
+      clearDrain();
+    };
 
     const checkIsAtBottom = () => {
       const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
@@ -687,40 +731,49 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
 
     const drainPressure = () => {
-      resetTimer = window.setInterval(() => {
+      // Behaviour change, deliberate: this used to start a new interval without
+      // clearing a running one, so a fast scroll burst left N orphans all
+      // decrementing `accumulated` and the pressure fell N times too fast. The
+      // arm-time was therefore a function of how many strays happened to be
+      // alive. Now exactly one drain runs and the rate is the designed 15/30ms.
+      clearDrain();
+      drainTimer = window.setInterval(() => {
         accumulated = Math.max(0, accumulated - 15);
         setScrollPressure(Math.round((accumulated / threshold) * 100));
         if (accumulated === 0) {
-          window.clearInterval(resetTimer);
+          clearDrain();
         }
       }, 30);
+    };
+
+    /** Arm the page transition and hold a beat before the curtain closes. */
+    const armTransition = () => {
+      setScrollPressure(100);
+      transitionTargetRef.current = currentNarration.next;
+      setTransitionState("triggered");
+      cancelDraining();
+      if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
+      triggerHoldRef.current = window.setTimeout(() => {
+        triggerHoldRef.current = undefined;
+        setScrollPressure(0);
+        setTransitionState("closing");
+      }, 1000);
     };
 
     const handleWheel = (e: WheelEvent) => {
       const isAtBottom = checkIsAtBottom();
       if (isAtBottom && e.deltaY > 0) {
         if (e.cancelable) e.preventDefault();
-        window.clearInterval(resetTimer);
+        clearDrain();
         accumulated = Math.min(threshold, accumulated + e.deltaY * 0.7);
         setScrollPressure(Math.round((accumulated / threshold) * 100));
 
         if (accumulated >= threshold) {
-          setScrollPressure(100);
-          const target = currentNarration.next;
-          transitionTargetRef.current = target;
-          setTransitionState("triggered");
-          
-          window.clearTimeout(resetTimer);
-          window.clearInterval(resetTimer);
-
-          setTimeout(() => {
-            setScrollPressure(0);
-            setTransitionState("closing");
-          }, 1000);
+          armTransition();
         } else {
           // start draining when user stops scrolling
-          window.clearTimeout(resetTimer);
-          resetTimer = window.setTimeout(drainPressure, 150);
+          clearArm();
+          armTimer = window.setTimeout(drainPressure, 150);
         }
       }
     };
@@ -739,35 +792,24 @@ function AppShellInner({ children }: { children: ReactNode }) {
         const diffY = startTouchY - currentTouchY;
         if (diffY > 0) {
           if (e.cancelable) e.preventDefault();
-          window.clearInterval(resetTimer);
+          clearDrain();
           accumulated = Math.min(threshold, accumulated + diffY * 0.85);
           setScrollPressure(Math.round((accumulated / threshold) * 100));
           startTouchY = currentTouchY;
 
           if (accumulated >= threshold) {
-            setScrollPressure(100);
-            const target = currentNarration.next;
-            transitionTargetRef.current = target;
-            setTransitionState("triggered");
-            
-            window.clearTimeout(resetTimer);
-            window.clearInterval(resetTimer);
-
-            setTimeout(() => {
-              setScrollPressure(0);
-              setTransitionState("closing");
-            }, 1000);
+            armTransition();
           } else {
-            window.clearTimeout(resetTimer);
-            resetTimer = window.setTimeout(drainPressure, 200);
+            clearArm();
+            armTimer = window.setTimeout(drainPressure, 200);
           }
         }
       }
     };
 
     const handleTouchEnd = () => {
-      window.clearTimeout(resetTimer);
-      resetTimer = window.setTimeout(drainPressure, 50);
+      clearArm();
+      armTimer = window.setTimeout(drainPressure, 50);
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
@@ -780,46 +822,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
-      window.clearInterval(resetTimer);
-      window.clearTimeout(resetTimer);
+      cancelDraining();
     };
   }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
 
   const headerReleased = phase === "header" || phase === "open";
   const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled, showMotto, toggleMotto } = useNavbar();
-  const [navHidden, setNavHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  const scrollAccumulator = useRef(0);
-
-  useEffect(() => {
-    if (!autohideEnabled) {
-      setNavHidden(false);
-      return;
-    }
-
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      const diff = currentY - lastScrollY.current;
-
-      if (currentY < 80) {
-        setNavHidden(false);
-        scrollAccumulator.current = 0;
-      } else if (diff > 8) {
-        setNavHidden(true);
-        scrollAccumulator.current = 0;
-      } else if (diff < -10) {
-        scrollAccumulator.current += diff;
-        if (scrollAccumulator.current < -25 || currentY < 120) {
-          setNavHidden(false);
-        }
-      }
-
-      lastScrollY.current = currentY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [autohideEnabled]);
+  const navHidden = useNavAutohide(autohideEnabled, pathname);
 
   // Global keyboard shortcut to toggle company motto (Alt+M / Option+M)
   useEffect(() => {
@@ -847,7 +856,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isImmersive = overrideMode === "immersive";
   const pointerFine = usePointerFine();
   const { insetX: liquidInsetX, insetY: liquidInsetY, setInset: setLiquidInset, reset: resetLiquidSpacing } = useLiquidSpacing();
-  const footerAnchorRef = useNavbarAnchor("site-footer", { dark: true });
+  const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
 
   useEffect(() => {
     // Eases the spacing back to zero whenever the user leaves Liquid Mode
@@ -880,7 +889,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             pointerEvents: showPreloader ? "none" : "none",
             transform: navHidden || showPreloader ? "translateY(-120%)" : "translateY(0%)",
             opacity: showPreloader ? 0 : 1,
-            transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease",
+            transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease`,
           }}
         >
           <Container maxWidth={isMinimal ? false : "xl"} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined }}>
@@ -1299,7 +1308,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 key="page-slide-transition"
                 initial={{ x: "-100%" }}
                 animate={(transitionState === "closing" || transitionState === "loading") ? { x: "0%" } : { x: "100%" }}
-                transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+                transition={{ duration: 0.8, ease: EASE_IN_OUT_QUART }}
                 onAnimationComplete={() => {
                   if (transitionState === "closing" && transitionTargetRef.current) {
                     const nextRoute = transitionTargetRef.current;

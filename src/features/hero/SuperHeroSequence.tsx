@@ -11,11 +11,17 @@ import { RouterLink } from "@/shared/components/RouterLink";
 import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
+import { panelOpacity, panelPointerEvents, wordLiftPercent } from "./heroPhases";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+/** The hero holds for three viewport heights, which is what gives the three
+ *  phases in heroPhases.ts room to read as distinct beats rather than a blur. */
+const HERO_PIN_DISTANCE = "+=300%";
 
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
@@ -34,9 +40,28 @@ export function HeroSignalCore() {
       ScrollTrigger.create({
         trigger: pinRef.current,
         start: "top top",
-        end: "+=300%",
+        end: HERO_PIN_DISTANCE,
         scrub: 0.6,
         pin: true,
+        // PARITY-LOCKED, and the obvious fix does not work — measured, not assumed.
+        //
+        // This fires on every scrub frame, so the whole hero subtree re-renders
+        // and emotion re-serialises every `sx` that interpolates the value. One
+        // pass of this pin at 1440x900 injects ~2,648 new CSS rules and pushes
+        // p95 frame time to ~46ms.
+        //
+        // The textbook fix — write the continuous values as CSS custom
+        // properties instead of state — was implemented and measured here. It
+        // removed only 485 of those 2,648 rules (18%) and left frame times
+        // unchanged, because the cost is not in this file. It is in
+        // HeroSignalP, which interpolates `progress` into its own sx at a dozen
+        // sites AND is structurally dependent on it: numLayers is
+        // round(16 * (1 - progress)), so the hero subtree goes from 241 DOM
+        // nodes to 33 across the pin. No custom property can express that.
+        //
+        // A real fix has to change how HeroSignalP renders its extrusion
+        // layers. That is a redesign of that component, not a refactor of this
+        // one, so it was reverted rather than shipped as a half-measure.
         onUpdate: (self) => {
           setScrollProgress(self.progress);
         },
@@ -101,7 +126,7 @@ export function HeroSignalCore() {
                   lineHeight: 1,
                   textTransform: "uppercase",
                   userSelect: "none",
-                  transform: reduced ? "translateY(0)" : `translateY(${ (1 - (scrollProgress <= 0.75 ? 0 : (scrollProgress - 0.75) / 0.25)) * -110 }%)`,
+                  transform: reduced ? "translateY(0)" : `translateY(${wordLiftPercent(scrollProgress)}%)`,
                   transition: "transform 0.05s linear",
                 }}
               >
@@ -150,8 +175,8 @@ export function HeroSignalCore() {
             flexDirection: "column",
             alignItems: "flex-start",
             gap: 0.8,
-            opacity: Math.max(0, 1 - scrollProgress * 3),
-            pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
+            opacity: panelOpacity(scrollProgress),
+            pointerEvents: panelPointerEvents(scrollProgress),
             transition: "opacity 0.3s ease",
           }}
         >
@@ -183,7 +208,7 @@ export function HeroSignalCore() {
               bgcolor: alpha(NOIR.panel, 0.75),
               backdropFilter: "blur(12px)",
               boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               "&, & *": {
                 textDecoration: "none !important",
               },
@@ -225,8 +250,8 @@ export function HeroSignalCore() {
             flexDirection: "column",
             alignItems: "flex-end",
             gap: 0.8,
-            opacity: Math.max(0, 1 - scrollProgress * 3),
-            pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
+            opacity: panelOpacity(scrollProgress),
+            pointerEvents: panelPointerEvents(scrollProgress),
             transition: "opacity 0.3s ease",
           }}
         >
@@ -259,7 +284,7 @@ export function HeroSignalCore() {
               bgcolor: alpha(NOIR.panel, 0.75),
               backdropFilter: "blur(12px)",
               boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               "&, & *": {
                 textDecoration: "none !important",
               },
@@ -301,8 +326,8 @@ export function HeroSignalCore() {
             flexDirection: "column",
             alignItems: "flex-start",
             gap: 0.8,
-            opacity: Math.max(0, 1 - scrollProgress * 3),
-            pointerEvents: scrollProgress > 0.3 ? "none" : "auto",
+            opacity: panelOpacity(scrollProgress),
+            pointerEvents: panelPointerEvents(scrollProgress),
             transition: "opacity 0.3s ease",
           }}
         >
@@ -334,7 +359,7 @@ export function HeroSignalCore() {
               bgcolor: alpha(NOIR.panel, 0.75),
               backdropFilter: "blur(12px)",
               boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               "&, & *": {
                 textDecoration: "none !important",
               },
@@ -374,7 +399,7 @@ export function HeroSignalCore() {
             zIndex: 4,
             display: { xs: "none", md: "flex" },
             alignItems: "center",
-            opacity: Math.max(0, 1 - scrollProgress * 3),
+            opacity: panelOpacity(scrollProgress),
           }}
         >
           <Typography

@@ -11,12 +11,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 /**
  * Unified transition tokens — mirrored from Reveal / StaggerItem so every
  * choreographed entrance across the site feels coherent.
  */
-const EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const REVEAL_DURATION = 0.6;
 const STAGGER_GAP = 0.06;
 /** MUI Drawer slide speed, derived from the global scroll-speed constant. */

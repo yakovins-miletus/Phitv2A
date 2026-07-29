@@ -22,10 +22,16 @@ export interface SectionDef {
 /** Attribute marking a snap-target stage element. */
 export const STAGE_ATTR = "data-stage-section";
 
-/** Wheel-paging stops here: this section and everything below it scroll
- *  freely (design: section 6, Global Reach, onward). */
-export const SNAP_STOP_SECTION_ID = "reach";
-
+/** Two entries here are not what they look like, and both have bitten people:
+ *
+ *  - `services` is rendered by CapabilityRack, not by routes/index.tsx.
+ *  - `closing` is never rendered as a section at all. It survives because
+ *    EyeFlow draws one rail dot per entry, so deleting it silently changes the
+ *    visible dot count. Remove it only together with an EyeFlow change.
+ *
+ *  This list is also NOT the registry the navbar uses. NavbarContext keeps its
+ *  own anchor ids in a separate namespace ("daily-life-video", "home-compact")
+ *  that deliberately does not line up with these — see NavbarContext.tsx. */
 export const HOME_SECTIONS: readonly SectionDef[] = [
   { id: "hero", label: "Signal Core", chapter: 0 },
   { id: "hero-desc", label: "Core Mission", chapter: 0 },
@@ -74,10 +80,4 @@ export function useActiveSection(): string {
     () => activeId,
     () => DEFAULT_SECTION_ID,
   );
-}
-
-/** Height of the sticky AppBar overlaying the viewport top — snap targets and
- *  scroll anchors land flush beneath it. */
-export function measureHeaderOffset(): number {
-  return 0; // Navbar is fixed/transparent, so sections should snap flush to the viewport top
 }
