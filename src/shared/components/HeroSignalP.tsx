@@ -3,6 +3,12 @@ import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
+import {
+  PHASE_FLATTEN_END,
+  flattenProgress,
+  moveLeftProgress,
+  sideFaceOpacity,
+} from "@/features/hero/heroPhases";
 
 // Grid cell base dimension in pixels (enlarged from 32px to 42px)
 const GRID_CELL = 42;
@@ -145,7 +151,7 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
     const start = performance.now();
 
     const draw = (now: number) => {
-      if (!isVisible || progressRef.current > 0.45) {
+      if (!isVisible || progressRef.current > PHASE_FLATTEN_END) {
         raf = requestAnimationFrame(draw);
         return;
       }
@@ -524,16 +530,16 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
   // If reduced motion is requested, instantly render the final 2D shifted layout
   const effectiveProgress = reduced ? 1 : progress;
 
-  // Phase 1 (0 to 0.45): 3D to 2D flattening
-  const progress3dTo2d = Math.min(1, effectiveProgress / 0.45);
+  // Phase 1 (0 to PHASE_FLATTEN_END): 3D to 2D flattening
+  const progress3dTo2d = flattenProgress(effectiveProgress);
 
-  // Phase 2 (0.45 to 0.75): P logo shifts left (desktop/tablet) or up (mobile)
-  const progressMoveLeft = effectiveProgress <= 0.45 ? 0 : effectiveProgress >= 0.75 ? 1 : (effectiveProgress - 0.45) / 0.3;
+  // Phase 2: P logo shifts left (desktop/tablet) or up (mobile)
+  const progressMoveLeft = moveLeftProgress(effectiveProgress);
 
   const rotX = 55 * (1 - progress3dTo2d);
   const rotZ = -45 * (1 - progress3dTo2d);
   const wrapperScale = 1.25 - 0.25 * progress3dTo2d;
-  const sideOpacity = Math.max(0, 1 - progress3dTo2d * 1.8);
+  const sideOpacity = sideFaceOpacity(progress3dTo2d);
   const logoLayers = Math.max(1, Math.round(12 * (1 - progress3dTo2d)));
 
   return (
