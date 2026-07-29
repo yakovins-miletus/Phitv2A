@@ -23,12 +23,14 @@ test("reduced motion: no preloader overlay mounts, hero text is present immediat
   await renderHome();
 
   expect(screen.queryByTestId("preloader")).not.toBeInTheDocument();
-  // Hero copy, un-gated by any scroll progress: under reduce the h1 sits at
-  // translateY(0) and the scroll cue is painted with the rest of the stage.
   expect(screen.getByText("[ SCROLL TO EXPLORE ↓ ]")).toBeInTheDocument();
+  // The core-mission block renders CONTENT.hero.description, split around
+  // "R&D firm" so that phrase can be gold — so the sentence is broken across
+  // elements and needs a node-spanning matcher.
   expect(
-    screen.getByText("We took two milliseconds down to eighteen microseconds."),
+    screen.getByText(/we view global markets as the ultimate intellectual puzzle/i),
   ).toBeInTheDocument();
+  expect(screen.getByText("R&D firm")).toBeInTheDocument();
 });
 
 test("reduced motion: stat strip renders final values instantly", async () => {

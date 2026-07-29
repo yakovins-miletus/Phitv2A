@@ -18,11 +18,13 @@ test("home route loads via the router: hero, services, new visual sections", asy
   expect(
     await screen.findByRole("heading", { level: 1, name: "Phitopolis" }),
   ).toBeInTheDocument();
-  // The hero's own copy. CONTENT.hero.tagline is no longer rendered anywhere —
-  // the mission lede (CONTENT.ledes.mission) replaced it in HeroDescriptionSection.
+  // The core-mission block renders CONTENT.hero.description, split around
+  // "R&D firm" so that phrase can be gold — so the sentence is broken across
+  // elements and needs a node-spanning matcher.
   expect(
-    screen.getByText("We took two milliseconds down to eighteen microseconds."),
+    screen.getByText(/we view global markets as the ultimate intellectual puzzle/i),
   ).toBeInTheDocument();
+  expect(screen.getByText("R&D firm")).toBeInTheDocument();
   expect(screen.getByText("Full-Stack Development")).toBeInTheDocument();
   expect(screen.getByText("From problem to production")).toBeInTheDocument();
   // ReachSection's heading became a SectionLede bound to CONTENT.ledes.reach.

@@ -8,7 +8,6 @@ import { useGSAP } from "@gsap/react";
 import { CONTENT } from "@/shared/content";
 import { HeroSignalP } from "@/shared/components/HeroSignalP";
 import { RouterLink } from "@/shared/components/RouterLink";
-import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { panelOpacity, panelPointerEvents, wordLiftPercent } from "./heroPhases";
@@ -426,24 +425,52 @@ export function HeroSignalCore() {
   );
 }
 
-/** Core mission, as L0 + L1.
- *
- *  This used to set CONTENT.hero.description — a 40-word sentence — at
- *  3.4rem/800. Nothing that long is readable at display size, so the reader
- *  either scrubbed past it or stopped. The claim now leads with a number the
- *  site already owns (CONTENT.impact: 2ms → 18µs) and the reasoning drops to
- *  body size behind it. */
+// Appended Section right after the hero page presenting the core mission statement
 export function HeroDescriptionSection() {
   const sectionDef = homeSection("hero-desc");
   return (
     <StageSection section={sectionDef} muted>
-      <Box sx={{ py: { xs: 6, md: 10 }, maxWidth: 980, mx: "auto", px: 2 }}>
-        <SectionLede
-          gunshot={CONTENT.ledes.mission.gunshot}
-          tracer={CONTENT.ledes.mission.tracer}
-          eyebrow="Core Mission"
-          align="center"
-        />
+      <Box
+        sx={{
+          py: { xs: 6, md: 10 },
+          textAlign: "center",
+          maxWidth: 980,
+          // alignSelf, NOT mx:"auto". StageSection wraps children in a MUI
+          // Stack, and Stack's spacing emits `& > :not(style):not(style) {
+          // margin: 0 }` on its direct children — a two-class selector that
+          // outranks this Box's own single-class sx rule. So `mx: "auto"`
+          // computed to 0px and this block sat 86px left of centre at 1440px
+          // wide, dented by exactly half the slack between its 980px cap and
+          // the 1152px stage. alignSelf is flex-native and unaffected.
+          alignSelf: "center",
+          width: "100%",
+          px: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Typography
+          variant="h2"
+          component="h2"
+          sx={{
+            fontSize: { xs: "1.8rem", sm: "2.6rem", md: "3.4rem" },
+            fontWeight: 800,
+            lineHeight: 1.3,
+            letterSpacing: "-0.02em",
+            color: "text.primary",
+          }}
+        >
+          {CONTENT.hero.description.split(/(R&D firm)/g).map((part, i) =>
+            /^(R&D firm)$/.test(part) ? (
+              <Box key={i} component="span" sx={{ color: NOIR.gold, fontWeight: 800 }}>
+                {part}
+              </Box>
+            ) : (
+              part
+            )
+          )}
+        </Typography>
       </Box>
     </StageSection>
   );
