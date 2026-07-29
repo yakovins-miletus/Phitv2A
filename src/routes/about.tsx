@@ -27,7 +27,7 @@ import { FillText } from "@/shared/components/FillText";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { Section } from "@/shared/components/Section";
 import { StatStrip } from "@/shared/components/StatStrip";
-import { useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { JourneyTimeline } from "@/features/about/components/JourneyTimeline";
 import { BackgroundReveal } from "@/features/about/components/BackgroundReveal";
 import { MetaLabel } from "@/features/about/components/MetaLabel";
@@ -495,7 +495,7 @@ function CertificationsSection() {
 }
 
 function AboutPage() {
-  const timelineAnchorRef = useNavbarAnchor("timeline", { dark: true });
+  const timelineAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TIMELINE, { dark: true });
 
   return (
     <Box sx={{ pt: 0, pb: { xs: 12, md: 16 }, display: "flex", flexDirection: "column", gap: { xs: 8, md: 20 } }}>

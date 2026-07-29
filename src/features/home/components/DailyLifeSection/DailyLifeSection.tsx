@@ -16,7 +16,7 @@ import { CONTENT } from "@/shared/content";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { SectionLede } from "@/shared/components/SectionLede";
-import { useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { useStagePresence } from "@/shared/components/StageSection";
 import {
   STAGE_ENTER_DURATION,
@@ -59,7 +59,7 @@ export function DailyLifeSection() {
   const reducedMotion = useReducedMotion();
 
   useStagePresence(sectionRef, "daily-life");
-  const videoAnchorRef = useNavbarAnchor("daily-life-video", { dark: true });
+  const videoAnchorRef = useNavbarAnchor(NAV_ANCHORS.DAILY_LIFE_VIDEO, { dark: true });
 
   useGSAP(
     () => {

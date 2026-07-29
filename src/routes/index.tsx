@@ -9,7 +9,7 @@ import { EyeFlow } from "@/shared/components/EyeFlow";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { StatStrip } from "@/shared/components/StatStrip";
 import { useStagePresence } from "@/shared/components/StageSection";
-import { useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
 import { CapabilityRack } from "@/features/services/components/CapabilityRack";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const useCasesRef = useRef<HTMLElement>(null);
-  const compactZoneRef = useNavbarAnchor("home-compact");
+  const compactZoneRef = useNavbarAnchor(NAV_ANCHORS.HOME_COMPACT);
   useStagePresence(useCasesRef, "use-cases");
 
   return (

@@ -26,7 +26,7 @@ import { CommandPalette } from "./CommandPalette";
 
 import { GrainOverlay } from "./GrainOverlay";
 import { LiquidNavHandle, useLiquidSpacing } from "./LiquidNavHandle";
-import { NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
+import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
 // Removed Magnetic imports
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
 import type { LoadSignal } from "./Preloader";
@@ -37,6 +37,7 @@ import PhitopolisLogo from "./PhitopolisLogo";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
+import { useNavAutohide } from "./useNavAutohide";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home" },
@@ -827,47 +828,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   const headerReleased = phase === "header" || phase === "open";
   const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled, showMotto, toggleMotto } = useNavbar();
-  const [navHidden, setNavHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  const scrollAccumulator = useRef(0);
-
-  useEffect(() => {
-    if (!autohideEnabled) {
-      setNavHidden(false);
-      return;
-    }
-
-    // Re-baseline on route change. Without this the first scroll event after a
-    // navigation computes `diff` against the *previous* page's offset — leaving
-    // a tall page for a short one produced a large positive diff and hid the
-    // nav for one frame before the next event corrected it. Deliberate visible
-    // change: it removes a flicker, it does not move any threshold.
-    lastScrollY.current = window.scrollY;
-    scrollAccumulator.current = 0;
-
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      const diff = currentY - lastScrollY.current;
-
-      if (currentY < 80) {
-        setNavHidden(false);
-        scrollAccumulator.current = 0;
-      } else if (diff > 8) {
-        setNavHidden(true);
-        scrollAccumulator.current = 0;
-      } else if (diff < -10) {
-        scrollAccumulator.current += diff;
-        if (scrollAccumulator.current < -25 || currentY < 120) {
-          setNavHidden(false);
-        }
-      }
-
-      lastScrollY.current = currentY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [autohideEnabled, pathname]);
+  const navHidden = useNavAutohide(autohideEnabled, pathname);
 
   // Global keyboard shortcut to toggle company motto (Alt+M / Option+M)
   useEffect(() => {
@@ -895,7 +856,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isImmersive = overrideMode === "immersive";
   const pointerFine = usePointerFine();
   const { insetX: liquidInsetX, insetY: liquidInsetY, setInset: setLiquidInset, reset: resetLiquidSpacing } = useLiquidSpacing();
-  const footerAnchorRef = useNavbarAnchor("site-footer", { dark: true });
+  const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
 
   useEffect(() => {
     // Eases the spacing back to zero whenever the user leaves Liquid Mode
