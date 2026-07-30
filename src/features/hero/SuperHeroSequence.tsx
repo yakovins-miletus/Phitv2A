@@ -287,18 +287,18 @@ export function HeroSignalCore() {
             <HeroSignalP progress={scrollProgress} />
           </Box>
 
-          {/* "AT" Wordmark Transition — Fades down in during Mini Trans */}
+          {/* "AT" Wordmark Transition — Fades down in centered on P during Sub-Phase 1 */}
           {pAtVal > 0.01 && (
             <Box
               sx={{
                 position: "absolute",
                 top: "50%",
-                left: `calc(50% - ${220 - tightVal * 70}px)`,
+                left: { xs: "50%", sm: "calc(50% - 220px)", md: "calc(50% - 250px)" },
                 transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -40}px))`,
                 opacity: pAtVal,
                 zIndex: 6,
                 pointerEvents: "none",
-                transition: "transform 0.1s ease-out, opacity 0.1s ease-out",
+                transition: "opacity 0.1s ease-out, transform 0.1s ease-out",
               }}
             >
               <Typography
@@ -316,15 +316,15 @@ export function HeroSignalCore() {
             </Box>
           )}
 
-          {/* PHITOPOLIS Word Transition — Phase 3 & Tightening in Phase 7 */}
+          {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2 */}
           <Box
             sx={{
               position: "absolute",
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
               left: {
                 xs: "50%",
-                sm: `calc(50% - ${60 - tightVal * 40}px)`,
-                md: `calc(50% - ${80 - tightVal * 40}px)`,
+                sm: `calc(50% - ${60 + tightVal * 70}px)`,
+                md: `calc(50% - ${80 + tightVal * 90}px)`,
               },
               width: "auto",
               textAlign: { xs: "center", sm: "left" },
