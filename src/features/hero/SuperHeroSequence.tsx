@@ -244,7 +244,7 @@ export function HeroSignalCore() {
                   gap: 1.5,
                 }}
               >
-                GENERATIONS OF COMPETITIVENESS <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>// 02</Box>
+                YEARS OF COMPETITIVENESS <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>// 02</Box>
               </Typography>
             </Box>
           </>
@@ -272,7 +272,7 @@ export function HeroSignalCore() {
             m: "auto",
           }}
         >
-          {/* Interactive Signal Canvas Layer (P Logo: Fades down out during Mini Trans) */}
+          {/* Interactive Signal Canvas Layer (P Logo drops down out as AT pushes from top) */}
           <Box
             aria-hidden
             sx={{
@@ -280,21 +280,21 @@ export function HeroSignalCore() {
               inset: 0,
               zIndex: 4,
               opacity: (1 - pAtVal) * (reduced ? 0.4 : 0.95),
-              transform: `translateY(${pAtVal * 60}px)`,
+              transform: `translateY(${pAtVal * 160}px)`,
               transition: "transform 0.1s ease-out, opacity 0.1s ease-out",
             }}
           >
             <HeroSignalP progress={scrollProgress} />
           </Box>
 
-          {/* "AT" Wordmark Transition — Fades down in at left of P during Sub-Phase 1 */}
+          {/* "AT" Wordmark Transition — Enters from top trailing P's top edge (pushing effect) */}
           {pAtVal > 0.01 && (
             <Box
               sx={{
                 position: "absolute",
                 top: "50%",
                 left: { xs: "50%", sm: "calc(50% - 280px)", md: "calc(50% - 330px)" },
-                transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -40}px))`,
+                transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -160}px))`,
                 opacity: pAtVal,
                 zIndex: 6,
                 pointerEvents: "none",
