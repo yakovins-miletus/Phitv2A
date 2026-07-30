@@ -21,9 +21,6 @@ import {
   flankOpacity,
   pToAtProgress,
   atTightenProgress,
-  megaSentenceIndex,
-  megaBurstPanelX,
-  slideState,
   panelOpacity,
   panelPointerEvents,
   sideFaceOpacity,
@@ -133,13 +130,13 @@ test("gunshot transition scales container 1.0 to 0.4 and translates split panels
 });
 
 test("mini transformation transitions P to AT and pulls AT PHITOPOLIS close together", () => {
-  expect(pToAtProgress(0.72)).toBe(0);
-  expect(pToAtProgress(0.74)).toBeCloseTo(0.5, 6);
-  expect(pToAtProgress(0.76)).toBe(1);
+  expect(pToAtProgress(0.75)).toBe(0);
+  expect(pToAtProgress(0.80)).toBeCloseTo(0.5, 6);
+  expect(pToAtProgress(0.85)).toBe(1);
 
-  expect(atTightenProgress(0.76)).toBe(0);
-  expect(atTightenProgress(0.78)).toBeCloseTo(0.5, 6);
-  expect(atTightenProgress(0.80)).toBe(1);
+  expect(atTightenProgress(0.85)).toBe(0);
+  expect(atTightenProgress(0.90)).toBeCloseTo(0.5, 6);
+  expect(atTightenProgress(0.95)).toBe(1);
 });
 
 test.each([
@@ -166,21 +163,5 @@ test("logo side faces fade out before flattening completes", () => {
   expect(sideFaceOpacity(0.25)).toBeCloseTo(0.55, 6);
   expect(sideFaceOpacity(5 / 9)).toBeCloseTo(0, 6);
   expect(sideFaceOpacity(1)).toBe(0);
-});
-
-test("mega transformation slide index, burst panel offset, and slideState smooth fade down with buffer holds", () => {
-  expect(megaSentenceIndex(0.80)).toBe(0);
-  expect(megaSentenceIndex(0.85)).toBe(1);
-  expect(megaSentenceIndex(0.92)).toBe(2);
-  expect(megaSentenceIndex(0.97)).toBe(3);
-
-  expect(megaBurstPanelX(0.84, true)).toBe(0);
-  expect(megaBurstPanelX(1.00, true)).toBeCloseTo(120, 6);
-  expect(megaBurstPanelX(1.00, false)).toBeCloseTo(-120, 6);
-
-  // Slide 1 entry, dwell hold, exit
-  expect(slideState(0.84, 1)).toEqual({ opacity: 0, translateY: -30 });
-  expect(slideState(0.87, 1)).toEqual({ opacity: 1, translateY: 0 });
-  expect(slideState(0.90, 1)).toEqual({ opacity: 0, translateY: 30 });
 });
 

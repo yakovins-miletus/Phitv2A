@@ -19,13 +19,10 @@ import {
   flankOpacity,
   gunshotProgress,
   leftFlankX,
-  megaBurstPanelX,
-  megaSentenceIndex,
   pToAtProgress,
   panelOpacity,
   panelPointerEvents,
   rightFlankX,
-  slideState,
   topPanelX,
   wordLiftPercent,
   wordRevealProgress,
@@ -37,16 +34,9 @@ import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** The hero holds for five viewport heights to give room for 3 logo phases,
- *  an empty dwell threshold, the gunshot transition, smoking drift, and mini/mega transformations. */
-const HERO_PIN_DISTANCE = "+=1500%";
-
-const SENTENCE_SLIDES = [
-  "",
-  "AT PHITOPOLIS, WE VIEW GLOBAL MARKETS AS THE ULTIMATE INTELLECTUAL PUZZLE.",
-  "AS AN R&D FIRM, WE CREATE TECHNOLOGY & SOLUTIONS DRIVEN BY DEEP INSIGHTS.",
-  "POWERED BY MODERN ENGINEERING & THE LATEST TRENDS IN ARTIFICIAL INTELLIGENCE.",
-];
+/** The hero holds for viewport height to give room for 3 logo phases,
+ *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
+const HERO_PIN_DISTANCE = "+=1000%";
 
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
@@ -84,7 +74,7 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         snap: {
-          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.72],
+          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.75],
           duration: { min: 0.3, max: 0.8 },
           delay: 0.1,
           ease: "power2.inOut",
@@ -107,12 +97,6 @@ export function HeroSignalCore() {
   const pAtVal = reduced ? 0 : pToAtProgress(scrollProgress);
   const tightVal = reduced ? 0 : atTightenProgress(scrollProgress);
 
-  const sentenceIdx = reduced ? 0 : megaSentenceIndex(scrollProgress);
-  const topBurst = reduced ? 0 : megaBurstPanelX(scrollProgress, true);
-  const bottomBurst = reduced ? 0 : megaBurstPanelX(scrollProgress, false);
-
-  const activeSlideState = reduced ? { opacity: 1, translateY: 0 } : slideState(scrollProgress, sentenceIdx);
-
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
       <Box
@@ -133,7 +117,7 @@ export function HeroSignalCore() {
           px: { xs: 4, md: 8 },
         }}
       >
-        {/* Dual Split-Pane Images Layer (Gunshot, Smoking & Mega Burst Section) */}
+        {/* Dual Split-Pane Images Layer (Gunshot & Smoking Section) */}
         {gProgress > 0.01 && (
           <Box
             aria-hidden
@@ -145,7 +129,7 @@ export function HeroSignalCore() {
               overflow: "hidden",
             }}
           >
-            {/* Top Split Panel (Left -> Right + High-Speed Mega Burst) */}
+            {/* Top Split Panel (Left -> Right) */}
             <Box
               sx={{
                 position: "absolute",
@@ -165,14 +149,14 @@ export function HeroSignalCore() {
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
-                  transform: `translateX(${(topX + topBurst).toFixed(2)}%)`,
+                  transform: `translateX(${topX.toFixed(2)}%)`,
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
                 }}
               />
             </Box>
 
-            {/* Bottom Split Panel (Right -> Left + High-Speed Mega Burst) */}
+            {/* Bottom Split Panel (Right -> Left) */}
             <Box
               sx={{
                 position: "absolute",
@@ -192,7 +176,7 @@ export function HeroSignalCore() {
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
-                  transform: `translateX(${(bottomX + bottomBurst).toFixed(2)}%) scale(1.05)`,
+                  transform: `translateX(${bottomX.toFixed(2)}%) scale(1.05)`,
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
                 }}
@@ -272,7 +256,7 @@ export function HeroSignalCore() {
           </>
         )}
 
-        {/* Scaled Hero Container (Houses P Logo, AT Text, Wordmark & Mega Transformation Sentences) */}
+        {/* Scaled Hero Container (Houses P Logo, AT Text & Wordmark) */}
         <Box
           sx={{
             position: "relative",
@@ -310,7 +294,7 @@ export function HeroSignalCore() {
           </Box>
 
           {/* "AT" Wordmark Transition — Fades down in at left of P during Sub-Phase 1 */}
-          {pAtVal > 0.01 && sentenceIdx === 0 && (
+          {pAtVal > 0.01 && (
             <Box
               sx={{
                 position: "absolute",
@@ -339,100 +323,49 @@ export function HeroSignalCore() {
           )}
 
           {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2 */}
-          {sentenceIdx === 0 && (
-            <Box
-              sx={{
-                position: "absolute",
-                top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
-                left: {
-                  xs: "50%",
-                  sm: `calc(50% - ${60 + tightVal * 90}px)`,
-                  md: `calc(50% - ${80 + tightVal * 110}px)`,
-                },
-                width: "auto",
-                textAlign: { xs: "center", sm: "left" },
-                zIndex: 5,
-                overflow: "hidden",
-                clipPath: "inset(0 0 0 0)",
-                opacity: reduced ? 1 : wordRevealProgress(scrollProgress),
-                pointerEvents: "auto",
-                transition: "opacity 0.15s ease-out, left 0.1s ease-out",
-                transform: {
-                  xs: "translate(-50%, -50%)",
-                  sm: "translate(0, -50%)",
-                },
-              }}
-            >
-              <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
-                <Typography
-                  variant="h1"
-                  component="h1"
-                  aria-label="Phitopolis"
-                  sx={{
-                    fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
-                    fontWeight: 900,
-                    letterSpacing: "0.02em",
-                    lineHeight: 1,
-                    textTransform: "uppercase",
-                    userSelect: "none",
-                    transform: reduced ? "translateY(0)" : `translateY(${wordLiftPercent(scrollProgress)}%)`,
-                    transition: "transform 0.05s linear",
-                  }}
-                >
-                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
-                </Typography>
-              </Box>
-            </Box>
-          )}
-
-          {/* Mega Transformation: Sentence-by-Sentence Breakdown with Smooth Fade Down & Buffer Holds */}
-          {sentenceIdx >= 1 && (
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 7,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                px: { xs: 4, md: 8 },
-                textAlign: "center",
-                bgcolor: "rgba(255, 255, 255, 0.98)",
-                borderRadius: "24px",
-                opacity: activeSlideState.opacity,
-                transform: `translateY(${activeSlideState.translateY}px)`,
-                transition: "opacity 0.08s ease-out, transform 0.08s ease-out",
-              }}
-            >
+          <Box
+            sx={{
+              position: "absolute",
+              top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
+              left: {
+                xs: "50%",
+                sm: `calc(50% - ${60 + tightVal * 90}px)`,
+                md: `calc(50% - ${80 + tightVal * 110}px)`,
+              },
+              width: "auto",
+              textAlign: { xs: "center", sm: "left" },
+              zIndex: 5,
+              overflow: "hidden",
+              clipPath: "inset(0 0 0 0)",
+              opacity: reduced ? 1 : wordRevealProgress(scrollProgress),
+              pointerEvents: "auto",
+              transition: "opacity 0.15s ease-out, left 0.1s ease-out",
+              transform: {
+                xs: "translate(-50%, -50%)",
+                sm: "translate(0, -50%)",
+              },
+            }}
+          >
+            <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
               <Typography
-                variant="overline"
+                variant="h1"
+                component="h1"
+                aria-label="Phitopolis"
                 sx={{
-                  fontFamily: MONO,
-                  fontSize: { xs: "0.75rem", md: "0.9rem" },
-                  letterSpacing: "0.22em",
-                  color: NOIR.gold,
-                  fontWeight: 800,
-                  mb: 2,
-                }}
-              >
-                {`0${sentenceIdx} // HERO NARRATIVE`}
-              </Typography>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontSize: { xs: "1.4rem", sm: "2.2rem", md: "3rem" },
+                  fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
                   fontWeight: 900,
-                  lineHeight: 1.25,
-                  letterSpacing: "-0.02em",
-                  color: NOIR.navyField,
-                  maxWidth: "920px",
+                  letterSpacing: "0.02em",
+                  lineHeight: 1,
+                  textTransform: "uppercase",
+                  userSelect: "none",
+                  transform: reduced ? "translateY(0)" : `translateY(${wordLiftPercent(scrollProgress)}%)`,
+                  transition: "transform 0.05s linear",
                 }}
               >
-                {SENTENCE_SLIDES[sentenceIdx]}
+                PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
               </Typography>
             </Box>
-          )}
+          </Box>
         </Box>
 
 
