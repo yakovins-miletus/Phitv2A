@@ -84,7 +84,7 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         snap: {
-          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.72, 0.76, 0.80, 0.84, 0.87, 0.90, 0.93, 0.96, 1.00],
+          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.72],
           duration: { min: 0.3, max: 0.8 },
           delay: 0.1,
           ease: "power2.inOut",
@@ -315,7 +315,7 @@ export function HeroSignalCore() {
               sx={{
                 position: "absolute",
                 top: "50%",
-                left: { xs: "50%", sm: "calc(50% - 270px)", md: "calc(50% - 310px)" },
+                left: { xs: "50%", sm: "calc(50% - 280px)", md: "calc(50% - 330px)" },
                 transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -40}px))`,
                 opacity: pAtVal,
                 zIndex: 6,
@@ -346,8 +346,8 @@ export function HeroSignalCore() {
                 top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
                 left: {
                   xs: "50%",
-                  sm: `calc(50% - ${60 + tightVal * 130}px)`,
-                  md: `calc(50% - ${80 + tightVal * 150}px)`,
+                  sm: `calc(50% - ${60 + tightVal * 90}px)`,
+                  md: `calc(50% - ${80 + tightVal * 110}px)`,
                 },
                 width: "auto",
                 textAlign: { xs: "center", sm: "left" },
