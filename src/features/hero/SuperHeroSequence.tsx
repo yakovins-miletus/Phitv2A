@@ -10,7 +10,16 @@ import { HeroSignalP } from "@/shared/components/HeroSignalP";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
-import { panelOpacity, panelPointerEvents, wordLiftPercent } from "./heroPhases";
+import {
+  bottomPanelX,
+  containerScale,
+  gunshotProgress,
+  panelOpacity,
+  panelPointerEvents,
+  topPanelX,
+  wordLiftPercent,
+  wordRevealProgress,
+} from "./heroPhases";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
@@ -18,9 +27,9 @@ import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** The hero holds for three viewport heights, which is what gives the three
- *  phases in heroPhases.ts room to read as distinct beats rather than a blur. */
-const HERO_PIN_DISTANCE = "+=300%";
+/** The hero holds for five viewport heights to give room for 3 logo phases,
+ *  an empty dwell threshold, the gunshot transition, and smoking drift. */
+const HERO_PIN_DISTANCE = "+=500%";
 
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
@@ -42,25 +51,12 @@ export function HeroSignalCore() {
         end: HERO_PIN_DISTANCE,
         scrub: 0.6,
         pin: true,
-        // PARITY-LOCKED, and the obvious fix does not work — measured, not assumed.
-        //
-        // This fires on every scrub frame, so the whole hero subtree re-renders
-        // and emotion re-serialises every `sx` that interpolates the value. One
-        // pass of this pin at 1440x900 injects ~2,648 new CSS rules and pushes
-        // p95 frame time to ~46ms.
-        //
-        // The textbook fix — write the continuous values as CSS custom
-        // properties instead of state — was implemented and measured here. It
-        // removed only 485 of those 2,648 rules (18%) and left frame times
-        // unchanged, because the cost is not in this file. It is in
-        // HeroSignalP, which interpolates `progress` into its own sx at a dozen
-        // sites AND is structurally dependent on it: numLayers is
-        // round(16 * (1 - progress)), so the hero subtree goes from 241 DOM
-        // nodes to 33 across the pin. No custom property can express that.
-        //
-        // A real fix has to change how HeroSignalP renders its extrusion
-        // layers. That is a redesign of that component, not a refactor of this
-        // one, so it was reverted rather than shipped as a half-measure.
+        snap: {
+          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.80, 1.00],
+          duration: { min: 0.3, max: 0.8 },
+          delay: 0.1,
+          ease: "power2.inOut",
+        },
         onUpdate: (self) => {
           setScrollProgress(self.progress);
         },
@@ -68,6 +64,11 @@ export function HeroSignalCore() {
     },
     { scope: pinRef }
   );
+
+  const scaleVal = reduced ? 1 : containerScale(scrollProgress);
+  const gProgress = reduced ? 0 : gunshotProgress(scrollProgress);
+  const topX = reduced ? 0 : topPanelX(scrollProgress);
+  const bottomX = reduced ? 0 : bottomPanelX(scrollProgress);
 
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
@@ -89,31 +90,122 @@ export function HeroSignalCore() {
           px: { xs: 4, md: 8 },
         }}
       >
-        {/* Interactive Signal Canvas Layer */}
-        <Box aria-hidden sx={{ position: "absolute", inset: 0, zIndex: 4, opacity: { xs: 0.4, md: 0.95 } }}>
-          <HeroSignalP progress={scrollProgress} />
-        </Box>
+        {/* Dual Split-Pane Images Layer (Gunshot & Smoking Section) */}
+        {gProgress > 0.01 && (
+          <Box
+            aria-hidden
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 2,
+              pointerEvents: "none",
+              overflow: "hidden",
+            }}
+          >
+            {/* Top Split Panel (Left -> Right) */}
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "50vh",
+                overflow: "hidden",
+                borderBottom: "1px solid rgba(255,255,255,0.2)",
+              }}
+            >
+              <Box
+                component="img"
+                src="/images/quant-research-banner.jpg"
+                alt=""
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: `translateX(${topX.toFixed(2)}%)`,
+                  filter: "brightness(0.85) contrast(1.05)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
 
-        {/* PHITOPOLIS Word Transition — Phase 3 */}
+            {/* Bottom Split Panel (Right -> Left) */}
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50vh",
+                left: 0,
+                width: "100%",
+                height: "50vh",
+                overflow: "hidden",
+                borderTop: "1px solid rgba(255,255,255,0.2)",
+              }}
+            >
+              <Box
+                component="img"
+                src="/images/data-science-banner.png"
+                alt=""
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: `translateX(${bottomX.toFixed(2)}%) scale(1.05)`,
+                  filter: "brightness(0.85) contrast(1.05)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Scaled Hero Container (Houses P Logo & Wordmark) */}
         <Box
           sx={{
-            position: "absolute",
-            top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
-            left: { xs: "50%", sm: "calc(50% - 60px)", md: "calc(50% - 80px)" },
-            width: "auto",
-            textAlign: { xs: "center", sm: "left" },
-            zIndex: 3,
-            overflow: "visible",
-            opacity: 1,
-            pointerEvents: "auto",
-            transition: "opacity 0.2s ease-out",
-            transform: {
-              xs: "translate(-50%, -50%)",
-              sm: "translate(0, -50%)",
-            },
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 4,
+            transform: `scale(${scaleVal.toFixed(3)})`,
+            transformOrigin: "center center",
+            transition: "transform 0.05s linear",
+            bgcolor: gProgress > 0.05 ? "#FFFFFF" : "transparent",
+            borderRadius: gProgress > 0.05 ? `${(gProgress * 24).toFixed(0)}px` : "0px",
+            border: gProgress > 0.05 ? "1px solid rgba(0,0,0,0.08)" : "none",
+            boxShadow: gProgress > 0.05 ? `0 24px 60px rgba(0,0,0,${(0.35 * gProgress).toFixed(2)})` : "none",
+            maxWidth: gProgress > 0.05 ? "1200px" : "100%",
+            maxHeight: gProgress > 0.05 ? "720px" : "100%",
+            m: "auto",
           }}
         >
-            <Box sx={{ position: "relative", overflow: "visible" }}>
+          {/* Interactive Signal Canvas Layer */}
+          <Box aria-hidden sx={{ position: "absolute", inset: 0, zIndex: 4, opacity: { xs: 0.4, md: 0.95 } }}>
+            <HeroSignalP progress={scrollProgress} />
+          </Box>
+
+          {/* PHITOPOLIS Word Transition — Phase 3 */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
+              left: { xs: "50%", sm: "calc(50% - 60px)", md: "calc(50% - 80px)" },
+              width: "auto",
+              textAlign: { xs: "center", sm: "left" },
+              zIndex: 5,
+              overflow: "hidden",
+              clipPath: "inset(0 0 0 0)",
+              opacity: reduced ? 1 : wordRevealProgress(scrollProgress),
+              pointerEvents: "auto",
+              transition: "opacity 0.15s ease-out",
+              transform: {
+                xs: "translate(-50%, -50%)",
+                sm: "translate(0, -50%)",
+              },
+            }}
+          >
+            <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
               <Typography
                 variant="h1"
                 component="h1"
@@ -131,25 +223,10 @@ export function HeroSignalCore() {
               >
                 PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
               </Typography>
-
-              {/* White background covering element (with no shadow) placed on top of the word's upper path */}
-              {!reduced && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: "95%",
-                    left: "-50px",
-                    right: "-50px",
-                    height: "300px",
-                    bgcolor: "#FFFFFF",
-                    zIndex: 10,
-                    boxShadow: "none",
-                    pointerEvents: "none",
-                  }}
-                />
-              )}
             </Box>
           </Box>
+        </Box>
+
 
         {/* Ultra-Subtle Corner Vignette */}
         <Box

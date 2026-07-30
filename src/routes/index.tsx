@@ -44,30 +44,64 @@ function HomePage() {
     <>
       <SmoothScroll />
       <EyeFlow />
-      <Box sx={{ position: 'relative', overflowX: 'clip' }}>
-        <SuperHeroSequence />
-        {/* CONTENT.impact, not CONTENT.stats: the strip is the page's first
-            hard claim, and "2 R&D offices / 6 open roles" spent it on filler
-            while the real numbers (100x latency, 99.4% accuracy) sat unused. */}
-        <Box id="stats">
+      <Box component="main" id="home-main" sx={{ position: 'relative', overflowX: 'clip' }}>
+        {/* 01. Hero Sequence */}
+        <Box component="section" id="hero-sequence" aria-label="Hero Sequence">
+          <SuperHeroSequence />
+        </Box>
+
+        <Divider />
+
+        {/* 02. Impact Stats */}
+        <Box component="section" id="stats" aria-label="Impact Metrics" sx={{ py: { xs: 4, md: 6 } }}>
           <StatStrip stats={CONTENT.impact} />
         </Box>
+
         <Divider />
-        <CapabilityRack />
-        <Box ref={useCasesRef} id="use-cases">
+
+        {/* 03. Capabilities & Services */}
+        <Box component="section" id="capabilities" aria-label="Capabilities and Services">
+          <CapabilityRack />
+        </Box>
+
+        <Divider />
+
+        {/* 04. Use Cases Narrative */}
+        <Box ref={useCasesRef} component="section" id="use-cases" aria-label="Real-World Applications">
           <UseCasesNarrative />
         </Box>
+
         <Divider />
-        <Box ref={compactZoneRef}>
-          <ProcessSection />
-          <ReachSection />
-          <DailyLifeSection />
-          <CandidatesAndCareersSection />
-          <BlogSection />
+
+        {/* 05. Compact & Sequential Sections Zone */}
+        <Box ref={compactZoneRef} id="compact-zone">
+          <Box component="section" id="process-sequence" aria-label="Engineering Process">
+            <ProcessSection />
+          </Box>
+          <Divider />
+
+          <Box component="section" id="reach-sequence" aria-label="Global Footprint">
+            <ReachSection />
+          </Box>
+          <Divider />
+
+          <Box component="section" id="daily-life-sequence" aria-label="Daily Life Behind the Code">
+            <DailyLifeSection />
+          </Box>
+          <Divider />
+
+          <Box component="section" id="careers-sequence" aria-label="Talent and Technical Careers">
+            <CandidatesAndCareersSection />
+          </Box>
+          <Divider />
+
+          <Box component="section" id="blog-sequence" aria-label="Intelligence Feed and Blog">
+            <BlogSection />
+          </Box>
         </Box>
       </Box>
-      {/* No footer here: AppShell renders the site footer for every route, and
-          this page used to stack a second one directly on top of it. */}
+      {/* No footer here: AppShell renders the site footer for every route */}
     </>
   );
 }
+
