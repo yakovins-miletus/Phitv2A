@@ -73,12 +73,6 @@ export function HeroSignalCore() {
         end: HERO_PIN_DISTANCE,
         scrub: 0.6,
         pin: true,
-        snap: {
-          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.75],
-          duration: { min: 0.3, max: 0.8 },
-          delay: 0.1,
-          ease: "power2.inOut",
-        },
         onUpdate: (self) => {
           setScrollProgress(self.progress);
         },
