@@ -13,11 +13,13 @@ import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import {
   DWELL_END,
+  atTightenProgress,
   bottomPanelX,
   containerScale,
   flankOpacity,
   gunshotProgress,
   leftFlankX,
+  pToAtProgress,
   panelOpacity,
   panelPointerEvents,
   rightFlankX,
@@ -33,8 +35,8 @@ import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /** The hero holds for five viewport heights to give room for 3 logo phases,
- *  an empty dwell threshold, the gunshot transition, and smoking drift. */
-const HERO_PIN_DISTANCE = "+=500%";
+ *  an empty dwell threshold, the gunshot transition, smoking drift, and mini/mega transformations. */
+const HERO_PIN_DISTANCE = "+=1200%";
 
 
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
@@ -66,7 +68,7 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         snap: {
-          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.80, 1.00],
+          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.80, 0.85, 0.90, 1.00],
           duration: { min: 0.3, max: 0.8 },
           delay: 0.1,
           ease: "power2.inOut",
@@ -86,6 +88,8 @@ export function HeroSignalCore() {
   const leftX = reduced ? -580 : leftFlankX(scrollProgress);
   const rightX = reduced ? 580 : rightFlankX(scrollProgress);
   const flankOp = reduced ? 1 : flankOpacity(scrollProgress);
+  const pAtVal = reduced ? 0 : pToAtProgress(scrollProgress);
+  const tightVal = reduced ? 0 : atTightenProgress(scrollProgress);
 
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
@@ -246,7 +250,7 @@ export function HeroSignalCore() {
           </>
         )}
 
-        {/* Scaled Hero Container (Houses P Logo & Wordmark) */}
+        {/* Scaled Hero Container (Houses P Logo, AT Text & Wordmark) */}
         <Box
           sx={{
             position: "relative",
@@ -268,17 +272,60 @@ export function HeroSignalCore() {
             m: "auto",
           }}
         >
-          {/* Interactive Signal Canvas Layer */}
-          <Box aria-hidden sx={{ position: "absolute", inset: 0, zIndex: 4, opacity: { xs: 0.4, md: 0.95 } }}>
+          {/* Interactive Signal Canvas Layer (P Logo: Fades down out during Mini Trans) */}
+          <Box
+            aria-hidden
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 4,
+              opacity: (1 - pAtVal) * (reduced ? 0.4 : 0.95),
+              transform: `translateY(${pAtVal * 60}px)`,
+              transition: "transform 0.1s ease-out, opacity 0.1s ease-out",
+            }}
+          >
             <HeroSignalP progress={scrollProgress} />
           </Box>
 
-          {/* PHITOPOLIS Word Transition — Phase 3 */}
+          {/* "AT" Wordmark Transition — Fades down in during Mini Trans */}
+          {pAtVal > 0.01 && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: `calc(50% - ${220 - tightVal * 70}px)`,
+                transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -40}px))`,
+                opacity: pAtVal,
+                zIndex: 6,
+                pointerEvents: "none",
+                transition: "transform 0.1s ease-out, opacity 0.1s ease-out",
+              }}
+            >
+              <Typography
+                variant="h1"
+                sx={{
+                  fontWeight: 900,
+                  fontSize: { xs: "2.8rem", sm: "4.5rem", md: "6rem" },
+                  letterSpacing: "-0.04em",
+                  color: NOIR.gold,
+                  textShadow: "0 2px 10px rgba(0,0,0,0.15)",
+                }}
+              >
+                AT
+              </Typography>
+            </Box>
+          )}
+
+          {/* PHITOPOLIS Word Transition — Phase 3 & Tightening in Phase 7 */}
           <Box
             sx={{
               position: "absolute",
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
-              left: { xs: "50%", sm: "calc(50% - 60px)", md: "calc(50% - 80px)" },
+              left: {
+                xs: "50%",
+                sm: `calc(50% - ${60 - tightVal * 40}px)`,
+                md: `calc(50% - ${80 - tightVal * 40}px)`,
+              },
               width: "auto",
               textAlign: { xs: "center", sm: "left" },
               zIndex: 5,
@@ -286,7 +333,7 @@ export function HeroSignalCore() {
               clipPath: "inset(0 0 0 0)",
               opacity: reduced ? 1 : wordRevealProgress(scrollProgress),
               pointerEvents: "auto",
-              transition: "opacity 0.15s ease-out",
+              transition: "opacity 0.15s ease-out, left 0.1s ease-out",
               transform: {
                 xs: "translate(-50%, -50%)",
                 sm: "translate(0, -50%)",

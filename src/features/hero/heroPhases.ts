@@ -135,6 +135,20 @@ export function flankOpacity(p: number): number {
   return Math.min(1, g * 1.5);
 }
 
+/** 0..1 progress during Mini Transformation where P fades down out and AT fades down in (0.80 -> 0.85). */
+export function pToAtProgress(p: number): number {
+  if (p <= 0.80) return 0;
+  if (p >= 0.85) return 1;
+  return (p - 0.80) / 0.05;
+}
+
+/** 0..1 progress during Mini Transformation where AT and PHITOPOLIS slide close together (0.85 -> 0.90). */
+export function atTightenProgress(p: number): number {
+  if (p <= 0.85) return 0;
+  if (p >= 0.90) return 1;
+  return (p - 0.85) / 0.05;
+}
+
 /** Opacity of the hero's side content panels. */
 export function panelOpacity(p: number): number {
   return Math.max(0, 1 - p * PANEL_FADE_RATE);
