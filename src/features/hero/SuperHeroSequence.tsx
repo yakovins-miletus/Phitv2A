@@ -16,7 +16,6 @@ import {
   atTightenProgress,
   bottomPanelX,
   containerScale,
-  filmFlickerStrobe,
   flankOpacity,
   gunshotProgress,
   leftFlankX,
@@ -26,6 +25,7 @@ import {
   panelOpacity,
   panelPointerEvents,
   rightFlankX,
+  slideState,
   topPanelX,
   wordLiftPercent,
   wordRevealProgress,
@@ -39,7 +39,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /** The hero holds for five viewport heights to give room for 3 logo phases,
  *  an empty dwell threshold, the gunshot transition, smoking drift, and mini/mega transformations. */
-const HERO_PIN_DISTANCE = "+=1200%";
+const HERO_PIN_DISTANCE = "+=1500%";
 
 const SENTENCE_SLIDES = [
   "",
@@ -58,10 +58,16 @@ export function HeroSignalCore() {
 
   useStagePresence(containerRef, "hero");
   const { registerAnchor } = useNavbar();
+
+  // Dark mode navbar activation strictly across the gunshot transition and smoking drift sections
   const isGunshotActive = !reduced && scrollProgress >= DWELL_END && scrollProgress < 0.98;
 
   useEffect(() => {
-    registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, isGunshotActive, true);
+    if (isGunshotActive) {
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, false);
+    } else {
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
+    }
     return () => {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     };
@@ -78,7 +84,7 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         snap: {
-          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.80, 0.85, 0.90, 1.00],
+          snapTo: [0, 0.20, 0.35, 0.50, 0.60, 0.72, 0.76, 0.80, 0.84, 0.87, 0.90, 0.93, 0.96, 1.00],
           duration: { min: 0.3, max: 0.8 },
           delay: 0.1,
           ease: "power2.inOut",
@@ -104,7 +110,8 @@ export function HeroSignalCore() {
   const sentenceIdx = reduced ? 0 : megaSentenceIndex(scrollProgress);
   const topBurst = reduced ? 0 : megaBurstPanelX(scrollProgress, true);
   const bottomBurst = reduced ? 0 : megaBurstPanelX(scrollProgress, false);
-  const strobeOp = reduced ? 0 : filmFlickerStrobe(scrollProgress);
+
+  const activeSlideState = reduced ? { opacity: 1, translateY: 0 } : slideState(scrollProgress, sentenceIdx);
 
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
@@ -159,7 +166,7 @@ export function HeroSignalCore() {
                   height: "100%",
                   objectFit: "cover",
                   transform: `translateX(${(topX + topBurst).toFixed(2)}%)`,
-                  filter: `brightness(${0.85 + strobeOp * 0.3}) contrast(1.05)`,
+                  filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
                 }}
               />
@@ -186,29 +193,12 @@ export function HeroSignalCore() {
                   height: "100%",
                   objectFit: "cover",
                   transform: `translateX(${(bottomX + bottomBurst).toFixed(2)}%) scale(1.05)`,
-                  filter: `brightness(${0.85 + strobeOp * 0.3}) contrast(1.05)`,
+                  filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
                 }}
               />
             </Box>
           </Box>
-        )}
-
-        {/* High-Contrast Strobe Flash + Film Flicker Overlay */}
-        {strobeOp > 0.01 && (
-          <Box
-            aria-hidden
-            sx={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
-              pointerEvents: "none",
-              bgcolor: "#FFFFFF",
-              opacity: strobeOp,
-              transition: "opacity 0.03s linear",
-              boxShadow: "inset 0 0 120px rgba(0,0,0,0.5)",
-            }}
-          />
         )}
 
         {/* Flanking Outward Text Elements (Gunshot Outward Motion -> Static in Smoking) */}
@@ -319,13 +309,13 @@ export function HeroSignalCore() {
             <HeroSignalP progress={scrollProgress} />
           </Box>
 
-          {/* "AT" Wordmark Transition — Fades down in centered on P during Sub-Phase 1 */}
+          {/* "AT" Wordmark Transition — Fades down in at left of P during Sub-Phase 1 */}
           {pAtVal > 0.01 && sentenceIdx === 0 && (
             <Box
               sx={{
                 position: "absolute",
                 top: "50%",
-                left: { xs: "50%", sm: "calc(50% - 220px)", md: "calc(50% - 250px)" },
+                left: { xs: "50%", sm: "calc(50% - 270px)", md: "calc(50% - 310px)" },
                 transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -40}px))`,
                 opacity: pAtVal,
                 zIndex: 6,
@@ -356,8 +346,8 @@ export function HeroSignalCore() {
                 top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
                 left: {
                   xs: "50%",
-                  sm: `calc(50% - ${60 + tightVal * 70}px)`,
-                  md: `calc(50% - ${80 + tightVal * 90}px)`,
+                  sm: `calc(50% - ${60 + tightVal * 130}px)`,
+                  md: `calc(50% - ${80 + tightVal * 150}px)`,
                 },
                 width: "auto",
                 textAlign: { xs: "center", sm: "left" },
@@ -395,7 +385,7 @@ export function HeroSignalCore() {
             </Box>
           )}
 
-          {/* Mega Transformation: Sentence-by-Sentence Breakdown (0.88 -> 1.00) */}
+          {/* Mega Transformation: Sentence-by-Sentence Breakdown with Smooth Fade Down & Buffer Holds */}
           {sentenceIdx >= 1 && (
             <Box
               sx={{
@@ -410,7 +400,9 @@ export function HeroSignalCore() {
                 textAlign: "center",
                 bgcolor: "rgba(255, 255, 255, 0.98)",
                 borderRadius: "24px",
-                transition: "opacity 0.08s ease-out",
+                opacity: activeSlideState.opacity,
+                transform: `translateY(${activeSlideState.translateY}px)`,
+                transition: "opacity 0.08s ease-out, transform 0.08s ease-out",
               }}
             >
               <Typography

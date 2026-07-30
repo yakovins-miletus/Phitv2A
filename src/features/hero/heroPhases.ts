@@ -135,46 +135,76 @@ export function flankOpacity(p: number): number {
   return Math.min(1, g * 1.5);
 }
 
-/** 0..1 progress during Mini Transformation where P fades down out and AT fades down in (0.80 -> 0.85). */
+/** 0..1 progress during Mini Transformation where P fades down out and AT fades down in (0.72 -> 0.76). */
 export function pToAtProgress(p: number): number {
-  if (p <= 0.80) return 0;
-  if (p >= 0.85) return 1;
-  return (p - 0.80) / 0.05;
+  if (p <= 0.72) return 0;
+  if (p >= 0.76) return 1;
+  return (p - 0.72) / 0.04;
 }
 
-/** 0..1 progress during Mini Transformation where AT and PHITOPOLIS slide close together (0.85 -> 0.90). */
+/** 0..1 progress during Mini Transformation where PHITOPOLIS slides left to AT (0.76 -> 0.80). */
 export function atTightenProgress(p: number): number {
-  if (p <= 0.85) return 0;
-  if (p >= 0.90) return 1;
-  return (p - 0.85) / 0.05;
+  if (p <= 0.76) return 0;
+  if (p >= 0.80) return 1;
+  return (p - 0.76) / 0.04;
 }
 
-/** Sentence index (0..3) for Mega Transformation slides (0.88 -> 1.00). */
+/** Sentence index (0..3) for Mega Transformation slides (0.84 -> 1.00). */
 export function megaSentenceIndex(p: number): number {
-  if (p < 0.88) return 0;
-  if (p < 0.92) return 1;
-  if (p < 0.96) return 2;
+  if (p < 0.84) return 0;
+  if (p < 0.90) return 1;
+  if (p < 0.95) return 2;
   return 3;
 }
 
 /** High-speed burst translation for background split panels during Mega Transformation. */
 export function megaBurstPanelX(p: number, isTop: boolean): number {
-  if (p <= 0.88) return 0;
-  const m = (p - 0.88) / 0.12;
+  if (p <= 0.84) return 0;
+  const m = (p - 0.84) / 0.16;
   return isTop ? m * 120 : -m * 120;
 }
 
-/** Strobe flash opacity (0..0.85) triggered at slide transitions. */
-export function filmFlickerStrobe(p: number): number {
-  if (p < 0.88) return 0;
-  const boundaries = [0.88, 0.92, 0.96, 1.00];
-  for (const b of boundaries) {
-    const diff = Math.abs(p - b);
-    if (diff < 0.015) {
-      return (1 - diff / 0.015) * 0.85;
-    }
+/** Returns opacity and translateY for smooth fade-in-down / buffer hold / fade-out-down slide transitions. */
+export function slideState(p: number, slideIdx: number): { opacity: number; translateY: number } {
+  let inStart = 0;
+  let inEnd = 0;
+  let outStart = 0;
+  let outEnd = 0;
+
+  if (slideIdx === 1) {
+    inStart = 0.84;
+    inEnd = 0.86;
+    outStart = 0.88;
+    outEnd = 0.90;
+  } else if (slideIdx === 2) {
+    inStart = 0.90;
+    inEnd = 0.92;
+    outStart = 0.94;
+    outEnd = 0.95;
+  } else if (slideIdx === 3) {
+    inStart = 0.95;
+    inEnd = 0.97;
+    outStart = 1.00;
+    outEnd = 1.05;
+  } else {
+    return { opacity: 0, translateY: -30 };
   }
-  return 0;
+
+  if (p < inStart) {
+    return { opacity: 0, translateY: -30 };
+  }
+  if (p <= inEnd) {
+    const t = (p - inStart) / (inEnd - inStart);
+    return { opacity: t, translateY: -30 * (1 - t) };
+  }
+  if (p <= outStart) {
+    return { opacity: 1, translateY: 0 };
+  }
+  if (p <= outEnd) {
+    const t = (p - outStart) / (outEnd - outStart);
+    return { opacity: 1 - t, translateY: 30 * t };
+  }
+  return { opacity: 0, translateY: 30 };
 }
 
 /** Opacity of the hero's side content panels. */
