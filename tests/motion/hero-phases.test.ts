@@ -19,7 +19,8 @@ import {
   leftFlankX,
   rightFlankX,
   flankOpacity,
-  pToAtProgress,
+  pExitProgress,
+  atEnterProgress,
   atTightenProgress,
   panelOpacity,
   panelPointerEvents,
@@ -130,12 +131,16 @@ test("gunshot transition scales container 1.0 to 0.4 and translates split panels
 });
 
 test("mini transformation transitions P to AT and pulls AT PHITOPOLIS close together", () => {
-  expect(pToAtProgress(0.72)).toBe(0);
-  expect(pToAtProgress(0.76)).toBeCloseTo(0.5, 6);
-  expect(pToAtProgress(0.80)).toBe(1);
+  expect(pExitProgress(0.72)).toBe(0);
+  expect(pExitProgress(0.745)).toBeCloseTo(0.5, 6);
+  expect(pExitProgress(0.77)).toBe(1);
 
-  expect(atTightenProgress(0.86)).toBe(0);
-  expect(atTightenProgress(0.90)).toBeCloseTo(0.5, 6);
+  expect(atEnterProgress(0.77)).toBe(0);
+  expect(atEnterProgress(0.80)).toBeCloseTo(0.5, 6);
+  expect(atEnterProgress(0.83)).toBe(1);
+
+  expect(atTightenProgress(0.87)).toBe(0);
+  expect(atTightenProgress(0.905)).toBeCloseTo(0.5, 6);
   expect(atTightenProgress(0.94)).toBe(1);
 });
 

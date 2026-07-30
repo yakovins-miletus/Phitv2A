@@ -13,13 +13,14 @@ import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import {
   DWELL_END,
+  atEnterProgress,
   atTightenProgress,
   bottomPanelX,
   containerScale,
   flankOpacity,
   gunshotProgress,
   leftFlankX,
-  pToAtProgress,
+  pExitProgress,
   panelOpacity,
   panelPointerEvents,
   rightFlankX,
@@ -88,7 +89,8 @@ export function HeroSignalCore() {
   const leftX = reduced ? -580 : leftFlankX(scrollProgress);
   const rightX = reduced ? 580 : rightFlankX(scrollProgress);
   const flankOp = reduced ? 1 : flankOpacity(scrollProgress);
-  const pAtVal = reduced ? 0 : pToAtProgress(scrollProgress);
+  const pExitVal = reduced ? 0 : pExitProgress(scrollProgress);
+  const atEnterVal = reduced ? 0 : atEnterProgress(scrollProgress);
   const tightVal = reduced ? 0 : atTightenProgress(scrollProgress);
 
   return (
@@ -272,30 +274,30 @@ export function HeroSignalCore() {
             m: "auto",
           }}
         >
-          {/* Interactive Signal Canvas Layer (P Logo drops down out as AT pushes from top) */}
+          {/* Interactive Signal Canvas Layer (P Logo drops down out first) */}
           <Box
             aria-hidden
             sx={{
               position: "absolute",
               inset: 0,
               zIndex: 4,
-              opacity: (1 - pAtVal) * (reduced ? 0.4 : 0.95),
-              transform: `translateY(${pAtVal * 160}px)`,
+              opacity: (1 - pExitVal) * (reduced ? 0.4 : 0.95),
+              transform: `translateY(${pExitVal * 180}px)`,
               transition: "transform 0.1s ease-out, opacity 0.1s ease-out",
             }}
           >
             <HeroSignalP progress={scrollProgress} />
           </Box>
 
-          {/* "AT" Wordmark Transition — Enters from top trailing P's top edge (pushing effect) */}
-          {pAtVal > 0.01 && (
+          {/* "AT" Wordmark Transition — Enters from top delayed after P drops away */}
+          {atEnterVal > 0.01 && (
             <Box
               sx={{
                 position: "absolute",
                 top: "50%",
                 left: { xs: "50%", sm: "calc(50% - 280px)", md: "calc(50% - 330px)" },
-                transform: `translate(-50%, calc(-50% + ${(1 - pAtVal) * -160}px))`,
-                opacity: pAtVal,
+                transform: `translate(-50%, calc(-50% + ${(1 - atEnterVal) * -160}px))`,
+                opacity: atEnterVal,
                 zIndex: 6,
                 pointerEvents: "none",
                 transition: "opacity 0.1s ease-out, transform 0.1s ease-out",

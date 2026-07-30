@@ -135,18 +135,30 @@ export function flankOpacity(p: number): number {
   return Math.min(1, g * 1.5);
 }
 
-/** 0..1 progress during Mini Transformation where P logo drops down out and AT enters from above pushing P (0.72 -> 0.80). */
-export function pToAtProgress(p: number): number {
+/** 0..1 progress during Mini Transformation where P logo drops down out (0.72 -> 0.77). */
+export function pExitProgress(p: number): number {
   if (p <= 0.72) return 0;
-  if (p >= 0.80) return 1;
-  return (p - 0.72) / 0.08;
+  if (p >= 0.77) return 1;
+  return (p - 0.72) / 0.05;
 }
 
-/** 0..1 progress during Mini Transformation where PHITOPOLIS slides left to meet AT after Buffer 1 (0.86 -> 0.94). */
+/** 0..1 progress during Mini Transformation where AT enters from above delayed after P drops away (0.77 -> 0.83). */
+export function atEnterProgress(p: number): number {
+  if (p <= 0.77) return 0;
+  if (p >= 0.83) return 1;
+  return (p - 0.77) / 0.06;
+}
+
+/** Backward compatibility alias for pExitProgress. */
+export function pToAtProgress(p: number): number {
+  return pExitProgress(p);
+}
+
+/** 0..1 progress during Mini Transformation where PHITOPOLIS slides left to meet AT after Buffer 1 (0.87 -> 0.94). */
 export function atTightenProgress(p: number): number {
-  if (p <= 0.86) return 0;
+  if (p <= 0.87) return 0;
   if (p >= 0.94) return 1;
-  return (p - 0.86) / 0.08;
+  return (p - 0.87) / 0.07;
 }
 
 /** Opacity of the hero's side content panels. */
