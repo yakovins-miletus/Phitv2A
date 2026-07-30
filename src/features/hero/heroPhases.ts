@@ -149,6 +149,34 @@ export function atTightenProgress(p: number): number {
   return (p - 0.85) / 0.05;
 }
 
+/** Sentence index (0..3) for Mega Transformation slides (0.88 -> 1.00). */
+export function megaSentenceIndex(p: number): number {
+  if (p < 0.88) return 0;
+  if (p < 0.92) return 1;
+  if (p < 0.96) return 2;
+  return 3;
+}
+
+/** High-speed burst translation for background split panels during Mega Transformation. */
+export function megaBurstPanelX(p: number, isTop: boolean): number {
+  if (p <= 0.88) return 0;
+  const m = (p - 0.88) / 0.12;
+  return isTop ? m * 120 : -m * 120;
+}
+
+/** Strobe flash opacity (0..0.85) triggered at slide transitions. */
+export function filmFlickerStrobe(p: number): number {
+  if (p < 0.88) return 0;
+  const boundaries = [0.88, 0.92, 0.96, 1.00];
+  for (const b of boundaries) {
+    const diff = Math.abs(p - b);
+    if (diff < 0.015) {
+      return (1 - diff / 0.015) * 0.85;
+    }
+  }
+  return 0;
+}
+
 /** Opacity of the hero's side content panels. */
 export function panelOpacity(p: number): number {
   return Math.max(0, 1 - p * PANEL_FADE_RATE);

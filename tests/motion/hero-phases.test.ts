@@ -21,6 +21,9 @@ import {
   flankOpacity,
   pToAtProgress,
   atTightenProgress,
+  megaSentenceIndex,
+  megaBurstPanelX,
+  filmFlickerStrobe,
   panelOpacity,
   panelPointerEvents,
   sideFaceOpacity,
@@ -163,5 +166,19 @@ test("logo side faces fade out before flattening completes", () => {
   expect(sideFaceOpacity(0.25)).toBeCloseTo(0.55, 6);
   expect(sideFaceOpacity(5 / 9)).toBeCloseTo(0, 6);
   expect(sideFaceOpacity(1)).toBe(0);
+});
+
+test("mega transformation slide index, burst panel offset, and film flicker strobe", () => {
+  expect(megaSentenceIndex(0.85)).toBe(0);
+  expect(megaSentenceIndex(0.88)).toBe(1);
+  expect(megaSentenceIndex(0.93)).toBe(2);
+  expect(megaSentenceIndex(0.97)).toBe(3);
+
+  expect(megaBurstPanelX(0.88, true)).toBe(0);
+  expect(megaBurstPanelX(1.00, true)).toBeCloseTo(120, 6);
+  expect(megaBurstPanelX(1.00, false)).toBeCloseTo(-120, 6);
+
+  expect(filmFlickerStrobe(0.88)).toBeCloseTo(0.85, 6);
+  expect(filmFlickerStrobe(0.90)).toBe(0);
 });
 
