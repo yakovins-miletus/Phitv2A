@@ -114,6 +114,27 @@ export function bottomPanelX(p: number): number {
   return -s * 10;
 }
 
+/** Left flanking text X translation px during gunshot ease-out (0 -> -580px), stays static in smoking. */
+export function leftFlankX(p: number): number {
+  if (p <= DWELL_END) return 0;
+  const g = gunshotEaseOut(p);
+  return -g * 580;
+}
+
+/** Right flanking text X translation px during gunshot ease-out (0 -> +580px), stays static in smoking. */
+export function rightFlankX(p: number): number {
+  if (p <= DWELL_END) return 0;
+  const g = gunshotEaseOut(p);
+  return g * 580;
+}
+
+/** Flanking text opacity during gunshot ease-out (0 -> 1), stays 1 in smoking. */
+export function flankOpacity(p: number): number {
+  if (p <= DWELL_END) return 0;
+  const g = gunshotEaseOut(p);
+  return Math.min(1, g * 1.5);
+}
+
 /** Opacity of the hero's side content panels. */
 export function panelOpacity(p: number): number {
   return Math.max(0, 1 - p * PANEL_FADE_RATE);
@@ -128,5 +149,6 @@ export function panelPointerEvents(p: number): "none" | "auto" {
 export function sideFaceOpacity(flatten: number): number {
   return Math.max(0, 1 - flatten * SIDE_FACE_FADE_RATE);
 }
+
 
 

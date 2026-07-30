@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
@@ -10,12 +10,17 @@ import { HeroSignalP } from "@/shared/components/HeroSignalP";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
+import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import {
+  DWELL_END,
   bottomPanelX,
   containerScale,
+  flankOpacity,
   gunshotProgress,
+  leftFlankX,
   panelOpacity,
   panelPointerEvents,
+  rightFlankX,
   topPanelX,
   wordLiftPercent,
   wordRevealProgress,
@@ -40,6 +45,15 @@ export function HeroSignalCore() {
   const reduced = useReducedMotion();
 
   useStagePresence(containerRef, "hero");
+  const { registerAnchor } = useNavbar();
+  const isGunshotActive = !reduced && scrollProgress >= DWELL_END && scrollProgress < 0.98;
+
+  useEffect(() => {
+    registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, isGunshotActive, true);
+    return () => {
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
+    };
+  }, [isGunshotActive, registerAnchor]);
 
   useGSAP(
     () => {
@@ -69,6 +83,9 @@ export function HeroSignalCore() {
   const gProgress = reduced ? 0 : gunshotProgress(scrollProgress);
   const topX = reduced ? 0 : topPanelX(scrollProgress);
   const bottomX = reduced ? 0 : bottomPanelX(scrollProgress);
+  const leftX = reduced ? -580 : leftFlankX(scrollProgress);
+  const rightX = reduced ? 580 : rightFlankX(scrollProgress);
+  const flankOp = reduced ? 1 : flankOpacity(scrollProgress);
 
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
@@ -156,6 +173,77 @@ export function HeroSignalCore() {
               />
             </Box>
           </Box>
+        )}
+
+        {/* Flanking Outward Text Elements (Gunshot Outward Motion -> Static in Smoking) */}
+        {flankOp > 0.01 && (
+          <>
+            {/* Left Text: 7 YEARS OF EXCELLENCE */}
+            <Box
+              sx={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: `translate(calc(-50% + ${leftX.toFixed(1)}px), -50%)`,
+                opacity: flankOp,
+                pointerEvents: "none",
+                zIndex: 3,
+                whiteSpace: "nowrap",
+                textAlign: "right",
+                transition: "transform 0.05s linear, opacity 0.05s linear",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "#FFFFFF",
+                  textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
+                <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>01 //</Box> 7 YEARS OF EXCELLENCE
+              </Typography>
+            </Box>
+
+            {/* Right Text: GENERATIONS OF COMPETITIVENESS */}
+            <Box
+              sx={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: `translate(calc(-50% + ${rightX.toFixed(1)}px), -50%)`,
+                opacity: flankOp,
+                pointerEvents: "none",
+                zIndex: 3,
+                whiteSpace: "nowrap",
+                textAlign: "left",
+                transition: "transform 0.05s linear, opacity 0.05s linear",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "#FFFFFF",
+                  textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
+                GENERATIONS OF COMPETITIVENESS <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>// 02</Box>
+              </Typography>
+            </Box>
+          </>
         )}
 
         {/* Scaled Hero Container (Houses P Logo & Wordmark) */}

@@ -25,6 +25,8 @@ export type NavbarMode = 'minimal' | 'dynamic' | 'compact' | 'immersive' | 'liqu
 export const NAV_ANCHORS = {
   /** The home page's post-hero content zone. */
   HOME_COMPACT: 'home-compact',
+  /** The hero page's gunshot & smoking dark image sequence. */
+  HERO_GUNSHOT: 'hero-gunshot',
   /** The daily-life film, which the navbar must go light over. */
   DAILY_LIFE_VIDEO: 'daily-life-video',
   /** The About page's hero section. */
@@ -60,7 +62,7 @@ const NavbarContext = createContext<NavbarContextValue | null>(null);
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
   const [overrideMode, setOverrideMode] = useState<NavbarMode>('minimal');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
-  const [showMotto, setShowMotto] = useState(true);
+  const [showMotto, setShowMotto] = useState(false);
   const [activeAnchors, setActiveAnchors] = useState<Set<string>>(new Set());
   const [darkAnchors, setDarkAnchors] = useState<Set<string>>(new Set());
 

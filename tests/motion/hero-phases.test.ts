@@ -16,6 +16,9 @@ import {
   containerScale,
   topPanelX,
   bottomPanelX,
+  leftFlankX,
+  rightFlankX,
+  flankOpacity,
   panelOpacity,
   panelPointerEvents,
   sideFaceOpacity,
@@ -110,6 +113,18 @@ test("gunshot transition scales container 1.0 to 0.4 and translates split panels
   expect(bottomPanelX(DWELL_END)).toBeCloseTo(100, 6);
   expect(bottomPanelX(GUNSHOT_END)).toBeCloseTo(0, 6);
   expect(bottomPanelX(1.0)).toBeCloseTo(-10, 6);
+
+  expect(leftFlankX(DWELL_END)).toBeCloseTo(0, 6);
+  expect(leftFlankX(GUNSHOT_END)).toBeCloseTo(-580, 6);
+  expect(leftFlankX(1.0)).toBeCloseTo(-580, 6);
+
+  expect(rightFlankX(DWELL_END)).toBeCloseTo(0, 6);
+  expect(rightFlankX(GUNSHOT_END)).toBeCloseTo(580, 6);
+  expect(rightFlankX(1.0)).toBeCloseTo(580, 6);
+
+  expect(flankOpacity(DWELL_END)).toBeCloseTo(0, 6);
+  expect(flankOpacity(GUNSHOT_END)).toBeCloseTo(1, 6);
+  expect(flankOpacity(1.0)).toBeCloseTo(1, 6);
 });
 
 test.each([
