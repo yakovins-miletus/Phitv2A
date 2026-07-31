@@ -32,7 +32,7 @@ import { RouterButton, RouterLink } from "./RouterLink";
 import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
-import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS, EASE_OUT_EXPO } from "@/shared/motion/easing";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { useNavAutohide } from "./useNavAutohide";
 
@@ -92,7 +92,42 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
   const router = useRouter();
+  const { overrideMode } = useNavbar();
+  const isMinimal = overrideMode === "minimal";
   const onDark = variant === "onDark";
+
+  const isPrimary = hovered || clicked;
+  let btnBgColor: string;
+  let btnBorderColor: string;
+  let btnTextColor: string;
+
+  if (isMinimal) {
+    if (onDark) {
+      if (isPrimary) {
+        btnBgColor = NOIR.gold;
+        btnBorderColor = NOIR.gold;
+        btnTextColor = "#FFFFFF";
+      } else {
+        btnBgColor = "rgba(255, 255, 255, 0.75)";
+        btnBorderColor = "rgba(255, 255, 255, 0.75)";
+        btnTextColor = "rgba(10, 42, 102, 0.7)";
+      }
+    } else {
+      if (isPrimary) {
+        btnBgColor = NOIR.navyField;
+        btnBorderColor = NOIR.navyField;
+        btnTextColor = "#FFFFFF";
+      } else {
+        btnBgColor = "rgba(255, 255, 255, 0.75)";
+        btnBorderColor = alpha(NOIR.navyField, 0.75);
+        btnTextColor = NOIR.navyField;
+      }
+    }
+  } else {
+    btnBgColor = isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(10,42,102,0.05)") : (onDark ? "transparent" : "#FFFFFF");
+    btnBorderColor = onDark ? (hovered ? NOIR.gold : "#FFFFFF") : "primary.main";
+    btnTextColor = onDark ? "#FFFFFF" : "primary.main";
+  }
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -111,17 +146,21 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
       onMouseLeave={() => { setHovered(false); setClicked(false); }}
       onClick={handleClick}
       sx={{
-        borderRadius: "6px",
-        borderColor: onDark ? (hovered ? NOIR.gold : "#FFFFFF") : "primary.main",
-        color: onDark ? "#FFFFFF" : "primary.main",
-        bgcolor: isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(10,42,102,0.05)") : (onDark ? "transparent" : "#FFFFFF"),
+        borderRadius: "10px",
+        borderColor: isMinimal ? btnBorderColor : (onDark ? (hovered ? NOIR.gold : "#FFFFFF") : "primary.main"),
+        color: isMinimal ? btnTextColor : (onDark ? "#FFFFFF" : "primary.main"),
+        bgcolor: isMinimal ? btnBgColor : (isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(10,42,102,0.05)") : (onDark ? "transparent" : "#FFFFFF")),
         boxShadow: isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : "none",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         transform: clicked ? "scale(0.95)" : "scale(1)",
         "&:hover": {
-          bgcolor: isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(0, 0, 0, 0.03)") : (onDark ? NOIR.gold : "primary.main"),
+          bgcolor: isMinimal 
+            ? (onDark ? NOIR.gold : NOIR.navyField) 
+            : (isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(0, 0, 0, 0.03)") : (onDark ? NOIR.gold : "primary.main")),
           color: "#FFFFFF",
-          borderColor: isActive ? (onDark ? NOIR.gold : "primary.main") : (onDark ? NOIR.gold : "primary.main"),
+          borderColor: isMinimal 
+            ? (onDark ? NOIR.gold : NOIR.navyField) 
+            : (isActive ? (onDark ? NOIR.gold : "primary.main") : (onDark ? NOIR.gold : "primary.main")),
         },
         ...sx,
       }}
@@ -231,6 +270,7 @@ function AnimatedMenuButton({
   isImmersiveDark,
   ariaLabel,
   sx,
+  noBorder = false,
 }: {
   active: boolean;
   onClick: () => void;
@@ -238,15 +278,48 @@ function AnimatedMenuButton({
   isImmersiveDark: boolean;
   ariaLabel: string;
   sx?: object;
+  noBorder?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+  const { overrideMode } = useNavbar();
+  const isMinimal = overrideMode === "minimal";
 
   const isPrimary = hovered || active;
   let bgColor: string;
   let borderColor: string;
   let iconColor: string;
 
-  if (isImmersiveDark) {
+  if (noBorder) {
+    bgColor = "transparent";
+    borderColor = "transparent";
+    if (isImmersiveDark) {
+      iconColor = isPrimary ? NOIR.gold : "#FFFFFF";
+    } else {
+      iconColor = isPrimary ? NOIR.gold : NOIR.navyField;
+    }
+  } else if (isMinimal) {
+    if (isImmersiveDark) {
+      if (isPrimary) {
+        bgColor = NOIR.gold;
+        borderColor = NOIR.gold;
+        iconColor = "#FFFFFF";
+      } else {
+        bgColor = "rgba(255, 255, 255, 0.75)";
+        borderColor = "rgba(255, 255, 255, 0.75)";
+        iconColor = "rgba(10, 42, 102, 0.7)";
+      }
+    } else {
+      if (isPrimary) {
+        bgColor = NOIR.navyField;
+        borderColor = NOIR.navyField;
+        iconColor = "#FFFFFF";
+      } else {
+        bgColor = "rgba(255, 255, 255, 0.75)";
+        borderColor = alpha(NOIR.navyField, 0.75);
+        iconColor = NOIR.navyField;
+      }
+    }
+  } else if (isImmersiveDark) {
     if (isPrimary) {
       bgColor = NOIR.gold;
       borderColor = NOIR.gold;
@@ -279,15 +352,15 @@ function AnimatedMenuButton({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: "6px",
-        border: `1px solid ${borderColor}`,
+        borderRadius: "10px",
+        border: noBorder ? "none" : `1px solid ${borderColor}`,
         backgroundColor: bgColor,
-        height: "42px",
-        width: "42px",
+        height: noBorder ? "28px" : "42px",
+        width: noBorder ? "36px" : "42px",
         p: 0,
         cursor: "pointer",
         outline: "none",
-        boxShadow: hovered ? `0 6px 20px ${alpha(NOIR.navyField, 0.25)}` : "none",
+        boxShadow: hovered && !noBorder ? `0 6px 20px ${alpha(NOIR.navyField, 0.25)}` : "none",
         transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
       }}
@@ -873,7 +946,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isMinimal = overrideMode === "minimal";
   const isLiquid = overrideMode === "liquid";
   const isNotch = overrideMode === "notch";
-  const onDark = isNotch || isOverDarkSection;
+  const isStandard = overrideMode === "standard";
+  const isIsland = overrideMode === "island";
+  const onDark = (isNotch || isOverDarkSection) && !isIsland;
   const isImmersive = overrideMode === "immersive";
   const pointerFine = usePointerFine();
   const { insetX: liquidInsetX, insetY: liquidInsetY, setInset: setLiquidInset, reset: resetLiquidSpacing } = useLiquidSpacing();
@@ -904,22 +979,34 @@ function AppShellInner({ children }: { children: ReactNode }) {
           position="fixed"
           elevation={0}
           sx={{
-            background: "transparent",
-            borderBottom: "none",
-            pt: isNotch ? 0 : 1,
-            pointerEvents: showPreloader ? "none" : "none",
+            bgcolor: isStandard
+              ? (isOverDarkSection
+                ? `rgba(${NOIR.navyFieldRgb}, 0.45)`
+                : "rgba(255, 255, 255, 0.55)")
+              : "transparent",
+            backdropFilter: isStandard ? "blur(20px) saturate(160%)" : "none",
+            borderBottom: isStandard
+              ? (isOverDarkSection
+                ? "1px solid rgba(255, 255, 255, 0.12)"
+                : "1px solid rgba(0, 0, 0, 0.08)")
+              : "none",
+            boxShadow: isStandard
+              ? (isOverDarkSection ? "0 4px 30px rgba(0,0,0,0.15)" : "0 2px 20px rgba(0,0,0,0.03)")
+              : "none",
+            pt: isNotch || isStandard ? 0 : 1,
+            pointerEvents: showPreloader ? "none" : (isStandard ? "auto" : "none"),
             transform: navHidden || showPreloader ? "translateY(-120%)" : "translateY(0%)",
             opacity: showPreloader ? 0 : 1,
-            transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease`,
+            transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s cubic-bezier(0.16,1,0.3,1), border-color 0.6s cubic-bezier(0.16,1,0.3,1), box-shadow 0.6s cubic-bezier(0.16,1,0.3,1)`,
           }}
         >
-          <Container maxWidth={isMinimal ? false : "xl"} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined }}>
+          <Container maxWidth={isStandard ? "lg" : (isMinimal ? false : "xl")} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isStandard ? undefined : (isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined) }}>
             <Toolbar
               disableGutters
               sx={{
                 position: "relative",
-                width: isLiquid ? `calc(100% - ${liquidInsetX * 2}px)` : (isNotch ? "fit-content" : "100%"),
-                maxWidth: isNotch ? "100%" : (derivedIsCompact ? "1200px" : "100%"),
+                width: "100%",
+                maxWidth: isStandard ? "100%" : (isNotch ? "100%" : (derivedIsCompact ? "1200px" : "100%")),
                 mt: isLiquid ? `${liquidInsetY}px` : 0,
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
@@ -933,41 +1020,43 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   "max-width 0.6s cubic-bezier(0.16,1,0.3,1), " +
                   "backdrop-filter 0.6s cubic-bezier(0.16,1,0.3,1), " +
                   "gap 0.6s cubic-bezier(0.16,1,0.3,1)",
-                bgcolor: isMinimal
+                bgcolor: isStandard
                   ? "transparent"
-                  : isNotch
-                  ? NOIR.navyField
-                  : isOverDarkSection
-                    ? `rgba(${NOIR.navyFieldRgb}, 0.28)`
-                    : (derivedIsCompact ? "#FFFFFF" : "transparent"),
-                backdropFilter: isMinimal
+                  : (isMinimal
+                    ? "transparent"
+                    : isNotch
+                    ? NOIR.navyField
+                    : isIsland
+                    ? "rgba(255, 255, 255, 0.65)"
+                    : isOverDarkSection
+                      ? `rgba(${NOIR.navyFieldRgb}, 0.28)`
+                      : (derivedIsCompact ? "#FFFFFF" : "transparent")),
+                backdropFilter: isStandard
                   ? "none"
-                  : isOverDarkSection
-                    ? "blur(16px) saturate(140%)"
-                    : "none",
-                border: isMinimal || isNotch ? "none" : "1px solid",
-                borderColor: isMinimal || isNotch
-                  ? "transparent"
-                  : isOverDarkSection
-                    ? "rgba(255,255,255,0.14)"
-                    : (derivedIsCompact ? "divider" : "transparent"),
-                borderRadius: isNotch
-                  ? "0px 0px 24px 24px"
-                  : isImmersive
-                    ? "28px"
-                    : (derivedIsCompact ? "100px" : "0px"),
-                padding: isNotch
-                  ? "4px 20px"
-                  : isImmersive
-                    ? "10px 24px"
-                    : (derivedIsCompact ? "2px 32px" : "8px 0px"),
-                boxShadow: isMinimal
-                  ? "none"
-                  : isNotch
-                  ? "0 8px 24px rgba(10,42,102,0.35)"
-                  : isOverDarkSection
-                    ? "0 8px 32px rgba(0,0,0,0.25)"
-                    : (derivedIsCompact ? "0 4px 24px rgba(0,0,0,0.04)" : "none"),
+                  : (isMinimal
+                    ? "none"
+                    : isIsland
+                    ? "blur(20px) saturate(160%)"
+                    : isOverDarkSection
+                      ? "blur(16px) saturate(140%)"
+                      : "none"),
+                border: isIsland ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
+                borderColor: isIsland ? "rgba(255, 255, 255, 0.4)" : "transparent",
+                borderRadius: isStandard
+                  ? "0px"
+                  : (isNotch
+                    ? "0px 0px 24px 24px"
+                    : isImmersive
+                      ? "28px"
+                      : (derivedIsCompact ? "100px" : "0px")),
+                padding: isStandard
+                  ? "8px 0px"
+                  : (isNotch
+                    ? "4px 20px"
+                    : isImmersive
+                      ? "10px 24px"
+                      : (derivedIsCompact ? "2px 32px" : "8px 0px")),
+                boxShadow: isIsland ? "0 8px 32px rgba(0,0,0,0.08)" : "none",
                 display: "flex",
                 justifyContent: isNotch ? "center" : "space-between",
                 alignItems: "center",
@@ -996,7 +1085,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               >
                 <Box sx={{ color: onDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
-                    style={{ height: 42, width: 'auto' }}
+                    style={{ height: isStandard ? 28 : 42, width: 'auto' }}
                     color="currentColor"
                     accentColor={NOIR.gold}
                   />
@@ -1010,7 +1099,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: "1.4rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease" }}
+                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: isStandard ? "1.1rem" : "1.4rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
@@ -1034,6 +1123,61 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 </motion.div>
               </RouterLink>
 
+              {/* Central Navigation Items for Standard or Island Mode */}
+              {(isStandard || isIsland) && (
+                <Box
+                  component="nav"
+                  sx={{
+                    display: { xs: "none", md: "flex" },
+                    alignItems: "center",
+                    gap: 3.5,
+                  }}
+                >
+                  {NAV_ITEMS.map((item) => {
+                    const isActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+                    return (
+                      <RouterLink
+                        key={item.to}
+                        to={item.to}
+                        underline="none"
+                        sx={{
+                          fontFamily: MONO,
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textDecoration: "none !important",
+                          color: isActive
+                            ? NOIR.gold
+                            : (onDark ? "rgba(255,255,255,0.7)" : "text.secondary"),
+                          transition: "color 0.3s ease",
+                          position: "relative",
+                          "&:hover": {
+                            color: NOIR.gold,
+                            textDecoration: "none !important",
+                          },
+                        }}
+                      >
+                        {item.label}
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeNavIndicator"
+                            transition={{ type: "tween", duration: 0.65, ease: EASE_OUT_EXPO }}
+                            style={{
+                              position: "absolute",
+                              bottom: "-6px",
+                              left: 0,
+                              right: 0,
+                              height: "2px",
+                              backgroundColor: NOIR.gold,
+                            }}
+                          />
+                        )}
+                      </RouterLink>
+                    );
+                  })}
+                </Box>
+              )}
+
               {/* Rightmost Controls: Contact + 3-Bar Menu Icon with Hover Dropdown & Click Mega Drawer */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <AnimatedContactButton
@@ -1043,7 +1187,25 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
-                    height: "42px",
+                    height: isStandard ? "28px" : "42px",
+                    fontSize: isStandard ? "0.72rem" : undefined,
+                    fontWeight: isStandard ? 700 : undefined,
+                    fontFamily: isStandard ? MONO : undefined,
+                    letterSpacing: isStandard ? "0.08em" : undefined,
+                    textTransform: isStandard ? "none" : undefined,
+                    padding: isStandard ? "2px 0px" : undefined,
+                    minWidth: isStandard ? "auto" : undefined,
+                    ...((isStandard || isIsland) && {
+                      border: "none !important",
+                      borderColor: "transparent !important",
+                      bgcolor: "transparent !important",
+                      boxShadow: "none !important",
+                      "&:hover": {
+                        borderColor: "transparent !important",
+                        bgcolor: "transparent !important",
+                        color: NOIR.gold + " !important",
+                      }
+                    })
                   }}
                 />
 
@@ -1054,6 +1216,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isNotch={false}
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
+                  noBorder={isStandard || isIsland}
                   sx={{ display: { xs: "none", md: "inline-flex" } }}
                 />
 
@@ -1064,6 +1227,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isNotch={false}
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
+                  noBorder={isStandard || isIsland}
                   sx={{ display: { xs: "inline-flex", md: "none" } }}
                 />
               </Box>

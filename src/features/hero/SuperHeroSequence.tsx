@@ -29,7 +29,7 @@ import {
   wordRevealProgress,
 } from "./heroPhases";
 import { NOIR } from "@/shared/theme/palette";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
@@ -377,158 +377,36 @@ export function HeroSignalCore() {
           }}
         />
 
-        {/* Top Left "WHO WE ARE" Button with Description */}
+        {/* Top Left Motto Section */}
         <Box
           sx={{
             position: "absolute",
             top: { xs: 60, md: 76 },
             left: { xs: 32, md: 72 },
             zIndex: 5,
-            display: { xs: "none", sm: "flex" },
+            display: "flex",
             flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 0.8,
             opacity: panelOpacity(scrollProgress),
-            pointerEvents: panelPointerEvents(scrollProgress),
             transition: "opacity 0.3s ease",
+            maxWidth: { xs: "320px", sm: "600px", md: "780px" },
           }}
         >
           <Typography
+            variant="h4"
             sx={{
-              fontFamily: MONO,
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              color: alpha(NOIR.navyField, 0.88),
-              textTransform: "uppercase",
+              fontFamily: DISPLAY_FONT,
+              fontWeight: 800,
+              fontSize: { xs: "2.0rem", md: "2.60rem" },
+              lineHeight: 1.15,
+              color: NOIR.navyField,
+              letterSpacing: "-0.03em",
             }}
           >
-            WHO WE ARE // R&D FIRM MANILA
+            Making Tomorrow's Technology Available Today
           </Typography>
-
-          <Box
-            component={RouterLink}
-            to="/about"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.2,
-              px: 3,
-              py: 1.2,
-              borderRadius: "6px",
-              textDecoration: "none !important",
-              border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-              bgcolor: alpha(NOIR.panel, 0.75),
-              backdropFilter: "blur(12px)",
-              boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
-              "&, & *": {
-                textDecoration: "none !important",
-              },
-              "&:hover": {
-                bgcolor: NOIR.navyField,
-                borderColor: NOIR.navyField,
-                boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-                "& .btn-text, & .btn-arrow": {
-                  color: "#FFFFFF !important",
-                },
-              },
-            }}
-          >
-            <Typography
-              className="btn-text"
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                color: "text.primary",
-                textTransform: "uppercase",
-                transition: "color 0.3s ease",
-              }}
-            >
-              ABOUT PHITOPOLIS <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
-            </Typography>
-          </Box>
         </Box>
 
-        {/* Top Right "EXPLORE OUR COMMUNITY" Button with Description */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: 60, md: 76 },
-            right: { xs: 32, md: 72 },
-            zIndex: 5,
-            display: { xs: "none", sm: "flex" },
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: 0.8,
-            opacity: panelOpacity(scrollProgress),
-            pointerEvents: panelPointerEvents(scrollProgress),
-            transition: "opacity 0.3s ease",
-          }}
-        >
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              color: alpha(NOIR.navyField, 0.88),
-              textTransform: "uppercase",
-              textAlign: "right",
-            }}
-          >
-            LATEST INSIGHTS & ENGINEERING BLOG
-          </Typography>
-
-          <Box
-            component={RouterLink}
-            to="/blog"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.2,
-              px: 3,
-              py: 1.2,
-              borderRadius: "6px",
-              textDecoration: "none !important",
-              border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-              bgcolor: alpha(NOIR.panel, 0.75),
-              backdropFilter: "blur(12px)",
-              boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
-              "&, & *": {
-                textDecoration: "none !important",
-              },
-              "&:hover": {
-                bgcolor: NOIR.navyField,
-                borderColor: NOIR.navyField,
-                boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-                "& .btn-text, & .btn-arrow": {
-                  color: "#FFFFFF !important",
-                },
-              },
-            }}
-          >
-            <Typography
-              className="btn-text"
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                color: "text.primary",
-                textTransform: "uppercase",
-                transition: "color 0.3s ease",
-              }}
-            >
-              EXPLORE OUR COMMUNITY <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Bottom Left "WHAT WE DO" Button with Description */}
+        {/* Bottom Left Navigation Launcher: Clumped links */}
         <Box
           sx={{
             position: "absolute",
@@ -537,11 +415,11 @@ export function HeroSignalCore() {
             zIndex: 5,
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 0.8,
+            gap: 1.2,
             opacity: panelOpacity(scrollProgress),
             pointerEvents: panelPointerEvents(scrollProgress),
             transition: "opacity 0.3s ease",
+            maxWidth: { xs: "calc(100% - 64px)", md: "850px" },
           }}
         >
           <Typography
@@ -554,52 +432,155 @@ export function HeroSignalCore() {
               textTransform: "uppercase",
             }}
           >
-            HIGH-PERFORMANCE R&D & FINTECH PLATFORMS
+            EXPLORE PHITOPOLIS // DIRECTORY
           </Typography>
 
           <Box
-            component={RouterLink}
-            to="/services"
             sx={{
               display: "flex",
-              alignItems: "center",
-              gap: 1.2,
-              px: 3,
-              py: 1.2,
-              borderRadius: "6px",
-              textDecoration: "none !important",
-              border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-              bgcolor: alpha(NOIR.panel, 0.75),
-              backdropFilter: "blur(12px)",
-              boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
-              "&, & *": {
-                textDecoration: "none !important",
-              },
-              "&:hover": {
-                bgcolor: NOIR.navyField,
-                borderColor: NOIR.navyField,
-                boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-                "& .btn-text, & .btn-arrow": {
-                  color: "#FFFFFF !important",
-                },
-              },
+              flexDirection: { xs: "column", sm: "row" },
+              flexWrap: "wrap",
+              gap: 1.5,
+              alignItems: "stretch",
             }}
           >
-            <Typography
-              className="btn-text"
+            {/* Link 1: ABOUT */}
+            <Box
+              component={RouterLink}
+              to="/about"
               sx={{
-                fontFamily: MONO,
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                color: "text.primary",
-                textTransform: "uppercase",
-                transition: "color 0.3s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                px: 3,
+                py: 1.2,
+                borderRadius: "8px",
+                textDecoration: "none !important",
+                border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
+                bgcolor: alpha(NOIR.panel, 0.75),
+                backdropFilter: "blur(12px)",
+                boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
+                transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
+                "&, & *": {
+                  textDecoration: "none !important",
+                },
+                "&:hover": {
+                  bgcolor: NOIR.navyField,
+                  borderColor: NOIR.navyField,
+                  boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+                  "& .btn-text": {
+                    color: "#FFFFFF !important",
+                  },
+                },
               }}
             >
-              WHAT WE DO <Box component="span" className="btn-arrow" sx={{ color: "text.primary", transition: "color 0.3s ease", ml: 0.5 }}>→</Box>
-            </Typography>
+              <Typography
+                className="btn-text"
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "text.primary",
+                  textTransform: "uppercase",
+                  transition: "color 0.3s ease",
+                }}
+              >
+                ABOUT PHITOPOLIS <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+              </Typography>
+            </Box>
+
+            {/* Link 2: SERVICES */}
+            <Box
+              component={RouterLink}
+              to="/services"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                px: 3,
+                py: 1.2,
+                borderRadius: "8px",
+                textDecoration: "none !important",
+                border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
+                bgcolor: alpha(NOIR.panel, 0.75),
+                backdropFilter: "blur(12px)",
+                boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
+                transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
+                "&, & *": {
+                  textDecoration: "none !important",
+                },
+                "&:hover": {
+                  bgcolor: NOIR.navyField,
+                  borderColor: NOIR.navyField,
+                  boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+                  "& .btn-text": {
+                    color: "#FFFFFF !important",
+                  },
+                },
+              }}
+            >
+              <Typography
+                className="btn-text"
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "text.primary",
+                  textTransform: "uppercase",
+                  transition: "color 0.3s ease",
+                }}
+              >
+                WHAT WE DO <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+              </Typography>
+            </Box>
+
+            {/* Link 3: BLOG */}
+            <Box
+              component={RouterLink}
+              to="/blog"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                px: 3,
+                py: 1.2,
+                borderRadius: "8px",
+                textDecoration: "none !important",
+                border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
+                bgcolor: alpha(NOIR.panel, 0.75),
+                backdropFilter: "blur(12px)",
+                boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
+                transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
+                "&, & *": {
+                  textDecoration: "none !important",
+                },
+                "&:hover": {
+                  bgcolor: NOIR.navyField,
+                  borderColor: NOIR.navyField,
+                  boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
+                  "& .btn-text": {
+                    color: "#FFFFFF !important",
+                  },
+                },
+              }}
+            >
+              <Typography
+                className="btn-text"
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "text.primary",
+                  textTransform: "uppercase",
+                  transition: "color 0.3s ease",
+                }}
+              >
+                EXPLORE COMMUNITY <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+              </Typography>
+            </Box>
           </Box>
         </Box>
 

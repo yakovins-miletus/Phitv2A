@@ -3,8 +3,14 @@ import { createTheme } from "@mui/material/styles";
 import { components } from "./components";
 import { palette } from "./palette";
 
-/** Single sitewide font — headings and body both render in Outfit. */
-export const FONT = "'Outfit', -apple-system, 'Helvetica Neue', Arial, sans-serif";
+/** The display font — headings and interactive elements. */
+export const DISPLAY_FONT = "'Outfit', -apple-system, 'Helvetica Neue', Arial, sans-serif";
+
+/** The body font — sitewide default for text and paragraphs. */
+export const BODY_FONT = "'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif";
+
+/** Legacy export — maps to the body font for backward compatibility. */
+export const FONT = BODY_FONT;
 
 /** The mono meta rail — exported for sx use on meta-labels and data readouts. */
 export const MONO = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -13,17 +19,19 @@ export const theme = createTheme({
   palette,
   shape: { borderRadius: 4 },
   typography: {
-    fontFamily: FONT,
+    fontFamily: BODY_FONT,
     h1: {
-      fontFamily: FONT,
+      fontFamily: DISPLAY_FONT,
       fontSize: "clamp(3rem, 8vw, 6rem)",
       lineHeight: 1.02,
       fontWeight: 700,
       letterSpacing: "-0.03em",
     },
-    h2: { fontFamily: FONT, fontSize: "2.5rem", lineHeight: 1.1, fontWeight: 700 },
-    h3: { fontFamily: FONT, fontSize: "1.75rem", lineHeight: 1.2, fontWeight: 500 },
-    h4: { fontFamily: FONT, fontSize: "1.25rem", lineHeight: 1.3, fontWeight: 500 },
+    h2: { fontFamily: DISPLAY_FONT, fontSize: "2.5rem", lineHeight: 1.1, fontWeight: 700 },
+    h3: { fontFamily: DISPLAY_FONT, fontSize: "1.75rem", lineHeight: 1.2, fontWeight: 500 },
+    h4: { fontFamily: DISPLAY_FONT, fontSize: "1.25rem", lineHeight: 1.3, fontWeight: 500 },
+    h5: { fontFamily: DISPLAY_FONT, fontSize: "1.1rem", lineHeight: 1.4, fontWeight: 500 },
+    h6: { fontFamily: DISPLAY_FONT, fontSize: "1rem", lineHeight: 1.4, fontWeight: 500 },
     subtitle1: { fontSize: "1.125rem", lineHeight: 1.6 },
     body1: { fontSize: "1rem", lineHeight: 1.65 },
     body2: { fontSize: "0.875rem", lineHeight: 1.6 },
@@ -33,7 +41,7 @@ export const theme = createTheme({
       fontWeight: 500,
       letterSpacing: "0.16em",
     },
-    button: { fontFamily: FONT, fontWeight: 500, textTransform: "none" },
+    button: { fontFamily: DISPLAY_FONT, fontWeight: 500, textTransform: "none" },
   },
   components,
 });

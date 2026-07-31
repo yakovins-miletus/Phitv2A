@@ -7,6 +7,15 @@
   font-display: swap;
 }
 
+/* Inter — self-hosted */
+@font-face {
+  font-family: "Inter";
+  src: url("../../assets/fonts/inter/inter-latin-wght.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Scroll-snap for the About page's white→navy transition into the Timeline.
    Proximity (not mandatory), and only About's own sections carry
    scroll-snap-align — inert everywhere else. */
