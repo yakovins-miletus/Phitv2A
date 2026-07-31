@@ -6,6 +6,7 @@ import { useReducedMotion } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import {
   PHASE_FLATTEN_END,
+  CONTAINER_START,
   flattenProgress,
   moveLeftProgress,
   sideFaceOpacity,
@@ -53,6 +54,8 @@ interface SignalLoop {
   waypoints: Point2D[];
   color: string;
   pulseOffsets: number[];
+  segLens: number[];
+  totalL: number;
 }
 
 function buildSignalLoops(): SignalLoop[] {
@@ -103,11 +106,29 @@ function buildSignalLoops(): SignalLoop[] {
     outerTL,
   ];
 
-  return [
+  const rawLoops = [
     { waypoints: loop1Waypoints, color: NOIR.goldRgb, pulseOffsets: [0, 0.5] },
     { waypoints: loop2Waypoints, color: NOIR.navyFieldRgb, pulseOffsets: [0.25, 0.75] },
     { waypoints: loop3Waypoints, color: NOIR.goldRgb, pulseOffsets: [0.1, 0.6] },
   ];
+
+  return rawLoops.map((loop) => {
+    const pts = loop.waypoints;
+    const segLens: number[] = [];
+    let totalL = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const p1 = pts[i]!;
+      const p2 = pts[(i + 1) % pts.length]!;
+      const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      segLens.push(len);
+      totalL += len;
+    }
+    return {
+      ...loop,
+      segLens,
+      totalL,
+    };
+  });
 }
 
 const SIGNAL_LOOPS = buildSignalLoops();
@@ -167,16 +188,8 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
         const pts = loop.waypoints;
         if (pts.length < 2) continue;
 
-        // Calculate segment lengths & total loop length
-        const segLens: number[] = [];
-        let totalL = 0;
-        for (let i = 0; i < pts.length; i++) {
-          const p1 = pts[i]!;
-          const p2 = pts[(i + 1) % pts.length]!;
-          const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-          segLens.push(len);
-          totalL += len;
-        }
+        const totalL = loop.totalL;
+        const segLens = loop.segLens;
 
         if (totalL === 0) continue;
 
@@ -204,11 +217,7 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
           const numSamples = 14; // Smooth sub-segment tracing
 
           ctx.beginPath();
-          ctx.lineWidth = 5.5;
           ctx.lineCap = "round";
-          ctx.strokeStyle = `rgba(${loop.color}, 0.95)`;
-          ctx.shadowColor = `rgba(${loop.color}, 0.9)`;
-          ctx.shadowBlur = 14;
 
           for (let s = 0; s <= numSamples; s++) {
             const sampleD = headD - (lineLen * (numSamples - s)) / numSamples;
@@ -219,8 +228,16 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
               ctx.lineTo(pt.x, pt.y);
             }
           }
+          
+          // Outer Glow Stroke
+          ctx.lineWidth = 14;
+          ctx.strokeStyle = `rgba(${loop.color}, 0.22)`;
           ctx.stroke();
-          ctx.shadowBlur = 0;
+
+          // Inner Core Stroke
+          ctx.lineWidth = 5.5;
+          ctx.strokeStyle = `rgba(${loop.color}, 0.95)`;
+          ctx.stroke();
 
           // Draw subtle node glow interaction when Loop 1 pulses are close to node centers
           if (loop.color === NOIR.goldRgb) {
@@ -813,6 +830,9 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
                   md: `translate(calc(-50% - ${progressMoveLeft * 320}px), -50%) translateZ(${Math.round(8 * (1 - progress3dTo2d))}px)`,
                 },
                 transition: "transform 0.05s linear",
+                // Hide P logo inside canvas during Phase 9 transform so the grouped element crossfade takes over
+                opacity: progress >= CONTAINER_START ? 0 : 1,
+                visibility: progress >= CONTAINER_START ? "hidden" : "visible",
               }}
             >
               {Array.from({ length: logoLayers }).map((_, i) => {

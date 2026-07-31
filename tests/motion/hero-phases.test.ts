@@ -7,7 +7,10 @@ import {
   DWELL_END,
   GUNSHOT_END,
   GUNSHOT_SPAN,
+  SMOKING_START,
+  SMOKING_END,
   SMOKING_SPAN,
+  CONTAINER_START,
   flattenProgress,
   moveLeftProgress,
   wordRevealProgress,
@@ -16,11 +19,11 @@ import {
   containerScale,
   topPanelX,
   bottomPanelX,
-  leftFlankX,
-  rightFlankX,
+  leftFlankY,
+  rightFlankY,
   flankOpacity,
-  pExitProgress,
-  atEnterProgress,
+  logoAtCrossfadeProgress,
+  borderAnimProgress,
   atTightenProgress,
   panelOpacity,
   panelPointerEvents,
@@ -35,9 +38,12 @@ test("phase boundaries are the values the design was built around", () => {
   expect(WORD_REVEAL_END).toBe(0.50);
   expect(WORD_REVEAL_SPAN).toBe(0.15);
   expect(DWELL_END).toBe(0.60);
-  expect(GUNSHOT_END).toBe(0.80);
-  expect(GUNSHOT_SPAN).toBe(0.20);
-  expect(SMOKING_SPAN).toBe(0.20);
+  expect(GUNSHOT_END).toBe(0.70);
+  expect(GUNSHOT_SPAN).toBe(0.10);
+  expect(SMOKING_START).toBe(0.74);
+  expect(SMOKING_END).toBe(0.82);
+  expect(SMOKING_SPAN).toBe(0.08);
+  expect(CONTAINER_START).toBe(0.86);
   expect(PHASE_MOVE_END - PHASE_FLATTEN_END).toBeCloseTo(PHASE_MOVE_SPAN, 10);
   expect(WORD_REVEAL_END - PHASE_MOVE_END).toBeCloseTo(WORD_REVEAL_SPAN, 10);
 });
@@ -51,11 +57,16 @@ test.each([
   [0.35, 1, 1, 0, 0, 0],
   [0.425, 1, 1, 0.5, 0, 0],
   [0.50, 1, 1, 1, 0, 0],
-  [0.55, 1, 1, 1, 0, 0], // Dwell hold
-  [0.70, 1, 1, 1, 0.5, 0], // Gunshot midpoint
-  [0.80, 1, 1, 1, 1, 0], // Gunshot finish
-  [0.90, 1, 1, 1, 1, 0.5], // Smoking midpoint
-  [1.00, 1, 1, 1, 1, 1], // Smoking finish
+  [0.55, 1, 1, 1, 0, 0],       // Dwell buffer midpoint
+  [0.60, 1, 1, 1, 0, 0],       // Dwell end / gunshot start
+  [0.65, 1, 1, 1, 0.5, 0],     // Gunshot midpoint
+  [0.70, 1, 1, 1, 1, 0],       // Gunshot end
+  [0.72, 1, 1, 1, 1, 0],       // Post-gunshot buffer
+  [0.74, 1, 1, 1, 1, 0],       // Smoking start
+  [0.78, 1, 1, 1, 1, 0.5],     // Smoking midpoint
+  [0.82, 1, 1, 1, 1, 1],       // Smoking end
+  [0.84, 1, 1, 1, 1, 1],       // Post-smoking buffer
+  [1.00, 1, 1, 1, 1, 1],       // End
 ])("progress %f -> flatten %f, moveLeft %f, wordReveal %f, gunshot %f, smoking %f", (p, flat, move, word, gun, smoke) => {
   expect(flattenProgress(p)).toBeCloseTo(flat, 6);
   expect(moveLeftProgress(p)).toBeCloseTo(move, 6);
@@ -93,7 +104,23 @@ test("phases do not overlap: each starts only once the previous has finished", (
   expect(wordRevealProgress(PHASE_MOVE_END - 1e-6)).toBe(0);
   expect(flattenProgress(PHASE_FLATTEN_END)).toBe(1);
   expect(gunshotProgress(DWELL_END - 1e-6)).toBe(0);
-  expect(smokingProgress(GUNSHOT_END - 1e-6)).toBe(0);
+  expect(smokingProgress(GUNSHOT_END)).toBe(0);      // buffer gap between gunshot and smoking
+  expect(smokingProgress(SMOKING_START - 1e-6)).toBe(0);
+});
+
+test("buffer segments: nothing new starts during buffer zones", () => {
+  // Post-gunshot buffer (0.70 → 0.74): gunshot done, smoking hasn't started
+  expect(gunshotProgress(0.72)).toBe(1);
+  expect(smokingProgress(0.72)).toBe(0);
+  expect(containerScale(0.72)).toBeCloseTo(0.4, 6);  // container already scaled down
+  expect(flankOpacity(0.72)).toBe(0);
+  expect(topPanelX(0.72)).toBe(0);
+  expect(bottomPanelX(0.72)).toBe(0);
+
+  // Post-smoking buffer (0.82 → 0.86): smoking done, P/AT transform hasn't started
+  expect(smokingProgress(0.84)).toBe(1);
+  expect(containerScale(0.84)).toBeCloseTo(0.4, 6);
+  expect(logoAtCrossfadeProgress(0.84)).toBe(0);
 });
 
 test("wordmark lift runs -110% (hidden) to 0% (in place)", () => {
@@ -103,45 +130,55 @@ test("wordmark lift runs -110% (hidden) to 0% (in place)", () => {
   expect(wordLiftPercent(WORD_REVEAL_END)).toBeCloseTo(0, 6);
 });
 
-test("gunshot transition scales container 1.0 to 0.4 and translates split panels with ease-out", () => {
-  expect(containerScale(0.50)).toBe(1);
+test("gunshot: images slide in AND container scales down together", () => {
+  // Container scales during gunshot
   expect(containerScale(DWELL_END)).toBe(1);
   expect(containerScale(GUNSHOT_END)).toBeCloseTo(0.4, 6);
+  // Container stays at 0.4 after gunshot
+  expect(containerScale(0.72)).toBeCloseTo(0.4, 6);
   expect(containerScale(1.0)).toBeCloseTo(0.4, 6);
-
+  // Flanking texts must stay invisible during gunshot
+  expect(flankOpacity(0.65)).toBe(0);
+  expect(flankOpacity(GUNSHOT_END)).toBe(0);
+  // Images slide in during gunshot
   expect(topPanelX(DWELL_END)).toBeCloseTo(-100, 6);
   expect(topPanelX(GUNSHOT_END)).toBeCloseTo(0, 6);
-  expect(topPanelX(1.0)).toBeCloseTo(10, 6);
-
   expect(bottomPanelX(DWELL_END)).toBeCloseTo(100, 6);
   expect(bottomPanelX(GUNSHOT_END)).toBeCloseTo(0, 6);
-  expect(bottomPanelX(1.0)).toBeCloseTo(-10, 6);
-
-  expect(leftFlankX(DWELL_END)).toBeCloseTo(0, 6);
-  expect(leftFlankX(GUNSHOT_END)).toBeCloseTo(-580, 6);
-  expect(leftFlankX(1.0)).toBeCloseTo(-580, 6);
-
-  expect(rightFlankX(DWELL_END)).toBeCloseTo(0, 6);
-  expect(rightFlankX(GUNSHOT_END)).toBeCloseTo(580, 6);
-  expect(rightFlankX(1.0)).toBeCloseTo(580, 6);
-
-  expect(flankOpacity(DWELL_END)).toBeCloseTo(0, 6);
-  expect(flankOpacity(GUNSHOT_END)).toBeCloseTo(1, 6);
-  expect(flankOpacity(1.0)).toBeCloseTo(1, 6);
 });
 
-test("mini transformation transitions P to AT and pulls AT PHITOPOLIS close together", () => {
-  expect(pExitProgress(0.72)).toBe(0);
-  expect(pExitProgress(0.745)).toBeCloseTo(0.5, 6);
-  expect(pExitProgress(0.77)).toBe(1);
+test("smoking: only texts appear vertically, container stays at 0.4", () => {
+  expect(containerScale(SMOKING_START)).toBeCloseTo(0.4, 6);
+  expect(containerScale(SMOKING_END)).toBeCloseTo(0.4, 6);
+  // Flanking texts appear during smoking
+  expect(flankOpacity(SMOKING_START)).toBe(0);
+  expect(flankOpacity(SMOKING_END)).toBe(1);
+  // Left text moves upward (negative Y)
+  expect(leftFlankY(SMOKING_START)).toBe(0);
+  expect(leftFlankY(SMOKING_END)).toBe(-25);
+  // Right text moves downward (positive Y)
+  expect(rightFlankY(SMOKING_START)).toBe(0);
+  expect(rightFlankY(SMOKING_END)).toBe(25);
+  // Images stay parked (no drift)
+  expect(topPanelX(SMOKING_START)).toBe(0);
+  expect(topPanelX(SMOKING_END)).toBe(0);
+});
 
-  expect(atEnterProgress(0.77)).toBe(0);
-  expect(atEnterProgress(0.80)).toBeCloseTo(0.5, 6);
-  expect(atEnterProgress(0.83)).toBe(1);
+test("container transform: P/AT transitions fire only after CONTAINER_START in one continuous flow", () => {
+  // P/AT crossfade (0.86 → 0.92)
+  expect(logoAtCrossfadeProgress(CONTAINER_START)).toBe(0);
+  expect(logoAtCrossfadeProgress(0.89)).toBeCloseTo(0.5, 6);
+  expect(logoAtCrossfadeProgress(0.92)).toBe(1);
 
-  expect(atTightenProgress(0.87)).toBe(0);
-  expect(atTightenProgress(0.905)).toBeCloseTo(0.5, 6);
-  expect(atTightenProgress(0.94)).toBe(1);
+  // Tighten (0.92 → 0.95)
+  expect(atTightenProgress(0.92)).toBe(0);
+  expect(atTightenProgress(0.935)).toBeCloseTo(0.5, 6);
+  expect(atTightenProgress(0.95)).toBe(1);
+
+  // Border animation starts immediately after tighten (0.95 → 1.00)
+  expect(borderAnimProgress(0.95)).toBe(0);
+  expect(borderAnimProgress(0.975)).toBeCloseTo(0.5, 6);
+  expect(borderAnimProgress(1.0)).toBe(1);
 });
 
 test.each([
@@ -169,4 +206,3 @@ test("logo side faces fade out before flattening completes", () => {
   expect(sideFaceOpacity(5 / 9)).toBeCloseTo(0, 6);
   expect(sideFaceOpacity(1)).toBe(0);
 });
-

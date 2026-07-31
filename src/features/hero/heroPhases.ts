@@ -23,15 +23,31 @@ export const PHASE_MOVE_SPAN = 0.15;
 export const WORD_REVEAL_END = 0.50;
 export const WORD_REVEAL_SPAN = 0.15;
 
-/** Phase 4: Empty threshold dwell hold (0.50 to 0.60). */
+/** Phase 4: Dwell buffer (0.50 → 0.60). Nothing moves. */
 export const DWELL_END = 0.60;
 
-/** Phase 5: Gunshot transition (0.60 to 0.80 - doubled duration: span 0.20). */
-export const GUNSHOT_END = 0.80;
-export const GUNSHOT_SPAN = 0.20;
+/** Phase 5: Gunshot — ONLY images slide in (0.60 → 0.70). */
+export const GUNSHOT_END = 0.70;
+export const GUNSHOT_SPAN = 0.10;
 
-/** Phase 6: Smoking section slow-motion drift (0.80 to 1.00). */
-export const SMOKING_SPAN = 0.20;
+/** Phase 6: Post-gunshot buffer (0.70 → 0.74). Nothing moves. */
+
+/** Phase 7: Smoking — ONLY flanking texts appear vertically (0.74 → 0.82). */
+export const SMOKING_START = 0.74;
+export const SMOKING_END = 0.82;
+export const SMOKING_SPAN = 0.08;
+
+/** Phase 8: Post-smoking buffer (0.82 → 0.86). Texts are settled, nothing moves. */
+
+/** Phase 9: Container transform — P exit, AT enter, tighten (0.86 → 1.00). */
+export const CONTAINER_START = 0.86;
+
+/** Border animation starts after tighten finishes (0.95 → 1.00). */
+export function borderAnimProgress(p: number): number {
+  if (p <= 0.95) return 0;
+  if (p >= 1.00) return 1;
+  return (p - 0.95) / 0.05;
+}
 
 /** Distance the wordmark travels, as a percentage of its own height. */
 export const WORD_LIFT_PERCENT = -110;
@@ -66,7 +82,7 @@ export function wordLiftPercent(p: number): number {
   return (1 - wordRevealProgress(p)) * WORD_LIFT_PERCENT;
 }
 
-/** 0 until DWELL_END, 0..1 across Phase 5 (Gunshot), then 1. */
+/** 0 until DWELL_END, 0..1 across Phase 5 (Gunshot images), then 1. */
 export function gunshotProgress(p: number): number {
   if (p <= DWELL_END) return 0;
   if (p >= GUNSHOT_END) return 1;
@@ -79,87 +95,101 @@ export function gunshotEaseOut(p: number): number {
   return 1 - Math.pow(1 - g, 3);
 }
 
-/** 0 until GUNSHOT_END, 0..1 across Phase 6 (Smoking drift). */
+/** 0 until SMOKING_START, 0..1 across Phase 7 (Smoking texts), then 1. */
 export function smokingProgress(p: number): number {
-  if (p <= GUNSHOT_END) return 0;
-  return Math.min(1, (p - GUNSHOT_END) / SMOKING_SPAN);
+  if (p <= SMOKING_START) return 0;
+  if (p >= SMOKING_END) return 1;
+  return (p - SMOKING_START) / SMOKING_SPAN;
 }
 
-/** Grouped container scale: 1.0 down to 0.4 during gunshot with ease-out, stays at 0.4 during smoking. */
+/**
+ * Container scale: scales down from 1.0 to 0.4 during gunshot (alongside images).
+ * Stays at 0.4 through smoking, buffers, and container transform.
+ */
 export function containerScale(p: number): number {
   if (p <= DWELL_END) return 1;
+  if (p >= GUNSHOT_END) return 0.4;
   const g = gunshotEaseOut(p);
-  return 1 - g * 0.6; // 1.0 -> 0.4
+  return 1 - g * 0.6; // 1.0 → 0.4
 }
 
-/** Top panel X translation percentage: -100% -> 0% during gunshot with ease-out, 0% -> +10% during smoking. */
+/**
+ * Top panel X translation: -100% → 0% during gunshot only.
+ * Stays at 0% during smoking and container transform (no drift).
+ */
 export function topPanelX(p: number): number {
   if (p <= DWELL_END) return -100;
-  if (p <= GUNSHOT_END) {
-    const g = gunshotEaseOut(p);
-    return -100 + g * 100;
-  }
-  const s = smokingProgress(p);
-  return s * 10;
+  if (p >= GUNSHOT_END) return 0;
+  const g = gunshotEaseOut(p);
+  return -100 + g * 100;
 }
 
-/** Bottom panel X translation percentage: +100% -> 0% during gunshot with ease-out, 0% -> -10% during smoking. */
+/**
+ * Bottom panel X translation: +100% → 0% during gunshot only.
+ * Stays at 0% during smoking and container transform (no drift).
+ */
 export function bottomPanelX(p: number): number {
   if (p <= DWELL_END) return 100;
-  if (p <= GUNSHOT_END) {
-    const g = gunshotEaseOut(p);
-    return 100 - g * 100;
-  }
+  if (p >= GUNSHOT_END) return 0;
+  const g = gunshotEaseOut(p);
+  return 100 - g * 100;
+}
+
+/** Left flanking text X translation px (unused — texts move vertically now). */
+export function leftFlankX(_p: number): number {
+  return 0;
+}
+
+/** Right flanking text X translation px (unused — texts move vertically now). */
+export function rightFlankX(_p: number): number {
+  return 0;
+}
+
+/** Left flanking text Y translation vh: 0 → -25vh (upward) during smoking only. */
+export function leftFlankY(p: number): number {
+  if (p <= SMOKING_START) return 0;
+  if (p >= SMOKING_END) return -25;
   const s = smokingProgress(p);
-  return -s * 10;
+  const eased = 1 - Math.pow(1 - s, 2); // ease-out quad
+  return -eased * 25;
 }
 
-/** Left flanking text X translation px during gunshot ease-out (0 -> -580px), stays static in smoking. */
-export function leftFlankX(p: number): number {
-  if (p <= DWELL_END) return 0;
-  const g = gunshotEaseOut(p);
-  return -g * 580;
+/** Right flanking text Y translation vh: 0 → +25vh (downward) during smoking only. */
+export function rightFlankY(p: number): number {
+  if (p <= SMOKING_START) return 0;
+  if (p >= SMOKING_END) return 25;
+  const s = smokingProgress(p);
+  const eased = 1 - Math.pow(1 - s, 2); // ease-out quad
+  return eased * 25;
 }
 
-/** Right flanking text X translation px during gunshot ease-out (0 -> +580px), stays static in smoking. */
-export function rightFlankX(p: number): number {
-  if (p <= DWELL_END) return 0;
-  const g = gunshotEaseOut(p);
-  return g * 580;
-}
-
-/** Flanking text opacity during gunshot ease-out (0 -> 1), stays 1 in smoking. */
+/** Flanking text opacity: 0 until smoking starts, then 0→1 during smoking. */
 export function flankOpacity(p: number): number {
-  if (p <= DWELL_END) return 0;
-  const g = gunshotEaseOut(p);
-  return Math.min(1, g * 1.5);
+  if (p <= SMOKING_START) return 0;
+  if (p >= SMOKING_END) return 1;
+  return smokingProgress(p);
 }
 
-/** 0..1 progress during Mini Transformation where P logo drops down out (0.72 -> 0.77). */
-export function pExitProgress(p: number): number {
-  if (p <= 0.72) return 0;
-  if (p >= 0.77) return 1;
-  return (p - 0.72) / 0.05;
-}
-
-/** 0..1 progress during Mini Transformation where AT enters from above delayed after P drops away (0.77 -> 0.83). */
-export function atEnterProgress(p: number): number {
-  if (p <= 0.77) return 0;
-  if (p >= 0.83) return 1;
-  return (p - 0.77) / 0.06;
+/** Crossfade progress for P logo and AT (0.86 → 0.92). */
+export function logoAtCrossfadeProgress(p: number): number {
+  if (p <= CONTAINER_START) return 0;
+  if (p >= 0.92) return 1;
+  return (p - CONTAINER_START) / 0.06;
 }
 
 /** Backward compatibility alias for pExitProgress. */
 export function pToAtProgress(p: number): number {
-  return pExitProgress(p);
+  return logoAtCrossfadeProgress(p);
 }
 
-/** 0..1 progress during Mini Transformation where PHITOPOLIS slides left to meet AT after Buffer 1 (0.87 -> 0.94). */
+/** PHITOPOLIS slides left to meet AT with reasonable spacing (0.92 → 0.95). */
 export function atTightenProgress(p: number): number {
-  if (p <= 0.87) return 0;
-  if (p >= 0.94) return 1;
-  return (p - 0.87) / 0.07;
+  if (p <= 0.92) return 0;
+  if (p >= 0.95) return 1;
+  return (p - 0.92) / 0.03;
 }
+
+/** Final buffer 0.97 → 1.00 */
 
 /** Opacity of the hero's side content panels. */
 export function panelOpacity(p: number): number {
@@ -175,6 +205,3 @@ export function panelPointerEvents(p: number): "none" | "auto" {
 export function sideFaceOpacity(flatten: number): number {
   return Math.max(0, 1 - flatten * SIDE_FACE_FADE_RATE);
 }
-
-
-

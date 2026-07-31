@@ -122,7 +122,7 @@ export function CandidatesAndCareersSection() {
         .fromTo(
           panel2Ref.current,
           {
-            yPercent: -100,
+            yPercent: 100,
             autoAlpha: 0,
           },
           {
@@ -252,6 +252,10 @@ export function CandidatesAndCareersSection() {
               bgcolor: "divider",
               borderRadius: "3px",
             },
+            // Hide Panel 2 initially to prevent it from overlapping Panel 1 during enter scroll.
+            opacity: reducedMotion ? 1 : 0,
+            visibility: reducedMotion ? "visible" : "hidden",
+            transform: reducedMotion ? "none" : "translateY(100%)",
           }}
         >
           <Stack spacing={3.5}>

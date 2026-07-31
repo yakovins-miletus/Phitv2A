@@ -76,14 +76,38 @@ const WARM_ROUTES = [
   { to: "/contact", label: "CONTACT" },
 ] as const;
 
+const CRITICAL_IMAGES = [
+  { src: "/phitopolis_logo_hero.svg", label: "BRAND LOGO" },
+  { src: "/images/quant-research-banner.jpg", label: "RESEARCH CORE" },
+  { src: "/images/data-science-banner.png", label: "DATA STREAM" },
+] as const;
+
+function preloadImage(src: string): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // failsafe: do not block load if asset is missing
+  });
+}
+
 function useWarmupSignals(active: boolean): LoadSignal[] {
   const router = useRouter();
   const [signals] = useState<LoadSignal[]>(() => {
     if (!active) return [];
-    return WARM_ROUTES.map((route) => ({
+
+    const routeSignals = WARM_ROUTES.map((route) => ({
       label: route.label,
       promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
     }));
+
+    const imageSignals = CRITICAL_IMAGES.map((img) => ({
+      label: img.label,
+      promise: preloadImage(img.src),
+    }));
+
+    return [...routeSignals, ...imageSignals];
   });
   return signals;
 }

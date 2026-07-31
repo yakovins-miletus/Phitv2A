@@ -86,27 +86,40 @@ export function ParticleField() {
         p.x = (p.x + p.vx + width) % width;
         p.y = (p.y + p.vy + height) % height;
       }
+      // 1. Draw connection lines in a single batched path
       context.lineWidth = 1;
+      context.strokeStyle = `rgba(${GOLD}, 0.06)`;
+      context.beginPath();
+      const lineDistSq = LINE_DIST * LINE_DIST;
       for (let i = 0; i < particles.length; i += 1) {
         const a = particles[i];
         if (a === undefined) continue;
         for (let j = i + 1; j < particles.length; j += 1) {
           const b = particles[j];
           if (b === undefined) continue;
-          const d = Math.hypot(a.x - b.x, a.y - b.y);
-          if (d < LINE_DIST) {
-            context.strokeStyle = `rgba(${GOLD}, ${String(0.14 * (1 - d / LINE_DIST))})`;
-            context.beginPath();
+          
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < lineDistSq) {
             context.moveTo(a.x, a.y);
             context.lineTo(b.x, b.y);
-            context.stroke();
           }
         }
-        context.fillStyle = `rgba(${GOLD}, 0.55)`;
-        context.beginPath();
-        context.arc(a.x, a.y, 1.4, 0, Math.PI * 2);
-        context.fill();
       }
+      context.stroke();
+
+      // 2. Draw all particle circles in a single batched path
+      context.fillStyle = `rgba(${GOLD}, 0.55)`;
+      context.beginPath();
+      for (let i = 0; i < particles.length; i += 1) {
+        const a = particles[i];
+        if (a === undefined) continue;
+        context.moveTo(a.x + 1.4, a.y);
+        context.arc(a.x, a.y, 1.4, 0, Math.PI * 2);
+      }
+      context.fill();
+
       rafId = requestAnimationFrame(frame);
     };
 

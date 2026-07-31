@@ -11,26 +11,29 @@ import { RouterLink } from "@/shared/components/RouterLink";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
+import { getLenis } from "@/shared/components/SmoothScroll";
 import {
   DWELL_END,
-  atEnterProgress,
+  GUNSHOT_END,
+  CONTAINER_START,
+  borderAnimProgress,
+  logoAtCrossfadeProgress,
   atTightenProgress,
   bottomPanelX,
   containerScale,
   flankOpacity,
   gunshotProgress,
-  leftFlankX,
-  pExitProgress,
+  leftFlankY,
   panelOpacity,
   panelPointerEvents,
-  rightFlankX,
+  rightFlankY,
   topPanelX,
   wordLiftPercent,
   wordRevealProgress,
 } from "./heroPhases";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
-import { useReducedMotion } from "@/shared/motion";
+import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -46,23 +49,26 @@ export function HeroSignalCore() {
   const containerRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const reduced = useReducedMotion();
+  const ready = usePreloaderReady();
+  const isSnappingRef = useRef(false);
 
   useStagePresence(containerRef, "hero");
   const { registerAnchor } = useNavbar();
 
-  // Dark mode navbar activation strictly across the gunshot transition and smoking drift sections
-  const isGunshotActive = !reduced && scrollProgress >= DWELL_END && scrollProgress < 0.98;
+  // Dark mode navbar activation starting when Phase 6 hits (GUNSHOT_END = 0.70)
+  const isHeroActive = !reduced && scrollProgress >= DWELL_END && scrollProgress < 0.98;
+  const isHeroDark = !reduced && scrollProgress >= GUNSHOT_END && scrollProgress < 0.98;
 
   useEffect(() => {
-    if (isGunshotActive) {
-      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, false);
+    if (isHeroActive) {
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, isHeroDark);
     } else {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     }
     return () => {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     };
-  }, [isGunshotActive, registerAnchor]);
+  }, [isHeroActive, isHeroDark, registerAnchor]);
 
   useGSAP(
     () => {
@@ -76,6 +82,61 @@ export function HeroSignalCore() {
         pin: true,
         onUpdate: (self) => {
           setScrollProgress(self.progress);
+
+          if (isSnappingRef.current) return;
+
+          const p = self.progress;
+          const dir = self.direction; // 1 = scroll down, -1 = scroll up
+
+          if (dir === 1 && p > DWELL_END && p < GUNSHOT_END - 0.01) {
+            isSnappingRef.current = true;
+            const targetScroll = self.start + GUNSHOT_END * (self.end - self.start);
+            const lenis = getLenis();
+            if (lenis) {
+              lenis.scrollTo(targetScroll, {
+                force: true,
+                duration: 0.5,
+                onComplete: () => {
+                  isSnappingRef.current = false;
+                },
+              });
+            } else {
+              const obj = { y: window.scrollY };
+              gsap.to(obj, {
+                y: targetScroll,
+                duration: 0.5,
+                ease: "power2.out",
+                onUpdate: () => window.scrollTo(0, obj.y),
+                onComplete: () => {
+                  isSnappingRef.current = false;
+                },
+              });
+            }
+          } else if (dir === -1 && p < GUNSHOT_END && p > DWELL_END + 0.01) {
+            isSnappingRef.current = true;
+            const targetScroll = self.start + DWELL_END * (self.end - self.start);
+            const lenis = getLenis();
+            if (lenis) {
+              lenis.scrollTo(targetScroll, {
+                force: true,
+                duration: 0.5,
+                onComplete: () => {
+                  isSnappingRef.current = false;
+                },
+              });
+            } else {
+              const obj = { y: window.scrollY };
+              gsap.to(obj, {
+                y: targetScroll,
+                duration: 0.5,
+                ease: "power2.out",
+                onUpdate: () => window.scrollTo(0, obj.y),
+                onComplete: () => {
+                  isSnappingRef.current = false;
+                },
+              });
+            }
+          }
         },
       });
     },
@@ -86,12 +147,12 @@ export function HeroSignalCore() {
   const gProgress = reduced ? 0 : gunshotProgress(scrollProgress);
   const topX = reduced ? 0 : topPanelX(scrollProgress);
   const bottomX = reduced ? 0 : bottomPanelX(scrollProgress);
-  const leftX = reduced ? -580 : leftFlankX(scrollProgress);
-  const rightX = reduced ? 580 : rightFlankX(scrollProgress);
+  const leftY = reduced ? -240 : leftFlankY(scrollProgress);
+  const rightY = reduced ? 240 : rightFlankY(scrollProgress);
   const flankOp = reduced ? 1 : flankOpacity(scrollProgress);
-  const pExitVal = reduced ? 0 : pExitProgress(scrollProgress);
-  const atEnterVal = reduced ? 0 : atEnterProgress(scrollProgress);
+  const crossfadeVal = reduced ? 1 : logoAtCrossfadeProgress(scrollProgress);
   const tightVal = reduced ? 0 : atTightenProgress(scrollProgress);
+  const borderProgress = reduced ? 1 : borderAnimProgress(scrollProgress);
 
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
@@ -108,9 +169,9 @@ export function HeroSignalCore() {
           alignItems: "center",
           justifyContent: "center",
           background: `radial-gradient(ellipse at center, #FFFFFF 65%, ${alpha(NOIR.panel, 0.4)} 88%, ${alpha(NOIR.navyField, 0.02)} 100%)`,
-          pt: { xs: 16, md: 12 },
-          pb: { xs: 10, md: 6 },
-          px: { xs: 4, md: 8 },
+          pt: 0,
+          pb: 0,
+          px: 0,
         }}
       >
         {/* Dual Split-Pane Images Layer (Gunshot & Smoking Section) */}
@@ -148,6 +209,12 @@ export function HeroSignalCore() {
                   transform: `translateX(${topX.toFixed(2)}%)`,
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
+                  // Film-loop panning drift when gunshot is locked, ending once out of hero view
+                  animation: (gProgress > 0.99 && scrollProgress < 0.98) ? "filmPanRight 30s linear infinite alternate" : "none",
+                  "@keyframes filmPanRight": {
+                    "0%": { objectPosition: "50% 50%" },
+                    "100%": { objectPosition: "55% 50%" },
+                  },
                 }}
               />
             </Box>
@@ -175,27 +242,33 @@ export function HeroSignalCore() {
                   transform: `translateX(${bottomX.toFixed(2)}%) scale(1.05)`,
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
+                  // Film-loop panning drift when gunshot is locked, ending once out of hero view
+                  animation: (gProgress > 0.99 && scrollProgress < 0.98) ? "filmPanLeft 30s linear infinite alternate" : "none",
+                  "@keyframes filmPanLeft": {
+                    "0%": { objectPosition: "50% 50%" },
+                    "100%": { objectPosition: "45% 50%" },
+                  },
                 }}
               />
             </Box>
           </Box>
         )}
 
-        {/* Flanking Outward Text Elements (Gunshot Outward Motion -> Static in Smoking) */}
+        {/* Flanking Text Elements (Appear during Smoking — vertical movement) */}
         {flankOp > 0.01 && (
           <>
-            {/* Left Text: 7 YEARS OF EXCELLENCE */}
+            {/* Top Text: 7 YEARS OF EXCELLENCE — starts at center, moves upward */}
             <Box
               sx={{
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                transform: `translate(calc(-50% + ${leftX.toFixed(1)}px), -50%)`,
+                transform: `translate(-50%, calc(-50% + ${leftY.toFixed(1)}vh))`,
                 opacity: flankOp,
                 pointerEvents: "none",
                 zIndex: 3,
                 whiteSpace: "nowrap",
-                textAlign: "right",
+                textAlign: "center",
                 transition: "transform 0.05s linear, opacity 0.05s linear",
               }}
             >
@@ -206,29 +279,30 @@ export function HeroSignalCore() {
                   fontWeight: 800,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: "#FFFFFF",
+                  color: borderProgress >= 0.99 ? NOIR.gold : "#FFFFFF",
                   textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
+                  transition: "color 0.15s ease-out",
                 }}
               >
-                <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>01 //</Box> 7 YEARS OF EXCELLENCE
+                7 YEARS OF EXCELLENCE
               </Typography>
             </Box>
 
-            {/* Right Text: GENERATIONS OF COMPETITIVENESS */}
+            {/* Bottom Text: GENERATIONS OF COMPETITIVENESS — starts at center, moves downward */}
             <Box
               sx={{
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                transform: `translate(calc(-50% + ${rightX.toFixed(1)}px), -50%)`,
+                transform: `translate(-50%, calc(-50% + ${rightY.toFixed(1)}vh))`,
                 opacity: flankOp,
                 pointerEvents: "none",
                 zIndex: 3,
                 whiteSpace: "nowrap",
-                textAlign: "left",
+                textAlign: "center",
                 transition: "transform 0.05s linear, opacity 0.05s linear",
               }}
             >
@@ -239,14 +313,15 @@ export function HeroSignalCore() {
                   fontWeight: 800,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: "#FFFFFF",
+                  color: borderProgress >= 0.99 ? NOIR.gold : "#FFFFFF",
                   textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
+                  transition: "color 0.15s ease-out",
                 }}
               >
-                YEARS OF COMPETITIVENESS <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>// 02</Box>
+                GENERATIONS OF COMPETITIVENESS
               </Typography>
             </Box>
           </>
@@ -264,7 +339,8 @@ export function HeroSignalCore() {
             zIndex: 4,
             transform: `scale(${scaleVal.toFixed(3)})`,
             transformOrigin: "center center",
-            transition: "transform 0.05s linear",
+            // Disable CSS transform transitions when scroll-driven to eliminate layout lag
+            transition: scrollProgress > 0 ? "none" : "transform 0.05s linear",
             bgcolor: gProgress > 0.05 ? "#FFFFFF" : "transparent",
             borderRadius: gProgress > 0.05 ? `${(gProgress * 24).toFixed(0)}px` : "0px",
             border: gProgress > 0.05 ? "1px solid rgba(0,0,0,0.08)" : "none",
@@ -272,45 +348,87 @@ export function HeroSignalCore() {
             maxWidth: gProgress > 0.05 ? "1200px" : "100%",
             maxHeight: gProgress > 0.05 ? "720px" : "100%",
             m: "auto",
+            // Secondary border animation from top to bottom drawing after AT & PHITOPOLIS align
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              inset: "-1px",
+              border: "6px solid",
+              borderColor: NOIR.gold,
+              borderRadius: "inherit",
+              pointerEvents: "none",
+              clipPath: `polygon(0% 0%, 100% 0%, 100% ${(borderProgress * 100).toFixed(1)}%, 0% ${(borderProgress * 100).toFixed(1)}%)`,
+              opacity: borderProgress > 0.01 ? 1 : 0,
+              willChange: "clip-path, opacity",
+            }
           }}
         >
-          {/* Interactive Signal Canvas Layer (P Logo drops down out first) */}
+          {/* Interactive Signal Canvas Layer (Grid, Signal lines, and cubes) */}
           <Box
             aria-hidden
             sx={{
               position: "absolute",
               inset: 0,
               zIndex: 4,
-              opacity: (1 - pExitVal) * (reduced ? 0.4 : 0.95),
-              transform: `translateY(${pExitVal * 180}px)`,
-              transition: "transform 0.1s ease-out, opacity 0.1s ease-out",
+              opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
+              transform: "none",
+              transition: scrollProgress > 0 ? "none" : "opacity 0.8s ease-out",
             }}
           >
             <HeroSignalP progress={scrollProgress} />
           </Box>
 
-          {/* "AT" Wordmark Transition — Enters from top delayed after P drops away */}
-          {atEnterVal > 0.01 && (
+          {/* Grouped P-Logo & AT Container (Linked crossfade on scroll) */}
+          {scrollProgress >= CONTAINER_START && (
             <Box
               sx={{
                 position: "absolute",
                 top: "50%",
-                left: { xs: "50%", sm: "calc(50% - 280px)", md: "calc(50% - 330px)" },
-                transform: `translate(-50%, calc(-50% + ${(1 - atEnterVal) * -160}px))`,
-                opacity: atEnterVal,
+                left: {
+                  xs: "50%",
+                  sm: "calc(50% - 220px)",
+                  md: "calc(50% - 320px)",
+                },
+                transform: "translate(-50%, -50%)",
+                width: "100%",
+                maxWidth: { xs: "200px", sm: "280px", md: "380px" },
+                height: "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 zIndex: 6,
                 pointerEvents: "none",
-                transition: "opacity 0.1s ease-out, transform 0.1s ease-out",
               }}
             >
+              {/* Flat P Logo - fades out and slides down */}
+              <Box
+                component="img"
+                src="/phitopolis_logo_hero.svg"
+                alt=""
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  opacity: 1 - crossfadeVal,
+                  transform: `translateY(${(crossfadeVal * 60).toFixed(1)}px) scale(${(1 - crossfadeVal * 0.15).toFixed(3)})`,
+                  willChange: "opacity, transform",
+                  transition: scrollProgress > 0 ? "none" : "opacity 0.1s ease-out, transform 0.1s ease-out",
+                }}
+              />
+
+              {/* AT Text - fades in and slides down into view */}
               <Typography
                 variant="h1"
                 sx={{
+                  position: "absolute",
                   fontWeight: 900,
                   fontSize: { xs: "2.8rem", sm: "4.5rem", md: "6rem" },
                   letterSpacing: "-0.04em",
                   color: NOIR.gold,
                   textShadow: "0 2px 10px rgba(0,0,0,0.15)",
+                  opacity: crossfadeVal,
+                  transform: `translateY(${((1 - crossfadeVal) * -60).toFixed(1)}px) scale(${(0.85 + crossfadeVal * 0.15).toFixed(3)})`,
+                  willChange: "opacity, transform",
+                  transition: scrollProgress > 0 ? "none" : "opacity 0.1s ease-out, transform 0.1s ease-out",
                 }}
               >
                 AT
@@ -335,7 +453,7 @@ export function HeroSignalCore() {
               clipPath: "inset(0 0 0 0)",
               opacity: reduced ? 1 : wordRevealProgress(scrollProgress),
               pointerEvents: "auto",
-              transition: "opacity 0.15s ease-out, left 0.1s ease-out",
+              transition: scrollProgress > 0 ? "none" : "opacity 0.15s ease-out, left 0.1s ease-out",
               transform: {
                 xs: "translate(-50%, -50%)",
                 sm: "translate(0, -50%)",
@@ -355,7 +473,7 @@ export function HeroSignalCore() {
                   textTransform: "uppercase",
                   userSelect: "none",
                   transform: reduced ? "translateY(0)" : `translateY(${wordLiftPercent(scrollProgress)}%)`,
-                  transition: "transform 0.05s linear",
+                  transition: scrollProgress > 0 ? "none" : "transform 0.05s linear",
                 }}
               >
                 PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
@@ -386,8 +504,9 @@ export function HeroSignalCore() {
             zIndex: 5,
             display: "flex",
             flexDirection: "column",
-            opacity: panelOpacity(scrollProgress),
-            transition: "opacity 0.3s ease",
+            opacity: ready ? panelOpacity(scrollProgress) : 0,
+            transform: ready ? "translateY(0)" : "translateY(16px)",
+            transition: `opacity 0.8s ${EASE_OUT_EXPO_CSS}, transform 0.8s ${EASE_OUT_EXPO_CSS}`,
             maxWidth: { xs: "320px", sm: "600px", md: "780px" },
           }}
         >
@@ -416,9 +535,11 @@ export function HeroSignalCore() {
             display: "flex",
             flexDirection: "column",
             gap: 1.2,
-            opacity: panelOpacity(scrollProgress),
-            pointerEvents: panelPointerEvents(scrollProgress),
-            transition: "opacity 0.3s ease",
+            opacity: ready ? panelOpacity(scrollProgress) : 0,
+            pointerEvents: ready ? panelPointerEvents(scrollProgress) : "none",
+            transform: ready ? "translateY(0)" : "translateY(16px)",
+            transition: `opacity 0.8s ${EASE_OUT_EXPO_CSS}, transform 0.8s ${EASE_OUT_EXPO_CSS}`,
+            transitionDelay: ready ? "0.15s" : "0s",
             maxWidth: { xs: "calc(100% - 64px)", md: "850px" },
           }}
         >
@@ -593,7 +714,9 @@ export function HeroSignalCore() {
             zIndex: 4,
             display: { xs: "none", md: "flex" },
             alignItems: "center",
-            opacity: panelOpacity(scrollProgress),
+            opacity: ready ? panelOpacity(scrollProgress) : 0,
+            transition: "opacity 0.8s ease-out",
+            transitionDelay: ready ? "0.3s" : "0s",
           }}
         >
           <Typography

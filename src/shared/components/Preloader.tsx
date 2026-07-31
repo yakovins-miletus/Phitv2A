@@ -46,10 +46,11 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
   const [resolved, setResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("ASSETS");
   const [forced, setForced] = useState(false);
+  const [phase, setPhase] = useState<"entry" | "loading" | "complete" | "dismissing" | "done">("entry");
 
   const total = Math.max(signals.length, 1);
-  const done = forced || signals.length === 0 || resolved >= total;
 
+  // Monitor loading signals
   useEffect(() => {
     let cancelled = false;
     for (const signal of signals) {
@@ -69,6 +70,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     };
   }, [signals]);
 
+  // Monitor Escape key for skipping
   useEffect(() => {
     const skip = (event: KeyboardEvent) => {
       if (event.key === "Escape") setForced(true);
@@ -77,14 +79,57 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     return () => window.removeEventListener("keydown", skip);
   }, []);
 
+  // Escape/Click overrides to skip straight to dismissing
   useEffect(() => {
-    if (done) {
+    if (forced) {
+      setPhase("dismissing");
+    }
+  }, [forced]);
+
+  // Phase transitions:
+  // 1. Entry Buffer Phase: Stay in entry phase for 1.2s to show signals flowing inwards
+  useEffect(() => {
+    if (phase === "entry") {
+      const timeoutMs = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 5 : 1200;
+      const timer = setTimeout(() => {
+        setPhase("loading");
+      }, timeoutMs);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  // 2. Loading Phase: Transition to Complete once all assets are loaded
+  useEffect(() => {
+    if (phase === "loading" && resolved >= total) {
+      setPhase("complete");
+    }
+  }, [phase, resolved, total]);
+
+  // 3. Complete Buffer Phase: Stay on 100% completed state for 1.0s to settle animations
+  useEffect(() => {
+    if (phase === "complete") {
+      const timeoutMs = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 5 : 1000;
+      const timer = setTimeout(() => {
+        setPhase("dismissing");
+      }, timeoutMs);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  // 4. Done Phase: Notify shell once dismissal completes
+  useEffect(() => {
+    if (phase === "done") {
       sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
       onDone();
     }
-  }, [done, onDone]);
+  }, [phase, onDone]);
 
-  const percent = done ? 100 : Math.round((Math.min(resolved, total) / total) * 100);
+  const isCompleteOrLater = phase === "complete" || phase === "dismissing" || phase === "done" || forced || resolved >= total;
+  const percent = isCompleteOrLater ? 100 : Math.round((Math.min(resolved, total) / total) * 100);
+
+  const showProgress = phase !== "entry" && phase !== "dismissing" && phase !== "done";
+  const progressOpacity = showProgress ? 1 : 0;
+  const contentOpacity = phase !== "dismissing" && phase !== "done" ? 1 : 0;
 
   return (
     <Box
@@ -95,12 +140,11 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
       {/* White Camera-Iris Shutter Background */}
       <motion.div
         initial={{ clipPath: "circle(150% at 50% 50%)" }}
-        animate={done ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
+        animate={(phase === "dismissing" || phase === "done") ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
         transition={{ duration: 0.55, ease: EASE_IN_OUT_QUART }}
         onAnimationComplete={() => {
-          if (done) {
-            sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-            onDone();
+          if (phase === "dismissing" || forced) {
+            setPhase("done");
           }
         }}
         style={{
@@ -114,7 +158,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
         }}
       >
         <motion.div
-          animate={done ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
+          animate={(phase === "dismissing" || phase === "done") ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           style={{
             display: "flex",
@@ -122,60 +166,156 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
             alignItems: "center",
             justifyContent: "center",
             gap: 24,
+            opacity: contentOpacity,
           }}
         >
-          {/* 2D P Logo with Glow */}
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            style={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            <Box
-              component="img"
-              src="/phitopolis_logo_hero.svg"
-              alt="Phitopolis 2D Logo"
-              sx={{
-                width: "100%",
-                height: "auto",
-                filter: `drop-shadow(0 0 25px ${NOIR.gold})`,
-              }}
-            />
-          </motion.div>
+          {/* Logo & Circular Loader Container */}
+          <Box sx={{ position: "relative", width: 280, height: 280, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+              <defs>
+                <filter id="preloader-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* Background guide lines */}
+              <path d="M 140 0 L 140 44 A 96 96 0 0 1 236 140 A 96 96 0 1 1 140 44" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
+              <path d="M 280 140 L 236 140 A 96 96 0 0 1 140 236 A 96 96 0 1 1 236 140" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
+              <path d="M 140 280 L 140 236 A 96 96 0 0 1 44 140 A 96 96 0 1 1 140 236" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
+              <path d="M 0 140 L 44 140 A 96 96 0 0 1 140 44 A 96 96 0 1 1 44 140" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
 
-          <Typography
-            component="span"
-            sx={{
-              fontFamily: MONO,
-              fontWeight: 700,
-              letterSpacing: "0.28em",
-              color: "primary.main",
-              fontSize: "1.1rem",
-            }}
-          >
-            <ScrambleText text="PHITOPOLIS" step={40} />
-          </Typography>
-          <Box sx={{ width: 180, height: "2px", bgcolor: "divider", overflow: "hidden" }}>
+              {/* Animated gold pulses */}
+              <motion.path
+                d="M 140 0 L 140 44 A 96 96 0 0 1 236 140 A 96 96 0 1 1 140 44"
+                fill="none"
+                stroke={NOIR.gold}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                filter="url(#preloader-glow)"
+                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
+                animate={{ strokeDashoffset: 0 }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 0 }}
+              />
+              <motion.path
+                d="M 280 140 L 236 140 A 96 96 0 0 1 140 236 A 96 96 0 1 1 236 140"
+                fill="none"
+                stroke={NOIR.gold}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                filter="url(#preloader-glow)"
+                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
+                animate={{ strokeDashoffset: 0 }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 0.55 }}
+              />
+              <motion.path
+                d="M 140 280 L 140 236 A 96 96 0 0 1 44 140 A 96 96 0 1 1 140 236"
+                fill="none"
+                stroke={NOIR.gold}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                filter="url(#preloader-glow)"
+                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
+                animate={{ strokeDashoffset: 0 }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 1.1 }}
+              />
+              <motion.path
+                d="M 0 140 L 44 140 A 96 96 0 0 1 140 44 A 96 96 0 1 1 44 140"
+                fill="none"
+                stroke={NOIR.gold}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                filter="url(#preloader-glow)"
+                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
+                animate={{ strokeDashoffset: 0 }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 1.65 }}
+              />
+
+              {/* Progress Circle Ring */}
+              <circle cx="140" cy="140" r="76" fill="none" stroke="rgba(10, 42, 102, 0.05)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
+              <motion.circle
+                cx="140"
+                cy="140"
+                r="76"
+                fill="none"
+                stroke={NOIR.gold}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeDasharray="477.52" // 2 * Math.PI * 76
+                initial={{ strokeDashoffset: 477.52 }}
+                animate={{ strokeDashoffset: 477.52 - (percent / 100) * 477.52 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                style={{
+                  transform: "rotate(-90deg)",
+                  transformOrigin: "140px 140px",
+                  opacity: progressOpacity,
+                  transition: "opacity 0.6s ease"
+                }}
+              />
+            </svg>
+            
+            {/* P Logo at the center */}
             <motion.div
-              animate={{ scaleX: percent / 100 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              style={{ height: "100%", background: NOIR.gold, transformOrigin: "left" }}
-            />
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
+            >
+              <Box
+                component="img"
+                src="/phitopolis_logo_hero.svg"
+                alt="Phitopolis 2D Logo"
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  filter: `drop-shadow(0 0 20px rgba(255, 199, 44, 0.4))`,
+                }}
+              />
+            </motion.div>
           </Box>
-          <Typography sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.8rem" }}>
-            {String(percent).padStart(2, "0")}%
-          </Typography>
-          <Typography
+
+          {/* Staged visibility for details */}
+          <Box
             sx={{
-              fontFamily: MONO,
-              color: "text.secondary",
-              fontSize: "0.65rem",
-              letterSpacing: "0.2em",
-              opacity: 0.7,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1.5,
+              opacity: progressOpacity,
+              transform: showProgress ? "translateY(0)" : "translateY(10px)",
+              transition: "opacity 0.6s ease, transform 0.6s ease",
             }}
           >
-            {done ? "READY" : `WARMING — ${lastLabel}`}
-          </Typography>
+            <Typography
+              component="span"
+              sx={{
+                fontFamily: MONO,
+                fontWeight: 700,
+                letterSpacing: "0.28em",
+                color: "primary.main",
+                fontSize: "1.1rem",
+              }}
+            >
+              <ScrambleText text="PHITOPOLIS" step={40} />
+            </Typography>
+            <Typography sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.8rem" }}>
+              {String(percent).padStart(2, "0")}%
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                color: "text.secondary",
+                fontSize: "0.65rem",
+                letterSpacing: "0.2em",
+                opacity: 0.7,
+              }}
+            >
+              {isCompleteOrLater ? "READY" : `WARMING — ${lastLabel}`}
+            </Typography>
+          </Box>
         </motion.div>
       </motion.div>
     </Box>
