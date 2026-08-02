@@ -202,6 +202,34 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
       "Root cause analysis skills and ability to suggest software improvements",
     ],
   },
+  "R&D Internship Program": {
+    id: "rd-internship-program",
+    title: "R&D Internship Program",
+    role: "Immersive paid engineering internship for top undergraduate students, working directly on production systems with senior mentorship",
+    overview:
+      "Our R&D Internship Program gives high-achieving undergraduate students early exposure to enterprise software development. Interns do not work on mock exercises — every intern is integrated into live engineering squads building real financial tools, web applications, and data pipelines.",
+    stack: ["React", "TypeScript", "Node.js", "Python", "Git"],
+    location: "BGC Office (Hybrid Schedule)",
+    type: "Paid Internship",
+    applyUrl: "https://forms.gle/niyMK6Wkc4v5yfLm7",
+    responsibilities: [
+      "Build production features for web portals, analytics dashboards, and automated test suites",
+      "Write clean, well-tested code in React, Node.js, Python, or Go under senior guidance",
+      "Present technical findings and completed project deliverables to engineering leadership",
+      "Participate in hackathons, team tech talks, and engineering workshops",
+    ],
+    requirements: [
+      "Currently enrolled undergraduate student in Computer Science, IT, Engineering, or relevant technical discipline",
+      "Demonstrated programming capability through coursework, personal projects, or open-source contributions",
+      "Curious mindset, strong communication skills, and willingness to learn complex technical concepts",
+      "Available for a 3 to 6-month internship period (full-time or part-time hybrid)",
+    ],
+    desirable: [
+      "Familiarity with containerization tools (Docker) and basic Linux command line",
+      "Experience with relational databases (SQL) and Git version control",
+      "Existing open-source project contributions or participation in programming competitions",
+    ],
+  },
 };
 
 // Visual Aid Diagram for each role
@@ -300,6 +328,31 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
             </Grid>
             <Grid size={{ xs: 4 }}>
               <PaperBox label="AWS Lakehouse" sub="Research Datasets" />
+            </Grid>
+          </Grid>
+        </Stack>
+      </Box>
+    );
+  }
+  if (roleId === "rd-internship-program") {
+    return (
+      <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+        <Stack spacing={2}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CodeIcon sx={{ color: NOIR.goldDark }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+              R&D INTERNSHIP PATHWAY
+            </Typography>
+          </Stack>
+          <Grid container spacing={2} textAlign="center">
+            <Grid size={{ xs: 4 }}>
+              <PaperBox label="Mentorship" sub="Senior Staff guidance" />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <PaperBox label="Production Code" sub="Real-world features" highlight />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <PaperBox label="Graduate Pathway" sub="Fast-track full-time offer" />
             </Grid>
           </Grid>
         </Stack>

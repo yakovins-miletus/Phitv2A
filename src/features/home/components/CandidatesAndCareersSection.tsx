@@ -1,72 +1,47 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
-import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import { motion, AnimatePresence } from "motion/react";
 
 import { CONTENT } from "@/shared/content";
-import { useReducedMotion } from "@/shared/motion";
-import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
-import { SectionLede } from "@/shared/components/SectionLede";
-import { StageKicker, useStagePresence } from "@/shared/components/StageSection";
+import { StageSection } from "@/shared/components/StageSection";
+import { homeSection } from "@/shared/sections";
 import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { RawStage } from "./RawStage";
 
-function TechChip({ label }: { label: string }) {
-  return (
-    <Chip
-      label={label}
-      size="small"
-      variant="outlined"
-      sx={{
-        fontFamily: MONO,
-        fontSize: "0.7rem",
-        letterSpacing: "0.08em",
-        color: "text.secondary",
-        borderColor: "divider",
-        borderRadius: 1,
-        transition: "all 0.2s ease",
-        "&:hover": {
-          color: "primary.main",
-          borderColor: "primary.main",
-          bgcolor: "action.hover",
-        }
-      }}
-    />
-  );
-}
+const CAREER_BG_IMAGES: Record<string, string> = {
+  "Quantitative Researcher": "/images/quant-research-banner.jpg",
+  "Software Engineer": "/images/software-engineer-banner.png",
+  "Full Stack Developer": "/images/AboutPageHero.png",
+  "Data Scientist": "/images/data-science-banner.png",
+  "DevOps Engineer": "/images/ops-support-banner.jpg",
+  "R&D Internship Program": "/images/grads/FocusedProgramming.JPG",
+};
 
-// Reticle corner marks framing the candidates panel.
-const CORNERS = [
-  { top: -1, left: -1, borderTop: 2, borderLeft: 2 },
-  { top: -1, right: -1, borderTop: 2, borderRight: 2 },
-  { bottom: -1, left: -1, borderBottom: 2, borderLeft: 2 },
-  { bottom: -1, right: -1, borderBottom: 2, borderRight: 2 },
-] as const;
+const CAREER_BADGES: Record<string, string> = {
+  "Quantitative Researcher": "QUANT & AI",
+  "Software Engineer": "LOW-LATENCY CORE",
+  "Full Stack Developer": "FULL-STACK SAAS",
+  "Data Scientist": "DATA LAKES & ETL",
+  "DevOps Engineer": "CLOUD & SRE",
+  "R&D Internship Program": "PAID INTERNSHIP",
+};
 
-/** Pin distance for the two-panel careers swap. Longer than daily-life's
- *  because it drives four phases across two panels, not three across one. */
-const CAREERS_PIN_DISTANCE = "+=200%";
-
-// Talent & Careers — Who We Look For and the Technical Graduate Program,
-// swapped as two panels across one pinned scrub.
 export function CandidatesAndCareersSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const panel1Ref = useRef<HTMLDivElement>(null);
-  const panel2Ref = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [brochureOpen, setBrochureOpen] = useState(false);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
@@ -74,289 +49,391 @@ export function CandidatesAndCareersSection() {
     stopLenis();
     setBrochureOpen(true);
   }, []);
+
   const closeBrochure = useCallback(() => {
     setBrochureOpen(false);
     startLenis();
   }, []);
+
   const openJobDetails = useCallback((title: string) => {
     stopLenis();
     setSelectedJobTitle(title);
   }, []);
+
   const closeJobDetails = useCallback(() => {
     setSelectedJobTitle(null);
     startLenis();
   }, []);
-  const reducedMotion = useReducedMotion();
-
-  useStagePresence(sectionRef, "candidates");
-
-  useGSAP(
-    () => {
-      if (reducedMotion || !sectionRef.current || !panel1Ref.current || !panel2Ref.current) return;
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: CAREERS_PIN_DISTANCE,
-          pin: true,
-          scrub: SCROLL_SPEED,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      // Phase 1: Dwell on "Who We Look For"
-      tl.to({}, { duration: 0.35 })
-        // Phase 2: Panel 2 rises from bottom to center, pushing Panel 1 upward
-        .to(
-          panel1Ref.current,
-          {
-            yPercent: -100,
-            autoAlpha: 0,
-            ease: "power2.inOut",
-            duration: 0.35,
-          },
-          "transition"
-        )
-        .fromTo(
-          panel2Ref.current,
-          {
-            yPercent: 100,
-            autoAlpha: 0,
-          },
-          {
-            yPercent: 0,
-            autoAlpha: 1,
-            ease: "power2.inOut",
-            duration: 0.35,
-          },
-          "transition"
-        )
-        // Phase 3: Dwell on Technical Graduate Program & Open Positions (0.7 -> 0.85)
-        .to({}, { duration: 0.25 })
-        // Phase 4: Soft Exit Slide Downward (0.85 -> 1.0)
-        .to(panel2Ref.current, {
-          yPercent: 100,
-          autoAlpha: 0.2,
-          ease: "power1.in",
-          duration: 0.15,
-        });
-    },
-    { scope: sectionRef, dependencies: [reducedMotion] }
-  );
 
   return (
-    <RawStage id="candidates" bgcolor="background.paper" ref={sectionRef}>
-      <Container maxWidth="lg" sx={{ position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-
-        {/* Panel 1: Who We Look For */}
-        <Box
-          ref={panel1Ref}
-          sx={{
-            position: "absolute",
-            width: "100%",
-            maxWidth: 860,
-            mx: "auto",
-            px: { xs: 3, md: 8 },
-            py: { xs: 5, md: 7 },
-            textAlign: "center",
-            willChange: "transform, opacity",
-          }}
-        >
-          <Box sx={{ position: "relative", px: { xs: 2, md: 6 }, py: { xs: 5, md: 7 } }}>
-            {CORNERS.map((corner, index) => (
-              <Box
-                key={`corner-${String(index)}`}
-                aria-hidden
-                sx={{
-                  position: "absolute",
-                  width: 24,
-                  height: 24,
-                  borderColor: NOIR.gold,
-                  borderStyle: "solid",
-                  borderWidth: 0,
-                  ...corner,
-                }}
-              />
-            ))}
-            <Stack spacing={3} alignItems="center">
-              <StageKicker index="10" label="Talent & Careers" />
-              <Typography
-                variant="h2"
-                sx={{
-                  fontSize: { xs: "1.8rem", sm: "2.5rem", md: "3rem" },
-                  fontWeight: 700,
-                  lineHeight: 1.25,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {CONTENT.targetCandidates.line}
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: { xs: "0.95rem", md: "1.1rem" },
-                  lineHeight: 1.6,
-                  maxWidth: 720,
-                }}
-              >
-                {CONTENT.targetCandidates.description}
-              </Typography>
+    <StageSection section={homeSection("candidates")} muted>
+      {/* 1. Header Information Block */}
+      <Grid container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end">
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Stack spacing={2}>
+            {/* Section Eyebrow / Sub-kicker */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Typography
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.78rem",
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
                   color: NOIR.goldDark,
+                  letterSpacing: "0.2em",
+                  fontWeight: 700,
+                }}
+              >
+                TALENT & CAREERS
+              </Typography>
+              <Box sx={{ width: 16, height: "1px", bgcolor: NOIR.gold }} />
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  color: "text.secondary",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
                   fontWeight: 600,
                 }}
               >
                 {CONTENT.targetCandidates.sub}
               </Typography>
-            </Stack>
-          </Box>
-        </Box>
+            </Box>
 
-        {/* Panel 2: Technical Graduate Program & Open Positions */}
-        <Box
-          ref={panel2Ref}
-          id="careers"
-          data-lenis-prevent
-          sx={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            width: "100%",
-            height: "100%",
-            maxHeight: "100vh",
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            py: { xs: 4, md: 6 },
-            px: { xs: 1, sm: 2 },
-            mx: "auto",
-            willChange: "transform, opacity",
-            scrollbarWidth: "thin",
-            "&::-webkit-scrollbar": {
-              width: "6px",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              bgcolor: "divider",
-              borderRadius: "3px",
-            },
-            // Hide Panel 2 initially to prevent it from overlapping Panel 1 during enter scroll.
-            opacity: reducedMotion ? 1 : 0,
-            visibility: reducedMotion ? "visible" : "hidden",
-            transform: reducedMotion ? "none" : "translateY(100%)",
-          }}
-        >
-          <Stack spacing={3.5}>
-            <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "flex-end" }} spacing={2}>
-              <Box>
-                <SectionLede
-                  gunshot={CONTENT.ledes.careers.gunshot}
-                  tracer={CONTENT.ledes.careers.tracer}
-                  eyebrow="Technical Graduate Program"
-                />
-              </Box>
+            {/* Who We Look For Title */}
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: "1.8rem", sm: "2.4rem", md: "3.2rem" },
+                lineHeight: 1.2,
+                letterSpacing: "-0.02em",
+                color: "text.primary",
+              }}
+            >
+              {CONTENT.targetCandidates.line}
+            </Typography>
 
-              {/* Brochure PDF Full-Page Drawer Trigger Button */}
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={openBrochure}
-                startIcon={<PictureAsPdfIcon />}
+            {/* Description Paragraph */}
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                fontSize: "1.08rem",
+                lineHeight: 1.65,
+                maxWidth: 820,
+              }}
+            >
+              {CONTENT.targetCandidates.description}
+            </Typography>
+
+            {/* Intake detail and system impact callout */}
+            <Box
+              sx={{
+                borderLeft: 3,
+                borderColor: NOIR.gold,
+                pl: 2,
+                py: 0.5,
+                mt: 1,
+              }}
+            >
+              <Typography
+                variant="body2"
+                color="text.secondary"
                 sx={{
-                  borderRadius: "100px",
-                  px: 3,
-                  py: 1.2,
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  borderColor: (theme) => alpha(theme.palette.primary.main, 0.4),
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                  "&:hover": {
-                    bgcolor: "primary.main",
-                    color: "white",
-                    borderColor: "primary.main",
-                  },
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  whiteSpace: "nowrap",
+                  fontStyle: "italic",
+                  lineHeight: 1.6,
+                  fontSize: "0.95rem",
                 }}
               >
-                View Program Brochure (PDF)
-              </Button>
-            </Stack>
+                {CONTENT.ledes.careers.tracer}
+              </Typography>
+            </Box>
+          </Stack>
+        </Grid>
 
-            <Grid container spacing={2.5}>
-              {CONTENT.careers.map((job) => (
-                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={job.title}>
-                  <Card
-                    onClick={() => openJobDetails(job.title)}
+        {/* Brochure Download Button */}
+        <Grid
+          size={{ xs: 12, md: 4 }}
+          sx={{
+            display: "flex",
+            justifyContent: { xs: "flex-start", md: "flex-end" },
+            alignItems: "center",
+          }}
+        >
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={openBrochure}
+            startIcon={<PictureAsPdfIcon />}
+            sx={{
+              borderRadius: "100px",
+              px: 3,
+              py: 1.2,
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              borderColor: (theme) => alpha(theme.palette.primary.main, 0.4),
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+              "&:hover": {
+                bgcolor: "primary.main",
+                color: "white",
+                borderColor: "primary.main",
+              },
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            View Program Brochure (PDF)
+          </Button>
+        </Grid>
+      </Grid>
+
+      {/* 2. Interactive Slat Row Component */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: 2,
+          height: isMobile ? "auto" : "550px",
+          width: "100%",
+          mt: 4,
+        }}
+      >
+        {CONTENT.careers.map((job, index) => {
+          const isActive = activeIndex === index;
+          const bgImage = CAREER_BG_IMAGES[job.title] || "/images/AboutPageHero.png";
+          const badge = CAREER_BADGES[job.title] || "OPEN ROLE";
+
+          return (
+            <Box
+              key={job.title}
+              component={motion.div}
+              layout
+              onMouseEnter={() => !isMobile && setActiveIndex(index)}
+              onClick={() => {
+                if (isMobile) {
+                  if (isActive) {
+                    openJobDetails(job.title);
+                  } else {
+                    setActiveIndex(index);
+                  }
+                } else {
+                  openJobDetails(job.title);
+                }
+              }}
+              sx={{
+                position: "relative",
+                flex: isMobile ? "none" : isActive ? 3.5 : 1,
+                height: isMobile ? (isActive ? "320px" : "90px") : "100%",
+                borderRadius: "20px",
+                overflow: "hidden",
+                cursor: "pointer",
+                border: "1px solid",
+                borderColor: isActive ? NOIR.gold : "divider",
+                transition: "flex 0.5s cubic-bezier(0.25, 1, 0.5, 1), height 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s ease",
+                boxShadow: isActive ? "0 20px 45px rgba(10,42,102,0.22)" : "0 4px 10px rgba(0,0,0,0.03)",
+                "&:hover .arrow-icon": {
+                  transform: "translateY(-4px)",
+                },
+              }}
+            >
+              {/* Slat Background Image */}
+              <Box
+                component="img"
+                src={bgImage}
+                alt={job.title}
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: isActive ? "scale(1.04)" : "scale(1)",
+                  transition: "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)",
+                }}
+              />
+
+              {/* Slat Hover Primary Blue Layer Overlay */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  bgcolor: "#0A2A66",
+                  opacity: isActive ? 0.35 : 0.85,
+                  transition: "opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
+                  zIndex: 1,
+                }}
+              />
+
+              {/* Slat Text & Interactive Overlay */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  p: { xs: 2.5, md: 3.5 },
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  zIndex: 2,
+                  background: "linear-gradient(to top, rgba(10, 42, 102, 0.95) 0%, rgba(10, 42, 102, 0.3) 60%, transparent 100%)",
+                  color: "white",
+                }}
+              >
+                {/* Top Badge Info */}
+                <Box
+                  sx={{
+                    mb: "auto",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Typography
                     sx={{
-                      p: 1.5,
-                      height: 1,
-                      bgcolor: "background.default",
-                      border: "1px solid",
-                      borderColor: "divider",
-                      borderRadius: "16px",
-                      position: "relative",
-                      cursor: "pointer",
-                      transition: "border-color 0.3s ease",
-                      "&:hover": { borderColor: "primary.main" },
-                      "&:hover .click-details": { opacity: 0.5 },
+                      fontFamily: MONO,
+                      fontSize: "0.68rem",
+                      letterSpacing: "0.15em",
+                      color: isActive ? NOIR.gold : "rgba(255,255,255,0.7)",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
                     }}
                   >
-                    <CardContent sx={{ p: 2, pb: 4.5, "&:last-child": { pb: 4.5 } }}>
-                      <Typography variant="h5" sx={{ fontWeight: 700, fontSize: "1.15rem", mb: 1 }}>
-                        {job.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.88rem", lineHeight: 1.5 }}>
-                        {job.role}
-                      </Typography>
-                      {job.stack.length > 0 ? (
-                        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 2 }}>
-                          {job.stack.map((tech) => (
-                            <TechChip key={tech} label={tech} />
-                          ))}
-                        </Stack>
-                      ) : null}
-                    </CardContent>
-                    <Typography
-                      className="click-details"
-                      sx={{
-                        position: "absolute",
-                        bottom: 12,
-                        right: 16,
-                        fontFamily: MONO,
-                        fontSize: "0.68rem",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: "text.primary",
-                        opacity: 0,
-                        transition: "opacity 0.3s ease",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      Click for details →
-                    </Typography>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Stack>
-        </Box>
+                    {badge}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: "0.72rem",
+                      color: "rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    0{index + 1}
+                  </Typography>
+                </Box>
 
-      </Container>
+                {/* Slat Title & Information Wrapper (Stationed at bottom) */}
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: "100%",
+                    minHeight: isMobile ? "auto" : isActive ? "200px" : "360px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-end",
+                    transition: "min-height 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
+                  }}
+                >
+                  {/* Faded Details (Stationed statically above the title when expanded) */}
+                  <Box
+                    sx={{
+                      width: "100%",
+                      mb: isMobile ? 0 : isActive ? 5.5 : 0,
+                      transition: "margin 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
+                    }}
+                  >
+                    <AnimatePresence>
+                      {isActive && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -24, height: 0 }}
+                          animate={{ opacity: 1, x: 0, height: "auto" }}
+                          exit={{ opacity: 0, x: -24, height: 0 }}
+                          transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+                        >
+                          <Stack spacing={2} sx={{ pb: 0.5 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                opacity: 0.9,
+                                fontSize: "0.88rem",
+                                lineHeight: 1.55,
+                                display: "-webkit-box",
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }}
+                            >
+                              {job.role}
+                            </Typography>
 
-      {/* Full-Page Interactive Brochure PDF Drawer */}
+                            {/* Tech Stack Chips */}
+                            <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                              {job.stack.map((tech) => (
+                                <Chip
+                                  key={tech}
+                                  label={tech}
+                                  size="small"
+                                  sx={{
+                                    fontFamily: MONO,
+                                    fontSize: "0.65rem",
+                                    bgcolor: "rgba(255,255,255,0.12)",
+                                    color: "white",
+                                    border: "1px solid rgba(255,255,255,0.18)",
+                                    borderRadius: 1,
+                                    height: "22px",
+                                    "& .MuiChip-label": { px: 1 },
+                                  }}
+                                />
+                              ))}
+                            </Stack>
+
+                            {/* Interactive "pointing upwards" CTA */}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.2,
+                                color: NOIR.gold,
+                                fontWeight: 700,
+                                fontSize: "0.8rem",
+                                textTransform: "uppercase",
+                                fontFamily: MONO,
+                                pt: 0.5,
+                              }}
+                            >
+                              <span>View details & apply</span>
+                              <ArrowUpwardIcon
+                                sx={{
+                                  fontSize: 16,
+                                  transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                }}
+                                className="arrow-icon"
+                              />
+                            </Box>
+                          </Stack>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Box>
+
+                  {/* Slat Title (Inverted 90 degrees when inactive, rotates back on active) */}
+                  <Typography
+                    variant="h4"
+                    component="h3"
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: { xs: "1.25rem", sm: "1.4rem", md: isActive ? "1.65rem" : "1.25rem" },
+                      lineHeight: 1.2,
+                      whiteSpace: isMobile ? "normal" : isActive ? "normal" : "nowrap",
+                      transform: isMobile ? "none" : isActive ? "rotate(0deg)" : "rotate(-90deg)",
+                      transformOrigin: "left bottom",
+                      position: isMobile ? "relative" : "absolute",
+                      bottom: isMobile ? "auto" : isActive ? "0px" : "15px",
+                      left: isMobile ? "auto" : isActive ? "0px" : "calc(50% - 8px)",
+                      right: isMobile ? "auto" : isActive ? "24px" : "auto",
+                      transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), left 0.5s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), right 0.5s, font-size 0.3s ease",
+                      textShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {job.title}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+
+      {/* 3. Brochure Drawer Modal */}
       <BrochureDrawer
         open={brochureOpen}
         onClose={closeBrochure}
@@ -364,12 +441,12 @@ export function CandidatesAndCareersSection() {
         title="2026 Technical Graduate Program Brochure"
       />
 
-      {/* Full-Screen Right-to-Left Job Details Drawer */}
+      {/* 4. Job Details Right Drawer Modal */}
       <JobDetailsDrawer
         open={Boolean(selectedJobTitle)}
         jobTitle={selectedJobTitle}
         onClose={closeJobDetails}
       />
-    </RawStage>
+    </StageSection>
   );
 }

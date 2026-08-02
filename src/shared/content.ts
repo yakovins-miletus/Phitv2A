@@ -280,6 +280,11 @@ export const CONTENT = {
       title: "DevOps Engineer",
       role: "Keep high-frequency systems and cloud platforms alive around the clock, across every market session",
       stack: ["Kubernetes", "CI/CD", "Prometheus", "AWS / GCP / Azure"]
+    },
+    {
+      title: "R&D Internship Program",
+      role: "Immersive paid engineering internship for top undergraduate students, working directly on production systems with senior mentorship",
+      stack: ["React", "TypeScript", "Node.js", "Python", "Git"]
     }
   ],
   process: [

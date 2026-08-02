@@ -313,7 +313,7 @@ function GridSignals({ reduced, progress = 0 }: { reduced: boolean | undefined; 
         pointerEvents: "none",
         transform: "translateZ(-1px)",
         opacity: canvasOpacity,
-        transition: "opacity 0.2s ease-out",
+        transition: "opacity 0.6s ease-out",
       }}
     />
   );
@@ -571,7 +571,7 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
         position: "relative",
         overflow: "visible",
         transformStyle: "preserve-3d",
-        animation: reduced === true ? "none" : "simpleFadeIn 1.5s ease-in forwards",
+        animation: reduced === true ? "none" : "simpleFadeIn 4.5s ease-in forwards",
         "@keyframes simpleFadeIn": {
           "0%": { opacity: 0 },
           "100%": { opacity: 1 },
@@ -590,7 +590,7 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
           justifyContent: "center",
           perspective: "1600px",
           transformStyle: "preserve-3d",
-          animation: reduced === true ? "none" : `sceneExpand 1.6s ${EASE_OUT_EXPO_CSS} forwards`,
+          animation: reduced === true ? "none" : `sceneExpand 4.8s ${EASE_OUT_EXPO_CSS} forwards`,
           "@keyframes sceneExpand": {
             "0%": { transform: "scale(0.65)", opacity: 0 },
             "100%": { transform: "scale(1)", opacity: 1 },
@@ -607,7 +607,7 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
             justifyContent: "center",
             transformStyle: "preserve-3d",
             transform: `scale(${wrapperScale.toFixed(3)}) rotateX(${rotX.toFixed(1)}deg) rotateZ(${rotZ.toFixed(1)}deg)`,
-            transition: "transform 0.1s linear",
+            transition: "transform 0.3s linear",
           }}
         >
           {/* Extended Outer Isometric Grid Field (Infinite feel with radial gradient mask blur fade) */}
@@ -829,7 +829,7 @@ export function HeroSignalP({ progress = 0 }: { progress?: number }) {
                   sm: `translate(calc(-50% - ${progressMoveLeft * 220}px), -50%) translateZ(${Math.round(8 * (1 - progress3dTo2d))}px)`,
                   md: `translate(calc(-50% - ${progressMoveLeft * 320}px), -50%) translateZ(${Math.round(8 * (1 - progress3dTo2d))}px)`,
                 },
-                transition: "transform 0.05s linear",
+                transition: "transform 0.15s linear",
                 // Hide P logo inside canvas during Phase 9 transform so the grouped element crossfade takes over
                 opacity: progress >= CONTAINER_START ? 0 : 1,
                 visibility: progress >= CONTAINER_START ? "hidden" : "visible",

@@ -24,7 +24,7 @@ export function Hero3DText({ children, delay = 0 }: Hero3DTextProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={shouldAnimate ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay }}
+          transition={{ duration: 1.8, delay: delay * 3 }}
         >
           {children}
         </motion.div>
@@ -52,9 +52,9 @@ export function Hero3DText({ children, delay = 0 }: Hero3DTextProps) {
           x: 0
         } : {}}
         transition={{ 
-          duration: 1.6, 
+          duration: 4.8, 
           ease: EASE_OUT_EXPO, // Custom smooth ease
-          delay 
+          delay: delay * 3 
         }}
         style={{ transformOrigin: "left center" }}
       >
