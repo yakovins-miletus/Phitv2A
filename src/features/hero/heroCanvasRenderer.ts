@@ -45,6 +45,8 @@ export interface HeroSprites {
   shadow: HTMLCanvasElement;
   /** The static grid field, rasterised at plane resolution. */
   grid: HTMLCanvasElement;
+  /** Offscreen scratch canvas for tinting logo sub-layer extrusion faces. */
+  tintCanvas: HTMLCanvasElement;
 }
 
 /** Corner radius of a service node's faces — `borderRadius: 14px` in the DOM version. */
@@ -128,6 +130,7 @@ export function createSprites(logoSrc: string): { sprites: HeroSprites; ready: P
     logoAspect: 1,
     shadow: buildShadowSprite(),
     grid: buildGridSprite(),
+    tintCanvas: document.createElement("canvas"),
   };
 
   const ready = new Promise<void>((resolve) => {
@@ -638,15 +641,62 @@ function drawImageOnPlane(
 }
 
 /**
+ * Render a single layer of the logo image tinted with a specified secondary color overlay.
+ * Uses source-atop compositing on an offscreen canvas for 100% reliable cross-platform 3D side shading.
+ */
+function drawTintedLogo(
+  ctx: CanvasRenderingContext2D,
+  cam: Camera,
+  logoImg: CanvasImageSource,
+  tintCanvas: HTMLCanvasElement,
+  cx: number,
+  cy: number,
+  z: number,
+  w: number,
+  h: number,
+  color: string,
+  alpha: number,
+): void {
+  if (alpha <= 0.01) {
+    drawImageOnPlane(ctx, cam, logoImg, cx, cy, z, w, h);
+    return;
+  }
+
+  const imgW = (logoImg as HTMLImageElement).naturalWidth || (logoImg as HTMLCanvasElement).width || 300;
+  const imgH = (logoImg as HTMLImageElement).naturalHeight || (logoImg as HTMLCanvasElement).height || 300;
+
+  if (tintCanvas.width !== imgW || tintCanvas.height !== imgH) {
+    tintCanvas.width = imgW;
+    tintCanvas.height = imgH;
+  }
+
+  const tCtx = tintCanvas.getContext("2d");
+  if (!tCtx) {
+    drawImageOnPlane(ctx, cam, logoImg, cx, cy, z, w, h);
+    return;
+  }
+
+  tCtx.clearRect(0, 0, imgW, imgH);
+  tCtx.drawImage(logoImg, 0, 0, imgW, imgH);
+
+  tCtx.globalCompositeOperation = "source-atop";
+  tCtx.fillStyle = color;
+  tCtx.globalAlpha = alpha;
+  tCtx.fillRect(0, 0, imgW, imgH);
+  tCtx.globalCompositeOperation = "source-over";
+  tCtx.globalAlpha = 1;
+
+  drawImageOnPlane(ctx, cam, tintCanvas, cx, cy, z, w, h);
+}
+
+/**
  * The brand mark.
  *
  * A volumetric 3D mark, built by blitting the same decoded logo bitmap at successive
- * plane heights with a darkening gradient down the stack — the effect the old DOM
- * version got by mounting up to 14 stacked `<img>` copies on separate `translateZ`
- * planes. That version also *perspective-sliced* every layer (16 sub-blits each) purely
- * to hug the camera skew, which is what made it heavy and stutter mid-scroll. Here the
- * layer count is capped and each layer is one plain blit (`drawImageOnPlane`, no
- * per-layer slicing), so the silhouette and depth read the same without the frame cost.
+ * plane heights with a darkening secondary color gradient down the stack — the effect
+ * the old DOM version got by mounting up to 14 stacked `<img>` copies on separate
+ * `translateZ` planes. Each sub-layer is solid-tinted using an offscreen canvas,
+ * giving sharp, vibrant 3D side walls with a distinct dark secondary base gradient.
  */
 function drawLogo(
   ctx: CanvasRenderingContext2D,
@@ -676,10 +726,10 @@ function drawLogo(
   }
 
   // Extrusion: successive blits climbing in z, back-to-front, darkening down the stack.
-  // Elevated baseZ (8px) + lift (24px) aligns top of P logo at Z=32, matching elevated service nodes (Z=32.5) and perimeter cubes.
+  // Elevated baseZ (8px) + lift (28px) aligns top of P logo at Z=36, matching elevated service nodes (Z=32.5) and perimeter cubes.
   const baseZ = 8 * (1 - state.flatten);
-  const lift = 24 * (1 - state.flatten);
-  const layers = Math.max(1, Math.round(12 * (1 - state.flatten)));
+  const lift = 28 * (1 - state.flatten);
+  const layers = Math.max(1, Math.round(14 * (1 - state.flatten)));
 
   // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
   const pOpacity = Math.max(0, 1 - state.pexit);
@@ -691,13 +741,33 @@ function drawLogo(
       const ratio = layers > 1 ? i / (layers - 1) : 1;
       const z = baseZ + ratio * lift;
       const isTop = i === layers - 1;
-      // Darker gradient per layer starting from top (base color) down to dark secondary base (0.28 brightness)
-      const layerDarkness = 0.28 + 0.72 * Math.pow(ratio, 1.2);
-      ctx.globalAlpha = pOpacity * (isTop ? 1 : 0.85);
-      ctx.filter = isTop ? "none" : `brightness(${layerDarkness.toFixed(2)})`;
-      drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
+
+      // Deep dark purple shadow gradient for primary 3D extrusion sides:
+      // Shades from deep midnight purple shadow (20, 8, 42) at base to rich dark violet (68, 28, 122) near top.
+      const purpleR = Math.round(20 + (68 - 20) * Math.pow(ratio, 0.75));
+      const purpleG = Math.round(8 + (28 - 8) * Math.pow(ratio, 0.75));
+      const purpleB = Math.round(42 + (122 - 42) * Math.pow(ratio, 0.75));
+      const sideColor = `rgb(${purpleR}, ${purpleG}, ${purpleB})`;
+
+      // Deep dark purple shadow blend (max 0.62 at bottom base, fading smoothly to 0 on top face)
+      const tintBlend = isTop ? 0 : 0.62 * Math.pow(1 - ratio, 0.75);
+
+      ctx.globalAlpha = pOpacity;
+      drawTintedLogo(
+        ctx,
+        cam,
+        logo,
+        sprites.tintCanvas,
+        cx,
+        cy + pDropY,
+        z,
+        lw * pScale,
+        lh * pScale,
+        sideColor,
+        tintBlend,
+      );
     }
-    ctx.filter = "none";
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
