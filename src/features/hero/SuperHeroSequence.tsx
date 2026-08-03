@@ -301,7 +301,28 @@ export function HeroSignalCore() {
             zIndex: 5,
             transform: "scale(var(--hp-scale, 1))",
             transformOrigin: "center center",
+            bgcolor: "#FFFFFF",
+            borderRadius: "calc(var(--hp-g, 0) * 24px)",
+            border: stage.chrome ? "1px solid rgba(0,0,0,0.08)" : "none",
+            boxShadow: stage.chrome
+              ? "0 24px 60px rgba(0, 0, 0, calc(0.35 * var(--hp-g, 0)))"
+              : "none",
+            maxWidth: stage.chrome ? "1600px" : "100%",
+            maxHeight: stage.chrome ? "720px" : "100%",
             m: "auto",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              inset: "-1px",
+              border: "6px solid",
+              borderColor: NOIR.gold,
+              borderRadius: "inherit",
+              pointerEvents: "none",
+              clipPath:
+                "polygon(0% 0%, 100% 0%, 100% calc(var(--hp-border, 0) * 100%), 0% calc(var(--hp-border, 0) * 100%))",
+              opacity: "var(--hp-border, 0)",
+              willChange: "clip-path",
+            }
           }}
         >
           {/* Interactive Signal Canvas Layer (Grid, Signal lines, cubes, service nodes,
