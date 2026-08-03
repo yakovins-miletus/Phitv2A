@@ -264,7 +264,9 @@ export function drawHeroFrame(
   ctx.clearRect(0, 0, w, h);
 
   // Fit the plane to the viewport the way the old fixed-size container did.
-  const viewScale = Math.min(w, h) / (PLANE_SIZE * 0.86);
+  // Zoomed out further than the original fit (0.86) so the full scene — grid, cubes,
+  // service nodes and the P mark — reads with more breathing room around it.
+  const viewScale = Math.min(w, h) / (PLANE_SIZE * 1.05);
   const cam = makeCamera(state.flatten, w / 2, h / 2, viewScale);
 
   drawGrid(ctx, cam, sprites, state);
@@ -638,7 +640,13 @@ function drawImageOnPlane(
 /**
  * The brand mark.
  *
- * Rendered as a crisp flat image resting on top of a 3D white rounded base plate.
+ * A volumetric 3D mark, built by blitting the same decoded logo bitmap at successive
+ * plane heights with a darkening gradient down the stack — the effect the old DOM
+ * version got by mounting up to 14 stacked `<img>` copies on separate `translateZ`
+ * planes. That version also *perspective-sliced* every layer (16 sub-blits each) purely
+ * to hug the camera skew, which is what made it heavy and stutter mid-scroll. Here the
+ * layer count is capped and each layer is one plain blit (`drawImageOnPlane`, no
+ * per-layer slicing), so the silhouette and depth read the same without the frame cost.
  */
 function drawLogo(
   ctx: CanvasRenderingContext2D,
@@ -651,69 +659,43 @@ function drawLogo(
   if (!logo || state.logoHidden) return;
 
   const mobile = w < 600;
-  const baseW = mobile ? 160 : w < 900 ? 220 : 280;
+  const baseW = mobile ? 200 : w < 900 ? 280 : 380;
   const shift = mobile ? 160 : w < 900 ? 200 : 260;
 
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;
 
-  // 3D Base Card Plate coordinates — slightly reduced scale (380px width on desktop)
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
 
-  const plateW = mobile ? 220 : w < 900 ? 300 : 380;
-  const plateH = plateW * 0.9;
-  const halfW = plateW / 2;
-  const halfH = plateH / 2;
-  const x0 = cx - halfW;
-  const y0 = cy - halfH;
-  const x1 = cx + halfW;
-  const y1 = cy + halfH;
-  const ez = Math.max(0, 18 * (1 - state.flatten));
-
-  // 1. Single Clean Pre-Rendered Soft Drop Shadow
+  // Ground contact shadow beneath the 3D mark while the scene still has depth: a soft
+  // radial pool plus a tighter, darker shadow offset toward the light source.
   if (state.sideOpacity > 0.01) {
-    blitShadow(ctx, cam, sprites, cx, cy, plateW * 1.30, state.sideOpacity * 0.60);
+    blitShadow(ctx, cam, sprites, cx, cy, lw * 0.7, 0.45 * state.sideOpacity);
+    blitShadow(ctx, cam, sprites, cx - 12, cy + 12, lw * 0.55, 0.6 * state.sideOpacity);
   }
 
-  // Stacked rounded rectangle extrusion slabs for the 3D Base Plate (Softer light slate-white gradient)
-  if (state.sideOpacity > 0.01 && ez > 1) {
-    ctx.globalAlpha = state.sideOpacity;
-    const numSlabs = Math.max(2, Math.round(14 * (1 - state.flatten)));
-    for (let i = 0; i < numSlabs; i++) {
-      const z = (i / (numSlabs - 1)) * ez;
-      const ratio = i / (numSlabs - 1);
-      const r = Math.round(205 + (240 - 205) * ratio);
-      const g = Math.round(215 + (244 - 215) * ratio);
-      const b = Math.round(228 + (250 - 228) * ratio);
-      traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
-      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
+  // Extrusion: successive blits climbing in z, back-to-front, darkening down the stack.
+  const lift = 10 * (1 - state.flatten);
+  const layers = Math.max(1, Math.round(8 * (1 - state.flatten)));
 
-  // Top Face of 3D Base Plate (Soft light off-white fill #F0F4FA blending naturally into hero background)
-  if (state.topOpacity > 0.01) {
-    const topZ = ez + 2.0;
-    ctx.globalAlpha = state.topOpacity;
-
-    traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, topZ, NODE_RADIUS);
-    ctx.fillStyle = "#F0F4FA";
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  // 2. Render Flat P Logo Image resting on top with added padding & breathing room (No 3D extrusion, no direct shadow)
+  // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
   const pOpacity = Math.max(0, 1 - state.pexit);
   if (pOpacity > 0.001) {
     const pDropY = state.pexit * 60;
     const pScale = 1 - state.pexit * 0.15;
-    const logoZ = ez + 2.0;
     ctx.save();
-    ctx.globalAlpha = pOpacity;
+    for (let i = 0; i < layers; i++) {
+      const z = (i / Math.max(1, layers)) * lift;
+      const isTop = i === layers - 1;
+      // Bottom layer darkest, top layer at full brightness.
+      const ratio = layers > 1 ? i / (layers - 1) : 1;
+      const layerDarkness = 0.55 + 0.45 * ratio;
+      ctx.globalAlpha = pOpacity * (isTop ? 1 : 0.8);
+      ctx.filter = isTop ? "none" : `brightness(${layerDarkness.toFixed(2)})`;
+      drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
+    }
     ctx.filter = "none";
-    drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, logoZ, lw * pScale, lh * pScale);
     ctx.restore();
   }
 
@@ -723,7 +705,7 @@ function drawLogo(
     const atSlideY = (1 - state.atenter) * -60;
     const atScale = 0.85 + state.atenter * 0.15;
 
-    const pCenter = project(cam, cx, cy + atSlideY, ez + 2.0);
+    const pCenter = project(cam, cx, cy + atSlideY, lift);
     ctx.save();
     ctx.globalAlpha = atOpacity;
     ctx.font = `900 ${Math.round(80 * cam.scale * atScale)}px Inter, sans-serif`;

@@ -16,7 +16,75 @@ export const CONTENT = {
   hero: {
     tagline: "Making tomorrow's technology available today",
     description:
-      "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and latest trends in Artificial Intelligence."
+      "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and latest trends in Artificial Intelligence.",
+    salesPitch: {
+      heroLine: {
+        title: "THE QUANTITATIVE R&D PARTNER FOR GLOBAL MARKETS",
+        subheading:
+          "Engineering cloud systems, machine learning, and AI for quantitative finance and financial technology.",
+      },
+      execSummary:
+        "At Phitopolis, we view global markets as the ultimate intellectual puzzle. Operating as a specialized R&D firm, we build cloud-native systems, data science engines, and artificial intelligence solutions for international clients operating in high-complexity environments.",
+      capabilities: [
+        {
+          title: "QUANTITATIVE RESEARCH & AI",
+          desc: "Statistical modeling, machine learning, and AI applied to large, noisy, complex financial datasets.",
+        },
+        {
+          title: "PRODUCT & CLOUD ENGINEERING",
+          desc: "High-performance systems designed to run seamlessly in public and private cloud environments.",
+        },
+        {
+          title: "TECHNICAL SUPPORT & OPERATIONS",
+          desc: "Smart, efficient, communicative technical talent operating alongside client teams globally.",
+        },
+      ],
+      pillars: [
+        {
+          id: "01",
+          name: "Research Pillar",
+          detail: "Data Science, Machine Learning, AI & High-Dimensional Statistics",
+        },
+        {
+          id: "02",
+          name: "Development Pillar",
+          detail: "Public & Private Cloud Architecture, Big Data Systems & Scalable Software",
+        },
+        {
+          id: "03",
+          name: "Support & Delivery Pillar",
+          detail: "Dedicated Technical Staff with Superior Communication & Global Operations",
+        },
+      ],
+      positioning: {
+        target: "Quantitative Finance, Data Providers & Fintech Leaders",
+        why: "We solve high-stakes technical problems where latency, precision, and architectural elegance determine success.",
+      },
+      differentiators: [
+        {
+          heading: "Elite Technical Talent",
+          body: "Smart, efficient engineers and data scientists with exceptional English communication skills.",
+        },
+        {
+          heading: "International Backing",
+          body: "Financed by institutional investors across the United States, Europe, and Hong Kong.",
+        },
+        {
+          heading: "Wall St. & Banking Leadership",
+          body: "Led by executives with senior tenure at Morgan Stanley, Merrill Lynch, JPMorgan, Deutsche Bank, and Macquarie Bank.",
+        },
+        {
+          heading: "Prime Global Location",
+          body: "Headquartered at Ecotower Building, Bonifacio Global City (BGC), Taguig, Manila, Philippines.",
+        },
+      ],
+      leadershipNote:
+        "Founded by Filipina corporate leader Kriz and global technologist Mark, Phitopolis brings Wall Street standards to Bonifacio Global City.",
+      cta: {
+        primary: "INITIATE TECHNICAL PARTNERSHIP",
+        secondary: "EXPLORE CAPABILITIES",
+      },
+    },
   },
   /** Home-page section ledes (L0/L1). Chapters 0-2 address the institutional
    *  client; chapter 3 addresses the engineering recruit. `dailyLife` is the
