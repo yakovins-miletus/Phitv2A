@@ -619,37 +619,26 @@ function drawImageOnPlane(
   w: number,
   h: number,
 ): void {
-  const SLICES = 16;
-  const sliceH = h / SLICES;
-  const imgW = (img as HTMLImageElement).naturalWidth || 380;
-  const imgH = (img as HTMLImageElement).naturalHeight || 380;
-  const srcSliceH = imgH / SLICES;
+  const tl = project(cam, cx - w / 2, cy - h / 2, z);
+  const tr = project(cam, cx + w / 2, cy - h / 2, z);
+  const bl = project(cam, cx - w / 2, cy + h / 2, z);
 
-  for (let i = 0; i < SLICES; i++) {
-    const sliceY = cy - h / 2 + i * sliceH;
-    const nextY = sliceY + sliceH;
-    const srcY = i * srcSliceH;
-
-    const tl = project(cam, cx - w / 2, sliceY, z);
-    const tr = project(cam, cx + w / 2, sliceY, z);
-    const bl = project(cam, cx - w / 2, nextY, z);
-
-    ctx.save();
-    ctx.transform(
-      (tr.sx - tl.sx) / w, (tr.sy - tl.sy) / w,
-      (bl.sx - tl.sx) / sliceH, (bl.sy - tl.sy) / sliceH,
-      tl.sx, tl.sy,
-    );
-    ctx.drawImage(img, 0, srcY, imgW, srcSliceH, 0, 0, w, sliceH);
-    ctx.restore();
-  }
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.transform(
+    (tr.sx - tl.sx) / w, (tr.sy - tl.sy) / w,
+    (bl.sx - tl.sx) / h, (bl.sy - tl.sy) / h,
+    tl.sx, tl.sy,
+  );
+  ctx.drawImage(img, 0, 0, w, h);
+  ctx.restore();
 }
 
 /**
  * The brand mark.
  *
- * One decoded bitmap is sliced and projected at plane coordinates to match 3D perspective,
- * and blitted at successive plane heights to build 14-layer extruded 3D volume.
+ * Rendered as a crisp flat image resting on top of a 3D white rounded base plate.
  */
 function drawLogo(
   ctx: CanvasRenderingContext2D,
@@ -681,22 +670,22 @@ function drawLogo(
   const y1 = baseCy + halfH;
   const ez = Math.max(0, 18 * (1 - state.flatten));
 
-  // 1. Render Ground Shadow & 3D Extrusion for the Stationary Center Base Plate
+  // 1. Render Tight, Subtle Ground Shadow & 3D Extrusion for the Stationary White Base Plate
   if (state.sideOpacity > 0.01) {
-    // Soft ground shadow beneath the base plate
-    blitShadow(ctx, cam, sprites, baseCx, baseCy, plateW * 1.5, state.sideOpacity * 0.85);
+    // Tight, subtle ground shadow hugging closely beneath the base plate
+    blitShadow(ctx, cam, sprites, baseCx, baseCy, plateW * 1.05, state.sideOpacity * 0.30);
   }
 
-  // Stacked rounded rectangle extrusion slabs for the 3D Base Plate (matching Service Nodes)
+  // Stacked rounded rectangle extrusion slabs for the White 3D Base Plate
   if (state.sideOpacity > 0.01 && ez > 1) {
     ctx.globalAlpha = state.sideOpacity;
     const numSlabs = Math.max(2, Math.round(14 * (1 - state.flatten)));
     for (let i = 0; i < numSlabs; i++) {
       const z = (i / (numSlabs - 1)) * ez;
       const ratio = i / (numSlabs - 1);
-      const r = Math.round(6 + (14 - 6) * ratio);
-      const g = Math.round(14 + (28 - 14) * ratio);
-      const b = Math.round(32 + (55 - 32) * ratio);
+      const r = Math.round(225 + (255 - 225) * ratio);
+      const g = Math.round(230 + (255 - 230) * ratio);
+      const b = Math.round(240 + (255 - 240) * ratio);
       traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fill();
@@ -704,13 +693,13 @@ function drawLogo(
     ctx.globalAlpha = 1;
   }
 
-  // Top Face of the 3D Base Plate (Navy fill + Gold accent border)
+  // Top Face of the 3D Base Plate (Crisp White fill + Gold accent border)
   if (state.topOpacity > 0.01) {
     const topZ = ez + 2.0;
     ctx.globalAlpha = state.topOpacity;
 
     traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, topZ, NODE_RADIUS);
-    ctx.fillStyle = "rgb(10, 24, 51)";
+    ctx.fillStyle = "#FFFFFF";
     ctx.fill();
 
     // Gold border outline on the base plate top face
