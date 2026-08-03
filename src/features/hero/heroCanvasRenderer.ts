@@ -619,29 +619,37 @@ function drawImageOnPlane(
   w: number,
   h: number,
 ): void {
-  const tl = project(cam, cx - w / 2, cy - h / 2, z);
-  const tr = project(cam, cx + w / 2, cy - h / 2, z);
-  const bl = project(cam, cx - w / 2, cy + h / 2, z);
+  const SLICES = 16;
+  const sliceH = h / SLICES;
+  const imgW = (img as HTMLImageElement).naturalWidth || 380;
+  const imgH = (img as HTMLImageElement).naturalHeight || 380;
+  const srcSliceH = imgH / SLICES;
 
-  ctx.save();
-  ctx.transform(
-    (tr.sx - tl.sx) / w, (tr.sy - tl.sy) / w,
-    (bl.sx - tl.sx) / h, (bl.sy - tl.sy) / h,
-    tl.sx, tl.sy,
-  );
-  ctx.drawImage(img, 0, 0, w, h);
-  ctx.restore();
+  for (let i = 0; i < SLICES; i++) {
+    const sliceY = cy - h / 2 + i * sliceH;
+    const nextY = sliceY + sliceH;
+    const srcY = i * srcSliceH;
+
+    const tl = project(cam, cx - w / 2, sliceY, z);
+    const tr = project(cam, cx + w / 2, sliceY, z);
+    const bl = project(cam, cx - w / 2, nextY, z);
+
+    ctx.save();
+    ctx.transform(
+      (tr.sx - tl.sx) / w, (tr.sy - tl.sy) / w,
+      (bl.sx - tl.sx) / sliceH, (bl.sy - tl.sy) / sliceH,
+      tl.sx, tl.sy,
+    );
+    ctx.drawImage(img, 0, srcY, imgW, srcSliceH, 0, 0, w, sliceH);
+    ctx.restore();
+  }
 }
 
 /**
  * The brand mark.
  *
- * The old version mounted up to 14 `<img>` copies of the same 26 KB SVG on separate
- * `translateZ` planes inside the rotated `preserve-3d` wrapper — and changed how many
- * were mounted as you scrolled, so the browser was creating and destroying composited
- * layers mid-gesture. Here one decoded bitmap is blitted at successive plane heights to
- * build the same extruded depth, and because it is drawn *on the plane* it stays skewed
- * into the isometric projection exactly as the DOM version was.
+ * One decoded bitmap is sliced and projected at plane coordinates to match 3D perspective,
+ * and blitted at successive plane heights to build 14-layer extruded 3D volume.
  */
 function drawLogo(
   ctx: CanvasRenderingContext2D,
@@ -664,14 +672,17 @@ function drawLogo(
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
 
-  // Ground shadow beneath the mark while the scene still has depth.
+  // Ground contact shadow beneath the 3D mark while the scene still has depth.
   if (state.sideOpacity > 0.01) {
-    blitShadow(ctx, cam, sprites, cx - 10, cy + 10, lw * 0.62, 0.4 * state.sideOpacity);
+    // Soft radial ground shadow
+    blitShadow(ctx, cam, sprites, cx, cy, lw * 0.7, 0.45 * state.sideOpacity);
+    // Dark directional ground contact shadow offset by -10px, +10px
+    blitShadow(ctx, cam, sprites, cx - 12, cy + 12, lw * 0.55, 0.6 * state.sideOpacity);
   }
 
-  // Extrusion: successive blits climbing in z, back-to-front.
-  const lift = 8 * (1 - state.flatten);
-  const layers = Math.max(1, Math.round(10 * (1 - state.flatten)));
+  // Extrusion: 14 successive blits climbing in z, back-to-front.
+  const lift = 14 * (1 - state.flatten);
+  const layers = Math.max(1, Math.round(14 * (1 - state.flatten)));
 
   // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
   const pOpacity = Math.max(0, 1 - state.pexit);
@@ -681,11 +692,10 @@ function drawLogo(
     ctx.save();
     for (let i = 0; i < layers; i++) {
       const z = (i / Math.max(1, layers)) * lift;
-      ctx.globalAlpha = 0.85 * pOpacity;
+      const isTop = i === layers - 1;
+      ctx.globalAlpha = (isTop ? 1 : 0.75) * pOpacity;
       drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
     }
-    ctx.globalAlpha = pOpacity;
-    drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, lift, lw * pScale, lh * pScale);
     ctx.restore();
   }
 
