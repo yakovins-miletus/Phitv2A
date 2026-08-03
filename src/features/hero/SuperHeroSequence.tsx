@@ -136,7 +136,6 @@ export function HeroSignalCore() {
               zIndex: 2,
               pointerEvents: "none",
               overflow: "hidden",
-              opacity: "var(--hp-g, 0)",
             }}
           >
             {/* Top Split Panel (Left -> Right) */}
@@ -302,12 +301,10 @@ export function HeroSignalCore() {
             transformOrigin: "center center",
             bgcolor: "#FFFFFF",
             borderRadius: "calc(var(--hp-g, 0) * 24px)",
-            border: stage.chrome ? "1px solid rgba(0,0,0,0.08)" : "none",
-            boxShadow: stage.chrome
-              ? "0 24px 60px rgba(0, 0, 0, calc(0.35 * var(--hp-g, 0)))"
-              : "none",
-            maxWidth: stage.chrome ? "1600px" : "100%",
-            maxHeight: stage.chrome ? "720px" : "100%",
+            border: "1px solid rgba(0,0,0,calc(0.08 * var(--hp-g, 0)))",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, calc(0.35 * var(--hp-g, 0)))",
+            maxWidth: "100%",
+            maxHeight: "100%",
             m: "auto",
             "&::after": {
               content: '""',
