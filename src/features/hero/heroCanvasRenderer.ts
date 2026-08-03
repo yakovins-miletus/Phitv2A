@@ -680,9 +680,9 @@ function drawLogo(
     blitShadow(ctx, cam, sprites, cx - 12, cy + 12, lw * 0.55, 0.6 * state.sideOpacity);
   }
 
-  // Extrusion: 14 successive blits climbing in z, back-to-front.
-  const lift = 14 * (1 - state.flatten);
-  const layers = Math.max(1, Math.round(14 * (1 - state.flatten)));
+  // Extrusion: 5 successive blits climbing in z, back-to-front with gradient darkening per layer down the stack.
+  const lift = 10 * (1 - state.flatten);
+  const layers = Math.max(1, Math.round(5 * (1 - state.flatten)));
 
   // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
   const pOpacity = Math.max(0, 1 - state.pexit);
@@ -693,9 +693,23 @@ function drawLogo(
     for (let i = 0; i < layers; i++) {
       const z = (i / Math.max(1, layers)) * lift;
       const isTop = i === layers - 1;
-      ctx.globalAlpha = (isTop ? 1 : 0.75) * pOpacity;
+      
+      // Gradient dark level down the stack: bottom layer (i=0) is darkest (0.50), top layer (i=4) is 1.0
+      const ratio = layers > 1 ? i / (layers - 1) : 1;
+      const layerDarkness = 0.50 + 0.50 * ratio; // 0.50 at bottom -> 1.0 at top
+
+      ctx.globalAlpha = pOpacity * (isTop ? 1 : 0.85);
+
+      // Apply dark gradient level filter per layer down the stack
+      if (!isTop) {
+        ctx.filter = `brightness(${layerDarkness.toFixed(2)}) contrast(1.10)`;
+      } else {
+        ctx.filter = "none";
+      }
+
       drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
     }
+    ctx.filter = "none";
     ctx.restore();
   }
 
