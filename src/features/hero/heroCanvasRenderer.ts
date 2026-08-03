@@ -676,8 +676,10 @@ function drawLogo(
   }
 
   // Extrusion: successive blits climbing in z, back-to-front, darkening down the stack.
-  const lift = 10 * (1 - state.flatten);
-  const layers = Math.max(1, Math.round(8 * (1 - state.flatten)));
+  // Elevated baseZ (8px) + lift (24px) aligns top of P logo at Z=32, matching elevated service nodes (Z=32.5) and perimeter cubes.
+  const baseZ = 8 * (1 - state.flatten);
+  const lift = 24 * (1 - state.flatten);
+  const layers = Math.max(1, Math.round(12 * (1 - state.flatten)));
 
   // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
   const pOpacity = Math.max(0, 1 - state.pexit);
@@ -686,12 +688,12 @@ function drawLogo(
     const pScale = 1 - state.pexit * 0.15;
     ctx.save();
     for (let i = 0; i < layers; i++) {
-      const z = (i / Math.max(1, layers)) * lift;
-      const isTop = i === layers - 1;
-      // Bottom layer darkest, top layer at full brightness.
       const ratio = layers > 1 ? i / (layers - 1) : 1;
-      const layerDarkness = 0.55 + 0.45 * ratio;
-      ctx.globalAlpha = pOpacity * (isTop ? 1 : 0.8);
+      const z = baseZ + ratio * lift;
+      const isTop = i === layers - 1;
+      // Darker gradient per layer starting from top (base color) down to dark secondary base (0.28 brightness)
+      const layerDarkness = 0.28 + 0.72 * Math.pow(ratio, 1.2);
+      ctx.globalAlpha = pOpacity * (isTop ? 1 : 0.85);
       ctx.filter = isTop ? "none" : `brightness(${layerDarkness.toFixed(2)})`;
       drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
     }
