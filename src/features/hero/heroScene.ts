@@ -277,6 +277,10 @@ export interface HeroFrameState {
   gridOpacity: number;
   /** Opacity of the signal canvas layer. */
   signalOpacity: number;
+  /** P exit progress (0.86 → 0.89). */
+  pexit: number;
+  /** AT enter progress (0.89 → 0.92). */
+  atenter: number;
   /** True once the scene is flat enough that 3D geometry is no longer drawn. */
   flat: boolean;
   /** True once phase 9 takes over the logo via the DOM crossfade. */
@@ -287,9 +291,11 @@ export interface HeroFrameState {
  * Derive the frame state. `progress` is the raw pin progress; `reduced` short-circuits
  * to the final flat layout exactly as `HeroSignalP.tsx:549` did.
  */
-export function heroFrameState(progress: number, reduced: boolean, containerStart: number): HeroFrameState {
+export function heroFrameState(progress: number, reduced: boolean, _containerStart: number): HeroFrameState {
   const p = reduced ? 1 : progress;
   const flatten = flattenProgress(p);
+  const pexit = p <= 0.86 ? 0 : p >= 0.89 ? 1 : (p - 0.86) / 0.03;
+  const atenter = p <= 0.89 ? 0 : p >= 0.92 ? 1 : (p - 0.89) / 0.03;
   return {
     flatten,
     moveLeft: moveLeftProgress(p),
@@ -298,9 +304,11 @@ export function heroFrameState(progress: number, reduced: boolean, containerStar
     topOpacity: Math.max(0, 1 - flatten * 2),
     // HeroSignalP.tsx:632,660 — grid fades against raw progress, not flatten.
     gridOpacity: Math.max(0, 1 - p * 1.5),
-    // HeroSignalP.tsx:138 — signal canvas fades against raw progress.
-    signalOpacity: Math.max(0, 1 - p * 2.2),
+    // Signals fade out in exact lockstep with 3D boxes and service nodes as scene flattens.
+    signalOpacity: Math.max(0, 1 - flatten * 2),
+    pexit,
+    atenter,
     flat: flatten >= 0.95,
-    logoHidden: p >= containerStart,
+    logoHidden: false,
   };
 }

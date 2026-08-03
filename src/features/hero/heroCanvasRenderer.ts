@@ -653,8 +653,6 @@ function drawLogo(
   const logo = sprites.logo;
   if (!logo || state.logoHidden) return;
 
-  // Plane-space width, matching the old responsive maxWidth ladder (200 / 280 / 380)
-  // against the 924px grid container the logo was a child of.
   const mobile = w < 600;
   const baseW = mobile ? 200 : w < 900 ? 280 : 380;
   const shift = mobile ? 160 : w < 900 ? 220 : 320;
@@ -671,19 +669,42 @@ function drawLogo(
     blitShadow(ctx, cam, sprites, cx - 10, cy + 10, lw * 0.62, 0.4 * state.sideOpacity);
   }
 
-  // Extrusion: successive blits climbing in z, back-to-front. HeroSignalP lifted the
-  // stack by translateZ(8 * (1 - flatten)); the same total height is used here.
+  // Extrusion: successive blits climbing in z, back-to-front.
   const lift = 8 * (1 - state.flatten);
   const layers = Math.max(1, Math.round(10 * (1 - state.flatten)));
 
-  ctx.save();
-  for (let i = 0; i < layers; i++) {
-    const z = (i / Math.max(1, layers)) * lift;
-    // Under-layers were `filter: brightness(0.85)` in the DOM version.
-    ctx.globalAlpha = 0.85;
-    drawImageOnPlane(ctx, cam, logo, cx, cy, z, lw, lh);
+  // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
+  const pOpacity = Math.max(0, 1 - state.pexit);
+  if (pOpacity > 0.001) {
+    const pDropY = state.pexit * 60;
+    const pScale = 1 - state.pexit * 0.15;
+    ctx.save();
+    for (let i = 0; i < layers; i++) {
+      const z = (i / Math.max(1, layers)) * lift;
+      ctx.globalAlpha = 0.85 * pOpacity;
+      drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
+    }
+    ctx.globalAlpha = pOpacity;
+    drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, lift, lw * pScale, lh * pScale);
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
-  drawImageOnPlane(ctx, cam, logo, cx, cy, lift, lw, lh);
-  ctx.restore();
+
+  // AT Text entrance animation: slide down into view & fade in (atenter: 0 -> 1) at exact same center coordinates
+  if (state.atenter > 0.001) {
+    const atOpacity = state.atenter;
+    const atSlideY = (1 - state.atenter) * -60;
+    const atScale = 0.85 + state.atenter * 0.15;
+
+    const pCenter = project(cam, cx, cy + atSlideY, lift);
+    ctx.save();
+    ctx.globalAlpha = atOpacity;
+    ctx.font = `900 ${Math.round(80 * cam.scale * atScale)}px Inter, sans-serif`;
+    ctx.fillStyle = "rgb(255, 199, 44)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+    ctx.shadowBlur = 10;
+    ctx.fillText("AT", pCenter.sx, pCenter.sy);
+    ctx.restore();
+  }
 }

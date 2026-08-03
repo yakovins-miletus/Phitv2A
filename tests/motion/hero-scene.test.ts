@@ -178,9 +178,9 @@ describe("frame state", () => {
     }
   });
 
-  test("the logo hands off to the DOM crossfade at CONTAINER_START", () => {
+  test("the canvas remains the single unified logo renderer throughout the sequence", () => {
     expect(heroFrameState(CONTAINER_START - 0.01, false, CONTAINER_START).logoHidden).toBe(false);
-    expect(heroFrameState(CONTAINER_START, false, CONTAINER_START).logoHidden).toBe(true);
+    expect(heroFrameState(CONTAINER_START, false, CONTAINER_START).logoHidden).toBe(false);
   });
 
   test("every derived opacity is monotonically non-increasing across the pin", () => {

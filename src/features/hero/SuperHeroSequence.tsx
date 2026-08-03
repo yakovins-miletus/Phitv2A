@@ -345,63 +345,7 @@ export function HeroSignalCore() {
             <HeroCanvas handleRef={canvasHandleRef} />
           </Box>
 
-          {/* Grouped P-Logo & AT Container (Linked crossfade on scroll) */}
-          {stage.container && (
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: {
-                  xs: "50%",
-                  sm: "calc(50% - 220px)",
-                  md: "calc(50% - 320px)",
-                },
-                transform: "translate(-50%, -50%)",
-                width: "100%",
-                maxWidth: { xs: "200px", sm: "280px", md: "380px" },
-                height: "auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 6,
-                pointerEvents: "none",
-              }}
-            >
-              {/* Flat P Logo - fades out and slides down */}
-              <Box
-                component="img" decoding="async"
-                src="/phitopolis_logo_hero.svg"
-                alt=""
-                sx={{
-                  width: "100%",
-                  height: "auto",
-                  opacity: "calc(1 - var(--hp-pexit, 0))",
-                  transform:
-                    "translateY(calc(var(--hp-pexit, 0) * 60px)) scale(calc(1 - var(--hp-pexit, 0) * 0.15))",
-                  willChange: "opacity, transform",
-                }}
-              />
 
-              {/* AT Text - fades in and slides down into view */}
-              <Typography
-                variant="h1"
-                sx={{
-                  position: "absolute",
-                  fontWeight: 900,
-                  fontSize: { xs: "2.8rem", sm: "4.5rem", md: "6rem" },
-                  letterSpacing: "-0.04em",
-                  color: NOIR.gold,
-                  textShadow: "0 2px 10px rgba(0,0,0,0.15)",
-                  opacity: "var(--hp-atenter, 0)",
-                  transform:
-                    "translateY(calc((1 - var(--hp-atenter, 0)) * -60px)) scale(calc(0.85 + var(--hp-atenter, 0) * 0.15))",
-                  willChange: "opacity, transform",
-                }}
-              >
-                AT
-              </Typography>
-            </Box>
-          )}
 
           {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2 */}
           <Box
