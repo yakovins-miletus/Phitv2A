@@ -301,31 +301,7 @@ export function HeroSignalCore() {
             zIndex: 5,
             transform: "scale(var(--hp-scale, 1))",
             transformOrigin: "center center",
-            // The card chrome switches once, at a threshold, instead of being recomputed
-            // per frame. borderRadius and the shadow's alpha still track --hp-g smoothly.
-            bgcolor: stage.chrome ? "#FFFFFF" : "transparent",
-            borderRadius: stage.chrome ? "calc(var(--hp-g, 0) * 24px)" : "0px",
-            border: stage.chrome ? "1px solid rgba(0,0,0,0.08)" : "none",
-            boxShadow: stage.chrome
-              ? "0 24px 60px rgba(0, 0, 0, calc(0.35 * var(--hp-g, 0)))"
-              : "none",
-            maxWidth: stage.chrome ? "1600px" : "100%",
-            maxHeight: stage.chrome ? "720px" : "100%",
             m: "auto",
-            // Secondary border animation from top to bottom drawing after AT & PHITOPOLIS align
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              inset: "-1px",
-              border: "6px solid",
-              borderColor: NOIR.gold,
-              borderRadius: "inherit",
-              pointerEvents: "none",
-              clipPath:
-                "polygon(0% 0%, 100% 0%, 100% calc(var(--hp-border, 0) * 100%), 0% calc(var(--hp-border, 0) * 100%))",
-              opacity: "var(--hp-border, 0)",
-              willChange: "clip-path",
-            }
           }}
         >
           {/* Interactive Signal Canvas Layer (Grid, Signal lines, cubes, service nodes,
@@ -337,14 +313,11 @@ export function HeroSignalCore() {
               inset: 0,
               zIndex: 4,
               opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
-              // One short fade instead of the old 2.4s + 4.5s + 4.8s stack, which took
-              // ~4.8s to resolve and made the scene look like it was loading piecemeal.
               transition: "opacity 0.6s ease-out",
             }}
           >
             <HeroCanvas handleRef={canvasHandleRef} />
           </Box>
-
 
 
           {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2 */}
@@ -354,8 +327,8 @@ export function HeroSignalCore() {
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
               left: {
                 xs: "50%",
-                sm: "calc(50% - (60px + var(--hp-tight, 0) * 90px))",
-                md: "calc(50% - (80px + var(--hp-tight, 0) * 110px))",
+                sm: "calc(50% - 10px)",
+                md: "calc(50% - 20px)",
               },
               width: "auto",
               textAlign: { xs: "center", sm: "left" },

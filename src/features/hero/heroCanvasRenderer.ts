@@ -655,7 +655,7 @@ function drawLogo(
 
   const mobile = w < 600;
   const baseW = mobile ? 200 : w < 900 ? 280 : 380;
-  const shift = mobile ? 160 : w < 900 ? 220 : 320;
+  const shift = mobile ? 160 : w < 900 ? 200 : 260;
 
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;
