@@ -651,18 +651,18 @@ function drawLogo(
   if (!logo || state.logoHidden) return;
 
   const mobile = w < 600;
-  const baseW = mobile ? 200 : w < 900 ? 270 : 350;
+  const baseW = mobile ? 160 : w < 900 ? 220 : 280;
   const shift = mobile ? 160 : w < 900 ? 200 : 260;
 
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;
 
-  // 3D Base Card Plate coordinates — size regained by +40% (460px width on desktop)
+  // 3D Base Card Plate coordinates — slightly reduced scale (380px width on desktop)
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
 
-  const plateW = mobile ? 270 : w < 900 ? 370 : 460;
-  const plateH = plateW * 0.95;
+  const plateW = mobile ? 220 : w < 900 ? 300 : 380;
+  const plateH = plateW * 0.9;
   const halfW = plateW / 2;
   const halfH = plateH / 2;
   const x0 = cx - halfW;
@@ -671,21 +671,21 @@ function drawLogo(
   const y1 = cy + halfH;
   const ez = Math.max(0, 18 * (1 - state.flatten));
 
-  // 1. Single Clean Pre-Rendered Soft Drop Shadow (NO secondary shadow box)
+  // 1. Single Clean Pre-Rendered Soft Drop Shadow
   if (state.sideOpacity > 0.01) {
-    blitShadow(ctx, cam, sprites, cx, cy, plateW * 1.35, state.sideOpacity * 0.65);
+    blitShadow(ctx, cam, sprites, cx, cy, plateW * 1.30, state.sideOpacity * 0.60);
   }
 
-  // Stacked rounded rectangle extrusion slabs for the 3D Base Plate (Shaded ambient occlusion)
+  // Stacked rounded rectangle extrusion slabs for the 3D Base Plate (Softer light slate-white gradient)
   if (state.sideOpacity > 0.01 && ez > 1) {
     ctx.globalAlpha = state.sideOpacity;
     const numSlabs = Math.max(2, Math.round(14 * (1 - state.flatten)));
     for (let i = 0; i < numSlabs; i++) {
       const z = (i / (numSlabs - 1)) * ez;
       const ratio = i / (numSlabs - 1);
-      const r = Math.round(215 + (255 - 215) * ratio);
-      const g = Math.round(220 + (255 - 220) * ratio);
-      const b = Math.round(230 + (255 - 230) * ratio);
+      const r = Math.round(205 + (240 - 205) * ratio);
+      const g = Math.round(215 + (244 - 215) * ratio);
+      const b = Math.round(228 + (250 - 228) * ratio);
       traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fill();
@@ -693,13 +693,13 @@ function drawLogo(
     ctx.globalAlpha = 1;
   }
 
-  // Top Face of 3D Base Plate (Solid white fill #FFFFFF matching hero background, NO grey border stroke)
+  // Top Face of 3D Base Plate (Soft light off-white fill #F0F4FA blending naturally into hero background)
   if (state.topOpacity > 0.01) {
     const topZ = ez + 2.0;
     ctx.globalAlpha = state.topOpacity;
 
     traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, topZ, NODE_RADIUS);
-    ctx.fillStyle = "#FFFFFF";
+    ctx.fillStyle = "#F0F4FA";
     ctx.fill();
     ctx.globalAlpha = 1;
   }
