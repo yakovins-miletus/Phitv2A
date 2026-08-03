@@ -213,7 +213,6 @@ export function HeroSignalCore() {
               zIndex: 3,
               bgcolor: alpha(NOIR.navyField, 0.60),
               pointerEvents: "none",
-              opacity: "var(--hp-g, 0)",
             }}
           />
         )}
