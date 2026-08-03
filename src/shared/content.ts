@@ -91,14 +91,14 @@ export const CONTENT = {
    *  handover between the two voices. */
   ledes: {
     mission: {
-      gunshot: "We took two milliseconds down to eighteen microseconds.",
+      gunshot: "Engineered for high performance and reliability.",
       tracer:
-        "Global markets are the hardest engineering problem on offer. We build what survives them.",
+        "We build resilient software and cloud infrastructure designed for complex, high-demand environments.",
     },
     services: {
       gunshot: "Four disciplines. One delivery contract.",
       tracer:
-        "Research, platforms, pipelines, and the people who keep them running — open a row for what each one actually ships.",
+        "Research, platforms, pipelines, and operational support — click any discipline to explore capabilities.",
     },
     reach: {
       gunshot: "Two offices. Two client regions. One clock that never stops.",
@@ -128,12 +128,12 @@ export const CONTENT = {
   },
   about: {
     title: "About Us",
-    body: "The architectural backbone of modern quantitative finance",
-    sub: "Born where deep mathematics and modern engineering meet, backed by elite investors across the USA, Europe, and Hong Kong, we bridge raw human ingenuity and the explosive potential of the AI era",
+    body: "The architectural backbone of modern quantitative engineering",
+    sub: "Born where mathematics and modern engineering meet, backed by elite investors across the USA, Europe, and Hong Kong.",
     /** /about page header — the full company narrative. */
     overline: "Who We Are",
     heading: "A top-tier R&D firm, built in Manila for global markets",
-    lead: "Born from Wall Street expertise and built by Manila's elite technology talent, we deliver high-performance R&D engineering for demanding global markets.",
+    lead: "Born from international technical expertise and built by Manila's elite technology talent, we deliver high-performance R&D engineering for demanding global markets.",
   },
   /** The four values Phitopolis is rooted in. */
   principles: {
@@ -170,10 +170,10 @@ export const CONTENT = {
   },
   /** Proven-impact figures — credibility through outcomes. */
   impact: [
-    { value: 100, suffix: "x", label: "Latency improvement", caption: "HFT pipeline · 2ms → 18µs" },
-    { value: 8, suffix: "x", label: "Analyst throughput", caption: "AI research synthesis" },
-    { value: 99.4, suffix: "%", label: "Detection accuracy", caption: "Computer-vision QA" },
-    { value: 10, suffix: "M+", label: "Documents indexed", caption: "RAG knowledge base" },
+    { value: 100, suffix: "x", label: "Latency improvement", caption: "High-performance pipeline optimization" },
+    { value: 8, suffix: "x", label: "Analyst throughput", caption: "Data processing & analytics" },
+    { value: 99.4, suffix: "%", label: "Detection accuracy", caption: "Automated QA & monitoring" },
+    { value: 10, suffix: "M+", label: "Documents indexed", caption: "Search & knowledge base" },
   ],
   /** Where our people come from — education and disciplines, as insight. */
   talent: {
@@ -256,45 +256,45 @@ export const CONTENT = {
     {
       id: "development",
       title: "Full-Stack Development",
-      gunshot: "Billion-dollar portfolios, watched in real time.",
+      gunshot: "High-performance web applications and cloud portals.",
       tracer:
-        "OmniDashboard puts institutional investors inside their own book — event-driven, cloud-native, quiet under load.",
-      summary: "Cloud-native platforms that make petabyte-scale systems feel invisible, intuitive, and effortlessly fast",
+        "We build secure web platforms and real-time dashboards that process large-scale data smoothly and reliably.",
+      summary: "Cloud-native web applications and real-time dashboards designed for speed and reliability",
       details:
-        "We architect secure, event-driven SaaS platforms with modern stacks, engineered for enterprise-grade scale and relentless uptime. Flagship work like the OmniDashboard portal lets institutional investors watch billion-dollar portfolios move in real time",
+        "We architect secure web platforms using modern stacks, engineered for enterprise reliability and high availability. Our applications enable teams to visualize complex data and manage operations in real time.",
       techStack: ["TypeScript", "ReactJS", "NodeJS", "GraphQL", "Linux", "Docker", "AWS", "CI/CD"]
     },
     {
       id: "quant-research",
       title: "Quantitative Research",
-      gunshot: "Petabytes of ticks in. One tradeable signal out.",
+      gunshot: "Data science, statistical modeling, and machine learning.",
       tracer:
-        "Project Clairvoyant reads historical ticks, satellite imagery, and sentiment to call short-term moves with stated confidence.",
-      summary: "Market analysis treated as a strict science: statistics, machine learning, and AI over massive datasets",
+        "We analyze complex datasets and build predictive models using statistical methods and artificial intelligence.",
+      summary: "Data analytics and machine learning models built to process large datasets",
       details:
-        "Our researchers turn raw, noisy market data into actionable intelligence and trading signals. Pipelines like Project Clairvoyant digest petabytes of historical ticks and alternative data, from satellite imagery to sentiment, to call short-term moves with statistical confidence",
+        "Our team processes complex datasets into actionable insights. We build data pipelines and machine learning models that analyze historical trends and real-time inputs with statistical precision.",
       techStack: ["Python", "Machine Learning", "Deep Learning", "Data Analytics"]
     },
     {
       id: "data-science",
       title: "Data Science",
-      gunshot: "The pipeline every downstream signal stands on.",
+      gunshot: "Automated data pipelines and scalable data architectures.",
       tracer:
-        "ETL backbones with quality gates at each stage, so a bad row never reaches a research notebook.",
-      summary: "The pipelines and data lakes that fuel financial sciences at petabyte scale",
+        "We design data systems with quality checks at every stage, ensuring engineering and analytics teams work with clean data.",
+      summary: "Scalable data pipelines and storage solutions engineered for analytics",
       details:
-        "We design the ETL backbones and data products that researchers and quantitative traders live on, with rigorous quality gates at every stage so that each downstream signal stands on data that can be trusted",
+        "We design automated ETL pipelines and data storage solutions with validation at every step, ensuring all downstream applications receive clean, reliable data.",
       techStack: ["Python", "AWS", "NoSQL", "Postgres", "Docker", "ETL"]
     },
     {
       id: "support",
       title: "Ops Support",
-      gunshot: "Every trading session, every day, no gap.",
+      gunshot: "24/7 technical operations and system monitoring.",
       tracer:
-        "An SRE matrix with anomaly detection catches the bottleneck before a client feels it.",
-      summary: "24/7 global operational continuity for high-frequency systems that demand mission-critical uptime",
+        "Our global engineering teams provide continuous system monitoring and operational support to maintain high uptime.",
+      summary: "24/7 global operational continuity and site reliability",
       details:
-        "Our global engineering teams keep high-frequency trading platforms, market-data pipelines, and cloud infrastructure running flawlessly around the clock. An automated SRE matrix with AI-driven anomaly detection catches bottlenecks before clients ever feel them",
+        "Our global engineering teams monitor and support cloud platforms, data pipelines, and core infrastructure around the clock, proactively resolving issues to ensure continuous uptime.",
       techStack: ["Linux", "UNIX Shell", "Prometheus", "Grafana", "AWS/GCP/Azure"]
     }
   ],

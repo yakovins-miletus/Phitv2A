@@ -272,7 +272,7 @@ export function drawHeroFrame(
   const viewScale = Math.min(w, h) / (PLANE_SIZE * 1.05);
   const cam = makeCamera(state.flatten, w / 2, h / 2, viewScale);
 
-  drawGrid(ctx, cam, sprites, state);
+  drawGrid(ctx, cam, sprites, state, w, h);
   drawSignals(ctx, cam, state, elapsed);
 
   if (!state.flat) {
@@ -294,30 +294,58 @@ function drawGrid(
   cam: Camera,
   _sprites: HeroSprites,
   state: HeroFrameState,
+  w: number,
+  h: number,
 ): void {
   if (state.gridOpacity <= 0.01) return;
 
   ctx.save();
   ctx.globalAlpha = state.gridOpacity;
-  ctx.strokeStyle = rgba(RGB_NAVY, 0.11);
+  ctx.strokeStyle = rgba(RGB_NAVY, 0.15);
   ctx.lineWidth = 1;
 
+  // Extended grid bounds: -8 cells to 30 cells (39x39 grid lines) for full-bleed coverage
+  const MIN_CELL = -8;
+  const MAX_CELL = 30;
+  const minPos = MIN_CELL * GRID_CELL;
+  const maxPos = MAX_CELL * GRID_CELL;
+
   ctx.beginPath();
-  for (let i = 0; i <= GRID_CELLS; i++) {
+  for (let i = MIN_CELL; i <= MAX_CELL; i++) {
     const pos = i * GRID_CELL;
-    // Vertical grid line from y=0 to y=PLANE_SIZE at x=pos
-    const p1 = project(cam, pos, 0, 0);
-    const p2 = project(cam, pos, PLANE_SIZE, 0);
+    // Vertical grid line from y=minPos to y=maxPos at x=pos
+    const p1 = project(cam, pos, minPos, 0);
+    const p2 = project(cam, pos, maxPos, 0);
     ctx.moveTo(p1.sx, p1.sy);
     ctx.lineTo(p2.sx, p2.sy);
 
-    // Horizontal grid line from x=0 to x=PLANE_SIZE at y=pos
-    const p3 = project(cam, 0, pos, 0);
-    const p4 = project(cam, PLANE_SIZE, pos, 0);
+    // Horizontal grid line from x=minPos to x=maxPos at y=pos
+    const p3 = project(cam, minPos, pos, 0);
+    const p4 = project(cam, maxPos, pos, 0);
     ctx.moveTo(p3.sx, p3.sy);
     ctx.lineTo(p4.sx, p4.sy);
   }
   ctx.stroke();
+
+  // Perspective-tilted isometric elliptical radial fade centered on plane origin
+  const center = project(cam, PLANE_SIZE / 2, PLANE_SIZE / 2, 0);
+  const innerR = PLANE_SIZE * 0.35 * cam.scale;
+  const outerR = PLANE_SIZE * 0.88 * cam.scale;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.translate(center.sx, center.sy);
+  ctx.scale(1, Math.max(0.3, cam.cosX)); // Squash Y to match 3D camera tilt
+
+  const mask = ctx.createRadialGradient(0, 0, innerR, 0, 0, outerR);
+  mask.addColorStop(0, "rgba(0,0,0,1)");
+  mask.addColorStop(0.60, "rgba(0,0,0,0.5)");
+  mask.addColorStop(1, "rgba(0,0,0,0)");
+
+  ctx.fillStyle = mask;
+  ctx.fillRect(-w * 1.5, -h * 1.5, w * 3, h * 3);
+  ctx.restore();
+
   ctx.restore();
 }
 

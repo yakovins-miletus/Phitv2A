@@ -2,7 +2,6 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import Chip from "@mui/material/Chip";
 
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
@@ -93,42 +92,6 @@ export function CapabilityRack() {
                       >
                         {service.summary}
                       </Typography>
-
-                      {/* Technologies Chips */}
-                      <Box sx={{ pt: 1 }}>
-                        <Typography
-                          variant="overline"
-                          sx={{
-                            color: NOIR.goldDark,
-                            letterSpacing: "0.12em",
-                            fontWeight: 800,
-                            mb: 1.5,
-                            display: "block",
-                          }}
-                        >
-                          Core Tech Stack
-                        </Typography>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                          {service.techStack.map((tech) => (
-                            <Chip
-                              key={tech}
-                              label={tech}
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                fontFamily: MONO,
-                                fontSize: "0.7rem",
-                                letterSpacing: "0.05em",
-                                color: "text.primary",
-                                borderColor: "divider",
-                                bgcolor: "action.hover",
-                                borderRadius: 1,
-                                py: 1.2,
-                              }}
-                            />
-                          ))}
-                        </Stack>
-                      </Box>
                     </Stack>
                   </Reveal>
                 </Grid>

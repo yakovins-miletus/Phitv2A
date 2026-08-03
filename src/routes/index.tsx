@@ -7,7 +7,6 @@ import { CONTENT } from "@/shared/content";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
-import { StatStrip } from "@/shared/components/StatStrip";
 import { useStagePresence } from "@/shared/components/StageSection";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
@@ -52,14 +51,7 @@ function HomePage() {
 
         <Divider />
 
-        {/* 02. Impact Stats */}
-        <Box component="section" id="stats" aria-label="Impact Metrics" sx={{ py: { xs: 4, md: 6 } }}>
-          <StatStrip stats={CONTENT.impact} />
-        </Box>
-
-        <Divider />
-
-        {/* 03. Capabilities & Services */}
+        {/* 02. Capabilities & Services */}
         <Box component="section" id="capabilities" aria-label="Capabilities and Services">
           <CapabilityRack />
         </Box>

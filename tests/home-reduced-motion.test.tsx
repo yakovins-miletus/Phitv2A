@@ -33,26 +33,6 @@ test("reduced motion: no preloader overlay mounts, hero text is present immediat
   expect(screen.getByText("R&D firm")).toBeInTheDocument();
 });
 
-test("reduced motion: stat strip renders final values instantly", async () => {
-  await renderHome();
-
-  // The strip is bound to CONTENT.impact, not CONTENT.stats — see the comment
-  // above <Box id="stats"> in routes/index.tsx for why.
-  expect(screen.getByText("Latency improvement")).toBeInTheDocument();
-  expect(screen.getByText("Detection accuracy")).toBeInTheDocument();
-  // Scoped to the stats stage: the Signal Lab HUD and the market ticker also
-  // render small numbers elsewhere on the page.
-  const stats = document.getElementById("stats");
-  expect(stats).not.toBeNull();
-  const strip = within(stats as HTMLElement);
-  // Final values with no count-up: CountUpNumber seeds state to `value` when
-  // reduced, so 0 never renders.
-  expect(strip.getByText("100x")).toBeInTheDocument();
-  expect(strip.getByText("8x")).toBeInTheDocument();
-  expect(strip.getByText("99.4%")).toBeInTheDocument();
-  expect(strip.getByText("10M+")).toBeInTheDocument();
-});
-
 test("reduced motion: hero scene is one decorative canvas, not a DOM particle field", async () => {
   await renderHome();
 

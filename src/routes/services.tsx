@@ -18,51 +18,51 @@ const FALLBACK_SERVICES: Service[] = [
     id: "development",
     slug: "full-stack-development",
     name: "Software Development",
-    tagline: "Cloud-native platforms at petabyte scale",
+    tagline: "Cloud-native platforms built for reliability and scale",
     description:
-      "We architect secure, event-driven SaaS platforms with modern stacks, engineered for enterprise-grade scale and relentless uptime — like the OmniDashboard portal that lets institutional investors watch billion-dollar portfolios move in real time",
+      "We architect secure web platforms using modern stacks, engineered for enterprise reliability and high availability — enabling teams to visualize complex data and manage operations in real time.",
     icon: "hub",
     highlights: ["TypeScript", "React", "GraphQL", "Docker", "AWS", "CI/CD"],
     display_order: 1,
     sub_teams: [
-      { name: "Platform Team", description: "Architects the core scalable microservices and APIs powering the trading ecosystem" },
-      { name: "Web Apps", description: "Builds responsive, high-performance user interfaces for real-time portfolio management" },
+      { name: "Platform Team", description: "Architects core scalable microservices and APIs powering web platforms" },
+      { name: "Web Apps", description: "Builds responsive, high-performance user interfaces for real-time data management" },
       { name: "Infra", description: "Designs and maintains robust, containerized cloud environments ensuring high availability" },
-      { name: "HPC", description: "Engineers high-performance computing clusters for executing low-latency market algorithms" }
+      { name: "HPC", description: "Engineers high-performance computing clusters for fast data processing and execution" }
     ]
   },
   {
     id: "quant-research",
     slug: "quantitative-research",
     name: "Quantitative Research",
-    tagline: "Global markets treated as a strict science",
+    tagline: "Data science and statistical modeling",
     description:
-      "Our researchers turn raw, noisy market data into trading signals. Pipelines like Project Clairvoyant digest petabytes of historical ticks and alternative data — from satellite imagery to sentiment — to call short-term moves with statistical confidence",
+      "Our team turns raw, complex data into clear insights. We build data pipelines and machine learning models that analyze historical trends and real-time inputs with statistical precision.",
     icon: "query_stats",
     highlights: ["Python", "Machine Learning", "Deep Learning", "Statistics"],
     display_order: 2,
     sub_teams: [
-      { name: "Alpha Research", description: "Discovers and tests new predictive signals from complex financial datasets" },
-      { name: "Portfolio Optimization", description: "Develops algorithms to maximize risk-adjusted returns across broad asset classes" },
-      { name: "Risk Modeling", description: "Builds robust models to forecast market volatility and mitigate systemic exposure" },
-      { name: "Alternative Data", description: "Extracts actionable insights from unconventional sources like satellite imagery and web sentiment" }
+      { name: "Alpha Research", description: "Discovers and tests predictive models from complex datasets" },
+      { name: "Portfolio Optimization", description: "Develops algorithms to maximize efficiency and risk-adjusted outcomes" },
+      { name: "Risk Modeling", description: "Builds models to forecast operational and system volatility" },
+      { name: "Alternative Data", description: "Extracts actionable insights from unstructured datasets and external feeds" }
     ]
   },
   {
     id: "data-science",
     slug: "data-science",
     name: "Data Science",
-    tagline: "Pipelines and data lakes that never bottleneck",
+    tagline: "Pipelines and data storage engineered for analytics",
     description:
-      "We design the ETL backbones and data products researchers and quantitative traders live on, with rigorous quality gates at every stage so every downstream signal stands on data that can be trusted",
+      "We design automated ETL pipelines and data storage solutions with validation at every step, ensuring all downstream applications receive clean, reliable data.",
     icon: "model_training",
     highlights: ["Python", "AWS", "ETL", "Postgres", "NoSQL", "Docker"],
     display_order: 3,
     sub_teams: [
-      { name: "Data Engineering", description: "Constructs scalable pipelines and architectures to ingest and process vast market data" },
+      { name: "Data Engineering", description: "Constructs scalable pipelines and architectures to ingest and process vast datasets" },
       { name: "ML Ops", description: "Deploys, monitors, and maintains machine learning models in production environments" },
       { name: "Analytics", description: "Transforms complex datasets into intuitive dashboards and actionable business intelligence" },
-      { name: "Core Data", description: "Manages the central data warehouses and ensures strict governance and data quality" }
+      { name: "Core Data", description: "Manages central data warehouses and ensures strict governance and data quality" }
     ]
   },
   {
@@ -71,7 +71,7 @@ const FALLBACK_SERVICES: Service[] = [
     name: "Ops Support",
     tagline: "24/7 global operational continuity and site reliability",
     description:
-      "Our global teams keep high-frequency trading platforms, market-data pipelines, and cloud infrastructure running flawlessly around the clock — an automated SRE matrix with AI-driven anomaly detection that catches bottlenecks before clients feel them",
+      "Our global engineering teams monitor and support cloud platforms, data pipelines, and core infrastructure around the clock, proactively resolving issues to ensure continuous uptime.",
     icon: "science",
     highlights: ["Linux", "Prometheus", "Grafana", "AWS / GCP / Azure"],
     display_order: 4,
