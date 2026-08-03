@@ -215,15 +215,14 @@ describe("CSS custom-property bridge", () => {
     expect(v.righty).toBe(240);
   });
 
-  test("split panels slide from off-screen to their resting pan offset", () => {
+  test("split panels stay at stable resting offset for smooth continuous auto-pan", () => {
     const before = heroVars(DWELL_END, false);
-    expect(before.topx).toBeCloseTo(-100, 6);
-    expect(before.botx).toBeCloseTo(100, 6);
+    expect(before.topx).toBeCloseTo(-14.2857, 3);
+    expect(before.botx).toBeCloseTo(-14.2857, 3);
 
     const after = heroVars(GUNSHOT_END, false);
-    // MAX_TRAVEL_PCT = 40 / 1.4 = 28.5714…
-    expect(after.topx).toBeCloseTo(-28.5714, 3);
-    expect(after.botx).toBeCloseTo(0, 6);
+    expect(after.topx).toBeCloseTo(-14.2857, 3);
+    expect(after.botx).toBeCloseTo(-14.2857, 3);
   });
 
   test("every emitted value is finite for any progress in range", () => {

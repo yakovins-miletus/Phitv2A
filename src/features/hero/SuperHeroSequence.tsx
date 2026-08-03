@@ -136,6 +136,7 @@ export function HeroSignalCore() {
               zIndex: 2,
               pointerEvents: "none",
               overflow: "hidden",
+              opacity: "var(--hp-g, 0)",
             }}
           >
             {/* Top Split Panel (Left -> Right) */}
@@ -158,10 +159,9 @@ export function HeroSignalCore() {
                   width: "140%",
                   height: "100%",
                   objectFit: "cover",
-                  transform: "translateX(calc(var(--hp-topx, -100) * 1%))",
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
-                  animation: stage.autoPan ? "autoPanTop 20s linear infinite alternate" : "none",
+                  animation: "autoPanTop 25s linear infinite alternate",
                   "@keyframes autoPanTop": {
                     "0%": { transform: "translateX(-28.5714%)" },
                     "100%": { transform: "translateX(0%)" },
@@ -190,10 +190,9 @@ export function HeroSignalCore() {
                   width: "140%",
                   height: "100%",
                   objectFit: "cover",
-                  transform: "translateX(calc(var(--hp-botx, 100) * 1%))",
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
-                  animation: stage.autoPan ? "autoPanBottom 20s linear infinite alternate" : "none",
+                  animation: "autoPanBottom 25s linear infinite alternate",
                   "@keyframes autoPanBottom": {
                     "0%": { transform: "translateX(0%)" },
                     "100%": { transform: "translateX(-28.5714%)" },
