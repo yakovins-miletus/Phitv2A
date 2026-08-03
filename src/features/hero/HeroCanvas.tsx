@@ -99,9 +99,8 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
 
     const frame = (now: number) => {
       if (disposed) return;
-      // Past the flatten phase the scene is a flat logo; nothing is animating, so stop
-      // burning frames. The driver restarts us if the user scrolls back up.
-      if (!visible || document.hidden || progressRef.current > PHASE_FLATTEN_END) {
+      // Scene animates signals and logo movement until container phase takes over at CONTAINER_START (0.86).
+      if (!visible || document.hidden || progressRef.current >= CONTAINER_START) {
         raf = 0;
         return;
       }
@@ -148,7 +147,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    /* ── Resize: debounced, and it repaints even when the loop is parked. ── */
+    /* ── Resize: ResizeObserver on canvas container prevents aspect ratio squishing when container scale/maxHeight changes ── */
     let resizeTimer = 0;
     const onResize = () => {
       window.clearTimeout(resizeTimer);
@@ -161,17 +160,26 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
     };
     window.addEventListener("resize", onResize, { passive: true });
 
+    const resizeObserver = new ResizeObserver(() => {
+      if (disposed) return;
+      measure();
+      paintStill();
+      if (visible) startLoop();
+    });
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
+
     startLoop();
 
     /**
      * The driver writes progress into a ref, which by design triggers nothing. While the
-     * loop is parked past PHASE_FLATTEN_END we still need the scene to update if the
-     * user scrolls back into the 3D range, so poll the ref at a low rate — 4 Hz is
-     * imperceptible for a restart check and costs nothing next to a 60 Hz render.
+     * loop is parked past CONTAINER_START we still need the scene to update if the
+     * user scrolls back into range, so poll the ref at a low rate.
      */
     const restartPoll = window.setInterval(() => {
       if (disposed || isStatic) return;
-      if (raf === 0 && visible && !document.hidden && progressRef.current <= PHASE_FLATTEN_END) {
+      if (raf === 0 && visible && !document.hidden && progressRef.current < CONTAINER_START) {
         startLoop();
       }
     }, 250);
@@ -182,6 +190,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
       window.clearTimeout(resizeTimer);
       window.clearInterval(restartPoll);
       observer.disconnect();
+      resizeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", onResize);
     };
