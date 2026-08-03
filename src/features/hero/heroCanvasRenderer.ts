@@ -668,48 +668,81 @@ function drawLogo(
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;
 
-  // Phase 2 slides the mark left on desktop, up on mobile.
+  // Stationary Center 3D Base Plate coordinates
+  const baseCx = PLANE_SIZE / 2;
+  const baseCy = PLANE_SIZE / 2;
+  const plateW = mobile ? 240 : w < 900 ? 320 : 420;
+  const plateH = plateW * 0.9;
+  const halfW = plateW / 2;
+  const halfH = plateH / 2;
+  const x0 = baseCx - halfW;
+  const y0 = baseCy - halfH;
+  const x1 = baseCx + halfW;
+  const y1 = baseCy + halfH;
+  const ez = Math.max(0, 18 * (1 - state.flatten));
+
+  // 1. Render Ground Shadow & 3D Extrusion for the Stationary Center Base Plate
+  if (state.sideOpacity > 0.01) {
+    // Soft ground shadow beneath the base plate
+    blitShadow(ctx, cam, sprites, baseCx, baseCy, plateW * 1.5, state.sideOpacity * 0.85);
+  }
+
+  // Stacked rounded rectangle extrusion slabs for the 3D Base Plate (matching Service Nodes)
+  if (state.sideOpacity > 0.01 && ez > 1) {
+    ctx.globalAlpha = state.sideOpacity;
+    const numSlabs = Math.max(2, Math.round(14 * (1 - state.flatten)));
+    for (let i = 0; i < numSlabs; i++) {
+      const z = (i / (numSlabs - 1)) * ez;
+      const ratio = i / (numSlabs - 1);
+      const r = Math.round(6 + (14 - 6) * ratio);
+      const g = Math.round(14 + (28 - 14) * ratio);
+      const b = Math.round(32 + (55 - 32) * ratio);
+      traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Top Face of the 3D Base Plate (Navy fill + Gold accent border)
+  if (state.topOpacity > 0.01) {
+    const topZ = ez + 2.0;
+    ctx.globalAlpha = state.topOpacity;
+
+    traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, topZ, NODE_RADIUS);
+    ctx.fillStyle = "rgb(10, 24, 51)";
+    ctx.fill();
+
+    // Gold border outline on the base plate top face
+    ctx.save();
+    ctx.lineWidth = 2 * cam.scale;
+    ctx.strokeStyle = rgba(RGB_GOLD, 0.8 * state.topOpacity);
+    ctx.stroke();
+
+    // Outer glow on base plate
+    if (state.sideOpacity > 0.05) {
+      ctx.lineWidth = 6 * cam.scale;
+      ctx.strokeStyle = rgba(RGB_GOLD, 0.22 * state.sideOpacity);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  // Phase 2 slides the mark left on desktop, up on mobile (lifting off the stationary base plate)
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
 
-  // Ground contact shadow beneath the 3D mark while the scene still has depth.
-  if (state.sideOpacity > 0.01) {
-    // Soft radial ground shadow
-    blitShadow(ctx, cam, sprites, cx, cy, lw * 0.7, 0.45 * state.sideOpacity);
-    // Dark directional ground contact shadow offset by -10px, +10px
-    blitShadow(ctx, cam, sprites, cx - 12, cy + 12, lw * 0.55, 0.6 * state.sideOpacity);
-  }
-
-  // Extrusion: 5 successive blits climbing in z, back-to-front with gradient darkening per layer down the stack.
-  const lift = 10 * (1 - state.flatten);
-  const layers = Math.max(1, Math.round(5 * (1 - state.flatten)));
-
-  // P Logo exit animation: drop down & fade out (pexit: 0 -> 1)
+  // 2. Render Flat P Logo Image resting on top at height Z = ez + 2.0 (No 3D extrusion, no shadow on logo itself)
   const pOpacity = Math.max(0, 1 - state.pexit);
   if (pOpacity > 0.001) {
     const pDropY = state.pexit * 60;
     const pScale = 1 - state.pexit * 0.15;
+    const logoZ = ez + 2.0;
     ctx.save();
-    for (let i = 0; i < layers; i++) {
-      const z = (i / Math.max(1, layers)) * lift;
-      const isTop = i === layers - 1;
-      
-      // Gradient dark level down the stack: bottom layer (i=0) is darkest (0.50), top layer (i=4) is 1.0
-      const ratio = layers > 1 ? i / (layers - 1) : 1;
-      const layerDarkness = 0.50 + 0.50 * ratio; // 0.50 at bottom -> 1.0 at top
-
-      ctx.globalAlpha = pOpacity * (isTop ? 1 : 0.85);
-
-      // Apply dark gradient level filter per layer down the stack
-      if (!isTop) {
-        ctx.filter = `brightness(${layerDarkness.toFixed(2)}) contrast(1.10)`;
-      } else {
-        ctx.filter = "none";
-      }
-
-      drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, z, lw * pScale, lh * pScale);
-    }
+    ctx.globalAlpha = pOpacity;
     ctx.filter = "none";
+    drawImageOnPlane(ctx, cam, logo, cx, cy + pDropY, logoZ, lw * pScale, lh * pScale);
     ctx.restore();
   }
 
@@ -719,7 +752,7 @@ function drawLogo(
     const atSlideY = (1 - state.atenter) * -60;
     const atScale = 0.85 + state.atenter * 0.15;
 
-    const pCenter = project(cam, cx, cy + atSlideY, lift);
+    const pCenter = project(cam, cx, cy + atSlideY, ez + 2.0);
     ctx.save();
     ctx.globalAlpha = atOpacity;
     ctx.font = `900 ${Math.round(80 * cam.scale * atScale)}px Inter, sans-serif`;
