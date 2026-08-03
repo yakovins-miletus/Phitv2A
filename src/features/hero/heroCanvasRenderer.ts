@@ -651,41 +651,41 @@ function drawLogo(
   if (!logo || state.logoHidden) return;
 
   const mobile = w < 600;
-  const baseW = mobile ? 200 : w < 900 ? 280 : 380;
+  const baseW = mobile ? 180 : w < 900 ? 250 : 340;
   const shift = mobile ? 160 : w < 900 ? 200 : 260;
 
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;
 
-  // Stationary Center 3D Base Plate coordinates
-  const baseCx = PLANE_SIZE / 2;
-  const baseCy = PLANE_SIZE / 2;
-  const plateW = mobile ? 240 : w < 900 ? 320 : 420;
-  const plateH = plateW * 0.9;
+  // 3D White Base Card Plate coordinates — translates in perfect lockstep with the P logo
+  const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
+  const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
+
+  const plateW = mobile ? 240 : w < 900 ? 330 : 440;
+  const plateH = plateW * 0.95;
   const halfW = plateW / 2;
   const halfH = plateH / 2;
-  const x0 = baseCx - halfW;
-  const y0 = baseCy - halfH;
-  const x1 = baseCx + halfW;
-  const y1 = baseCy + halfH;
+  const x0 = cx - halfW;
+  const y0 = cy - halfH;
+  const x1 = cx + halfW;
+  const y1 = cy + halfH;
   const ez = Math.max(0, 18 * (1 - state.flatten));
 
-  // 1. Render Tight, Subtle Ground Shadow & 3D Extrusion for the Stationary White Base Plate
+  // 1. High-Performance Pre-Rendered Soft Drop Shadow Outside 3D Base Card (GPU Accelerated)
   if (state.sideOpacity > 0.01) {
-    // Tight, subtle ground shadow hugging closely beneath the base plate
-    blitShadow(ctx, cam, sprites, baseCx, baseCy, plateW * 1.05, state.sideOpacity * 0.30);
+    blitShadow(ctx, cam, sprites, cx + 6, cy + 10, plateW * 1.18, state.sideOpacity * 0.40);
   }
 
-  // Stacked rounded rectangle extrusion slabs for the White 3D Base Plate
+  // Stacked rounded rectangle extrusion slabs for the White 3D Base Plate (No gold stroke)
   if (state.sideOpacity > 0.01 && ez > 1) {
     ctx.globalAlpha = state.sideOpacity;
     const numSlabs = Math.max(2, Math.round(14 * (1 - state.flatten)));
     for (let i = 0; i < numSlabs; i++) {
       const z = (i / (numSlabs - 1)) * ez;
       const ratio = i / (numSlabs - 1);
-      const r = Math.round(225 + (255 - 225) * ratio);
-      const g = Math.round(230 + (255 - 230) * ratio);
-      const b = Math.round(240 + (255 - 240) * ratio);
+      const r = Math.round(220 + (255 - 220) * ratio);
+      const g = Math.round(225 + (255 - 225) * ratio);
+      const b = Math.round(235 + (255 - 235) * ratio);
       traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fill();
@@ -693,7 +693,7 @@ function drawLogo(
     ctx.globalAlpha = 1;
   }
 
-  // Top Face of the 3D Base Plate (Crisp White fill + Gold accent border)
+  // Crisp White Top Face of 3D Base Plate (Clean white fill, NO glowing yellow/gold border)
   if (state.topOpacity > 0.01) {
     const topZ = ez + 2.0;
     ctx.globalAlpha = state.topOpacity;
@@ -701,28 +701,10 @@ function drawLogo(
     traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, topZ, NODE_RADIUS);
     ctx.fillStyle = "#FFFFFF";
     ctx.fill();
-
-    // Gold border outline on the base plate top face
-    ctx.save();
-    ctx.lineWidth = 2 * cam.scale;
-    ctx.strokeStyle = rgba(RGB_GOLD, 0.8 * state.topOpacity);
-    ctx.stroke();
-
-    // Outer glow on base plate
-    if (state.sideOpacity > 0.05) {
-      ctx.lineWidth = 6 * cam.scale;
-      ctx.strokeStyle = rgba(RGB_GOLD, 0.22 * state.sideOpacity);
-      ctx.stroke();
-    }
-    ctx.restore();
     ctx.globalAlpha = 1;
   }
 
-  // Phase 2 slides the mark left on desktop, up on mobile (lifting off the stationary base plate)
-  const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
-  const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
-
-  // 2. Render Flat P Logo Image resting on top at height Z = ez + 2.0 (No 3D extrusion, no shadow on logo itself)
+  // 2. Render Flat P Logo Image resting on top with added padding & breathing room (No 3D extrusion, no direct shadow)
   const pOpacity = Math.max(0, 1 - state.pexit);
   if (pOpacity > 0.001) {
     const pDropY = state.pexit * 60;
