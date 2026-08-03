@@ -38,7 +38,7 @@ export function BlogVideoHero() {
       <Box
         ref={containerRef}
         aria-hidden
-        sx={{ position: "absolute", inset: 0, filter: "brightness(0.55) contrast(1.1)" }}
+        sx={{ position: "absolute", inset: 0, filter: "brightness(0.88) contrast(1.05)" }}
       >
         <Box
           component="video"
@@ -66,12 +66,13 @@ export function BlogVideoHero() {
         </Box>
       </Box>
 
-      {/* Dark Radial Gradient Overlay */}
+      {/* Reduced Opacity Blue Gradient Overlay — Video is now vibrant and visible */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background: "radial-gradient(circle at 50% 30%, rgba(6, 24, 59, 0.4) 0%, rgba(6, 24, 59, 0.92) 80%), linear-gradient(180deg, rgba(6, 24, 59, 0.6) 0%, #06183B 100%)",
+          background:
+            "radial-gradient(circle at 50% 30%, rgba(6, 24, 59, 0.15) 0%, rgba(6, 24, 59, 0.5) 75%), linear-gradient(180deg, rgba(6, 24, 59, 0.2) 0%, rgba(6, 24, 59, 0.7) 100%)",
         }}
       />
 
@@ -89,6 +90,7 @@ export function BlogVideoHero() {
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",
                   fontFamily: MONO,
+                  textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
                 }}
               >
                 INSIGHTS & ENGINEERING LOGS
@@ -106,6 +108,7 @@ export function BlogVideoHero() {
                 lineHeight: 1.08,
                 letterSpacing: "-0.02em",
                 color: "common.white",
+                textShadow: "0 4px 20px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.9)",
               }}
             >
               Direct Logs from the Phitopolis R&D Team.
@@ -116,11 +119,12 @@ export function BlogVideoHero() {
             <Typography
               variant="subtitle1"
               sx={{
-                color: "rgba(255, 255, 255, 0.82)",
+                color: "rgba(255, 255, 255, 0.92)",
                 fontSize: { xs: "1.1rem", md: "1.3rem" },
                 lineHeight: 1.6,
                 fontWeight: 400,
                 maxWidth: 720,
+                textShadow: "0 2px 12px rgba(0, 0, 0, 0.85)",
               }}
             >
               What we shipped, benchmarked, and broke across microsecond C++ engines, machine learning signal pipelines, and cloud data architecture.

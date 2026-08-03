@@ -77,49 +77,108 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
         }
       }}
     >
-      {/* 2D Icon Emblem Banner Stage (No Photos) */}
+      {/* Banner Stage — Image or 2D Icon Emblem */}
       <Box
         sx={{
           width: "100%",
           aspectRatio: isHero ? "21/9" : "16/9",
-          background: "linear-gradient(135deg, #06183B 0%, #0A2A66 100%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           position: "relative",
           overflow: "hidden",
           borderBottom: "1px solid rgba(255, 199, 44, 0.15)",
+          bgcolor: "#06183B",
         }}
       >
-        {/* Subtle Tech Grid Pattern */}
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.15,
-            backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)",
-            backgroundSize: "16px 16px",
-          }}
-        />
-
-        {/* 2D Icon Emblem Container */}
-        <Box
-          sx={{
-            width: 68,
-            height: 68,
-            borderRadius: "18px",
-            bgcolor: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {get2DIconForCategory(post.category, post.title)}
-        </Box>
+        {post.image_url ? (
+          <>
+            <Box
+              component="img"
+              decoding="async"
+              src={post.image_url}
+              alt={post.title}
+              loading="lazy"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+                transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                ".MuiCard-root:hover &": {
+                  transform: "scale(1.06)",
+                },
+              }}
+            />
+            {/* Subtle Gradient Vignette */}
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(180deg, rgba(6, 24, 59, 0.25) 0%, rgba(6, 24, 59, 0.65) 100%)",
+              }}
+            />
+            {/* Floating Glassmorphic Icon Emblem Badge */}
+            <Box
+              sx={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 44,
+                height: 44,
+                borderRadius: "12px",
+                bgcolor: "rgba(6, 24, 59, 0.75)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 16px rgba(0, 0, 0, 0.4)",
+                zIndex: 2,
+              }}
+            >
+              {get2DIconForCategory(post.category, post.title)}
+            </Box>
+          </>
+        ) : (
+          <Box
+            sx={{
+              width: "100%",
+              height: "100%",
+              background: "linear-gradient(135deg, #06183B 0%, #0A2A66 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            {/* Tech Grid Pattern */}
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                opacity: 0.15,
+                backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)",
+                backgroundSize: "16px 16px",
+              }}
+            />
+            {/* 2D Icon Emblem Container */}
+            <Box
+              sx={{
+                width: 68,
+                height: 68,
+                borderRadius: "18px",
+                bgcolor: "rgba(255, 255, 255, 0.08)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {get2DIconForCategory(post.category, post.title)}
+            </Box>
+          </Box>
+        )}
       </Box>
       <CardContent sx={{ p: 3, pb: 0 }}>
         <Stack spacing={1.5}>

@@ -41,7 +41,7 @@ export function InnovationHero() {
       <Box
         ref={containerRef}
         aria-hidden
-        sx={{ position: "absolute", inset: 0, filter: "brightness(0.5) contrast(1.1)" }}
+        sx={{ position: "absolute", inset: 0, filter: "brightness(0.88) contrast(1.05)" }}
       >
         <Box
           component="video"
@@ -69,12 +69,13 @@ export function InnovationHero() {
         </Box>
       </Box>
 
-      {/* Dark Radial Gradient Overlay */}
+      {/* Reduced Opacity Blue Gradient Overlay — Video is now vibrant and visible */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background: "radial-gradient(circle at 60% 40%, rgba(6, 24, 59, 0.4) 0%, rgba(6, 24, 59, 0.95) 80%), linear-gradient(180deg, rgba(6, 24, 59, 0.6) 0%, #06183B 100%)",
+          background:
+            "radial-gradient(circle at 60% 40%, rgba(6, 24, 59, 0.15) 0%, rgba(6, 24, 59, 0.5) 75%), linear-gradient(180deg, rgba(6, 24, 59, 0.2) 0%, rgba(6, 24, 59, 0.7) 100%)",
         }}
       />
 
@@ -92,6 +93,7 @@ export function InnovationHero() {
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",
                   fontFamily: MONO,
+                  textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
                 }}
               >
                 EMPLOYEE PET PROJECTS // INNOVATION LAB
@@ -109,6 +111,7 @@ export function InnovationHero() {
                 lineHeight: 1.08,
                 letterSpacing: "-0.02em",
                 color: "common.white",
+                textShadow: "0 4px 20px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.9)",
               }}
             >
               Where Phitopolis Engineers Build Next-Gen Experiments.
@@ -119,11 +122,12 @@ export function InnovationHero() {
             <Typography
               variant="subtitle1"
               sx={{
-                color: "rgba(255, 255, 255, 0.85)",
+                color: "rgba(255, 255, 255, 0.92)",
                 fontSize: { xs: "1.1rem", md: "1.3rem" },
                 lineHeight: 1.6,
                 fontWeight: 400,
                 maxWidth: 760,
+                textShadow: "0 2px 12px rgba(0, 0, 0, 0.85)",
               }}
             >
               Discover open-source tools, machine learning signal prototypes, and high-performance C++ / Rust kernels created by our software engineers, quantitative researchers, and graduate fellows during their R&D pet project time.
@@ -137,25 +141,27 @@ export function InnovationHero() {
                 icon={<CodeIcon sx={{ color: "#FFC72C !important" }} />}
                 label="100% ENGINEER INITIATED"
                 sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                  bgcolor: "rgba(6, 24, 59, 0.65)",
+                  backdropFilter: "blur(12px)",
                   color: "common.white",
                   fontFamily: MONO,
                   fontWeight: 700,
                   fontSize: "0.75rem",
-                  border: "1px solid rgba(255, 199, 44, 0.3)",
+                  border: "1px solid rgba(255, 199, 44, 0.4)",
                   py: 2,
                 }}
               />
               <Chip
                 icon={<MemoryIcon sx={{ color: `${NOIR.live} !important` }} />}
-                label="6 LIVE R&D EXPERIMENTS"
+                label="9 LIVE R&D EXPERIMENTS"
                 sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                  bgcolor: "rgba(6, 24, 59, 0.65)",
+                  backdropFilter: "blur(12px)",
                   color: "common.white",
                   fontFamily: MONO,
                   fontWeight: 700,
                   fontSize: "0.75rem",
-                  border: `1px solid ${alpha(NOIR.live, 0.3)}`,
+                  border: `1px solid ${alpha(NOIR.live, 0.5)}`,
                   py: 2,
                 }}
               />
@@ -163,12 +169,13 @@ export function InnovationHero() {
                 icon={<AutoAwesomeIcon sx={{ color: "#FFC72C !important" }} />}
                 label="C++ / RUST / PYTHON / AI"
                 sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                  bgcolor: "rgba(6, 24, 59, 0.65)",
+                  backdropFilter: "blur(12px)",
                   color: "common.white",
                   fontFamily: MONO,
                   fontWeight: 700,
                   fontSize: "0.75rem",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
                   py: 2,
                 }}
               />

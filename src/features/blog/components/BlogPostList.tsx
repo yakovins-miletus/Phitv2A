@@ -34,31 +34,56 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
       }}
       sx={{
         cursor: "pointer",
-        transition: "background-color 0.2s ease-in-out",
-        backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: "blur(12px)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        backgroundColor: "background.paper",
+        borderRadius: "16px",
+        overflow: "hidden",
         border: "1px solid",
-        borderColor: (theme) => alpha(theme.palette.divider, 0.2),
+        borderColor: "rgba(10, 42, 102, 0.12)",
+        boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
         "&:hover": {
-          backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+          transform: "translateY(-4px)",
+          borderColor: "#FFC72C",
+          boxShadow: "0 12px 32px rgba(10, 42, 102, 0.1)",
         }
       }}
     >
       {post.image_url ? (
         <Box
-          component="img" decoding="async"
-          src={post.image_url}
-          alt=""
-          loading="lazy"
           sx={{
             width: "100%",
             aspectRatio: isHero ? "21/9" : "16/9",
-            objectFit: "cover",
-            display: "block",
-            borderBottom: 1,
-            borderColor: "divider",
+            position: "relative",
+            overflow: "hidden",
+            borderBottom: "1px solid rgba(10, 42, 102, 0.1)",
+            bgcolor: "#06183B",
           }}
-        />
+        >
+          <Box
+            component="img"
+            decoding="async"
+            src={post.image_url}
+            alt={post.title}
+            loading="lazy"
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+              ".MuiCard-root:hover &": {
+                transform: "scale(1.06)",
+              },
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(180deg, rgba(6, 24, 59, 0.15) 0%, rgba(6, 24, 59, 0.55) 100%)",
+            }}
+          />
+        </Box>
       ) : (
         <Box
           sx={{
