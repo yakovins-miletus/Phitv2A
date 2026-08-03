@@ -1,3 +1,4 @@
+import { NOIR } from "@/shared/theme/palette";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -31,7 +32,7 @@ function get2DIconForCategory(category: string, title: string) {
     return <AutoAwesomeIcon sx={{ fontSize: "2.6rem", color: "#FFC72C" }} />;
   }
   if (catLower.includes("systems") || titleLower.includes("rust") || titleLower.includes("c++")) {
-    return <TerminalIcon sx={{ fontSize: "2.6rem", color: "#00E676" }} />;
+    return <TerminalIcon sx={{ fontSize: "2.6rem", color: NOIR.live }} />;
   }
   if (catLower.includes("web") || titleLower.includes("webgl") || titleLower.includes("3d")) {
     return <LanguageIcon sx={{ fontSize: "2.6rem", color: "#29B6F6" }} />;

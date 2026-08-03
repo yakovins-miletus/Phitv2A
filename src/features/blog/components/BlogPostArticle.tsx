@@ -8,7 +8,7 @@ import { isImageParagraph } from "../bodyImages";
 
 /** Post bodies are plain text; blank lines separate paragraphs.
  *  React escapes everything — no HTML, no markdown, no XSS surface. The one
- *  extension: a paragraph that is entirely an image path renders as <img>. */
+ *  extension: a paragraph that is entirely an image path renders as <img decoding="async">. */
 function BodyParagraphs({ text }: { text: string }) {
   return (
     <Stack spacing={1.5}>
@@ -21,7 +21,7 @@ function BodyParagraphs({ text }: { text: string }) {
           isImageParagraph(paragraph) ? (
             <Box
               key={index}
-              component="img"
+              component="img" decoding="async"
               src={paragraph}
               alt=""
               loading="lazy"
@@ -75,7 +75,7 @@ export function BlogPostArticle({ post }: { post: BlogPost }) {
       </Stack>
       {post.image_url === null || post.image_url === undefined ? null : (
         <Box
-          component="img"
+          component="img" decoding="async"
           src={post.image_url}
           alt=""
           sx={{

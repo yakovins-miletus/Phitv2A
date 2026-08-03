@@ -5,7 +5,7 @@ import type { SyntheticEvent } from "react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
-import { NOIR } from "@/shared/theme/palette";
+import { CHAPTER_ACCENTS, NOIR } from "@/shared/theme/palette";
 import { FONT } from "@/shared/theme/theme";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -49,7 +49,7 @@ const CHAPTERS: Chapter[] = [
     tag: "The Beginning",
     title: "Where it all started",
     sub: "Where it all started",
-    color: "#E879F9",
+    color: CHAPTER_ACCENTS["2019"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2020/06/Cheers-1024x683.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2020/06/Mgmt-1024x683.jpg",
@@ -63,8 +63,8 @@ const CHAPTERS: Chapter[] = [
     tag: "Pandemic",
     title: "Pandemic",
     sub: "Adapting under pressure",
-    color: "#38BDF8",
-    images: ["/2020/1.png", "/2020/2.jpg"],
+    color: CHAPTER_ACCENTS["2020"]!,
+    images: ["/2020/1.webp", "/2020/2.jpg"],
     body: "Transitioned our technical team to strategic remote work setups to ensure safety and continuity. The disruption forced us to rethink how distributed teams collaborate — and we came out stronger for it",
   },
   {
@@ -73,7 +73,7 @@ const CHAPTERS: Chapter[] = [
     tag: "New Normal",
     title: "Adjusting to the new normal",
     sub: "Distributed, but never disconnected",
-    color: "#FFC72C",
+    color: CHAPTER_ACCENTS["2021"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2021/10/Image-from-iOS-4-768x576.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2021/10/Image-from-iOS-8-768x1024.jpg",
@@ -88,7 +88,7 @@ const CHAPTERS: Chapter[] = [
     tag: "Momentum",
     title: "Gaining momentum",
     sub: "Engineering at scale",
-    color: "#60A5FA",
+    color: CHAPTER_ACCENTS["2022"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2022/03/Image-from-iOS-21-768x576.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2022/08/Image-from-iOS-33-1-768x512.jpg",
@@ -102,7 +102,7 @@ const CHAPTERS: Chapter[] = [
     tag: "Acceleration",
     title: "Accelerating the mission",
     sub: "Deeper, faster, further",
-    color: "#34D399",
+    color: CHAPTER_ACCENTS["2023"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2023/03/46E1B7F6-6580-4DCC-AB2A-C3E634F57080-2-2048x2048.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2023/04/IMG_9159-1-1-2048x1336.jpg",
@@ -117,7 +117,7 @@ const CHAPTERS: Chapter[] = [
     tag: "New Heights",
     title: "Reaching new heights",
     sub: "Milestones that matter",
-    color: "#A78BFA",
+    color: CHAPTER_ACCENTS["2024"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2024/01/hike-with-mike-blog-1.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2024/04/group-pic-final-2048x1687.jpg",
@@ -132,7 +132,7 @@ const CHAPTERS: Chapter[] = [
     tag: "Expansion",
     title: "Expansion",
     sub: "New frontiers, new possibilities",
-    color: "#F59E0B",
+    color: CHAPTER_ACCENTS["2025"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2025/01/image8.png",
       "https://phitopolis.com/blog/wp-content/uploads/2025/03/DLSU-Job-Expo_001.png",
@@ -147,7 +147,7 @@ const CHAPTERS: Chapter[] = [
     tag: "AI Day",
     title: "New challenges, the work continues",
     sub: "Tomorrow's technology, available today",
-    color: "#F472B6",
+    color: CHAPTER_ACCENTS["2026"]!,
     images: [
       "https://phitopolis.com/blog/wp-content/uploads/2026/02/5-2048x870.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2026/02/Image-2-2048x1536.jpg",
@@ -239,6 +239,7 @@ function FloatingString({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     let raf = 0;
+    let visible = true;
     let rawCursorY = window.innerHeight / 2;
     let springY = window.innerHeight / 2;
     let springVel = 0;
@@ -261,13 +262,31 @@ function FloatingString({
       rawCursorY = e.clientY;
       lastMoveTime = performance.now();
     };
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+
+    // Cached so the frame loop never reads layout. `canvas.offsetWidth/offsetHeight`
+    // and `window.innerHeight` used to be read on every single frame, forcing a
+    // synchronous reflow 60 times a second for the whole 480vh of the About page.
+    let cssW = 0;
+    let cssH = 0;
+    let viewportH = window.innerHeight;
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
+      cssW = canvas.offsetWidth;
+      cssH = canvas.offsetHeight;
+      viewportH = window.innerHeight;
+      canvas.width = cssW * dpr;
+      canvas.height = cssH * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    // Debounced: the raw event fires continuously during a window drag, and each
+    // call reallocates the canvas backing store.
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(resize, 120);
     };
 
     const sampleY = (tp: number, centerY: number) => {
@@ -282,8 +301,8 @@ function FloatingString({
     };
 
     const draw = () => {
-      const w = canvas.offsetWidth;
-      const h = canvas.offsetHeight;
+      const w = cssW;
+      const h = cssH;
       ctx.clearRect(0, 0, w, h);
 
       const idleElapsed = performance.now() - lastMoveTime;
@@ -294,7 +313,7 @@ function FloatingString({
       springVel += (rawCursorY + idleOffset - springY) * 0.055;
       springVel *= 0.82;
       springY += springVel;
-      const displace = ((springY - window.innerHeight / 2) / (window.innerHeight / 2)) * h * 0.42;
+      const displace = ((springY - viewportH / 2) / (viewportH / 2)) * h * 0.42;
       cursorHistory[histHead] = displace;
       histHead = (histHead + 1) % HISTORY;
 
@@ -379,15 +398,42 @@ function FloatingString({
         ctx.fillText(yr, travelX - lw / 2, travelY - dotR - 4);
       }
 
-      raf = requestAnimationFrame(draw);
+      raf = visible && !document.hidden ? requestAnimationFrame(draw) : 0;
     };
+
+    const start = () => {
+      if (raf === 0 && visible && !document.hidden) raf = requestAnimationFrame(draw);
+    };
+    const stop = () => {
+      if (raf !== 0) { cancelAnimationFrame(raf); raf = 0; }
+    };
+
+    // The spring physics, 180-slot ring buffer and per-year ctx.measureText used to
+    // run at 60fps for the entire 480vh About page, on- or off-screen, and kept
+    // running in a backgrounded tab. Now it only animates while actually visible.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        visible = entry.isIntersecting;
+        if (visible) start(); else stop();
+      },
+      { threshold: 0.02 },
+    );
+    observer.observe(canvas);
+
+    const onVisibility = () => { if (document.hidden) stop(); else start(); };
+    document.addEventListener("visibilitychange", onVisibility);
 
     resize();
     draw();
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", onResize, { passive: true });
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      stop();
+      window.clearTimeout(resizeTimer);
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("resize", onResize);
       window.removeEventListener("mousemove", onMouseMove);
     };
   }, [years, scrollProgressRef]);
@@ -453,7 +499,7 @@ function ScatterPhoto({ src, alt, pos }: { src: string; alt: string; pos: Scatte
         willChange: "transform",
       }}
     >
-      <img
+      <img decoding="async" loading="lazy"
         src={src}
         alt={alt}
         onError={handleImgError}
@@ -471,7 +517,7 @@ function StaticJourneyImage({ src, title }: { src: string; title: string }) {
         aspectRatio: "4/3", maxWidth: 360, borderRadius: 10, overflow: "hidden", 
         border: "2px solid rgba(255,255,255,0.7)",
       }}>
-      <img src={src} alt={title} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      <img decoding="async" loading="lazy" src={src} alt={title} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
     </div>
   );
 }
@@ -492,7 +538,7 @@ function StaticJourney() {
             <p style={{ fontFamily: FONT, fontWeight: 600, fontSize: "1.1rem", color: ch.color, margin: 0 }}>
               {ch.title}
             </p>
-            <p style={{ fontFamily: FONT, fontSize: "0.95rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.8, margin: 0, maxWidth: 560 }}>
+            <p style={{ fontFamily: FONT, fontSize: "0.95rem", color: "rgba(255,255,255,0.62)", lineHeight: 1.8, margin: 0, maxWidth: 560 }}>
               {ch.body}
             </p>
             {ch.images[0] ? (
@@ -710,7 +756,7 @@ export function JourneyTimeline() {
                     style={{
                       fontFamily: FONT,
                       fontSize: "clamp(0.8rem, 1vw, 0.92rem)",
-                      color: "rgba(255,255,255,0.36)",
+                      color: "rgba(255,255,255,0.62)",
                       lineHeight: 1.9,
                       margin: "18px 0 0",
                       maxWidth: 440,
@@ -732,7 +778,7 @@ export function JourneyTimeline() {
                         key={ch.id + "-m-" + String(j)}
                         style={{ flex: 1, aspectRatio: "4/3", borderRadius: 10, overflow: "hidden", border: "2px solid rgba(255,255,255,0.7)", boxShadow: "0 4px 16px rgba(0,0,0,0.35)" }}
                       >
-                        <img src={src} alt={`${ch.title} — ${String(j + 1)}`} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <img decoding="async" loading="lazy" src={src} alt={`${ch.title} — ${String(j + 1)}`} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       </div>
                     ))}
                   </div>
@@ -779,8 +825,11 @@ export function JourneyTimeline() {
                   }}
                   style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.12)", flexShrink: 0 }}
                 />
+                {/* Was 8px at rgba(255,255,255,0.22) — 1.95:1, roughly four times under
+                    the AA floor, at a size below the practical legibility limit.
+                    Now 11px at 0.7 alpha (7.4:1). */}
                 {!isMobile && (
-                  <span style={{ fontFamily: FONT, fontSize: 8, color: "rgba(255,255,255,0.22)", letterSpacing: "0.08em" }}>
+                  <span style={{ fontFamily: FONT, fontSize: 11, color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
                     {ch.num}
                   </span>
                 )}

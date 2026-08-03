@@ -13,15 +13,13 @@ import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { EntrancePhaseContext, useReducedMotion, usePointerFine } from "@/shared/motion";
+import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
 import { MONO } from "@/shared/theme/theme";
 import { motion, AnimatePresence } from "motion/react";
 
 import { CommandPalette } from "./CommandPalette";
 
-import { GrainOverlay } from "./GrainOverlay";
-import { LiquidNavHandle, useLiquidSpacing } from "./LiquidNavHandle";
 import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
 // Removed Magnetic imports
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
@@ -32,7 +30,7 @@ import { RouterButton, RouterLink } from "./RouterLink";
 import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
-import { EASE_IN_OUT_QUART, EASE_OUT_EXPO_CSS, EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { EASE_OUT_EXPO_CSS, EASE_OUT_EXPO } from "@/shared/motion/easing";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { useNavAutohide } from "./useNavAutohide";
 
@@ -76,10 +74,13 @@ const WARM_ROUTES = [
   { to: "/contact", label: "CONTACT" },
 ] as const;
 
+/** Warmed during the preloader. These point at the 1200px derivatives rather than the
+    originals — `data-science-banner.png` alone was 975 KB, preloaded on every first
+    visit on every device, before anything had asked for it. */
 const CRITICAL_IMAGES = [
   { src: "/phitopolis_logo_hero.svg", label: "BRAND LOGO" },
-  { src: "/images/quant-research-banner.jpg", label: "RESEARCH CORE" },
-  { src: "/images/data-science-banner.png", label: "DATA STREAM" },
+  { src: "/images/careers/quant-research-banner.jpg", label: "RESEARCH CORE" },
+  { src: "/images/careers/data-science-banner.jpg", label: "DATA STREAM" },
 ] as const;
 
 function preloadImage(src: string): Promise<void> {
@@ -394,311 +395,6 @@ function AnimatedMenuButton({
   );
 }
 
-/** Full White Loading Screen Display shown during continuous page transitions. */
-function TransitionLoadingDisplay({
-  targetLabel,
-  onComplete,
-}: {
-  targetLabel: string;
-  onComplete: () => void;
-}) {
-  const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState<"loading" | "hold" | "fadeout" | "blank">("loading");
-
-  useEffect(() => {
-    const startTime = performance.now();
-    const duration = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 50 : 650;
-
-    let animFrame: number;
-    const tick = (now: number) => {
-      const elapsed = now - startTime;
-      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
-      setProgress(pct);
-      if (pct < 100) {
-        animFrame = requestAnimationFrame(tick);
-      } else {
-        // Hold for 1 second, then fade out indicator, then complete
-        setPhase("hold");
-        setTimeout(() => {
-          setPhase("fadeout");
-          setTimeout(() => {
-            setPhase("blank");
-            setTimeout(() => {
-              onComplete();
-            }, 300);
-          }, 300);
-        }, 1000);
-      }
-    };
-
-    animFrame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animFrame);
-  }, [onComplete]);
-
-  const isVisible = phase === "loading" || phase === "hold";
-
-  return (
-    <Box
-      sx={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "#FFFFFF",
-        zIndex: 3001,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 2.5,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.98 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}
-      >
-        <Box sx={{ width: 90, height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <img
-            src="/phitopolis_logo_hero.svg"
-            alt="Phitopolis Logo"
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
-        </Box>
-
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.85rem",
-            fontWeight: 800,
-            letterSpacing: "0.22em",
-            color: NOIR.navyField,
-            textTransform: "uppercase",
-          }}
-        >
-          PHITOPOLIS
-        </Typography>
-
-        <Box sx={{ width: 220, height: 3, bgcolor: alpha(NOIR.navyField, 0.12), borderRadius: "2px", overflow: "hidden", mt: 1 }}>
-          <Box
-            sx={{
-              height: "100%",
-              bgcolor: NOIR.gold,
-              width: `${progress}%`,
-              transition: "width 0.04s linear",
-            }}
-          />
-        </Box>
-
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.82rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: NOIR.gold,
-          }}
-        >
-          {progress}%
-        </Typography>
-
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.68rem",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            color: alpha(NOIR.navyField, 0.55),
-            textTransform: "uppercase",
-          }}
-        >
-          LOADING — {targetLabel}
-        </Typography>
-      </motion.div>
-    </Box>
-  );
-}
-
-// Renders dynamic, themed progress bars based on the target page theme
-function renderNextPageIndicator(nextPath: string, progress: number) {
-  switch (nextPath) {
-    case "/about": // Wavelength / Soundwave / Pulse
-      return (
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', justifyContent: 'center', height: 40 }}>
-          {Array.from({ length: 24 }).map((_, i) => {
-            const active = (i / 24) * 100 <= progress;
-            const waveHeight = 6 + 22 * Math.abs(Math.sin(i * 0.4));
-            return (
-              <Box
-                key={i}
-                sx={{
-                  width: 3,
-                  height: waveHeight,
-                  borderRadius: 1,
-                  bgcolor: active ? NOIR.gold : "rgba(255,255,255,0.15)",
-                  transition: "background-color 0.1s ease, transform 0.2s ease",
-                  transform: active ? "scaleY(1.15)" : "scaleY(1)",
-                }}
-              />
-            );
-          })}
-        </Box>
-      );
-    case "/services": // LED Matrix / Binary Grid
-      return (
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
-          {Array.from({ length: 16 }).map((_, i) => {
-            const active = (i / 16) * 100 <= progress;
-            return (
-              <Box
-                key={i}
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "2px",
-                  border: "1px solid",
-                  borderColor: active ? NOIR.gold : "rgba(255,255,255,0.2)",
-                  bgcolor: active ? NOIR.gold : "transparent",
-                  boxShadow: active ? `0 0 8px ${NOIR.gold}` : "none",
-                  transition: "all 0.1s ease",
-                  fontFamily: MONO,
-                  fontSize: "7px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: active ? "primary.main" : "rgba(255,255,255,0.3)",
-                }}
-              >
-                {i % 2 === 0 ? "1" : "0"}
-              </Box>
-            );
-          })}
-        </Box>
-      );
-    case "/blog": // Highlighted Book/Text lines
-      return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: 200, mx: 'auto' }}>
-          {[0, 1, 2].map((lineIndex) => {
-            const start = lineIndex * 33.3;
-            const lineProgress = Math.max(0, Math.min(100, ((progress - start) / 33.3) * 100));
-            return (
-              <Box
-                key={lineIndex}
-                sx={{
-                  width: lineIndex === 2 ? "70%" : "100%",
-                  height: 4,
-                  borderRadius: 1,
-                  position: "relative",
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  overflow: "hidden",
-                }}
-              >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    width: `${lineProgress}%`,
-                    bgcolor: NOIR.gold,
-                  }}
-                />
-              </Box>
-            );
-          })}
-        </Box>
-      );
-    case "/innovation-hub": // Quantum Orbit / Particle Core
-      return (
-        <Box sx={{ position: "relative", width: 60, height: 60, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto" }}>
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              bgcolor: progress > 30 ? NOIR.gold : "rgba(255,255,255,0.2)",
-              boxShadow: progress > 30 ? `0 0 10px ${NOIR.gold}` : "none",
-              transition: "all 0.3s",
-            }}
-          />
-          {[1, 2, 3].map((ring) => {
-            const active = progress >= ring * 33;
-            return (
-              <Box
-                key={ring}
-                sx={{
-                  position: "absolute",
-                  width: 16 + ring * 12,
-                  height: 16 + ring * 12,
-                  borderRadius: "50%",
-                  border: "1px solid",
-                  borderColor: active ? NOIR.gold : "rgba(255,255,255,0.1)",
-                  transform: `rotate(${progress * (ring === 2 ? -1.5 : 1.2)}deg)`,
-                  transition: "border-color 0.2s, transform 0.1s linear",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {active && (
-                  <Box
-                    sx={{
-                      width: 4,
-                      height: 4,
-                      borderRadius: "50%",
-                      bgcolor: NOIR.gold,
-                      boxShadow: `0 0 6px ${NOIR.gold}`,
-                    }}
-                  />
-                )}
-              </Box>
-            );
-          })}
-        </Box>
-      );
-    case "/contact": // WiFi / Signal Bar
-      return (
-        <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'flex-end', justifyContent: 'center', height: 32 }}>
-          {Array.from({ length: 5 }).map((_, i) => {
-            const active = (i / 5) * 100 <= progress;
-            const barHeight = 6 + i * 6;
-            return (
-              <Box
-                key={i}
-                sx={{
-                  width: 5,
-                  height: barHeight,
-                  borderRadius: "2px 2px 0 0",
-                  bgcolor: active ? NOIR.gold : "rgba(255,255,255,0.15)",
-                  boxShadow: active ? `0 0 6px ${NOIR.gold}` : "none",
-                  transition: "all 0.15s ease",
-                }}
-              />
-            );
-          })}
-        </Box>
-      );
-    default: // Circular / Loop
-      return (
-        <Box sx={{ width: 60, height: 30, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto" }}>
-          <svg width="60" height="30" viewBox="0 0 60 30" fill="none">
-            <path
-              d="M15 5 C 5 5, 5 25, 15 25 C 25 25, 35 5, 45 5 C 55 5, 55 25, 45 25 C 35 25, 25 5, 15 5 Z"
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth="2"
-            />
-            <path
-              d="M15 5 C 5 5, 5 25, 15 25 C 25 25, 35 5, 45 5 C 55 5, 55 25, 45 25 C 35 25, 25 5, 15 5 Z"
-              stroke={NOIR.gold}
-              strokeWidth="2.5"
-              strokeDasharray="140"
-              strokeDashoffset={140 - (progress / 100) * 140}
-              style={{ transition: "stroke-dashoffset 0.1s linear" }}
-            />
-          </svg>
-        </Box>
-      );
-  }
-}
-
 /** Delay before the entrance plays when there is no preloader to cover it
     (repeat visits) — lets the first paint commit so nothing moves mid-layout. */
 const SETTLE_MS = 80;
@@ -744,27 +440,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const router = useRouter();
-  const [transitionState, setTransitionState] = useState<"idle" | "triggered" | "closing" | "loading" | "opening">("idle");
-  const transitionTargetRef = useRef<string | null>(null);
-  const [scrollPressure, setScrollPressure] = useState(0);
+  // The overscroll-to-navigate machine that used to live here is gone.
+  // It accumulated "scroll pressure" from non-passive wheel/touchmove listeners —
+  // each tick calling checkIsAtBottom(), which read scrollY, innerHeight, two
+  // scrollHeights and an offsetHeight, forcing a full synchronous layout — then
+  // auto-navigated to the next page and played a full-screen curtain wipe. It
+  // hijacked the browser's own overscroll gesture, its escape hatch (Esc) was
+  // undiscoverable, and it re-attached five window listeners mid-gesture because
+  // its own setState was one of the effect's dependencies.
+  // The footer now offers the next chapter as an ordinary link.
   const currentNarration = NARRATION_FLOW[pathname] ?? NARRATION_FLOW["/"]!;
-
-  // The 1s hold between arming the transition and closing the curtain. It has
-  // to live outside the pressure effect below: arming sets `transitionState`,
-  // which is one of that effect's deps, so the effect tears down and re-runs
-  // immediately — and a cleanup owned by it would cancel the very timer that
-  // drives triggered -> closing, freezing the machine. (Before this it was an
-  // uncaptured setTimeout, so nothing could cancel it; the leak was what made
-  // it work, at the cost of firing after unmount.) Component-scoped ref plus an
-  // unmount-only cleanup fixes the leak without breaking the hold.
-  const triggerHoldRef = useRef<number | undefined>(undefined);
-  useEffect(
-    () => () => {
-      if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
-    },
-    [],
-  );
 
   useEffect(() => {
     // Reset body overflow on route change to guarantee scroll is never blocked on new pages
@@ -776,173 +461,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
     refreshScrollTriggers();
   }, [pathname]);
 
-  // Continuous overscroll below footer -> transition to next narration page
-  useEffect(() => {
-    if (reduced || showPreloader || (transitionState !== "idle" && transitionState !== "triggered")) {
-      return;
-    }
-
-    let accumulated = 0;
-    const threshold = 280; // threshold scroll pressure to trigger next page
-    let armTimer: number | undefined;
-    let drainTimer: number | undefined;
-
-    const clearArm = () => {
-      if (armTimer !== undefined) {
-        window.clearTimeout(armTimer);
-        armTimer = undefined;
-      }
-    };
-    const clearDrain = () => {
-      if (drainTimer !== undefined) {
-        window.clearInterval(drainTimer);
-        drainTimer = undefined;
-      }
-    };
-    /** Cancel any pending drain, however far along it is. */
-    const cancelDraining = () => {
-      clearArm();
-      clearDrain();
-    };
-
-    const checkIsAtBottom = () => {
-      const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
-      const viewportHeight = window.innerHeight;
-      const fullHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
-        document.documentElement.offsetHeight
-      );
-      return scrollY + viewportHeight >= fullHeight - 60;
-    };
-
-    const drainPressure = () => {
-      clearDrain();
-      drainTimer = window.setInterval(() => {
-        accumulated = Math.max(0, accumulated - 15);
-        setScrollPressure(Math.round((accumulated / threshold) * 100));
-        if (accumulated === 0) {
-          clearDrain();
-        }
-      }, 30);
-    };
-
-    const cancelArmTransition = () => {
-      if (triggerHoldRef.current !== undefined) {
-        window.clearTimeout(triggerHoldRef.current);
-        triggerHoldRef.current = undefined;
-      }
-      setTransitionState("idle");
-      transitionTargetRef.current = null;
-      accumulated = 0;
-      setScrollPressure(0);
-    };
-
-    /** Arm the page transition and hold a beat before the curtain closes. */
-    const armTransition = () => {
-      setScrollPressure(100);
-      transitionTargetRef.current = currentNarration.next;
-      setTransitionState("triggered");
-      cancelDraining();
-      if (triggerHoldRef.current !== undefined) window.clearTimeout(triggerHoldRef.current);
-      // 1.5s delay phase where users can cancel by scrolling back or pressing Esc
-      triggerHoldRef.current = window.setTimeout(() => {
-        triggerHoldRef.current = undefined;
-        setScrollPressure(0);
-        setTransitionState("closing");
-      }, 1500);
-    };
-
-    const handleWheel = (e: WheelEvent) => {
-      if (transitionState === "triggered") {
-        if (e.deltaY < 0) {
-          if (e.cancelable) e.preventDefault();
-          cancelArmTransition();
-        }
-        return;
-      }
-
-      const isAtBottom = checkIsAtBottom();
-      if (isAtBottom && e.deltaY > 0) {
-        if (e.cancelable) e.preventDefault();
-        clearDrain();
-        accumulated = Math.min(threshold, accumulated + e.deltaY * 0.7);
-        setScrollPressure(Math.round((accumulated / threshold) * 100));
-
-        if (accumulated >= threshold) {
-          armTransition();
-        } else {
-          clearArm();
-          armTimer = window.setTimeout(drainPressure, 150);
-        }
-      }
-    };
-
-    let startTouchY = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        startTouchY = e.touches[0]!.clientY;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const currentTouchY = e.touches[0]!.clientY;
-        const diffY = startTouchY - currentTouchY;
-
-        if (transitionState === "triggered") {
-          if (diffY < 0) {
-            cancelArmTransition();
-          }
-          return;
-        }
-
-        const isAtBottom = checkIsAtBottom();
-        if (isAtBottom && diffY > 0) {
-          if (e.cancelable) e.preventDefault();
-          clearDrain();
-          accumulated = Math.min(threshold, accumulated + diffY * 0.85);
-          setScrollPressure(Math.round((accumulated / threshold) * 100));
-          startTouchY = currentTouchY;
-
-          if (accumulated >= threshold) {
-            armTransition();
-          } else {
-            clearArm();
-            armTimer = window.setTimeout(drainPressure, 200);
-          }
-        }
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (transitionState !== "triggered") {
-        clearArm();
-        armTimer = window.setTimeout(drainPressure, 50);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && transitionState === "triggered") {
-        cancelArmTransition();
-      }
-    };
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("keydown", handleKeyDown);
-      cancelDraining();
-    };
-  }, [pathname, reduced, transitionState, showPreloader, currentNarration]);
 
   const headerReleased = phase === "header" || phase === "open";
   const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled, showMotto, toggleMotto } = useNavbar();
@@ -968,27 +486,24 @@ function AppShellInner({ children }: { children: ReactNode }) {
   }, [toggleMotto]);
 
   const isMinimal = overrideMode === "minimal";
-  const isLiquid = overrideMode === "liquid";
   const isNotch = overrideMode === "notch";
   const isStandard = overrideMode === "standard";
   const isIsland = overrideMode === "island";
   const onDark = (isNotch || isOverDarkSection) && !isIsland;
   const isImmersive = overrideMode === "immersive";
-  const pointerFine = usePointerFine();
-  const { insetX: liquidInsetX, insetY: liquidInsetY, setInset: setLiquidInset, reset: resetLiquidSpacing } = useLiquidSpacing();
   const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
-
-  useEffect(() => {
-    // Eases the spacing back to zero whenever the user leaves Liquid Mode
-    // (the dragged inset otherwise persists across mode toggles and route
-    // changes, since AppShellInner never unmounts).
-    if (!isLiquid) resetLiquidSpacing(reduced !== true);
-  }, [isLiquid, reduced, resetLiquidSpacing]);
-
 
   return (
     <EntrancePhaseContext.Provider value={phase}>
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        {/* First tab stop on every page. There was no skip link, so a keyboard user
+            had to tab through the whole header — logo, six nav items, contact button,
+            menu trigger — on every single navigation before reaching content.
+            Styling lives in components.ts (.skip-to-content); it is off-screen until
+            focused. */}
+        <Box component="a" href="#main-content" className="skip-to-content">
+          Skip to content
+        </Box>
         {showPreloader ? (
           <Preloader
             warmup={warmup}
@@ -1031,7 +546,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 position: "relative",
                 width: "100%",
                 maxWidth: isStandard ? "100%" : (isNotch ? "100%" : (derivedIsCompact ? "1200px" : "100%")),
-                mt: isLiquid ? `${liquidInsetY}px` : 0,
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -1088,9 +602,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 mx: "auto",
               }}
             >
-              {isLiquid && pointerFine ? (
-                <LiquidNavHandle insetX={liquidInsetX} insetY={liquidInsetY} onChange={setLiquidInset} />
-              ) : null}
               <RouterLink
                 to="/"
                 underline="none"
@@ -1314,7 +825,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </RouterButton>
         </Drawer>
 
-        <Box component="main" sx={{ flexGrow: 1 }}>
+        <Box component="main" id="main-content" tabIndex={-1} sx={{ flexGrow: 1, outline: "none" }}>
           {children}
         </Box>
 
@@ -1323,52 +834,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <SiteFooter
           footerAnchorRef={footerAnchorRef}
           currentNarration={currentNarration}
-          transitionState={transitionState}
-          scrollPressure={scrollPressure}
-          renderNextPageIndicator={renderNextPageIndicator}
         />
         <CommandPalette />
-        <GrainOverlay />
 
-        {/* Global Left-to-Right Swipe Curtain & Full White Loading Screen Overlay */}
-        <AnimatePresence>
-          {(transitionState !== "idle" && transitionState !== "triggered") && (
-            <>
-              <motion.div
-                key="page-slide-transition"
-                initial={{ x: "-100%" }}
-                animate={(transitionState === "closing" || transitionState === "loading") ? { x: "0%" } : { x: "100%" }}
-                transition={{ duration: 0.8, ease: EASE_IN_OUT_QUART }}
-                onAnimationComplete={() => {
-                  if (transitionState === "closing" && transitionTargetRef.current) {
-                    const nextRoute = transitionTargetRef.current;
-                    void router.navigate({ to: nextRoute }).then(() => {
-                      window.scrollTo(0, 0);
-                      setTransitionState("loading");
-                    });
-                  } else if (transitionState === "opening") {
-                    setTransitionState("idle");
-                    transitionTargetRef.current = null;
-                  }
-                }}
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  backgroundColor: "#FFFFFF",
-                  zIndex: 3000,
-                  pointerEvents: "none",
-                }}
-              />
-
-              {transitionState === "loading" && (
-                <TransitionLoadingDisplay
-                  targetLabel={currentNarration.label}
-                  onComplete={() => setTransitionState("opening")}
-                />
-              )}
-            </>
-          )}
-        </AnimatePresence>
       </Box>
     </EntrancePhaseContext.Provider>
   );

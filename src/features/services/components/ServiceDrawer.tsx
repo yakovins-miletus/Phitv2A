@@ -172,7 +172,7 @@ export function ServiceVector({ id }: { id: string }) {
         {/* 4 Abstract SDLC Phase Nodes */}
         {/* Phase 1: Architecture / Design (Top: x=200, y=80) */}
         <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: STAGGER_GAP * 3, type: "spring" }}>
-          <rect x="165" y="55" width="70" height="50" rx="12" fill="#0A1833" stroke={NOIR.gold} strokeWidth="2" />
+          <rect x="165" y="55" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.gold} strokeWidth="2" />
           <rect x="177" y="70" width="22" height="4" rx="2" fill={NOIR.goldLight} />
           <rect x="177" y="80" width="46" height="4" rx="2" fill={NOIR.mist} />
           <circle cx="218" cy="72" r="6" fill={NOIR.gold} />
@@ -180,21 +180,21 @@ export function ServiceVector({ id }: { id: string }) {
 
         {/* Phase 2: Code / Build (Right: x=320, y=200) */}
         <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: STAGGER_GAP * 4, type: "spring" }}>
-          <rect x="295" y="175" width="70" height="50" rx="12" fill="#0A1833" stroke={NOIR.goldLight} strokeWidth="2" />
+          <rect x="295" y="175" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.goldLight} strokeWidth="2" />
           {/* Abstract Code brackets < /> */}
           <path d="M 315 192 L 308 200 L 315 208 M 345 192 L 352 200 L 345 208 M 332 190 L 328 210" stroke={NOIR.goldLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </motion.g>
 
         {/* Phase 3: Test / Deploy (Bottom: x=200, y=320) */}
         <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: STAGGER_GAP * 5, type: "spring" }}>
-          <rect x="165" y="295" width="70" height="50" rx="12" fill="#0A1833" stroke={NOIR.goldDark} strokeWidth="2" />
+          <rect x="165" y="295" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.goldDark} strokeWidth="2" />
           {/* Abstract Check & Launch icon */}
           <path d="M 185 320 L 195 328 L 215 312" stroke={NOIR.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </motion.g>
 
         {/* Phase 4: Operate / Monitor (Left: x=80, y=200) */}
         <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: STAGGER_GAP * 6, type: "spring" }}>
-          <rect x="35" y="175" width="70" height="50" rx="12" fill="#0A1833" stroke={NOIR.mist} strokeWidth="2" />
+          <rect x="35" y="175" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.mist} strokeWidth="2" />
           {/* Abstract Pulse wave */}
           <path d="M 48 200 L 58 200 L 63 190 L 70 210 L 77 195 L 82 200 L 92 200" stroke={NOIR.mist} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </motion.g>
@@ -316,13 +316,17 @@ export function ServiceVector({ id }: { id: string }) {
         transition={{ duration: REVEAL_DURATION, ease: EASE_OUT_EXPO }}
       >
         {/* Outer Glow Backdrop */}
-        <rect x="50" y="75" width="300" height="250" rx="14" fill="#061226" stroke={NOIR.gold} strokeWidth="2.5" style={{ filter: "drop-shadow(0 12px 32px rgba(212,175,55,0.2))" }} />
+        <rect x="50" y="75" width="300" height="250" rx="14" fill={NOIR.navyInk} stroke={NOIR.gold} strokeWidth="2.5" style={{ filter: "drop-shadow(0 12px 32px rgba(212,175,55,0.2))" }} />
         
         {/* Terminal Header */}
-        <rect x="50" y="75" width="300" height="34" rx="14" fill="#0A1833" />
-        <circle cx="70" cy="92" r="4" fill="#FF5F56" />
-        <circle cx="84" cy="92" r="4" fill="#FFBD2E" />
-        <circle cx="98" cy="92" r="4" fill="#27C93F" />
+        <rect x="50" y="75" width="300" height="34" rx="14" fill={NOIR.navyPanel} />
+        {/* Window dots. These were the macOS traffic lights (#FF5F56 / #FFBD2E /
+            #27C93F) copied verbatim into a navy-and-gold brand — the most literal
+            piece of template residue in the codebase. Re-cut in brand gold at
+            descending opacity, which reads the same without borrowing Apple's. */}
+        <circle cx="70" cy="92" r="4" fill={NOIR.gold} opacity="0.9" />
+        <circle cx="84" cy="92" r="4" fill={NOIR.gold} opacity="0.55" />
+        <circle cx="98" cy="92" r="4" fill={NOIR.gold} opacity="0.3" />
         <line x1="50" y1="109" x2="350" y2="109" stroke={NOIR.goldDark} strokeWidth="1" opacity="0.4" />
 
         {/* Abstract Terminal Code Stream (Represented purely as lines) */}

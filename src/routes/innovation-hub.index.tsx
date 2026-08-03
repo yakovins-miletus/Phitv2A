@@ -1,3 +1,4 @@
+import { NOIR } from "@/shared/theme/palette";
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -100,7 +101,7 @@ function InnovationPage() {
   };
 
   return (
-    <Box sx={{ width: "100%", bgcolor: "#06183B", minHeight: "100vh" }}>
+    <Box sx={{ width: "100%", bgcolor: NOIR.navyDeep, minHeight: "100vh" }}>
       {/* ── High-Impact Video Hero Stage ── */}
       <InnovationHero />
 

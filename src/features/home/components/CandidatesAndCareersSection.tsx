@@ -20,14 +20,30 @@ import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 
+/**
+ * Card backgrounds, served from 1200px derivatives rather than the originals.
+ *
+ * These used to point straight at the full-resolution source photographs — the same
+ * files the About page uses as full-bleed heroes. A ~400px card was pulling
+ * `grads/FocusedProgramming.JPG` at **7.0 MB** and `AboutPageHero.png` at **2.3 MB**,
+ * which together cost more than the entire JavaScript bundle: the home page transferred
+ * 11.89 MB, of which ~11.6 MB was images (docs/perf-baseline.md).
+ *
+ * The derivatives in /images/careers are 1200px JPEGs — 11.4 MB down to 844 KB for the
+ * set. Regenerate with:
+ *   sips -s format jpeg -s formatOptions 68 -Z 1200 <src> --out public/images/careers/<name>.jpg
+ */
 const CAREER_BG_IMAGES: Record<string, string> = {
-  "Quantitative Researcher": "/images/quant-research-banner.jpg",
-  "Software Engineer": "/images/software-engineer-banner.png",
-  "Full Stack Developer": "/images/AboutPageHero.png",
-  "Data Scientist": "/images/data-science-banner.png",
-  "DevOps Engineer": "/images/ops-support-banner.jpg",
-  "R&D Internship Program": "/images/grads/FocusedProgramming.JPG",
+  "Quantitative Researcher": "/images/careers/quant-research-banner.jpg",
+  "Software Engineer": "/images/careers/software-engineer-banner.jpg",
+  "Full Stack Developer": "/images/careers/AboutPageHero.jpg",
+  "Data Scientist": "/images/careers/data-science-banner.jpg",
+  "DevOps Engineer": "/images/careers/ops-support-banner.jpg",
+  "R&D Internship Program": "/images/careers/FocusedProgramming.jpg",
 };
+
+/** Fallback when a role has no mapped image. */
+const CAREER_BG_FALLBACK = "/images/careers/AboutPageHero.jpg";
 
 const CAREER_BADGES: Record<string, string> = {
   "Quantitative Researcher": "QUANT & AI",
@@ -200,7 +216,7 @@ export function CandidatesAndCareersSection() {
       >
         {CONTENT.careers.map((job, index) => {
           const isActive = activeIndex === index;
-          const bgImage = CAREER_BG_IMAGES[job.title] || "/images/AboutPageHero.png";
+          const bgImage = CAREER_BG_IMAGES[job.title] ?? CAREER_BG_FALLBACK;
           const badge = CAREER_BADGES[job.title] || "OPEN ROLE";
 
           return (
@@ -238,7 +254,7 @@ export function CandidatesAndCareersSection() {
             >
               {/* Slat Background Image */}
               <Box
-                component="img"
+                component="img" decoding="async" loading="lazy"
                 src={bgImage}
                 alt={job.title}
                 sx={{
@@ -304,7 +320,7 @@ export function CandidatesAndCareersSection() {
                     sx={{
                       fontFamily: MONO,
                       fontSize: "0.72rem",
-                      color: "rgba(255,255,255,0.5)",
+                      color: "rgba(255,255,255,0.62)",
                     }}
                   >
                     0{index + 1}

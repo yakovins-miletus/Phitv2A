@@ -53,12 +53,27 @@ test("reduced motion: stat strip renders final values instantly", async () => {
   expect(strip.getByText("10M+")).toBeInTheDocument();
 });
 
-test("reduced motion: spectacle layer degrades — no particle canvas", async () => {
+test("reduced motion: hero scene is one decorative canvas, not a DOM particle field", async () => {
   await renderHome();
 
-  // ParticleField renders nothing under reduce. (The Signal Lab's static
-  // canvas is legitimate under reduce, so scope to the hero.)
-  expect(document.querySelector("#hero canvas")).toBeNull();
+  // The hero scene is now a single canvas (HeroCanvas) rather than the ~250 styled
+  // DOM nodes HeroSignalP used to mount. Under reduce it still mounts — it paints one
+  // static, fully-flattened frame and never starts a rAF loop, which is asserted
+  // deterministically in tests/motion/hero-scene.test.ts.
+  const hero = document.querySelector("#hero");
+  expect(hero).not.toBeNull();
+
+  const canvases = (hero as HTMLElement).querySelectorAll("canvas");
+  expect(canvases).toHaveLength(1);
+
+  // Purely decorative: it must never reach the accessibility tree.
+  expect(canvases[0]).toHaveAttribute("aria-hidden");
+
+  // The old implementation stacked 12-14 copies of the same logo SVG to fake extrusion
+  // depth. Nothing should stack images like that any more.
+  expect(
+    (hero as HTMLElement).querySelectorAll('img[src*="phitopolis_logo_hero"]').length,
+  ).toBeLessThanOrEqual(1);
 });
 
 test("reduced motion: use-case narrative stacks vertically, all slides reachable", async () => {

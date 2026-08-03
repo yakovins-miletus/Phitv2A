@@ -28,7 +28,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     badge: "FOUNDATIONAL FELLOWS",
     title: "2023 Inaugural Graduate Cohort",
     description: "The pioneer cohort of software and quantitative research fellows who established Phitopolis R&D standards, setting the benchmark for high-performance software engineering in Manila.",
-    image: "/images/grads/2023Grads.jpg",
+    image: "/images/grads/2023Grads.webp",
     highlights: ["Software Engineering", "Quant Systems", "Platform R&D"],
   },
   {
@@ -37,7 +37,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     badge: "SYSTEMS & INFRASTRUCTURE",
     title: "2024 Batch 1 R&D Cohort",
     description: "High-performing engineering graduates specializing in core systems architecture, distributed data pipelines, and low-latency C++ engines.",
-    image: "/images/grads/2024B1.jpg",
+    image: "/images/grads/2024B1.webp",
     highlights: ["Core Engineering", "Systems Design", "High-Performance Computing"],
   },
   {
@@ -46,7 +46,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     badge: "ADVANCED SYSTEMS",
     title: "2024 Batch 2 R&D Cohort",
     description: "Engineering graduates expanding distributed computing pipelines, cloud infrastructure, and automated testing frameworks.",
-    image: "/images/grads/2024B2Grads.jpg",
+    image: "/images/grads/2024B2Grads.webp",
     highlights: ["Distributed Systems", "Data Pipelines", "Cloud R&D"],
   },
   {
@@ -64,7 +64,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     badge: "NEXT-GEN LEADERS",
     title: "2026 Batch 1 Tech Graduates",
     description: "Our newest cohort of elite graduates driving modern web architecture, cloud native pipelines, and autonomous AI agents for global systems.",
-    image: "/images/grads/2026B1Grads.jpg",
+    image: "/images/grads/2026B1Grads.webp",
     highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
   },
 ];
@@ -273,7 +273,7 @@ export function GraduateHallOfFameSection() {
                           }}
                         >
                           <Box
-                            component="img"
+                            component="img" decoding="async" loading="lazy"
                             src={cohort.image}
                             alt={cohort.title}
                             sx={{

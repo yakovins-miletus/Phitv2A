@@ -152,6 +152,9 @@ export function DailyLifeSection() {
           component="video"
           ref={videoRef}
           src={videoLoaded ? "/videos/daily-life.mp4" : undefined}
+          // The poster keeps the frame filled before the IntersectionObserver releases
+          // the src, so the section never shows an empty navy box on a slow connection.
+          poster="/videos/daily-life-poster.jpg"
           preload="none"
           autoPlay
           muted
@@ -241,7 +244,7 @@ export function DailyLifeSection() {
                   },
                   "& .MuiSlider-rail": {
                     opacity: 0.3,
-                    bgcolor: "rgba(255, 255, 255, 0.5)",
+                    bgcolor: "rgba(255, 255, 255, 0.62)",
                   },
                   "& .MuiSlider-track": {
                     bgcolor: NOIR.gold,
@@ -311,7 +314,7 @@ export function DailyLifeSection() {
                       },
                       "& .MuiSlider-rail": {
                         opacity: 0.3,
-                        bgcolor: "rgba(255, 255, 255, 0.5)",
+                        bgcolor: "rgba(255, 255, 255, 0.62)",
                       },
                       "& .MuiSlider-track": {
                         bgcolor: "white",

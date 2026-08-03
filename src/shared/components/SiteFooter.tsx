@@ -13,7 +13,6 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import SecurityIcon from "@mui/icons-material/Security";
 import { alpha } from "@mui/material/styles";
-import { motion, AnimatePresence } from "motion/react";
 
 import { RouterLink, RouterButton } from "@/shared/components/RouterLink";
 import { NOIR } from "@/shared/theme/palette";
@@ -21,25 +20,17 @@ import { MONO } from "@/shared/theme/theme";
 
 interface SiteFooterProps {
   footerAnchorRef: React.RefObject<HTMLElement | null>;
+  /** The next chapter in the site's reading order, or undefined on unknown routes. */
   currentNarration: { next: string; label: string; to?: string } | undefined;
-  transitionState: string;
-  scrollPressure: number;
-  renderNextPageIndicator: (nextTo: string, progress: number) => React.ReactNode;
 }
 
-export function SiteFooter({
-  footerAnchorRef,
-  currentNarration,
-  transitionState,
-  scrollPressure,
-  renderNextPageIndicator,
-}: SiteFooterProps) {
+export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProps) {
   return (
     <Box
       component="footer"
       ref={footerAnchorRef}
       sx={{
-        bgcolor: "#06183B",
+        bgcolor: NOIR.navyDeep,
         color: "#FFFFFF",
         borderTop: `1px solid ${alpha(NOIR.gold, 0.25)}`,
         pt: { xs: 10, md: 14 },
@@ -112,82 +103,53 @@ export function SiteFooter({
                   width: "100%",
                 }}
               >
-              <AnimatePresence mode="wait">
-                {transitionState === "triggered" || transitionState === "closing" || transitionState === "loading" ? (
-                  <motion.div
-                    key="now-transitioning"
-                    initial={{ y: -15, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 15, opacity: 0 }}
-                    transition={{ duration: 0.65, ease: "easeOut" }}
+              {/* Next chapter.
+                  This used to be a scroll-pressure meter: overscrolling past the footer
+                  accumulated "pressure" and then auto-navigated, driven by non-passive
+                  wheel/touchmove listeners that forced a full layout read on every tick.
+                  It hijacked a browser gesture, its only escape hatch was an undiscoverable
+                  Esc, and it was the worst scroll-jank source on low-end hardware. It is now
+                  what it should always have been: a link. */}
+              <Stack spacing={2} alignItems="center">
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: NOIR.gold }} />
+                  <Typography
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: "0.78rem",
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      color: NOIR.gold,
+                      fontWeight: 800,
+                    }}
                   >
-                    <Stack spacing={1} alignItems="center">
-                      <Typography
-                        sx={{
-                          fontFamily: MONO,
-                          fontSize: { xs: "0.95rem", md: "1.15rem" },
-                          letterSpacing: "0.22em",
-                          textTransform: "uppercase",
-                          color: "#FFC72C",
-                          fontWeight: 800,
-                        }}
-                      >
-                        NOW TRANSITIONING TO {currentNarration.label.toUpperCase()}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontFamily: MONO,
-                          fontSize: "0.75rem",
-                          letterSpacing: "0.15em",
-                          color: "rgba(255, 255, 255, 0.7)",
-                          fontWeight: 700,
-                        }}
-                      >
-                        [ SCROLL UP OR PRESS ESC TO CANCEL ]
-                      </Typography>
-                    </Stack>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="scroll-cue"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#FFC72C" }} />
-                      <Typography
-                        sx={{
-                          fontFamily: MONO,
-                          fontSize: "0.78rem",
-                          letterSpacing: "0.2em",
-                          textTransform: "uppercase",
-                          color: "#FFC72C",
-                          fontWeight: 800,
-                        }}
-                      >
-                        [ SCROLL CONTINUOUSLY TO ENTER NEXT CHAPTER ↓ ]
-                      </Typography>
-                    </Box>
+                    Next chapter
+                  </Typography>
+                </Box>
 
-                    {/* Dynamic thematic progression bar */}
-                    {renderNextPageIndicator(currentNarration.next, scrollPressure)}
-
-                    <Typography
-                      sx={{
-                        fontFamily: MONO,
-                        fontSize: "0.72rem",
-                        letterSpacing: "0.15em",
-                        color: "rgba(255, 255, 255, 0.6)",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      NEXT CHAPTER: {currentNarration.label.toUpperCase()} ({scrollPressure}%)
-                    </Typography>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <RouterButton
+                  to={currentNarration.next}
+                  variant="outlined"
+                  sx={{
+                    borderRadius: "100px",
+                    px: 4,
+                    py: 1.4,
+                    fontFamily: MONO,
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    color: "#FFFFFF",
+                    borderColor: alpha(NOIR.gold, 0.5),
+                    "&:hover": {
+                      bgcolor: NOIR.gold,
+                      borderColor: NOIR.gold,
+                      color: NOIR.navyField,
+                    },
+                  }}
+                >
+                  {currentNarration.label} →
+                </RouterButton>
+              </Stack>
             </Box>
           </Box>
         )}
@@ -236,8 +198,8 @@ export function SiteFooter({
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#00E676", boxShadow: "0 0 10px #00E676" }} />
-                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "#00E676", fontWeight: 700 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: NOIR.live, boxShadow: `0 0 10px ${NOIR.live}` }} />
+                    <Typography variant="caption" sx={{ fontFamily: MONO, color: NOIR.live, fontWeight: 700 }}>
                       BGC MANILA R&D LAB ACTIVE (GMT+8)
                     </Typography>
                   </Box>
@@ -353,7 +315,7 @@ export function SiteFooter({
                 </Typography>
                 <Stack spacing={2}>
                   <Box>
-                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.5)", display: "block", mb: 0.3 }}>
+                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", display: "block", mb: 0.3 }}>
                       GENERAL INQUIRIES
                     </Typography>
                     <Typography
@@ -376,7 +338,7 @@ export function SiteFooter({
                   </Box>
 
                   <Box>
-                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.5)", display: "block", mb: 0.3 }}>
+                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", display: "block", mb: 0.3 }}>
                       CAREERS & FELLOWSHIPS
                     </Typography>
                     <Typography
@@ -443,7 +405,7 @@ export function SiteFooter({
             <Typography variant="caption" sx={{ fontFamily: MONO, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.8)" }}>
               © 2026 Phitopolis International Corp. All rights reserved.
             </Typography>
-            <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "rgba(255, 255, 255, 0.5)" }}>
+            <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "rgba(255, 255, 255, 0.62)" }}>
               Registered Software & Quantitative Research Firm • Bonifacio Global City, Manila
             </Typography>
           </Stack>

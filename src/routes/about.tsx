@@ -197,7 +197,7 @@ function TalentSection() {
                       }}
                     >
                       {school.logo ? (
-                        <Box component="img" src={school.logo} alt={school.name} sx={{ width: 20, height: 20, objectFit: "contain", borderRadius: "50%", bgcolor: "white" }} />
+                        <Box component="img" decoding="async" loading="lazy" src={school.logo} alt={school.name} sx={{ width: 20, height: 20, objectFit: "contain", borderRadius: "50%", bgcolor: "white" }} />
                       ) : (
                         <Box sx={{ width: 20, height: 20, borderRadius: "50%", bgcolor: "divider" }} />
                       )}

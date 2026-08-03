@@ -6,6 +6,12 @@
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["dev"],
       "port": 5173
+    },
+    {
+      "name": "phitv2a-preview",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["preview", "--port", "4173"],
+      "port": 4173
     }
   ]
 }

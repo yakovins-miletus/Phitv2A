@@ -12,6 +12,7 @@ import {
 } from "motion/react";
 
 import { FONT, MONO } from "@/shared/theme/theme";
+import { TECH_CAT_ACCENTS } from "@/shared/theme/palette";
 
 import { MetaLabel } from "./MetaLabel";
 
@@ -181,12 +182,9 @@ const ROW3_TECHS = [
   { name: "Flutter", cat: "dev" }
 ];
 
-const TECH_CAT_COLORS: Record<string, string> = {
-  ai: "#FFC72C",
-  dev: "#A78BFA",
-  infra: "#60A5FA",
-  data: "#34D399"
-};
+/** Re-exported from the palette; `dev`/`infra`/`data` used to be Tailwind
+    violet-400 / blue-400 / emerald-400 sitting next to a brand-gold `ai`. */
+const TECH_CAT_COLORS = TECH_CAT_ACCENTS;
 
 const LOCAL_TECHS: Record<string, string> = {
   "AWS": "/logos/tech/aws.svg",
@@ -217,7 +215,7 @@ const TechCard = React.memo(({ tech, activeCat }: { tech: { name: string; cat: s
     >
       {localPath ? (
         <Box
-          component="img"
+          component="img" decoding="async" loading="lazy"
           src={localPath}
           alt={tech.name}
           sx={{
@@ -230,7 +228,7 @@ const TechCard = React.memo(({ tech, activeCat }: { tech: { name: string; cat: s
         />
       ) : slug && imageValid ? (
         <Box
-          component="img"
+          component="img" decoding="async" loading="lazy"
           src={`https://cdn.simpleicons.org/${slug}`}
           alt={tech.name}
           onError={() => setImageValid(false)}

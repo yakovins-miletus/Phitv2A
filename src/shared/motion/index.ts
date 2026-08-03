@@ -28,6 +28,9 @@ export function useEntranceSettled(): boolean {
   return useContext(EntrancePhaseContext) === "open";
 }
 
+/** Device capability tiering — gates cost, where usePointerFine gates affordances. */
+export { useDeviceTier, useIsLowPowerDevice, type DeviceTier } from "./useDeviceTier";
+
 const POINTER_FINE = "(pointer: fine)";
 
 /** Magnetic hovers exist only for precise pointers (inventory row 6). */

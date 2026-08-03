@@ -25,7 +25,6 @@ const COMMANDS = [
   { id: "sys-nav-dynamic", group: "SYSTEM", label: "Navbar: Dynamic Mode", keywords: "navbar auto dynamic", run: { kind: "navbar-mode", mode: "dynamic" } },
   { id: "sys-nav-island", group: "SYSTEM", label: "Navbar: Island Mode", keywords: "navbar island forced compact", run: { kind: "navbar-mode", mode: "island" } },
   { id: "sys-nav-immersive", group: "SYSTEM", label: "Navbar: Immersive Mode", keywords: "navbar immersive full", run: { kind: "navbar-mode", mode: "immersive" } },
-  { id: "sys-nav-liquid", group: "SYSTEM", label: "Navbar: Liquid Mode", keywords: "navbar liquid morph drag corners shape squircle", run: { kind: "navbar-mode", mode: "liquid" } },
   { id: "sys-nav-notch", group: "SYSTEM", label: "Navbar: Notch Mode", keywords: "navbar notch macbook camera capsule dark island", run: { kind: "navbar-mode", mode: "notch" } },
   { id: "sys-nav-standard", group: "SYSTEM", label: "Navbar: Standard Mode", keywords: "navbar standard wide stretch full top normal center nav items", run: { kind: "navbar-mode", mode: "standard" } },
   { id: "sys-nav-autohide", group: "SYSTEM", label: "Toggle Navigation Autohide", keywords: "navigation autohide navbar scroll hide show toggle", run: { kind: "toggle-autohide" } },

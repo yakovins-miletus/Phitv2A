@@ -1,3 +1,4 @@
+import { NOIR } from "@/shared/theme/palette";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -202,7 +203,7 @@ export function ContactForm() {
               bgcolor: "#0A2A66",
               color: "#FFFFFF",
               "&:hover": {
-                bgcolor: "#06183B",
+                bgcolor: NOIR.navyDeep,
               },
             }}
           >

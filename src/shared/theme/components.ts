@@ -1,6 +1,51 @@
 import type { Components, Theme } from "@mui/material/styles";
 
+/**
+ * The sitewide keyboard-focus indicator.
+ *
+ * There was none. `:focus-visible` appeared exactly twice across 150 files, and four
+ * places set `outline: none` with nothing in its place, so a keyboard user could lose
+ * track of where they were entirely. This applies one visible ring to every focusable
+ * element, including plain `<a>`/`<div tabindex>` that MUI never sees.
+ *
+ * `:focus-visible` (not `:focus`) so mouse clicks don't draw a ring — the reason people
+ * reach for `outline: none` in the first place.
+ */
+const focusRing = (theme: Theme) => ({
+  outline: `2px solid ${theme.palette.secondary.main}`,
+  outlineOffset: "2px",
+  // A second, darker ring so the gold stays visible on light grounds too.
+  boxShadow: `0 0 0 4px ${theme.palette.primary.main}33`,
+  borderRadius: "4px",
+});
+
 export const components: Components<Theme> = {
+  MuiCssBaseline: {
+    styleOverrides: (theme) => ({
+      "*:focus-visible": focusRing(theme),
+      // Skip link: off-screen until focused, then pinned top-left.
+      ".skip-to-content": {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        zIndex: theme.zIndex.tooltip + 10,
+        padding: theme.spacing(1.5, 3),
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.common.white,
+        fontWeight: 700,
+        textDecoration: "none",
+        borderBottomRightRadius: "8px",
+        transform: "translateY(-120%)",
+        "&:focus-visible": {
+          transform: "translateY(0)",
+          ...focusRing(theme),
+        },
+      },
+      "@media (prefers-reduced-motion: no-preference)": {
+        ".skip-to-content": { transition: "transform 0.2s ease-out" },
+      },
+    }),
+  },
   MuiButton: {
     defaultProps: { disableElevation: true },
     styleOverrides: {

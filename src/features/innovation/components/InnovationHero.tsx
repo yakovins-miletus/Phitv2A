@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { alpha } from "@mui/material/styles";
+import { NOIR } from "@/shared/theme/palette";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
@@ -14,10 +15,11 @@ import { motion } from "motion/react";
 import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 export function InnovationHero() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
+  const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
 
   return (
     <Box
@@ -26,31 +28,46 @@ export function InnovationHero() {
         position: "relative",
         height: { xs: "80vh", md: "85vh" },
         width: "100%",
-        bgcolor: "#06183B",
+        bgcolor: NOIR.navyDeep,
         color: "common.white",
         overflow: "hidden",
         display: "flex",
         alignItems: "center",
       }}
     >
-      {/* Background Loop Video */}
+      {/* Background loop — see BlogVideoHero: same 62.8 MB / 251s file, same ungated
+          autoplay. Now a 787 KB 12-second loop, viewport-gated, poster-only under
+          reduced motion or on a low-power device. */}
       <Box
-        component="video"
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        src="/videos/daily-life.mp4"
-        sx={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          filter: "brightness(0.5) contrast(1.1)",
-        }}
-      />
+        ref={containerRef}
+        aria-hidden
+        sx={{ position: "absolute", inset: 0, filter: "brightness(0.5) contrast(1.1)" }}
+      >
+        <Box
+          component="video"
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster={BACKGROUND_LOOP.poster}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        >
+          {!posterOnly && shouldLoad && (
+            <>
+              <source src={BACKGROUND_LOOP.webm} type="video/webm" />
+              <source src={BACKGROUND_LOOP.mp4} type="video/mp4" />
+            </>
+          )}
+        </Box>
+      </Box>
 
       {/* Dark Radial Gradient Overlay */}
       <Box
@@ -130,7 +147,7 @@ export function InnovationHero() {
                 }}
               />
               <Chip
-                icon={<MemoryIcon sx={{ color: "#00E676 !important" }} />}
+                icon={<MemoryIcon sx={{ color: `${NOIR.live} !important` }} />}
                 label="6 LIVE R&D EXPERIMENTS"
                 sx={{
                   bgcolor: "rgba(255, 255, 255, 0.08)",
@@ -138,7 +155,7 @@ export function InnovationHero() {
                   fontFamily: MONO,
                   fontWeight: 700,
                   fontSize: "0.75rem",
-                  border: "1px solid rgba(0, 230, 118, 0.3)",
+                  border: `1px solid ${alpha(NOIR.live, 0.3)}`,
                   py: 2,
                 }}
               />

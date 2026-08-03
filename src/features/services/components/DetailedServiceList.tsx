@@ -14,10 +14,10 @@ import { usePointerFine } from "@/shared/motion";
 import type { Service } from "../api";
 
 const BANNER_MAP: Record<string, string> = {
-  "Data Science": "/images/data-science-banner.png",
+  "Data Science": "/images/data-science-banner.webp",
   "Ops Support": "/images/ops-support-banner.jpg",
   "Quantitative Research": "/images/quant-research-banner.jpg",
-  "Software Development": "/images/software-engineer-banner.png",
+  "Software Development": "/images/software-engineer-banner.webp",
 };
 
 function SubTeamCard({ team }: { team: { name: string; description: string } }) {
@@ -102,7 +102,7 @@ function SpatialBannerCard({ src, alt }: { src: string; alt: string }) {
         }}
       >
         <Box
-          component="img"
+          component="img" decoding="async" loading="lazy"
           src={src}
           alt={alt}
           sx={{

@@ -146,11 +146,11 @@ export const CONTENT = {
         provider: "Amazon Web Services",
         count: 14,
         items: [
-          { name: "Solutions Architect — Professional", logo: "/logos/certs/aws-certs/solutions-architect-pro.png" },
-          { name: "Machine Learning — Specialty", logo: "/logos/certs/aws-certs/machine-learning.png" },
-          { name: "Security — Specialty", logo: "/logos/certs/aws-certs/security.png" },
-          { name: "Data Engineer — Associate", logo: "/logos/certs/aws-certs/data-engineer.png" },
-          { name: "DevOps Engineer — Professional", logo: "/logos/certs/aws-certs/dev-ops-engineer-pro.png" },
+          { name: "Solutions Architect — Professional", logo: "/logos/certs/aws-certs/solutions-architect-pro.webp" },
+          { name: "Machine Learning — Specialty", logo: "/logos/certs/aws-certs/machine-learning.webp" },
+          { name: "Security — Specialty", logo: "/logos/certs/aws-certs/security.webp" },
+          { name: "Data Engineer — Associate", logo: "/logos/certs/aws-certs/data-engineer.webp" },
+          { name: "DevOps Engineer — Professional", logo: "/logos/certs/aws-certs/dev-ops-engineer-pro.webp" },
         ],
       },
       {

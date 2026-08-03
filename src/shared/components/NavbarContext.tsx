@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 
-export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'liquid' | 'notch' | 'standard';
+export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch' | 'standard';
 
 /**
  * Navbar anchors — the SECOND of the page's "what is on screen" registries, and
@@ -101,7 +101,7 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
   const derivedIsCompact = useMemo(() => {
     if (overrideMode === 'immersive' || overrideMode === 'minimal') return false;
     if (overrideMode === 'dynamic') return isAutoCompact;
-    // island | liquid | notch share the bounded, backgrounded baseline —
+    // island | notch share the bounded, backgrounded baseline —
     // each layers its own shape/color overrides on top in AppShell.
     return true;
   }, [overrideMode, isAutoCompact]);

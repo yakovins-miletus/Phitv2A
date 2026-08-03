@@ -26,7 +26,7 @@ const INTERNSHIP_PILLARS: ProgramPillar[] = [
     title: "University Engagement & Expos",
     subtitle: "DLSU, ATENEO & UP PARTNERSHIPS",
     description: "Active campus presence through technical career expos, student hackathons, and guest engineering lectures.",
-    image: "/images/grads/DLSUexpo.png",
+    image: "/images/grads/DLSUexpo.webp",
   },
   {
     icon: CodeIcon,
@@ -99,7 +99,7 @@ export function InternshipProgramSection() {
                         }}
                       >
                         <Box
-                          component="img"
+                          component="img" decoding="async" loading="lazy"
                           src={pillar.image}
                           alt={pillar.title}
                           sx={{

@@ -189,7 +189,7 @@ export function CertificationsSection() {
                               }}
                             >
                               <Box
-                                component="img"
+                                component="img" decoding="async" loading="lazy"
                                 src={cert.logo}
                                 alt={cert.name}
                                 sx={{

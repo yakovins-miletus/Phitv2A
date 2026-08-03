@@ -11,7 +11,59 @@ import { NOIR } from "@/shared/theme/palette";
 import { EASE_IN_OUT_QUART } from "@/shared/motion/easing";
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
-const HARD_CAP_MS = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 150 : 800;
+const IS_JSDOM = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") === true;
+const HARD_CAP_MS = IS_JSDOM ? 150 : 800;
+/** The one deliberate hold: enough to read as an entrance, not enough to be a wait. */
+const ENTRY_SETTLE_MS = IS_JSDOM ? 5 : 180;
+
+/** The four quarter-turn arcs of the loader ring, and their stagger. */
+const PULSE_ARCS = [
+  { d: "M 140 0 L 140 44 A 96 96 0 0 1 236 140 A 96 96 0 1 1 140 44", delay: 0 },
+  { d: "M 280 140 L 236 140 A 96 96 0 0 1 140 236 A 96 96 0 1 1 236 140", delay: 0.55 },
+  { d: "M 140 280 L 140 236 A 96 96 0 0 1 44 140 A 96 96 0 1 1 140 236", delay: 1.1 },
+  { d: "M 0 140 L 44 140 A 96 96 0 0 1 140 44 A 96 96 0 1 1 44 140", delay: 1.65 },
+] as const;
+
+/**
+ * One travelling gold pulse.
+ *
+ * These used to carry `filter="url(#preloader-glow)"` — an `feGaussianBlur` re-rasterised
+ * on every frame of a `repeat: Infinity` animation, four times over, while eight warm-up
+ * promises raced behind the overlay. It was the single most expensive thing on screen
+ * during load. The glow is now a wide translucent stroke under a crisp core: two paint
+ * ops instead of a filter pass, visually equivalent at this stroke width.
+ */
+function PulseArc({ d, delay }: { d: string; delay: number }) {
+  const dash = { strokeDasharray: "70 600" } as const;
+  const anim = {
+    initial: { strokeDashoffset: 670 },
+    animate: { strokeDashoffset: 0 },
+    transition: { duration: 2.2, repeat: Infinity, ease: "linear" as const, delay },
+  };
+  return (
+    <>
+      <motion.path
+        d={d}
+        fill="none"
+        stroke={NOIR.gold}
+        strokeWidth="7"
+        strokeLinecap="round"
+        opacity={0.22}
+        style={dash}
+        {...anim}
+      />
+      <motion.path
+        d={d}
+        fill="none"
+        stroke={NOIR.gold}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        style={dash}
+        {...anim}
+      />
+    </>
+  );
+}
 
 /** One unit of real warm-up work surfaced by the progress bar. */
 export interface LoadSignal {
@@ -46,7 +98,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
   const [resolved, setResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("ASSETS");
   const [forced, setForced] = useState(false);
-  const [phase, setPhase] = useState<"entry" | "loading" | "complete" | "dismissing" | "done">("entry");
+  const [phase, setPhase] = useState<"entry" | "loading" | "dismissing" | "done">("entry");
 
   const total = Math.max(signals.length, 1);
 
@@ -86,35 +138,36 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     }
   }, [forced]);
 
-  // Phase transitions:
-  // 1. Entry Buffer Phase: Stay in entry phase for 1.2s to show signals flowing inwards
+  // Phase transitions.
+  //
+  // These used to hold for 1200ms (entry) + 1000ms (complete) + 550ms (wipe) = 2,750ms
+  // of hardcoded setTimeout, regardless of how fast the page actually loaded — and the
+  // hero's own fades then ran on top, so nothing was fully present for ~7.5s. The
+  // buffers are gone: the overlay now tracks real signals and leaves as soon as they
+  // resolve. ENTRY_SETTLE_MS is the one deliberate hold left, just long enough for the
+  // wordmark to register as a considered entrance rather than a flash.
+  //
+  // 1. Entry: a single short settle, then straight to tracking real work.
   useEffect(() => {
     if (phase === "entry") {
-      const timeoutMs = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 5 : 1200;
       const timer = setTimeout(() => {
         setPhase("loading");
-      }, timeoutMs);
+      }, ENTRY_SETTLE_MS);
       return () => clearTimeout(timer);
     }
   }, [phase]);
 
-  // 2. Loading Phase: Transition to Complete once all assets are loaded
+  // 2. Loading → dismissing, the moment the real signals resolve.
+  //
+  // There used to be a distinct "complete" phase in between, whose only job was to hold
+  // for 1000ms. With that buffer gone the phase had nothing left to do but immediately
+  // forward to "dismissing", so it is skipped entirely rather than kept as a state that
+  // exists for one render. The iris wipe is the outro.
   useEffect(() => {
     if (phase === "loading" && resolved >= total) {
-      setPhase("complete");
+      setPhase("dismissing");
     }
   }, [phase, resolved, total]);
-
-  // 3. Complete Buffer Phase: Stay on 100% completed state for 1.0s to settle animations
-  useEffect(() => {
-    if (phase === "complete") {
-      const timeoutMs = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") ? 5 : 1000;
-      const timer = setTimeout(() => {
-        setPhase("dismissing");
-      }, timeoutMs);
-      return () => clearTimeout(timer);
-    }
-  }, [phase]);
 
   // 4. Done Phase: Notify shell once dismissal completes
   useEffect(() => {
@@ -124,7 +177,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     }
   }, [phase, onDone]);
 
-  const isCompleteOrLater = phase === "complete" || phase === "dismissing" || phase === "done" || forced || resolved >= total;
+  const isCompleteOrLater = phase === "dismissing" || phase === "done" || forced || resolved >= total;
   const percent = isCompleteOrLater ? 100 : Math.round((Math.min(resolved, total) / total) * 100);
 
   const showProgress = phase !== "entry" && phase !== "dismissing" && phase !== "done";
@@ -172,67 +225,15 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
           {/* Logo & Circular Loader Container */}
           <Box sx={{ position: "relative", width: 280, height: 280, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-              <defs>
-                <filter id="preloader-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              
               {/* Background guide lines */}
-              <path d="M 140 0 L 140 44 A 96 96 0 0 1 236 140 A 96 96 0 1 1 140 44" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
-              <path d="M 280 140 L 236 140 A 96 96 0 0 1 140 236 A 96 96 0 1 1 236 140" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
-              <path d="M 140 280 L 140 236 A 96 96 0 0 1 44 140 A 96 96 0 1 1 140 236" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
-              <path d="M 0 140 L 44 140 A 96 96 0 0 1 140 44 A 96 96 0 1 1 44 140" fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
+              {PULSE_ARCS.map((arc) => (
+                <path key={`guide-${arc.delay}`} d={arc.d} fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
+              ))}
 
               {/* Animated gold pulses */}
-              <motion.path
-                d="M 140 0 L 140 44 A 96 96 0 0 1 236 140 A 96 96 0 1 1 140 44"
-                fill="none"
-                stroke={NOIR.gold}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                filter="url(#preloader-glow)"
-                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
-                animate={{ strokeDashoffset: 0 }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 0 }}
-              />
-              <motion.path
-                d="M 280 140 L 236 140 A 96 96 0 0 1 140 236 A 96 96 0 1 1 236 140"
-                fill="none"
-                stroke={NOIR.gold}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                filter="url(#preloader-glow)"
-                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
-                animate={{ strokeDashoffset: 0 }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 0.55 }}
-              />
-              <motion.path
-                d="M 140 280 L 140 236 A 96 96 0 0 1 44 140 A 96 96 0 1 1 140 236"
-                fill="none"
-                stroke={NOIR.gold}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                filter="url(#preloader-glow)"
-                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
-                animate={{ strokeDashoffset: 0 }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 1.1 }}
-              />
-              <motion.path
-                d="M 0 140 L 44 140 A 96 96 0 0 1 140 44 A 96 96 0 1 1 44 140"
-                fill="none"
-                stroke={NOIR.gold}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                filter="url(#preloader-glow)"
-                initial={{ strokeDasharray: "70 600", strokeDashoffset: 670 }}
-                animate={{ strokeDashoffset: 0 }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "linear", delay: 1.65 }}
-              />
+              {PULSE_ARCS.map((arc) => (
+                <PulseArc key={`pulse-${arc.delay}`} d={arc.d} delay={arc.delay} />
+              ))}
 
               {/* Progress Circle Ring */}
               <circle cx="140" cy="140" r="76" fill="none" stroke="rgba(10, 42, 102, 0.05)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
@@ -265,7 +266,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
               style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
             >
               <Box
-                component="img"
+                component="img" decoding="async"
                 src="/phitopolis_logo_hero.svg"
                 alt="Phitopolis 2D Logo"
                 sx={{

@@ -53,7 +53,7 @@ export function HeroGallery() {
           }}
         >
           <Box
-            component="img"
+            component="img" decoding="async"
             src="/images/AboutPageHero2.JPG"
             alt="Phitopolis Engineering Team Collaboration"
             sx={{
@@ -118,7 +118,7 @@ export function HeroGallery() {
           }}
         >
           <Box
-            component="img"
+            component="img" decoding="async"
             src="/images/AboutPage1.JPG"
             alt="Phitopolis Headquarters & Engineers"
             sx={{
@@ -198,7 +198,7 @@ export function HeroGallery() {
           }}
         >
           <Box
-            component="img"
+            component="img" decoding="async"
             src="/images/AteneoQR.jpg"
             alt="Academic Engagement & Ateneo"
             sx={{

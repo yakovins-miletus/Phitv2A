@@ -46,7 +46,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
     >
       {post.image_url ? (
         <Box
-          component="img"
+          component="img" decoding="async"
           src={post.image_url}
           alt=""
           loading="lazy"

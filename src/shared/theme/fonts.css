@@ -16,12 +16,14 @@
   font-display: swap;
 }
 
-/* Scroll-snap for the About page's white→navy transition into the Timeline.
-   Proximity (not mandatory), and only About's own sections carry
-   scroll-snap-align — inert everywhere else. */
-html {
-  scroll-snap-type: y proximity;
-}
+/* REMOVED: `html { scroll-snap-type: y proximity }`.
+   The comment here claimed "only About's own sections carry scroll-snap-align —
+   inert everywhere else", but `scroll-snap-align` appears nowhere in src/. The
+   declaration had no snap targets at all, so it bought nothing while making the
+   root a snap container on every route — and root-level snap combined with Lenis
+   smooth scroll and GSAP pinning is a known source of scroll jank on low-end
+   devices. If the About transition wants snapping again, scope the container to
+   that page and give its sections a scroll-snap-align. */
 
 /* View Transitions respect reduced motion explicitly. */
 @media (prefers-reduced-motion: reduce) {

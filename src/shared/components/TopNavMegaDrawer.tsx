@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { NOIR } from "@/shared/theme/palette";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
+import Modal from "@mui/material/Modal";
+import Slide from "@mui/material/Slide";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { motion, AnimatePresence } from "motion/react";
 import { useRouter, useLocation } from "@tanstack/react-router";
 
 import { MONO } from "@/shared/theme/theme";
-import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 export interface NavSectionItem {
   to: string;
@@ -26,14 +27,14 @@ export const MEGA_NAV_ITEMS: NavSectionItem[] = [
     to: "/",
     label: "Home",
     sub: "Signal Core & High-Performance Platforms",
-    preview: "/images/software-engineer-banner.png",
+    preview: "/images/software-engineer-banner.webp",
     tag: "01",
   },
   {
     to: "/about",
     label: "About",
     sub: "Who We Are, Principles & Manila R&D Firm",
-    preview: "/images/AboutPageHero.png",
+    preview: "/images/AboutPageHero.webp",
     tag: "02",
   },
   {
@@ -61,14 +62,14 @@ export const MEGA_NAV_ITEMS: NavSectionItem[] = [
     to: "/innovation-hub",
     label: "Innovation Lab",
     sub: "Autonomous AI Agents & Signal Engines",
-    preview: "/images/data-science-banner.png",
+    preview: "/images/data-science-banner.webp",
     tag: "06",
   },
   {
     to: "/contact",
     label: "Contact",
     sub: "BGC Manila & Clark R&D Offices",
-    preview: "/images/ecotower-bgc.jpg",
+    preview: "/images/ecotower-bgc.webp",
     tag: "07",
   },
 ];
@@ -83,41 +84,51 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
   const router = useRouter();
   const location = useLocation();
 
-  // Close on Escape key press
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
   const handleNavigate = (to: string) => {
     onClose();
     router.navigate({ to });
   };
 
+  // This is the site's PRIMARY navigation, and it used to be a bare `motion.div`
+  // at `position: fixed; inset: 0; zIndex: 4000` — no role, no accessible name,
+  // no focus trap, no focus restore, no background inerting and no scroll lock,
+  // with `<Box onClick>` nav items that were not focusable at all. A keyboard user
+  // could open the menu and then tab straight through it into the page underneath,
+  // which was still fully interactive behind an opaque overlay. The menu could not
+  // be operated by keyboard.
+  //
+  // MUI's Modal supplies the trap, the restore, the inerting, the scroll lock and
+  // the Escape handler (which is why the hand-rolled keydown listener is gone).
+  //
+  // The slide uses MUI's own `Slide` rather than motion's AnimatePresence. With
+  // AnimatePresence the panel mounted a tick after Modal opened, so the focus trap
+  // built its candidate list against an empty subtree — tabbing past the last item
+  // then dropped focus onto document.body and out of the dialog entirely. Modal is
+  // built to drive a transition child directly, and keeps the trap in step with it.
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0, y: "-100%" }}
-          animate={{ opacity: 1, y: "0%" }}
-          exit={{ opacity: 0, y: "-100%" }}
-          transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
-          style={{
+    <Modal
+      open={open}
+      onClose={onClose}
+      closeAfterTransition
+      slotProps={{ backdrop: { sx: { bgcolor: "transparent" } } }}
+      sx={{ zIndex: (theme) => theme.zIndex.modal + 10 }}
+    >
+    <Slide in={open} direction="down" timeout={450} appear>
+        <Box
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mega-drawer-title"
+          tabIndex={-1}
+          sx={{
             position: "fixed",
             inset: 0,
             width: "100vw",
             height: "100vh",
-            zIndex: 4000,
-            backgroundColor: "#06183B",
+            backgroundColor: NOIR.navyDeep,
             color: "white",
             overflow: "hidden",
-            willChange: "transform, opacity",
-            transform: "translateZ(0)",
+            willChange: "transform",
+            outline: "none",
           }}
         >
           {/* Background Ambient Glows & Dynamic Preview Image */}
@@ -131,7 +142,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
             }}
           >
             <Box
-              component="img"
+              component="img" decoding="async" loading="lazy"
               key={activeItem.to}
               src={activeItem.preview}
               alt=""
@@ -184,6 +195,8 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#FFC72C" }} />
                 <Typography
+                  id="mega-drawer-title"
+                  component="h2"
                   sx={{
                     fontFamily: MONO,
                     fontSize: "0.8rem",
@@ -238,9 +251,22 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                     return (
                       <Box
                         key={item.to}
+                        component="button"
+                        type="button"
+                        aria-current={isActiveRoute ? "page" : undefined}
                         onMouseEnter={() => setActiveItem(item)}
+                        onFocus={() => setActiveItem(item)}
                         onClick={() => handleNavigate(item.to)}
                         sx={{
+                          // Was a <Box onClick> — not reachable by keyboard at all.
+                          appearance: "none",
+                          background: "none",
+                          border: 0,
+                          font: "inherit",
+                          color: "inherit",
+                          textAlign: "left",
+                          width: "100%",
+                          display: "block",
                           position: "relative",
                           py: { xs: 1, md: 1.2 },
                           px: { xs: 2, md: 3 },
@@ -301,6 +327,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               {/* Right Column: High-Performance Preview Display */}
               <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" } }}>
                 <Box
+                  aria-hidden
                   onClick={() => handleNavigate(activeItem.to)}
                   sx={{
                     borderRadius: 6,
@@ -318,7 +345,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                 >
                   <Box sx={{ position: "relative", width: "100%", height: 380, overflow: "hidden" }}>
                     <Box
-                      component="img"
+                      component="img" decoding="async" loading="lazy"
                       key={activeItem.to}
                       src={activeItem.preview}
                       alt={activeItem.label}
@@ -385,7 +412,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                 flexShrink: 0,
               }}
             >
-              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.5)", fontSize: "0.72rem" }}>
+              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", fontSize: "0.72rem" }}>
                 PHITOPOLIS R&D FIRM • BGC MANILA & CLARK
               </Typography>
               <Typography variant="caption" sx={{ fontFamily: MONO, color: "#FFC72C", fontSize: "0.72rem", fontWeight: 700 }}>
@@ -393,8 +420,8 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               </Typography>
             </Stack>
           </Container>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </Box>
+    </Slide>
+    </Modal>
   );
 }

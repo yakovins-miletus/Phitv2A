@@ -6,28 +6,12 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { CONTENT } from "@/shared/content";
-import { HeroSignalP } from "@/shared/components/HeroSignalP";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { StageSection, useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, homeSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
-import { getLenis } from "@/shared/components/SmoothScroll";
-import {
-  DWELL_END,
-  GUNSHOT_END,
-  CONTAINER_START,
-  borderAnimProgress,
-  atTightenProgress,
-  containerScale,
-  flankOpacity,
-  gunshotProgress,
-  leftFlankY,
-  panelOpacity,
-  panelPointerEvents,
-  rightFlankY,
-  wordLiftPercent,
-  wordRevealProgress,
-} from "./heroPhases";
+import { HeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
+import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
@@ -39,37 +23,59 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
 const HERO_PIN_DISTANCE = "+=3000%";
 
-
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
+//
+// Scroll drives this sequence WITHOUT React state. `onUpdate` writes CSS custom
+// properties onto the hero container and pushes progress into the canvas through an
+// imperative handle; every `sx` below is a static object that reads `var(--hp-*)`, so
+// Emotion serializes each rule once at mount instead of re-injecting it per frame.
+// Only the coarse `stage` — nine booleans that flip ~4 times across the whole pin —
+// lives in state, because conditional mounts cannot be expressed in CSS.
+//
+// Before this change one scroll pass injected 1,335 stylesheet rules and dropped 32% of
+// frames; see docs/perf-baseline.md.
 export function HeroSignalCore() {
   const pinRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const canvasHandleRef = useRef<HeroCanvasHandle | null>(null);
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
-  const isSnappingRef = useRef(false);
+
+  const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
+  const stageRef = useRef(stage);
 
   useStagePresence(containerRef, "hero");
   const { registerAnchor } = useNavbar();
 
-  // Dark mode navbar activation starting when Phase 6 hits (GUNSHOT_END = 0.70)
-  const isHeroActive = !reduced && scrollProgress >= DWELL_END && scrollProgress < 0.98;
-  const isHeroDark = !reduced && scrollProgress >= GUNSHOT_END && scrollProgress < 0.98;
-
   useEffect(() => {
-    if (isHeroActive) {
-      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, isHeroDark);
+    if (stage.navActive) {
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, stage.navDark);
     } else {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     }
     return () => {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     };
-  }, [isHeroActive, isHeroDark, registerAnchor]);
+  }, [stage.navActive, stage.navDark, registerAnchor]);
+
+  // Seed the custom properties before first paint so the hero renders its settled state
+  // even if no scroll ever happens (reduced motion, or a user who never scrolls).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const isReduced = reduced === true;
+    writeHeroVars(el, heroVars(0, isReduced));
+    const next = heroStage(0, isReduced);
+    stageRef.current = next;
+    setStage(next);
+  }, [reduced]);
 
   useGSAP(
     () => {
       if (reduced) return;
+
+      const el = containerRef.current;
+      if (!el) return;
 
       ScrollTrigger.create({
         trigger: pinRef.current,
@@ -78,109 +84,18 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         onUpdate: (self) => {
-          setScrollProgress(self.progress);
-
-          if (isSnappingRef.current) return;
-
           const p = self.progress;
-          const dir = self.direction; // 1 = scroll down, -1 = scroll up
 
-          if (dir === 1 && p > DWELL_END && p < GUNSHOT_END - 0.01) {
-            isSnappingRef.current = true;
-            const targetScroll = self.start + GUNSHOT_END * (self.end - self.start);
-            const lenis = getLenis();
-            if (lenis) {
-              lenis.scrollTo(targetScroll, {
-                force: true,
-                duration: 1.5,
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            } else {
-              const obj = { y: window.scrollY };
-              gsap.to(obj, {
-                y: targetScroll,
-                duration: 1.5,
-                ease: "power2.out",
-                onUpdate: () => window.scrollTo(0, obj.y),
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            }
-          } else if (dir === -1 && p < GUNSHOT_END && p > DWELL_END + 0.01) {
-            isSnappingRef.current = true;
-            const targetScroll = self.start + DWELL_END * (self.end - self.start);
-            const lenis = getLenis();
-            if (lenis) {
-              lenis.scrollTo(targetScroll, {
-                force: true,
-                duration: 1.5,
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            } else {
-              const obj = { y: window.scrollY };
-              gsap.to(obj, {
-                y: targetScroll,
-                duration: 1.5,
-                ease: "power2.out",
-                onUpdate: () => window.scrollTo(0, obj.y),
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            }
-          } else if (dir === 1 && p > CONTAINER_START && p < 0.95 - 0.01) {
-            isSnappingRef.current = true;
-            const targetScroll = self.start + 0.95 * (self.end - self.start);
-            const lenis = getLenis();
-            if (lenis) {
-              lenis.scrollTo(targetScroll, {
-                force: true,
-                duration: 1.5,
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            } else {
-              const obj = { y: window.scrollY };
-              gsap.to(obj, {
-                y: targetScroll,
-                duration: 1.5,
-                ease: "power2.out",
-                onUpdate: () => window.scrollTo(0, obj.y),
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            }
-          } else if (dir === -1 && p < 0.95 && p > CONTAINER_START + 0.01) {
-            isSnappingRef.current = true;
-            const targetScroll = self.start + CONTAINER_START * (self.end - self.start);
-            const lenis = getLenis();
-            if (lenis) {
-              lenis.scrollTo(targetScroll, {
-                force: true,
-                duration: 1.5,
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            } else {
-              const obj = { y: window.scrollY };
-              gsap.to(obj, {
-                y: targetScroll,
-                duration: 1.5,
-                ease: "power2.out",
-                onUpdate: () => window.scrollTo(0, obj.y),
-                onComplete: () => {
-                  isSnappingRef.current = false;
-                },
-              });
-            }
+          // Per-frame: one batch of custom-property writes. No React render.
+          writeHeroVars(el, heroVars(p, false));
+          canvasHandleRef.current?.setProgress(p);
+
+          // Coarse state: only commit when a boolean actually flips, which happens
+          // roughly four times across the entire 30-viewport pin.
+          const next = heroStage(p, false);
+          if (!sameStage(stageRef.current, next)) {
+            stageRef.current = next;
+            setStage(next);
           }
         },
       });
@@ -188,32 +103,8 @@ export function HeroSignalCore() {
     { scope: pinRef }
   );
 
-  const scaleVal = reduced ? 1 : containerScale(scrollProgress);
-  const gProgress = reduced ? 0 : gunshotProgress(scrollProgress);
-  
-  const EXTRA_WIDTH_PCT = 40;
-  const MAX_TRAVEL_PCT = EXTRA_WIDTH_PCT / 1.4; // 28.5714%
-  const topXVal = reduced ? -MAX_TRAVEL_PCT : -100 + gProgress * (100 - MAX_TRAVEL_PCT);
-  const bottomXVal = reduced ? 0 : 100 - gProgress * 100;
-
-  const leftY = reduced ? -240 : leftFlankY(scrollProgress);
-  const rightY = reduced ? 240 : rightFlankY(scrollProgress);
-  const flankOp = reduced ? 1 : flankOpacity(scrollProgress);
-  const pExitProgressVal = (p: number) => {
-    if (p <= CONTAINER_START) return 0;
-    if (p >= 0.89) return 1;
-    return (p - CONTAINER_START) / 0.03;
-  };
-  const atEnterProgressVal = (p: number) => {
-    if (p <= 0.89) return 0;
-    if (p >= 0.92) return 1;
-    return (p - 0.89) / 0.03;
-  };
-
-  const pExitVal = reduced ? 1 : pExitProgressVal(scrollProgress);
-  const atEnterVal = reduced ? 1 : atEnterProgressVal(scrollProgress);
-  const tightVal = reduced ? 0 : atTightenProgress(scrollProgress);
-  const borderProgress = reduced ? 1 : borderAnimProgress(scrollProgress);
+  // Every continuous value now lives in a CSS custom property written by the driver
+  // above (see heroVars.ts). Nothing below recomputes per frame.
 
   return (
     <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
@@ -236,7 +127,7 @@ export function HeroSignalCore() {
         }}
       >
         {/* Dual Split-Pane Images Layer (Gunshot & Smoking Section) */}
-        {gProgress > 0.01 && (
+        {stage.gunshot && (
           <Box
             aria-hidden
             sx={{
@@ -260,17 +151,17 @@ export function HeroSignalCore() {
               }}
             >
               <Box
-                component="img"
+                component="img" decoding="async"
                 src="/images/topHalfHero.jpg"
                 alt=""
                 sx={{
                   width: "140%",
                   height: "100%",
                   objectFit: "cover",
-                  transform: `translateX(${topXVal.toFixed(4)}%)`,
+                  transform: "translateX(calc(var(--hp-topx, -100) * 1%))",
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
-                  animation: (gProgress > 0.99 && scrollProgress < 0.98) ? "autoPanTop 20s linear infinite alternate" : "none",
+                  animation: stage.autoPan ? "autoPanTop 20s linear infinite alternate" : "none",
                   "@keyframes autoPanTop": {
                     "0%": { transform: "translateX(-28.5714%)" },
                     "100%": { transform: "translateX(0%)" },
@@ -292,17 +183,17 @@ export function HeroSignalCore() {
               }}
             >
               <Box
-                component="img"
+                component="img" decoding="async"
                 src="/images/botHalfHero.jpg"
                 alt=""
                 sx={{
                   width: "140%",
                   height: "100%",
                   objectFit: "cover",
-                  transform: `translateX(${bottomXVal.toFixed(4)}%)`,
+                  transform: "translateX(calc(var(--hp-botx, 100) * 1%))",
                   filter: "brightness(0.85) contrast(1.05)",
                   willChange: "transform",
-                  animation: (gProgress > 0.99 && scrollProgress < 0.98) ? "autoPanBottom 20s linear infinite alternate" : "none",
+                  animation: stage.autoPan ? "autoPanBottom 20s linear infinite alternate" : "none",
                   "@keyframes autoPanBottom": {
                     "0%": { transform: "translateX(0%)" },
                     "100%": { transform: "translateX(-28.5714%)" },
@@ -314,7 +205,7 @@ export function HeroSignalCore() {
         )}
 
         {/* Primary Navy Layer (60% transparent) */}
-        {gProgress > 0.01 && (
+        {stage.gunshot && (
           <Box
             aria-hidden
             sx={{
@@ -323,14 +214,13 @@ export function HeroSignalCore() {
               zIndex: 3,
               bgcolor: alpha(NOIR.navyField, 0.60),
               pointerEvents: "none",
-              opacity: gProgress,
-              transition: scrollProgress > 0 ? "none" : "opacity 0.8s ease-out",
+              opacity: "var(--hp-g, 0)",
             }}
           />
         )}
 
         {/* Flanking Text Elements (Appear during Smoking — vertical movement) */}
-        {flankOp > 0.01 && (
+        {stage.flank && (
           <>
             {/* Top Text: 7 YEARS OF EXCELLENCE — starts at center, moves upward */}
             <Box
@@ -338,13 +228,12 @@ export function HeroSignalCore() {
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                transform: `translate(-50%, calc(-50% + ${leftY.toFixed(1)}vh))`,
-                opacity: flankOp,
+                transform: "translate(-50%, calc(-50% + var(--hp-lefty, 0) * 1vh))",
+                opacity: "var(--hp-flank, 0)",
                 pointerEvents: "none",
                 zIndex: 4,
                 whiteSpace: "nowrap",
                 textAlign: "center",
-                transition: "transform 0.05s linear, opacity 0.05s linear",
               }}
             >
               <Typography
@@ -354,7 +243,7 @@ export function HeroSignalCore() {
                   fontWeight: 800,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: borderProgress >= 0.99 ? NOIR.gold : "#FFFFFF",
+                  color: stage.borderDone ? NOIR.gold : "#FFFFFF",
                   textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
                   display: "flex",
                   alignItems: "center",
@@ -372,13 +261,12 @@ export function HeroSignalCore() {
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                transform: `translate(-50%, calc(-50% + ${rightY.toFixed(1)}vh))`,
-                opacity: flankOp,
+                transform: "translate(-50%, calc(-50% + var(--hp-righty, 0) * 1vh))",
+                opacity: "var(--hp-flank, 0)",
                 pointerEvents: "none",
                 zIndex: 4,
                 whiteSpace: "nowrap",
                 textAlign: "center",
-                transition: "transform 0.05s linear, opacity 0.05s linear",
               }}
             >
               <Typography
@@ -388,7 +276,7 @@ export function HeroSignalCore() {
                   fontWeight: 800,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: borderProgress >= 0.99 ? NOIR.gold : "#FFFFFF",
+                  color: stage.borderDone ? NOIR.gold : "#FFFFFF",
                   textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
                   display: "flex",
                   alignItems: "center",
@@ -412,16 +300,18 @@ export function HeroSignalCore() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 5,
-            transform: `scale(${scaleVal.toFixed(3)})`,
+            transform: "scale(var(--hp-scale, 1))",
             transformOrigin: "center center",
-            // Disable CSS transform transitions when scroll-driven to eliminate layout lag
-            transition: scrollProgress > 0 ? "none" : "transform 0.05s linear",
-            bgcolor: gProgress > 0.05 ? "#FFFFFF" : "transparent",
-            borderRadius: gProgress > 0.05 ? `${(gProgress * 24).toFixed(0)}px` : "0px",
-            border: gProgress > 0.05 ? "1px solid rgba(0,0,0,0.08)" : "none",
-            boxShadow: gProgress > 0.05 ? `0 24px 60px rgba(0,0,0,${(0.35 * gProgress).toFixed(2)})` : "none",
-            maxWidth: gProgress > 0.05 ? "1600px" : "100%",
-            maxHeight: gProgress > 0.05 ? "720px" : "100%",
+            // The card chrome switches once, at a threshold, instead of being recomputed
+            // per frame. borderRadius and the shadow's alpha still track --hp-g smoothly.
+            bgcolor: stage.chrome ? "#FFFFFF" : "transparent",
+            borderRadius: stage.chrome ? "calc(var(--hp-g, 0) * 24px)" : "0px",
+            border: stage.chrome ? "1px solid rgba(0,0,0,0.08)" : "none",
+            boxShadow: stage.chrome
+              ? "0 24px 60px rgba(0, 0, 0, calc(0.35 * var(--hp-g, 0)))"
+              : "none",
+            maxWidth: stage.chrome ? "1600px" : "100%",
+            maxHeight: stage.chrome ? "720px" : "100%",
             m: "auto",
             // Secondary border animation from top to bottom drawing after AT & PHITOPOLIS align
             "&::after": {
@@ -432,13 +322,15 @@ export function HeroSignalCore() {
               borderColor: NOIR.gold,
               borderRadius: "inherit",
               pointerEvents: "none",
-              clipPath: `polygon(0% 0%, 100% 0%, 100% ${(borderProgress * 100).toFixed(1)}%, 0% ${(borderProgress * 100).toFixed(1)}%)`,
-              opacity: borderProgress > 0.01 ? 1 : 0,
-              willChange: "clip-path, opacity",
+              clipPath:
+                "polygon(0% 0%, 100% 0%, 100% calc(var(--hp-border, 0) * 100%), 0% calc(var(--hp-border, 0) * 100%))",
+              opacity: "var(--hp-border, 0)",
+              willChange: "clip-path",
             }
           }}
         >
-          {/* Interactive Signal Canvas Layer (Grid, Signal lines, and cubes) */}
+          {/* Interactive Signal Canvas Layer (Grid, Signal lines, cubes, service nodes,
+              and the extruded P mark) — one canvas replacing ~250 DOM nodes. */}
           <Box
             aria-hidden
             sx={{
@@ -446,15 +338,16 @@ export function HeroSignalCore() {
               inset: 0,
               zIndex: 4,
               opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
-              transform: "none",
-              transition: scrollProgress > 0 ? "none" : "opacity 2.4s ease-out",
+              // One short fade instead of the old 2.4s + 4.5s + 4.8s stack, which took
+              // ~4.8s to resolve and made the scene look like it was loading piecemeal.
+              transition: "opacity 0.6s ease-out",
             }}
           >
-            <HeroSignalP progress={scrollProgress} />
+            <HeroCanvas handleRef={canvasHandleRef} />
           </Box>
 
           {/* Grouped P-Logo & AT Container (Linked crossfade on scroll) */}
-          {scrollProgress >= CONTAINER_START && (
+          {stage.container && (
             <Box
               sx={{
                 position: "absolute",
@@ -477,16 +370,16 @@ export function HeroSignalCore() {
             >
               {/* Flat P Logo - fades out and slides down */}
               <Box
-                component="img"
+                component="img" decoding="async"
                 src="/phitopolis_logo_hero.svg"
                 alt=""
                 sx={{
                   width: "100%",
                   height: "auto",
-                  opacity: 1 - pExitVal,
-                  transform: `translateY(${(pExitVal * 60).toFixed(1)}px) scale(${(1 - pExitVal * 0.15).toFixed(3)})`,
+                  opacity: "calc(1 - var(--hp-pexit, 0))",
+                  transform:
+                    "translateY(calc(var(--hp-pexit, 0) * 60px)) scale(calc(1 - var(--hp-pexit, 0) * 0.15))",
                   willChange: "opacity, transform",
-                  transition: scrollProgress > 0 ? "none" : "opacity 0.3s ease-out, transform 0.3s ease-out",
                 }}
               />
 
@@ -500,10 +393,10 @@ export function HeroSignalCore() {
                   letterSpacing: "-0.04em",
                   color: NOIR.gold,
                   textShadow: "0 2px 10px rgba(0,0,0,0.15)",
-                  opacity: atEnterVal,
-                  transform: `translateY(${((1 - atEnterVal) * -60).toFixed(1)}px) scale(${(0.85 + atEnterVal * 0.15).toFixed(3)})`,
+                  opacity: "var(--hp-atenter, 0)",
+                  transform:
+                    "translateY(calc((1 - var(--hp-atenter, 0)) * -60px)) scale(calc(0.85 + var(--hp-atenter, 0) * 0.15))",
                   willChange: "opacity, transform",
-                  transition: scrollProgress > 0 ? "none" : "opacity 0.3s ease-out, transform 0.3s ease-out",
                 }}
               >
                 AT
@@ -518,17 +411,16 @@ export function HeroSignalCore() {
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
               left: {
                 xs: "50%",
-                sm: `calc(50% - ${60 + tightVal * 90}px)`,
-                md: `calc(50% - ${80 + tightVal * 110}px)`,
+                sm: "calc(50% - (60px + var(--hp-tight, 0) * 90px))",
+                md: "calc(50% - (80px + var(--hp-tight, 0) * 110px))",
               },
               width: "auto",
               textAlign: { xs: "center", sm: "left" },
               zIndex: 5,
               overflow: "hidden",
               clipPath: "inset(0 0 0 0)",
-              opacity: reduced ? 1 : wordRevealProgress(scrollProgress),
+              opacity: "var(--hp-word, 0)",
               pointerEvents: "auto",
-              transition: scrollProgress > 0 ? "none" : "opacity 0.45s ease-out, left 0.3s ease-out",
               transform: {
                 xs: "translate(-50%, -50%)",
                 sm: "translate(0, -50%)",
@@ -547,8 +439,7 @@ export function HeroSignalCore() {
                   lineHeight: 1,
                   textTransform: "uppercase",
                   userSelect: "none",
-                  transform: reduced ? "translateY(0)" : `translateY(${wordLiftPercent(scrollProgress)}%)`,
-                  transition: scrollProgress > 0 ? "none" : "transform 0.15s linear",
+                  transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
                 }}
               >
                 PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
@@ -579,7 +470,7 @@ export function HeroSignalCore() {
             zIndex: 5,
             display: "flex",
             flexDirection: "column",
-            opacity: ready ? panelOpacity(scrollProgress) : 0,
+            opacity: ready ? "var(--hp-panel, 1)" : 0,
             transform: ready ? "translateY(0)" : "translateY(16px)",
             transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}, transform 2.4s ${EASE_OUT_EXPO_CSS}`,
             maxWidth: { xs: "320px", sm: "600px", md: "780px" },
@@ -610,8 +501,8 @@ export function HeroSignalCore() {
             display: "flex",
             flexDirection: "column",
             gap: 1.2,
-            opacity: ready ? panelOpacity(scrollProgress) : 0,
-            pointerEvents: ready ? panelPointerEvents(scrollProgress) : "none",
+            opacity: ready ? "var(--hp-panel, 1)" : 0,
+            pointerEvents: ready && stage.panelInteractive ? "auto" : "none",
             transform: ready ? "translateY(0)" : "translateY(16px)",
             transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}, transform 2.4s ${EASE_OUT_EXPO_CSS}`,
             transitionDelay: ready ? "0.45s" : "0s",
@@ -789,7 +680,7 @@ export function HeroSignalCore() {
             zIndex: 4,
             display: { xs: "none", md: "flex" },
             alignItems: "center",
-            opacity: ready ? panelOpacity(scrollProgress) : 0,
+            opacity: ready ? "var(--hp-panel, 1)" : 0,
             transition: "opacity 2.4s ease-out",
             transitionDelay: ready ? "0.9s" : "0s",
           }}

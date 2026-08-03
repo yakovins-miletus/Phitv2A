@@ -1,3 +1,4 @@
+import { NOIR } from "@/shared/theme/palette";
 import { useRef, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -33,7 +34,7 @@ const VALUES_DATA: ValueItem[] = [
     headline: "Unwavering Honesty & Ethical Engineering",
     definition: CONTENT.principles.values[0]!.definition,
     valueToClient: CONTENT.principles.values[0]!.valueToClient,
-    image: "/images/software-engineer-banner.png",
+    image: "/images/software-engineer-banner.webp",
     icon: ShieldIcon,
   },
   {
@@ -119,7 +120,7 @@ export function PrinciplesValuesShowcase() {
           top: 0,
           height: "100vh",
           width: "100%",
-          bgcolor: "#06183B",
+          bgcolor: NOIR.navyDeep,
           color: "common.white",
           overflow: "hidden",
           display: "flex",
@@ -157,7 +158,7 @@ export function PrinciplesValuesShowcase() {
                 </Typography>
               </Box>
 
-              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.5)", fontSize: "0.78rem" }}>
+              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", fontSize: "0.78rem" }}>
                 SCROLL TO EXPLORE ({activeIndex + 1} / {VALUES_DATA.length})
               </Typography>
             </Stack>
@@ -295,7 +296,7 @@ export function PrinciplesValuesShowcase() {
                       }}
                     >
                       <Box
-                        component="img"
+                        component="img" decoding="async" loading="lazy"
                         src={activeValue.image}
                         alt={activeValue.label}
                         sx={{

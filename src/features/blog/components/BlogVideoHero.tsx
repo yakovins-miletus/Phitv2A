@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { NOIR } from "@/shared/theme/palette";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
@@ -10,10 +10,11 @@ import { motion } from "motion/react";
 import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 export function BlogVideoHero() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
+  const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
 
   return (
     <Box
@@ -22,31 +23,48 @@ export function BlogVideoHero() {
         position: "relative",
         height: { xs: "75vh", md: "85vh" },
         width: "100%",
-        bgcolor: "#06183B",
+        bgcolor: NOIR.navyDeep,
         color: "common.white",
         overflow: "hidden",
         display: "flex",
         alignItems: "center",
       }}
     >
-      {/* Background High-Performance Loop Video */}
+      {/* Background loop.
+          This used to be `<video autoPlay src="/videos/daily-life.mp4">` with no gate —
+          a 62.8 MB, 251-second file behind a brightness filter. It is now a 787 KB
+          12-second loop that only loads when the hero is near the viewport, and never
+          loads at all under reduced motion or on a low-power device (poster instead). */}
       <Box
-        component="video"
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        src="/videos/daily-life.mp4"
-        sx={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          filter: "brightness(0.55) contrast(1.1)",
-        }}
-      />
+        ref={containerRef}
+        aria-hidden
+        sx={{ position: "absolute", inset: 0, filter: "brightness(0.55) contrast(1.1)" }}
+      >
+        <Box
+          component="video"
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster={BACKGROUND_LOOP.poster}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        >
+          {!posterOnly && shouldLoad && (
+            <>
+              <source src={BACKGROUND_LOOP.webm} type="video/webm" />
+              <source src={BACKGROUND_LOOP.mp4} type="video/mp4" />
+            </>
+          )}
+        </Box>
+      </Box>
 
       {/* Dark Radial Gradient Overlay */}
       <Box
