@@ -204,7 +204,7 @@ function traceRoundedPlaneRect(
   radius: number,
 ): void {
   const r = Math.min(radius, (x1 - x0) / 2, (y1 - y0) / 2);
-  const STEPS = 4;
+  const STEPS = 8;
   // Corner centres, and the angle each corner sweeps through.
   const corners: readonly [number, number, number][] = [
     [x1 - r, y0 + r, -Math.PI / 2], // top-right
@@ -287,24 +287,32 @@ export function drawHeroFrame(
 function drawGrid(
   ctx: CanvasRenderingContext2D,
   cam: Camera,
-  sprites: HeroSprites,
+  _sprites: HeroSprites,
   state: HeroFrameState,
 ): void {
   if (state.gridOpacity <= 0.01) return;
 
-  // Project the plane's four corners and map the sprite onto them with a transform.
-  const tl = project(cam, 0, 0, 0);
-  const tr = project(cam, PLANE_SIZE, 0, 0);
-  const bl = project(cam, 0, PLANE_SIZE, 0);
-
   ctx.save();
   ctx.globalAlpha = state.gridOpacity;
-  ctx.transform(
-    (tr.sx - tl.sx) / PLANE_SIZE, (tr.sy - tl.sy) / PLANE_SIZE,
-    (bl.sx - tl.sx) / PLANE_SIZE, (bl.sy - tl.sy) / PLANE_SIZE,
-    tl.sx, tl.sy,
-  );
-  ctx.drawImage(sprites.grid, 0, 0);
+  ctx.strokeStyle = rgba(RGB_NAVY, 0.11);
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+  for (let i = 0; i <= GRID_CELLS; i++) {
+    const pos = i * GRID_CELL;
+    // Vertical grid line from y=0 to y=PLANE_SIZE at x=pos
+    const p1 = project(cam, pos, 0, 0);
+    const p2 = project(cam, pos, PLANE_SIZE, 0);
+    ctx.moveTo(p1.sx, p1.sy);
+    ctx.lineTo(p2.sx, p2.sy);
+
+    // Horizontal grid line from x=0 to x=PLANE_SIZE at y=pos
+    const p3 = project(cam, 0, pos, 0);
+    const p4 = project(cam, PLANE_SIZE, pos, 0);
+    ctx.moveTo(p3.sx, p3.sy);
+    ctx.lineTo(p4.sx, p4.sy);
+  }
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -473,21 +481,20 @@ function collectNode(
         blitShadow(ctx, cam, sprites, spec.cx, spec.cy, SERVICE_NODE_SIZE * 1.6, state.sideOpacity);
       }
 
-      // The old code stacked 16 absolutely-positioned slabs per node (64 divs total,
-      // each with a per-frame bgcolor ramping rgb(6,14,32) → rgb(10,24,51) up the
-      // stack). Two gradient-shaded walls reproduce that ramp in one pass each.
+      // Stacked rounded rectangle extrusion slabs matching original ElevatedServiceNode
       if (state.sideOpacity > 0.01 && ez > 1) {
         ctx.globalAlpha = state.sideOpacity;
-        gradientQuad(
-          ctx, cam,
-          [[x0, y0, ez], [x0, y1, ez], [x0, y1, 0], [x0, y0, 0]],
-          "rgb(10, 24, 51)", "rgb(6, 14, 32)",
-        );
-        gradientQuad(
-          ctx, cam,
-          [[x0, y1, ez], [x1, y1, ez], [x1, y1, 0], [x0, y1, 0]],
-          "rgb(8, 19, 42)", "rgb(5, 12, 28)",
-        );
+        const numSlabs = Math.max(2, Math.round(14 * (1 - state.flatten)));
+        for (let i = 0; i < numSlabs; i++) {
+          const z = (i / (numSlabs - 1)) * ez;
+          const ratio = i / (numSlabs - 1);
+          const r = Math.round(6 + (10 - 6) * ratio);
+          const g = Math.round(14 + (24 - 14) * ratio);
+          const b = Math.round(32 + (51 - 32) * ratio);
+          traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
+          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+          ctx.fill();
+        }
         ctx.globalAlpha = 1;
       }
 
