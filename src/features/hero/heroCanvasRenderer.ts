@@ -651,18 +651,18 @@ function drawLogo(
   if (!logo || state.logoHidden) return;
 
   const mobile = w < 600;
-  const baseW = mobile ? 140 : w < 900 ? 190 : 250;
+  const baseW = mobile ? 200 : w < 900 ? 270 : 350;
   const shift = mobile ? 160 : w < 900 ? 200 : 260;
 
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;
 
-  // 3D Base Card Plate coordinates — sized at 340px to sit cleanly inside the 4 service nodes with zero overlap
+  // 3D Base Card Plate coordinates — size regained by +40% (460px width on desktop)
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
 
-  const plateW = mobile ? 200 : w < 900 ? 270 : 340;
-  const plateH = plateW * 0.9;
+  const plateW = mobile ? 270 : w < 900 ? 370 : 460;
+  const plateH = plateW * 0.95;
   const halfW = plateW / 2;
   const halfH = plateH / 2;
   const x0 = cx - halfW;
@@ -671,15 +671,9 @@ function drawLogo(
   const y1 = cy + halfH;
   const ez = Math.max(0, 18 * (1 - state.flatten));
 
-  // 1. Rich 3D Ground Drop Shadow (Projected plane shadow + GPU accelerated blit shadow)
+  // 1. Single Clean Pre-Rendered Soft Drop Shadow (NO secondary shadow box)
   if (state.sideOpacity > 0.01) {
-    // Soft radial blur shadow
-    blitShadow(ctx, cam, sprites, cx - 8, cy + 12, plateW * 1.35, state.sideOpacity * 0.75);
-
-    // Projected directional drop shadow on ground plane (z = 0)
-    traceRoundedPlaneRect(ctx, cam, x0 - 12, y0 + 16, x1 - 12, y1 + 16, 0, NODE_RADIUS);
-    ctx.fillStyle = rgba(RGB_SHADOW, 0.32 * state.sideOpacity);
-    ctx.fill();
+    blitShadow(ctx, cam, sprites, cx, cy, plateW * 1.35, state.sideOpacity * 0.65);
   }
 
   // Stacked rounded rectangle extrusion slabs for the 3D Base Plate (Shaded ambient occlusion)
@@ -689,9 +683,9 @@ function drawLogo(
     for (let i = 0; i < numSlabs; i++) {
       const z = (i / (numSlabs - 1)) * ez;
       const ratio = i / (numSlabs - 1);
-      const r = Math.round(175 + (246 - 175) * ratio);
-      const g = Math.round(188 + (248 - 188) * ratio);
-      const b = Math.round(210 + (252 - 210) * ratio);
+      const r = Math.round(215 + (255 - 215) * ratio);
+      const g = Math.round(220 + (255 - 220) * ratio);
+      const b = Math.round(230 + (255 - 230) * ratio);
       traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fill();
@@ -699,21 +693,14 @@ function drawLogo(
     ctx.globalAlpha = 1;
   }
 
-  // Top Face of 3D Base Plate (Synced with background plane color #F6F8FC)
+  // Top Face of 3D Base Plate (Solid white fill #FFFFFF matching hero background, NO grey border stroke)
   if (state.topOpacity > 0.01) {
     const topZ = ez + 2.0;
     ctx.globalAlpha = state.topOpacity;
 
     traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, topZ, NODE_RADIUS);
-    ctx.fillStyle = "#F6F8FC";
+    ctx.fillStyle = "#FFFFFF";
     ctx.fill();
-
-    // Subtle dark ambient edge outline for crisp 3D definition
-    ctx.save();
-    ctx.lineWidth = 1.5 * cam.scale;
-    ctx.strokeStyle = rgba(RGB_SHADOW, 0.12 * state.topOpacity);
-    ctx.stroke();
-    ctx.restore();
     ctx.globalAlpha = 1;
   }
 
