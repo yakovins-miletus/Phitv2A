@@ -22,9 +22,14 @@
 
 import { useEffect, useImperativeHandle, useRef, type RefObject } from "react";
 import { useReducedMotion, useIsLowPowerDevice } from "@/shared/motion";
-import { CONTAINER_START, PHASE_FLATTEN_END } from "./heroPhases";
+import { CONTAINER_START } from "./heroPhases";
 import { heroFrameState } from "./heroScene";
-import { createSprites, drawHeroFrame, type HeroSprites } from "./heroCanvasRenderer";
+import {
+  createSprites,
+  drawHeroFrame,
+  logoRasterSize,
+  type HeroSprites,
+} from "./heroCanvasRenderer";
 
 const LOGO_SRC = "/phitopolis_logo_hero.svg";
 /** Resize work is debounced by this much; reallocating the backing store is expensive. */
@@ -75,7 +80,13 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
     let height = 0;
     const start = performance.now();
 
-    const { sprites, ready } = createSprites(LOGO_SRC);
+    // Match the logo raster to the same DPR ceiling the backing store uses, so the
+    // tinted extrusion layers are sampled at the resolution they are drawn at
+    // rather than upscaled from the SVG's declared 320x320.
+    const { sprites, ready } = createSprites(
+      LOGO_SRC,
+      logoRasterSize(window.devicePixelRatio || 1),
+    );
 
     /** Recompute the backing store. Reads layout — never called from inside a frame. */
     const measure = () => {

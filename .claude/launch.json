@@ -4,8 +4,8 @@
     {
       "name": "phitv2a-dev",
       "runtimeExecutable": "yarn",
-      "runtimeArgs": ["dev"],
-      "port": 5173
+      "runtimeArgs": ["dev", "--port", "5180", "--strictPort"],
+      "port": 5180
     },
     {
       "name": "phitv2a-preview",

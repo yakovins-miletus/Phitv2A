@@ -156,7 +156,7 @@ export function InternshipProgramSection() {
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
               alignItems: { xs: "flex-start", md: "center" },
-              justify: "space-between",
+              justifyContent: "space-between",
               gap: 3,
             }}
           >

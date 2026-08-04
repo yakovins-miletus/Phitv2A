@@ -1,5 +1,5 @@
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 
 import { routeTree } from "@/routeTree.gen";
 
@@ -24,13 +24,78 @@ test("reduced motion: no preloader overlay mounts, hero text is present immediat
 
   expect(screen.queryByTestId("preloader")).not.toBeInTheDocument();
   expect(screen.getByText("[ SCROLL TO EXPLORE ↓ ]")).toBeInTheDocument();
-  // The core-mission block renders CONTENT.hero.description, split around
-  // "R&D firm" so that phrase can be gold — so the sentence is broken across
-  // elements and needs a node-spanning matcher.
   expect(
     screen.getByText(/we view global markets as the ultimate intellectual puzzle/i),
   ).toBeInTheDocument();
-  expect(screen.getByText("R&D firm")).toBeInTheDocument();
+});
+
+test("reduced motion: every pitch section is reachable, not just the first", async () => {
+  await renderHome();
+
+  // The regression this guards is real and shipped. The pitch was one pinned 100vh
+  // deck holding four beats, switched by `display: none` off a scroll-driven beat
+  // index — and its ScrollTrigger was skipped entirely under reduce:
+  //
+  //     if (reduced || !containerRef.current) return;
+  //
+  // so `activeBeat` stayed 0 forever. Beats 1-3 existed in the DOM but were never
+  // displayed, and the only other way to reach them was a tab bar built from
+  // `<Box onClick>` with no tabIndex and no key handler — unreachable by keyboard
+  // too. Under reduced motion the page silently lost three quarters of its pitch.
+  //
+  // They are three ordinary sections now, so scrolling is the only requirement.
+  expect(
+    screen.getByRole("heading", { name: /THE QUANTITATIVE R&D PARTNER FOR GLOBAL MARKETS/i }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Support & Delivery Pillar" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Elite Technical Talent" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Prime Global Location" })).toBeInTheDocument();
+
+  // And no beat-switching tab bar survives to be un-focusable.
+  expect(screen.queryByText(/01 EXECUTIVE SUMMARY/i)).not.toBeInTheDocument();
+});
+
+test("reduced motion: the ground layer paints one static ground and starts no loop", async () => {
+  await renderHome();
+
+  // Rung 1 of the ground layer's degradation ladder. setup.ts stubs
+  // prefers-reduced-motion: reduce, so this is the reduce path by construction.
+  const host = document.querySelector<HTMLElement>('[data-ground-layer]');
+  expect(host).not.toBeNull();
+
+  // Decorative and behind everything: it must never reach the accessibility tree
+  // and must never become the LCP element.
+  expect(host).toHaveAttribute("aria-hidden");
+
+  // A ground is painted — the page is never a flash of unstyled white — but the
+  // WebGL canvas stays hidden and no renderer is created under reduce.
+  expect(host!.style.backgroundColor).not.toBe("");
+  const canvas = host!.querySelector("canvas");
+  expect(canvas).not.toBeNull();
+  expect(canvas!.style.opacity).toBe("0");
+});
+
+test("the ground layer is not occluded by the root backgrounds", async () => {
+  await renderHome();
+
+  // Regression guard for a bug that made the entire layer invisible while every
+  // other signal said it was working.
+  //
+  // `index.html` paints `html { background: #f8fafc }` as a pre-JS anti-flash
+  // colour, and CssBaseline paints `body` with `background.default`. Because *html*
+  // carries a background of its own, body's stops propagating to the viewport
+  // canvas and paints as an ordinary in-flow block instead — which per CSS painting
+  // order happens AFTER negative-z-index descendants. So `z-index: -1` put the
+  // ground layer *underneath* body's opaque fill.
+  //
+  // Nothing observable in the DOM caught this: the canvas had opacity 1, WebGL was
+  // rendering, and the sampler reported correct colours the whole time. Only the
+  // painting order was wrong.
+  const html = document.documentElement.style.backgroundColor;
+  const body = document.body.style.backgroundColor;
+  expect(html).toBe("transparent");
+  expect(body).toBe("transparent");
 });
 
 test("reduced motion: hero scene is one decorative canvas, not a DOM particle field", async () => {

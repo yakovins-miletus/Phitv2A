@@ -126,7 +126,10 @@ export function DailyLifeSection() {
 
 
   return (
-    <RawStage id="daily-life" bgcolor="primary.main" ref={sectionRef}>
+    // RawStage is transparent by default now: GroundLayer paints `navyDeep` here,
+    // one step deeper than the card's `primary.main`, so the film card reads as a
+    // lifted surface instead of a same-navy rectangle with a 1px border.
+    <RawStage id="daily-life" ref={sectionRef}>
       <Box ref={videoAnchorRef} sx={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
       <Box
         ref={cardRef}

@@ -1,7 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
 
 import {
+  CHAPTERS,
   HOME_SECTIONS,
+  actOfChapter,
+  chapterTarget,
   homeSection,
   setActiveSection,
   useActiveSection,
@@ -63,10 +66,14 @@ test("every section EyeFlow can land on resolves, including the rail-only one", 
   for (const section of HOME_SECTIONS) {
     expect(homeSection(section.id).id).toBe(section.id);
   }
-  // "closing" is never rendered as a section but must stay: EyeFlow draws one
-  // rail dot per entry, so removing it silently changes the visible dot count.
+  // "closing" is never rendered as a section. It is kept because it is harmless
+  // and shares its chapter with `blog`, which sorts first and so owns that
+  // chapter's scroll target. (The old comment here claimed it had to stay
+  // because "EyeFlow draws one rail dot per entry" — that described the retired
+  // ScrollRail. EyeFlow renders one label per chapter, not per section.)
   expect(HOME_SECTIONS.map((s) => s.id)).toContain("closing");
-  expect(homeSection("closing").chapter).toBe(3);
+  expect(homeSection("closing").chapter).toBe(5);
+  expect(chapterTarget(homeSection("closing").chapter)).toBe("blog");
 });
 
 test("homeSection throws loudly on an unknown id rather than returning undefined", () => {
@@ -80,5 +87,41 @@ test("chapters are contiguous and non-decreasing down the page", () => {
   for (let i = 1; i < chapters.length; i += 1) {
     expect(chapters[i]!).toBeGreaterThanOrEqual(chapters[i - 1]!);
   }
-  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3]));
+  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5]));
+  // Every declared chapter is actually used by a section, so the rail never
+  // renders a label you cannot scroll to.
+  expect(new Set(CHAPTERS.map((c) => c.index))).toEqual(new Set(chapters));
+});
+
+test("every chapter belongs to exactly one act", () => {
+  // The bug this guards: `chapter: 2` used to hold BOTH `reach` (the last
+  // Services beat) and `daily-life` (the first People beat), so the act seam ran
+  // through the middle of a chapter and the rail read REACH over the people
+  // film. An act must be a property of the chapter, never of the section.
+  for (const { index } of CHAPTERS) {
+    const acts = new Set(
+      HOME_SECTIONS.filter((s) => s.chapter === index).map((s) => actOfChapter(s.chapter)),
+    );
+    expect(acts.size).toBeLessThanOrEqual(1);
+  }
+});
+
+test("the acts partition the page in order: all of SERVICES, then all of PEOPLE", () => {
+  // Sections are declared in scroll order, so the act sequence must change
+  // exactly once. Two changes would mean the page cuts back to Services after
+  // introducing the people — which is the narrative the two-act split exists to
+  // prevent.
+  const acts = HOME_SECTIONS.map((s) => actOfChapter(s.chapter));
+  const switches = acts.filter((act, i) => i > 0 && act !== acts[i - 1]).length;
+  expect(switches).toBe(1);
+  expect(acts[0]).toBe("services");
+  expect(acts.at(-1)).toBe("people");
+
+  // The seam is between `reach` and `daily-life` specifically. If someone moves
+  // a section across it, this is the test that should fail.
+  const ids = HOME_SECTIONS.map((s) => s.id);
+  const lastServices = ids[acts.lastIndexOf("services")];
+  const firstPeople = ids[acts.indexOf("people")];
+  expect(lastServices).toBe("reach");
+  expect(firstPeople).toBe("daily-life");
 });

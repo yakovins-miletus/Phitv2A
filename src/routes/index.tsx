@@ -1,15 +1,17 @@
 import { useRef } from "react";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { CONTENT } from "@/shared/content";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
+import { GroundLayer } from "@/shared/components/ground/GroundLayer";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { useStagePresence } from "@/shared/components/StageSection";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
+import { MissionStatement } from "@/features/hero/description/MissionStatement";
+import { OperatingPillars } from "@/features/hero/description/OperatingPillars";
+import { MarketPosition } from "@/features/hero/description/MarketPosition";
 import { CapabilityRack } from "@/features/services/components/CapabilityRack";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
 import { BlogSection } from "@/features/home/components/BlogSection";
@@ -42,52 +44,113 @@ function HomePage() {
   return (
     <>
       <SmoothScroll />
+      <GroundLayer />
       <EyeFlow />
-      <Box component="main" id="home-main" sx={{ position: 'relative', overflowX: 'clip' }}>
+      {/* Two acts, one per variety the firm sells: SERVICES (what we build) then
+          PEOPLE (who builds it). The seam is between `reach-sequence` and
+          `daily-life-sequence`, where `ledes.dailyLife` carries the written
+          handover — "That is the work. These are the people who do it."
+
+          `data-act` is tagged per SECTION rather than on two wrapper divs, and
+          that is deliberate: `#compact-zone` spans process→blog, so the act
+          boundary falls *inside* it. Wrapper divs per act would have forced the
+          compact zone to shrink to process→reach, silently dropping the navbar's
+          compact behaviour over the whole People act. The ground layer unions the
+          rects of every element sharing an act, so it needs the tags, not a
+          container.
+
+          There are no <Divider />s here any more. A hairline at every seam
+          announces the cut instead of absorbing it, and it fought the ground
+          transitions directly. Separation is space and ground change now. */}
+      <Box component="main" id="home-main" sx={{ position: "relative", overflowX: "clip" }}>
         {/* 01. Hero Sequence */}
-        <Box component="section" id="hero-sequence" aria-label="Hero Sequence">
+        <Box component="section" id="hero-sequence" aria-label="Hero Sequence" data-act="services">
           <SuperHeroSequence />
         </Box>
 
-        <Divider />
+        {/* 02-04. The pitch, as three sections rather than one pinned four-beat deck.
+            Grounds run navyDeep → navyPanel → void, so Act I opens dark and resolves
+            into light at the footprint instead of alternating slabs. */}
+        <Box data-act="services">
+          <MissionStatement />
+        </Box>
+        <Box data-act="services">
+          <OperatingPillars />
+        </Box>
+        <Box data-act="services">
+          <MarketPosition />
+        </Box>
 
-        {/* 02. Capabilities & Services */}
-        <Box component="section" id="capabilities" aria-label="Capabilities and Services">
+        {/* 05. Capabilities & Services */}
+        <Box
+          component="section"
+          id="capabilities"
+          aria-label="Capabilities and Services"
+          data-act="services"
+        >
           <CapabilityRack />
         </Box>
 
-        <Divider />
-
-        {/* 04. Use Cases Narrative */}
-        <Box ref={useCasesRef} component="section" id="use-cases" aria-label="Real-World Applications">
+        {/* 03. Use Cases Narrative */}
+        <Box
+          ref={useCasesRef}
+          component="section"
+          id="use-cases"
+          aria-label="Real-World Applications"
+          data-act="services"
+        >
           <UseCasesNarrative />
         </Box>
 
-        <Divider />
-
-        {/* 05. Compact & Sequential Sections Zone */}
+        {/* 04. Compact & Sequential Sections Zone — spans process→blog and so
+            straddles the act seam. See the note above. */}
         <Box ref={compactZoneRef} id="compact-zone">
-          <Box component="section" id="process-sequence" aria-label="Engineering Process">
+          <Box
+            component="section"
+            id="process-sequence"
+            aria-label="Engineering Process"
+            data-act="services"
+          >
             <ProcessSection />
           </Box>
-          <Divider />
 
-          <Box component="section" id="reach-sequence" aria-label="Global Footprint">
+          {/* Global Footprint — closes Act I. */}
+          <Box
+            component="section"
+            id="reach-sequence"
+            aria-label="Global Footprint"
+            data-act="services"
+          >
             <ReachSection />
           </Box>
-          <Divider />
 
-          <Box component="section" id="daily-life-sequence" aria-label="Daily Life Behind the Code">
+          {/* ── ACT II · PEOPLE ─────────────────────────────────────────────────
+              Daily Life opens the act; the ground layer plays its one directional
+              wipe at this boundary rather than a crossfade. */}
+          <Box
+            component="section"
+            id="daily-life-sequence"
+            aria-label="Daily Life Behind the Code"
+            data-act="people"
+          >
             <DailyLifeSection />
           </Box>
-          <Divider />
 
-          <Box component="section" id="careers-sequence" aria-label="Talent and Technical Careers">
+          <Box
+            component="section"
+            id="careers-sequence"
+            aria-label="Talent and Technical Careers"
+            data-act="people"
+          >
             <CandidatesAndCareersSection />
           </Box>
-          <Divider />
 
-          <Box component="section" id="blog-sequence" aria-label="Intelligence Feed and Blog">
+          <Box
+            component="section"
+            id="blog-sequence"
+            aria-label="Intelligence Feed and Blog"
+            data-act="people"
+          >
             <BlogSection />
           </Box>
         </Box>

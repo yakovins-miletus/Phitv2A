@@ -38,8 +38,28 @@ import {
 /* ─────────────────────────────── Sprites ─────────────────────────────── */
 
 export interface HeroSprites {
-  /** The brand mark, decoded once. Null until it loads (or if it failed). */
+  /** The brand mark, decoded once. Null until it loads (or if it failed).
+   *  This is the `<img>` holding the SVG, so it keeps its vector data: drawing it
+   *  at any size re-rasterises from the vector and stays crisp. The untinted top
+   *  face of the extrusion draws straight from this. */
   logo: CanvasImageSource | null;
+  /**
+   * High-resolution raster of the same mark, used as the source for the tinted
+   * extrusion layers.
+   *
+   * Those layers cannot draw from `logo` directly — they need a per-layer colour
+   * composited over the glyph, which means an offscreen `source-atop` pass, and
+   * the result of that pass is a *bitmap with no vector data*. Sizing that bitmap
+   * to the SVG's declared 320x320 was the bug: every one of the 13 tinted layers
+   * was then upscaled to the on-screen mark (~705 device px at DPR 2, ~1128 on a
+   * 1440p Retina panel). Measured against the untinted top face, the tinted layers
+   * carried **7.4x** the soft-edge pixel count — visible as a soft, low-quality
+   * stack sitting under a crisp top face.
+   *
+   * Rasterising once at `rasterPx` and tinting from that keeps the sides as sharp
+   * as the top. Null until the logo loads.
+   */
+  logoRaster: HTMLCanvasElement | null;
   logoAspect: number;
   /** Pre-blurred radial shadow blob, drawn scaled wherever a soft shadow is needed. */
   shadow: HTMLCanvasElement;
@@ -47,6 +67,19 @@ export interface HeroSprites {
   grid: HTMLCanvasElement;
   /** Offscreen scratch canvas for tinting logo sub-layer extrusion faces. */
   tintCanvas: HTMLCanvasElement;
+}
+
+/**
+ * Resolution to rasterise the logo at for the tint source.
+ *
+ * The mark draws at `baseW` (380) world units scaled by `min(w,h) / (PLANE_SIZE *
+ * 1.05)`, so on a 1440x900 viewport it lands at ~352 CSS px and HeroCanvas renders
+ * it at up to DPR 2. 512 per DPR step clears that with headroom without paying for
+ * pixels nothing samples; the cap keeps the per-frame tint work bounded, since the
+ * scratch canvas is cleared and recomposited once per tinted layer per frame.
+ */
+export function logoRasterSize(dpr: number): number {
+  return Math.min(1024, Math.max(320, Math.round(512 * Math.min(dpr, 2))));
 }
 
 /** Corner radius of a service node's faces — `borderRadius: 14px` in the DOM version. */
@@ -124,9 +157,13 @@ function buildGridSprite(): HTMLCanvasElement {
  * it resolves, so a slow or failed SVG fetch degrades to "no logo" rather than blocking
  * the first frame.
  */
-export function createSprites(logoSrc: string): { sprites: HeroSprites; ready: Promise<void> } {
+export function createSprites(
+  logoSrc: string,
+  rasterPx = 320,
+): { sprites: HeroSprites; ready: Promise<void> } {
   const sprites: HeroSprites = {
     logo: null,
+    logoRaster: null,
     logoAspect: 1,
     shadow: buildShadowSprite(),
     grid: buildGridSprite(),
@@ -139,6 +176,23 @@ export function createSprites(logoSrc: string): { sprites: HeroSprites; ready: P
     img.onload = () => {
       sprites.logo = img;
       sprites.logoAspect = img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 1;
+
+      // One vector rasterisation at load, reused by every tinted layer on every
+      // frame. Drawing the SVG-backed <img> at rasterPx re-rasterises from the
+      // vector (verified in Chromium: identical edge-pixel counts to loading the
+      // same SVG with rasterPx as its declared intrinsic size), so this is a true
+      // high-resolution render rather than an upscale of the 320x320 decode.
+      const side = Math.max(1, Math.round(rasterPx));
+      const raster = document.createElement("canvas");
+      raster.width = side;
+      raster.height = Math.max(1, Math.round(side * sprites.logoAspect));
+      const rCtx = raster.getContext("2d");
+      if (rCtx) {
+        rCtx.imageSmoothingEnabled = true;
+        rCtx.imageSmoothingQuality = "high";
+        rCtx.drawImage(img, 0, 0, raster.width, raster.height);
+        sprites.logoRaster = raster;
+      }
       resolve();
     };
     img.onerror = () => resolve();
@@ -676,6 +730,7 @@ function drawTintedLogo(
   ctx: CanvasRenderingContext2D,
   cam: Camera,
   logoImg: CanvasImageSource,
+  logoRaster: HTMLCanvasElement | null,
   tintCanvas: HTMLCanvasElement,
   cx: number,
   cy: number,
@@ -686,12 +741,27 @@ function drawTintedLogo(
   alpha: number,
 ): void {
   if (alpha <= 0.01) {
+    // The top face. `logoImg` keeps its vector data, so this stays crisp at any
+    // size — it always did, which is why the top read sharp while the stack under
+    // it did not.
     drawImageOnPlane(ctx, cam, logoImg, cx, cy, z, w, h);
     return;
   }
 
-  const imgW = (logoImg as HTMLImageElement).naturalWidth || (logoImg as HTMLCanvasElement).width || 300;
-  const imgH = (logoImg as HTMLImageElement).naturalHeight || (logoImg as HTMLCanvasElement).height || 300;
+  // Tint from the high-resolution raster when it is available. Falling back to
+  // `logoImg` reproduces the old soft result rather than dropping the layer, so a
+  // failed raster degrades in quality only.
+  const tintSource: CanvasImageSource = logoRaster ?? logoImg;
+  const imgW =
+    logoRaster?.width ||
+    (logoImg as HTMLImageElement).naturalWidth ||
+    (logoImg as HTMLCanvasElement).width ||
+    300;
+  const imgH =
+    logoRaster?.height ||
+    (logoImg as HTMLImageElement).naturalHeight ||
+    (logoImg as HTMLCanvasElement).height ||
+    300;
 
   if (tintCanvas.width !== imgW || tintCanvas.height !== imgH) {
     tintCanvas.width = imgW;
@@ -705,7 +775,7 @@ function drawTintedLogo(
   }
 
   tCtx.clearRect(0, 0, imgW, imgH);
-  tCtx.drawImage(logoImg, 0, 0, imgW, imgH);
+  tCtx.drawImage(tintSource, 0, 0, imgW, imgH);
 
   tCtx.globalCompositeOperation = "source-atop";
   tCtx.fillStyle = color;
@@ -785,6 +855,7 @@ function drawLogo(
         ctx,
         cam,
         logo,
+        sprites.logoRaster,
         sprites.tintCanvas,
         cx,
         cy + pDropY,

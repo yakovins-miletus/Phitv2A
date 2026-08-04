@@ -110,7 +110,7 @@ function CareersIndexPage() {
                         borderColor: "rgba(10, 42, 102, 0.1)",
                         display: "flex",
                         flexDirection: "column",
-                        justify: "space-between",
+                        justifyContent: "space-between",
                         height: "100%",
                         position: "relative",
                         transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",

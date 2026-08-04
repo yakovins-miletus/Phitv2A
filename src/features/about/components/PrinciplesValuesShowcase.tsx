@@ -187,7 +187,10 @@ export function PrinciplesValuesShowcase() {
                             color: "#0A2A66",
                             display: "flex",
                             alignItems: "center",
-                            justify: "center",
+                            // Was `justify: "center"` — not a CSS property, so it was
+                            // dropped silently and the icon sat at flex-start,
+                            // hugging the left edge of this 54x54 tile.
+                            justifyContent: "center",
                             boxShadow: "0 8px 24px rgba(255, 199, 44, 0.3)",
                           }}
                         >

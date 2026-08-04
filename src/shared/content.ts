@@ -14,6 +14,23 @@
  *  and `details`, so their copy is unaffected by home-page edits. */
 export const CONTENT = {
   hero: {
+    /**
+     * Build-status notice rendered in the hero.
+     *
+     * TEMPORARY. This exists so nobody — client, stakeholder, or a teammate
+     * sharing a link — mistakes the current site for a finished product. It is
+     * deliberately the first thing in the hero's top-left block, above the motto,
+     * rather than a corner ribbon that reads as decoration.
+     *
+     * TO REMOVE AT MVP: delete this `buildStatus` key and the `{buildStatus && …}`
+     * block in `features/hero/SuperHeroSequence.tsx`. Setting it to `null` also
+     * hides it, which is the safer move if a demo needs it gone for an hour.
+     */
+    buildStatus: {
+      label: "Proof of concept · pre-MVP",
+      detail:
+        "Scaffolding build. Structure, copy, and data are provisional and not yet reviewed for client presentation.",
+    } as { label: string; detail: string } | null,
     tagline: "Making tomorrow's technology available today",
     description:
       "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and latest trends in Artificial Intelligence.",
@@ -78,12 +95,11 @@ export const CONTENT = {
           body: "Headquartered at Ecotower Building, Bonifacio Global City (BGC), Taguig, Manila, Philippines.",
         },
       ],
-      leadershipNote:
-        "Founded by Filipina corporate leader Kriz and global technologist Mark, Phitopolis brings Wall Street standards to Bonifacio Global City.",
-      cta: {
-        primary: "INITIATE TECHNICAL PARTNERSHIP",
-        secondary: "EXPLORE CAPABILITIES",
-      },
+      // `leadershipNote` and `cta` lived here for the deck's fourth beat
+      // ("Leadership credibility & consultative executive CTA"), which has been cut.
+      // Conversion is carried by the navbar Contact button and the footer CTA; the
+      // hero narrative now ends on market position. The Wall St. pedigree survives
+      // as `differentiators[2]`, framed as a market advantage rather than a bio.
     },
   },
   /** Home-page section ledes (L0/L1). Chapters 0-2 address the institutional

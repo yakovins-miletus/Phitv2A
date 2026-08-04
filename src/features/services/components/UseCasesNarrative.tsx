@@ -111,7 +111,9 @@ export function UseCasesNarrative() {
       sx={{
         position: "relative",
         overflow: "hidden",
-        bgcolor: NOIR.void,
+        // Transparent so GroundLayer's scroll-driven surface shows through; the
+        // ground itself is declared on this section's SectionDef.
+        bgcolor: "transparent",
         color: NOIR.ink,
       }}
     >

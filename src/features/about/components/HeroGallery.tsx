@@ -146,7 +146,7 @@ export function HeroGallery() {
               right: 18,
               display: "flex",
               alignItems: "center",
-              justify: "space-between",
+              justifyContent: "space-between",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

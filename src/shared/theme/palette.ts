@@ -22,6 +22,16 @@ export const NOIR = {
    *  alpha, not this token. */
   mist: "#5C719D",
   hairline: "#D1D5DB", // Divider/Border
+  /**
+   * Pure white.
+   *
+   * Added when the scroll-driven ground layer took over painting page backgrounds:
+   * the hero's ground was a `radial-gradient(..., #FFFFFF 65%, ...)` written inline,
+   * and the layer needs that exact value as a stop to hand off to `void` without a
+   * visible step. It is a real ground in this design — not the same thing as
+   * `void` (#F4F7FC) — so it earns a token rather than another inline literal.
+   */
+  white: "#FFFFFF",
   /** rgb triplets for rgba() composition */
   goldRgb: "255, 199, 44",
   voidRgb: "244, 247, 252",

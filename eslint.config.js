@@ -55,6 +55,21 @@ export default tseslint.config(
           message:
             "Raw cubic-bezier. Use EASE_OUT_EXPO_CSS / EASE_IN_OUT_QUART_CSS from @/shared/motion/easing.",
         },
+        {
+          // `sx` is a plain object, so a misspelled CSS property is not a type
+          // error — it is silently dropped and the style simply never applies.
+          // Five copies of `justify:` had accumulated; the visible one left an
+          // icon at flex-start inside a centred 54x54 tile on /about.
+          //
+          // Deliberately only `justify`. The first version of this rule also
+          // covered align/direction/wrap/grow/shrink/basis/items/self and threw
+          // nine false positives on ordinary data keys and MUI props (`items`,
+          // `direction`, `align`) — a rule that cries wolf gets switched off, so
+          // it is scoped to the one name that is never anything but this mistake.
+          selector: "Property[key.name='justify']",
+          message:
+            "`justify` is not a CSS property — sx drops unknown keys silently. Use `justifyContent`.",
+        },
       ],
     },
   },

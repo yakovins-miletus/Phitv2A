@@ -121,7 +121,7 @@ export function ContactForm() {
         p: { xs: 3.5, md: 4.5 },
         display: "flex",
         flexDirection: "column",
-        justify: "space-between",
+        justifyContent: "space-between",
       }}
     >
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit} noValidate sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>

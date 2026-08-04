@@ -9,6 +9,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
 import { NOIR } from "@/shared/theme/palette";
+import { GROUNDS } from "@/shared/theme/grounds";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import type { SectionDef } from "@/shared/sections";
 import { useReducedMotion } from "@/shared/motion";
@@ -82,6 +83,9 @@ interface StageSectionProps {
  *  visible by default; all tweens are from-side only so reduced motion and
  *  no-JS render the final state. */
 export function StageSection({ section, muted = false, children }: StageSectionProps) {
+  // The ground comes from the section registry, not a prop, so the scroll-driven
+  // ground layer reads exactly what this paints. See SectionDef.ground.
+  const surface = section.ground ? GROUNDS[section.ground] : null;
   const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
 
@@ -139,9 +143,17 @@ export function StageSection({ section, muted = false, children }: StageSectionP
         display: "flex",
         alignItems: "center",
         py: { xs: 6, md: 10 },
-        bgcolor: muted ? "background.paper" : "transparent",
-        borderTop: muted ? 1 : 0,
-        borderBottom: muted ? 1 : 0,
+        // Transparent by design: GroundLayer paints the surface behind every
+        // section and moves it with scroll. Painting an opaque `bgcolor` here would
+        // occlude the layer and restore the hard cut at every seam. The ground is
+        // still declared — on `SectionDef.ground` — the layer just renders it.
+        bgcolor: "transparent",
+        color: surface ? surface.fg : undefined,
+        // Hairline bands are a `muted` device from before the ground layer; they
+        // read as seams between grounds the layer is blending. Only sections with
+        // no declared ground still get them.
+        borderTop: surface ? 0 : muted ? 1 : 0,
+        borderBottom: surface ? 0 : muted ? 1 : 0,
         borderColor: "divider",
         overflow: "visible",
       }}

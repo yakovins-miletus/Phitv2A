@@ -21,12 +21,18 @@ import { STAGE_ATTR } from "@/shared/sections";
  */
 export function RawStage({
   id,
-  bgcolor,
+  bgcolor = "transparent",
   ref,
   children,
 }: {
   id: string;
-  bgcolor: string;
+  /**
+   * Surface for this stage. Defaults to transparent so GroundLayer's scroll-driven
+   * ground shows through — the ground itself is declared on the section's
+   * `SectionDef.ground`. Pass a colour only for a stage that must occlude the
+   * layer, which no current caller does.
+   */
+  bgcolor?: string;
   ref?: Ref<HTMLElement>;
   children: ReactNode;
 }) {
@@ -45,8 +51,9 @@ export function RawStage({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        borderTop: 1,
-        borderBottom: 1,
+        // No hairline bands: they read as seams between grounds the layer blends.
+        borderTop: 0,
+        borderBottom: 0,
         borderColor: "divider",
       }}
     >
