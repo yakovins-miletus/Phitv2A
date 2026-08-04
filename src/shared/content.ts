@@ -117,7 +117,7 @@ export const CONTENT = {
         "Research, platforms, pipelines, and operational support — click any discipline to explore capabilities.",
     },
     reach: {
-      gunshot: "Two offices. Two client regions. One clock that never stops.",
+      gunshot: "Established International Presence",
       tracer: "Arcs denote clients and investors.",
     },
     dailyLife: {

@@ -24,7 +24,7 @@ interface Cohort {
 const GRADUATE_COHORTS: Cohort[] = [
   {
     id: "2023",
-    year: "2023",
+    year: "2023 Grad Cohort",
     badge: "FOUNDATIONAL FELLOWS",
     title: "2023 Inaugural Graduate Cohort",
     description: "The pioneer cohort of software and quantitative research fellows who established Phitopolis R&D standards, setting the benchmark for high-performance software engineering in Manila.",
@@ -33,7 +33,7 @@ const GRADUATE_COHORTS: Cohort[] = [
   },
   {
     id: "2024-b1",
-    year: "2024 B1",
+    year: "2024 Batch 1",
     badge: "SYSTEMS & INFRASTRUCTURE",
     title: "2024 Batch 1 R&D Cohort",
     description: "High-performing engineering graduates specializing in core systems architecture, distributed data pipelines, and low-latency C++ engines.",
@@ -42,7 +42,7 @@ const GRADUATE_COHORTS: Cohort[] = [
   },
   {
     id: "2024-b2",
-    year: "2024 B2",
+    year: "2024 Batch 2",
     badge: "ADVANCED SYSTEMS",
     title: "2024 Batch 2 R&D Cohort",
     description: "Engineering graduates expanding distributed computing pipelines, cloud infrastructure, and automated testing frameworks.",
@@ -60,7 +60,7 @@ const GRADUATE_COHORTS: Cohort[] = [
   },
   {
     id: "2026-b1",
-    year: "2026 B1",
+    year: "2026 Batch 1",
     badge: "NEXT-GEN LEADERS",
     title: "2026 Batch 1 Tech Graduates",
     description: "Our newest cohort of elite graduates driving modern web architecture, cloud native pipelines, and autonomous AI agents for global systems.",

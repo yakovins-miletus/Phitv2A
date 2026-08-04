@@ -15,7 +15,7 @@ That is a good rule. Roughly **56 %** of the file already meets it, and where it
 copy is genuinely strong:
 
 - `content.ts:26` — *"We took two milliseconds down to eighteen microseconds."*
-- `content.ts:36` — *"Two offices. Two client regions. One clock that never stops."*
+- `content.ts:36` — *"Established International Presence"*
 - `content.ts:45` — *"Six open roles. One intake a year."*
 - `content.ts:105` — `{ value: 100, suffix: "x", label: "Latency improvement", caption: "HFT pipeline · 2ms → 18µs" }`
 - `content.ts:202` — *"Petabytes of ticks in. One tradeable signal out."*

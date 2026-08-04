@@ -25,7 +25,7 @@ import { homeSection } from "@/shared/sections";
  *    the ground layer is already interpolating, so nothing draws a seam around it.
  *  - The map bleeds past the container gutters at desktop, so the footprint reads
  *    as wide as the claim.
- *  - The two figures the lede asserts — "Two offices. Two client regions." — now
+ *  - The two figures the lede asserts — "TEstablished International Presence" — now
  *    appear as figures beneath it. `CONTENT.stats` already held them and had no
  *    consumer anywhere in the app.
  */
