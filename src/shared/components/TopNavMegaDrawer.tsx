@@ -1,4 +1,3 @@
-import { NOIR } from "@/shared/theme/palette";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -110,7 +109,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
       open={open}
       onClose={onClose}
       closeAfterTransition
-      slotProps={{ backdrop: { sx: { bgcolor: "transparent" } } }}
+      slotProps={{ backdrop: { sx: { bgcolor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(16px)" } } }}
       sx={{ zIndex: (theme) => theme.zIndex.modal + 10 }}
     >
     <Slide in={open} direction="down" timeout={450} appear>
@@ -124,7 +123,8 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
             inset: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: NOIR.navyDeep,
+            backgroundColor: "rgba(6, 24, 59, 0.6)",
+            backdropFilter: "blur(24px)",
             color: "white",
             overflow: "hidden",
             willChange: "transform",

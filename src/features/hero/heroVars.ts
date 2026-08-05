@@ -200,8 +200,8 @@ export function heroStage(progress: number, reduced: boolean): HeroStage {
     flank: flankOpacity(progress) > 0.01,
     container: progress >= CONTAINER_START,
     borderDone: borderAnimProgress(progress) >= 0.99,
-    navActive: progress >= DWELL_END && progress < 0.98,
-    navDark: progress >= GUNSHOT_END && progress < 0.98,
+    navActive: progress >= DWELL_END,
+    navDark: progress >= GUNSHOT_END,
     panelInteractive: progress <= PANEL_POINTER_CUTOFF,
   };
 }

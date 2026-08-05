@@ -249,7 +249,7 @@ describe("discrete stage", () => {
     expect(heroStage(DWELL_END - 0.01, false).navActive).toBe(false);
     expect(heroStage(DWELL_END, false).navActive).toBe(true);
     expect(heroStage(GUNSHOT_END, false).navDark).toBe(true);
-    expect(heroStage(0.99, false).navDark).toBe(false);
+    expect(heroStage(0.99, false).navDark).toBe(true);
   });
 
   test("the stage changes only a handful of times across the whole pin", () => {

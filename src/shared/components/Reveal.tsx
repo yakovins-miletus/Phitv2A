@@ -1,4 +1,5 @@
 import { motion, useInView } from "motion/react";
+import type { MotionStyle } from "motion/react";
 import { useRef } from "react";
 import type { ReactNode } from "react";
 
@@ -8,13 +9,14 @@ import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 /** Shared scroll-into-view reveal. Animate ONLY transform+opacity.
  *  Content is visible by default via CSS; the JS animation enhances. */
-export function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+export function Reveal({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: MotionStyle }) {
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.3 });
   
   const shouldAnimate = ready && inView;
+  const styleProp = style ? { style } : {};
 
   return (
     <motion.div
@@ -26,6 +28,7 @@ export function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: n
         ease: EASE_OUT_EXPO,
         delay,
       }}
+      {...styleProp}
     >
       {children}
     </motion.div>

@@ -67,7 +67,7 @@ export function EyeFlow() {
 
       let intervalIdx = 0;
       for (let i = 0; i < offsets.length - 1; i++) {
-        if (y >= offsets[i]) {
+        if (y >= offsets[i]!) {
           intervalIdx = i;
         }
       }

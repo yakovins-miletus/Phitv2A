@@ -9,7 +9,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 import { CONTENT } from "@/shared/content";
 import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
@@ -142,28 +142,6 @@ export function CandidatesAndCareersSection() {
               {CONTENT.targetCandidates.description}
             </Typography>
 
-            {/* Intake detail and system impact callout */}
-            <Box
-              sx={{
-                borderLeft: 3,
-                borderColor: NOIR.gold,
-                pl: 2,
-                py: 0.5,
-                mt: 1,
-              }}
-            >
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  fontStyle: "italic",
-                  lineHeight: 1.6,
-                  fontSize: "0.95rem",
-                }}
-              >
-                {CONTENT.ledes.careers.tracer}
-              </Typography>
-            </Box>
           </Stack>
         </Grid>
 
@@ -327,7 +305,6 @@ export function CandidatesAndCareersSection() {
                   </Typography>
                 </Box>
 
-                {/* Slat Title & Information Wrapper (Stationed at bottom) */}
                 <Box
                   sx={{
                     position: "relative",
@@ -339,87 +316,86 @@ export function CandidatesAndCareersSection() {
                     transition: "min-height 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
                   }}
                 >
-                  {/* Faded Details (Stationed statically above the title when expanded) */}
-                  <Box
-                    sx={{
-                      width: "100%",
-                      mb: isMobile ? 0 : isActive ? 5.5 : 0,
-                      transition: "margin 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
-                    }}
-                  >
-                    <AnimatePresence>
-                      {isActive && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -24, height: 0 }}
-                          animate={{ opacity: 1, x: 0, height: "auto" }}
-                          exit={{ opacity: 0, x: -24, height: 0 }}
-                          transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+                  {/* Faded Details — positioned absolute above the title when expanded so they do not push the header position */}
+                  {isActive && (
+                    <Box
+                      component={motion.div}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -16 }}
+                      transition={{ duration: 0.35, ease: "easeOut", delay: 0.15 }}
+                      sx={{
+                        width: "100%",
+                        position: "absolute",
+                        bottom: "45px", // Anchored above the title header
+                        left: 0,
+                        right: 0,
+                      }}
+                    >
+                      <Stack spacing={1.5} sx={{ pb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            opacity: 0.9,
+                            fontSize: "0.85rem",
+                            lineHeight: 1.45,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            color: "rgba(255, 255, 255, 0.92)",
+                          }}
                         >
-                          <Stack spacing={2} sx={{ pb: 0.5 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                opacity: 0.9,
-                                fontSize: "0.88rem",
-                                lineHeight: 1.55,
-                                display: "-webkit-box",
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }}
-                            >
-                              {job.role}
-                            </Typography>
+                          {job.role}
+                        </Typography>
 
-                            {/* Tech Stack Chips */}
-                            <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-                              {job.stack.map((tech) => (
-                                <Chip
-                                  key={tech}
-                                  label={tech}
-                                  size="small"
-                                  sx={{
-                                    fontFamily: MONO,
-                                    fontSize: "0.65rem",
-                                    bgcolor: "rgba(10, 42, 102, 0.08)",
-                                    color: "#0A2A66",
-                                    border: "1px solid rgba(10, 42, 102, 0.18)",
-                                    borderRadius: 1,
-                                    height: "22px",
-                                    "& .MuiChip-label": { px: 1 },
-                                  }}
-                                />
-                              ))}
-                            </Stack>
-
-                            {/* Interactive "pointing upwards" CTA */}
-                            <Box
+                        {/* Tech Stack Chips — high contrast text and border */}
+                        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                          {job.stack.map((tech) => (
+                            <Chip
+                              key={tech}
+                              label={tech}
+                              size="small"
                               sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.2,
-                                color: NOIR.gold,
-                                fontWeight: 700,
-                                fontSize: "0.8rem",
-                                textTransform: "uppercase",
                                 fontFamily: MONO,
-                                pt: 0.5,
+                                fontSize: "0.62rem",
+                                bgcolor: "rgba(255, 255, 255, 0.15)",
+                                color: "#ffffff",
+                                border: "1px solid rgba(255, 255, 255, 0.45)",
+                                borderRadius: 1,
+                                height: "20px",
+                                "& .MuiChip-label": { px: 0.8 },
                               }}
-                            >
-                              <span>View details & apply</span>
-                              <ArrowUpwardIcon
-                                sx={{
-                                  fontSize: 16,
-                                  transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                                }}
-                                className="arrow-icon"
-                              />
-                            </Box>
-                          </Stack>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Box>
+                            />
+                          ))}
+                        </Stack>
+
+                        {/* Interactive "pointing upwards" CTA */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            color: NOIR.gold,
+                            fontWeight: 700,
+                            fontSize: "0.78rem",
+                            textTransform: "uppercase",
+                            fontFamily: MONO,
+                            pt: 0.2,
+                          }}
+                        >
+                          <span>View details & apply</span>
+                          <ArrowUpwardIcon
+                            sx={{
+                              fontSize: 14,
+                              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                            }}
+                            className="arrow-icon"
+                          />
+                        </Box>
+                      </Stack>
+                    </Box>
+                  )}
 
                   {/* Slat Title (Inverted 90 degrees when inactive, rotates back on active) */}
                   <Typography

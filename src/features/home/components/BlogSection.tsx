@@ -1,200 +1,146 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardActionArea from "@mui/material/CardActionArea";
-import CardContent from "@mui/material/CardContent";
-import IconButton from "@mui/material/IconButton";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
 
 import { blogPostsQuery } from "@/features/blog/api";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
-import { CONTENT } from "@/shared/content";
 import { Reveal } from "@/shared/components/Reveal";
-import { RouterButton } from "@/shared/components/RouterLink";
-import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
+import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 
-// Intelligence Feed — the blog rail.
+// Intelligence Feed — the immersive blog showcase.
 export function BlogSection() {
-  const page = useQuery(blogPostsQuery({ limit: 10, offset: 0 }));
+  const page = useQuery(blogPostsQuery({ limit: 4, offset: 0 }));
   const posts = page.data?.items ?? FALLBACK_BLOG_PAGE.items;
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  const checkScroll = useCallback(() => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth, children } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
+  const featuredPost = posts[0];
+  const sidePosts = posts.slice(1, 4);
 
-      let currentActive = 0;
-      let minDistance = Infinity;
-      Array.from(children).forEach((child, index) => {
-        const childHtml = child as HTMLElement;
-        const distance = Math.abs(childHtml.offsetLeft - scrollLeft);
-        if (distance < minDistance) {
-          minDistance = distance;
-          currentActive = index;
-        }
-      });
-      setActiveIndex(currentActive);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkScroll();
-    const currentRef = scrollRef.current;
-    if (currentRef) {
-      currentRef.addEventListener("scroll", checkScroll, { passive: true });
-      window.addEventListener("resize", checkScroll, { passive: true });
-      return () => {
-        currentRef.removeEventListener("scroll", checkScroll);
-        window.removeEventListener("resize", checkScroll);
-      };
-    }
-  }, [checkScroll]);
-
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -384, behavior: "smooth" });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 384, behavior: "smooth" });
-    }
-  };
-
-  const slicedPosts = posts.slice(0, 7);
+  if (!featuredPost) return null;
 
   return (
-    <StageSection section={homeSection("blog")} muted>
+    <StageSection section={homeSection("blog")}>
       <Reveal>
-        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
-          <SectionLede
-            gunshot={CONTENT.ledes.blog.gunshot}
-            tracer={CONTENT.ledes.blog.tracer}
-            eyebrow="Intelligence Feed"
-          />
-          <Stack direction="row" spacing={1} sx={{ flexShrink: 0, display: { xs: "none", md: "flex" } }}>
-            <IconButton disabled={!canScrollLeft} onClick={scrollLeft} aria-label="Previous posts" sx={{ border: 1, borderColor: "divider", bgcolor: "background.paper", "&:hover": { bgcolor: "action.hover" } }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </IconButton>
-            <IconButton disabled={!canScrollRight} onClick={scrollRight} aria-label="Next posts" sx={{ border: 1, borderColor: "divider", bgcolor: "background.paper", "&:hover": { bgcolor: "action.hover" } }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-            </IconButton>
-          </Stack>
-        </Stack>
+        <Box sx={{ mb: 6, px: { xs: 2, md: 5 } }}>
+          <Typography variant="overline" sx={{ fontFamily: MONO, color: NOIR.gold, letterSpacing: "0.2em", fontSize: "0.9rem" }}>
+            INTELLIGENCE FEED
+          </Typography>
+        </Box>
       </Reveal>
-      <Reveal delay={0.1}>
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: "flex",
-            overflowX: "auto",
-            gap: 3,
-            pb: 2,
-            scrollSnapType: "x mandatory",
-            "&::-webkit-scrollbar": { display: "none" },
-            scrollbarWidth: "none",
-          }}
-        >
-          {slicedPosts.map((post) => {
-            return (
-              <Card
-                key={post.id}
+
+      <Box sx={{ px: { xs: 2, md: 5 } }}>
+        <Grid container spacing={3} alignItems="stretch">
+          {/* Featured Post */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Reveal delay={0.1} style={{ height: "100%" }}>
+              <Box
+                onClick={() => void navigate({ to: "/blog/$slug", params: { slug: featuredPost.slug } })}
                 sx={{
-                  flexShrink: 0,
-                  width: { xs: 280, md: 360 },
-                  display: "flex",
-                  flexDirection: "column",
-                  border: 1,
-                  borderColor: "divider",
-                  bgcolor: "background.default",
-                  scrollSnapAlign: "start",
+                  position: "relative",
+                  height: { xs: "60vh", md: "100%" },
+                  minHeight: 500,
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  "&:hover img": { transform: "scale(1.05)" },
                 }}
               >
-                <CardActionArea
-                  onClick={() => {
-                    void navigate({ to: "/blog/$slug", params: { slug: post.slug } });
+                {featuredPost.image_url && (
+                  <Box
+                    component="img"
+                    src={featuredPost.image_url}
+                    alt=""
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      transition: "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  />
+                )}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to top, rgba(10,42,102,0.95) 0%, rgba(10,42,102,0.2) 60%, transparent 100%)",
                   }}
-                  sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    width: "100%",
+                    p: { xs: 4, md: 6 },
+                  }}
                 >
-                  {post.image_url ? (
-                    <Box
-                      component="img" decoding="async"
-                      src={post.image_url}
-                      alt=""
-                      loading="lazy"
-                      sx={{
-                        width: "100%",
-                        aspectRatio: "16/9",
-                        objectFit: "cover",
-                        display: "block",
-                        borderBottom: 1,
-                        borderColor: "divider",
-                      }}
-                    />
-                  ) : (
-                    <Box sx={{ width: "100%", aspectRatio: "16/9", bgcolor: "divider", borderBottom: 1, borderColor: "divider" }} />
-                  )}
-                  <CardContent sx={{ flexGrow: 1, width: "100%" }}>
-                    <Typography variant="overline" color="primary" gutterBottom>{post.category}</Typography>
-                    <Typography variant="h5" sx={{ mb: 1, mt: 0.5 }}>{post.title}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}>
+                  <Typography variant="overline" sx={{ color: NOIR.gold, fontWeight: 700, letterSpacing: "0.15em", fontFamily: MONO, display: "block", mb: 2 }}>
+                    {featuredPost.category}
+                  </Typography>
+                  <Typography variant="h2" sx={{ color: "white", fontWeight: 800, mb: 3, fontSize: { xs: "2.5rem", md: "4.5rem" }, lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+                    {featuredPost.title}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.8)", maxWidth: 700, fontSize: "1.2rem", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {featuredPost.excerpt}
+                  </Typography>
+                </Box>
+              </Box>
+            </Reveal>
+          </Grid>
+
+          {/* Side Posts */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Stack spacing={3} sx={{ height: "100%" }}>
+              {sidePosts.map((post, i) => (
+                <Reveal key={post.id} delay={0.2 + i * 0.1} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <Box
+                    onClick={() => void navigate({ to: "/blog/$slug", params: { slug: post.slug } })}
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "flex-end",
+                      p: { xs: 4, md: 5 },
+                      borderRadius: 4,
+                      bgcolor: "rgba(255,255,255,0.03)",
+                      border: "1px solid",
+                      borderColor: "rgba(255,255,255,0.1)",
+                      cursor: "pointer",
+                      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      position: "relative",
+                      overflow: "hidden",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.06)",
+                        borderColor: "rgba(255,255,255,0.2)",
+                        transform: "translateY(-4px)",
+                      },
+                    }}
+                  >
+                    <Typography variant="overline" sx={{ color: NOIR.gold, fontWeight: 700, fontFamily: MONO, letterSpacing: "0.1em", mb: 2 }}>
+                      {post.category}
+                    </Typography>
+                    <Typography variant="h4" sx={{ color: "white", fontWeight: 700, mb: 2, fontSize: "1.75rem", lineHeight: 1.2, letterSpacing: "-0.01em" }}>
+                      {post.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", fontSize: "1.05rem", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                       {post.excerpt}
                     </Typography>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            );
-          })}
-        </Box>
-        <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 3, display: "flex" }}>
-          {slicedPosts.map((_, index) => (
-            <Box
-              key={index}
-              sx={{
-                width: activeIndex === index ? 24 : 8,
-                height: 8,
-                borderRadius: 4,
-                bgcolor: activeIndex === index ? "primary.main" : "divider",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                if (scrollRef.current) {
-                  const children = scrollRef.current.children;
-                  const target = children[index] as HTMLElement;
-                  if (target) {
-                    scrollRef.current.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
-                  }
-                }
-              }}
-            />
-          ))}
-        </Stack>
-      </Reveal>
-      <Reveal delay={0.15}>
-        <Stack direction="row" sx={{ mt: 2 }}>
-          <RouterButton to="/blog" variant="outlined">
-            View all posts →
-          </RouterButton>
-        </Stack>
-      </Reveal>
+                  </Box>
+                </Reveal>
+              ))}
+            </Stack>
+          </Grid>
+        </Grid>
+      </Box>
     </StageSection>
   );
 }

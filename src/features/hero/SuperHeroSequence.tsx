@@ -130,7 +130,7 @@ export function HeroSignalCore() {
         onUpdate: (self) => {
           // Clamp so animations complete at 1800/1900 of the pin.
           // The final 100vh of pin time is dead air for the overlay transition.
-          const p = Math.min(1.0, self.progress / ANIM_LIMIT);
+          const p = Math.min(1.1, self.progress / ANIM_LIMIT);
 
           // Per-frame: one batch of custom-property writes. No React render.
           writeHeroVars(el, heroVars(p, false));

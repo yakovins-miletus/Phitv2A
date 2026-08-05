@@ -236,7 +236,7 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
 function RoleVisualAid({ roleId }: { roleId: string }) {
   if (roleId === "quant-researcher") {
     return (
-      <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
             <PsychologylIcon sx={{ color: NOIR.goldDark }} />
@@ -261,7 +261,7 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "software-engineer") {
     return (
-      <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
             <SpeedIcon sx={{ color: NOIR.goldDark }} />
@@ -286,7 +286,7 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "full-stack-developer") {
     return (
-      <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
             <CodeIcon sx={{ color: NOIR.goldDark }} />
@@ -311,7 +311,7 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "data-scientist") {
     return (
-      <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
             <StorageIcon sx={{ color: NOIR.goldDark }} />
@@ -336,7 +336,7 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "rd-internship-program") {
     return (
-      <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
             <CodeIcon sx={{ color: NOIR.goldDark }} />
@@ -390,10 +390,10 @@ function PaperBox({ label, sub, highlight }: { label: string; sub: string; highl
       sx={{
         p: 2,
         borderRadius: 2,
-        bgcolor: highlight ? "primary.main" : "background.paper",
-        color: highlight ? "white" : "text.primary",
+        bgcolor: highlight ? "primary.main" : "rgba(255,255,255,0.05)",
+        color: "white",
         border: "1px solid",
-        borderColor: highlight ? "primary.main" : "divider",
+        borderColor: highlight ? "primary.main" : "rgba(255,255,255,0.1)",
       }}
     >
       <Typography variant="body2" sx={{ fontWeight: 700, fontSize: "0.85rem" }}>
@@ -425,8 +425,8 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
       slotProps={{
         backdrop: {
           sx: {
-            bgcolor: "rgba(0, 0, 0, 0.5)",
-            backdropFilter: "blur(4px)",
+            bgcolor: "rgba(0, 0, 0, 0.4)",
+            backdropFilter: "blur(16px)",
           },
         },
       }}
@@ -443,8 +443,11 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
             position: "relative",
             width: { xs: "95vw", sm: "85vw", md: "60vw" },
             height: { xs: "90vh", sm: "85vh", md: "80vh" },
-            bgcolor: "background.default",
+            bgcolor: "rgba(10, 42, 102, 0.6)",
+            backdropFilter: "blur(24px)",
+            color: "common.white",
             borderRadius: 4,
+            border: "1px solid rgba(255, 255, 255, 0.15)",
             boxShadow: 24,
             display: "flex",
             flexDirection: "column",
@@ -459,8 +462,8 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
               px: { xs: 3, sm: 4, md: 5 },
               py: 2,
               borderBottom: 1,
-              borderColor: "divider",
-              bgcolor: "background.paper",
+              borderColor: "rgba(255,255,255,0.1)",
+              bgcolor: "transparent",
               borderRadius: "16px 16px 0 0",
               zIndex: 10,
             }}
@@ -469,7 +472,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
               <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={onClose}
-                sx={{ color: "text.secondary", fontWeight: 600, "&:hover": { color: "primary.main" } }}
+                sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 600, "&:hover": { color: "white" } }}
               >
                 Back to Positions
               </Button>
@@ -486,7 +489,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                 >
                   Apply Now
                 </Button>
-                <IconButton onClick={onClose} aria-label="Close Job Details">
+                <IconButton onClick={onClose} aria-label="Close Job Details" sx={{ color: "white" }}>
                   <CloseIcon />
                 </IconButton>
               </Stack>
@@ -522,7 +525,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                       label={detail.type}
                       size="small"
                       variant="outlined"
-                      sx={{ borderColor: "divider", fontWeight: 600 }}
+                      sx={{ borderColor: "rgba(255,255,255,0.2)", color: "white", fontWeight: 600 }}
                     />
                   </Stack>
 
@@ -530,7 +533,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     {detail.title}
                   </Typography>
 
-                  <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 500, lineHeight: 1.5, maxWidth: 850 }}>
+                  <Typography variant="h5" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 500, lineHeight: 1.5, maxWidth: 850 }}>
                     {detail.role}
                   </Typography>
 
@@ -543,9 +546,10 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                         sx={{
                           fontFamily: MONO,
                           fontSize: "0.8rem",
-                          bgcolor: "rgba(10,42,102,0.06)",
+                          bgcolor: "rgba(255,255,255,0.05)",
                           border: "1px solid",
-                          borderColor: "divider",
+                          borderColor: "rgba(255,255,255,0.1)",
+                          color: "white",
                         }}
                       />
                     ))}
@@ -560,7 +564,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                   <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>
                     Role Overview
                   </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7, fontSize: "1.05rem" }}>
+                  <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.7, fontSize: "1.05rem" }}>
                     {detail.overview}
                   </Typography>
                 </Box>
@@ -574,7 +578,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     {detail.responsibilities.map((item, index) => (
                       <Stack key={`resp-${String(index)}`} direction="row" spacing={2} alignItems="flex-start">
                         <CheckCircleOutlineIcon sx={{ color: "primary.main", mt: 0.3, fontSize: "1.2rem" }} />
-                        <Typography variant="body1" sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
+                        <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", lineHeight: 1.6 }}>
                           {item}
                         </Typography>
                       </Stack>
@@ -591,7 +595,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     {detail.requirements.map((item, index) => (
                       <Stack key={`req-${String(index)}`} direction="row" spacing={2} alignItems="flex-start">
                         <CheckCircleOutlineIcon sx={{ color: NOIR.goldDark, mt: 0.3, fontSize: "1.2rem" }} />
-                        <Typography variant="body1" sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
+                        <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", lineHeight: 1.6 }}>
                           {item}
                         </Typography>
                       </Stack>
@@ -608,7 +612,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     {detail.desirable.map((item, index) => (
                       <Stack key={`des-${String(index)}`} direction="row" spacing={2} alignItems="flex-start">
                         <StarOutlineIcon sx={{ color: "primary.main", mt: 0.3, fontSize: "1.2rem" }} />
-                        <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
+                        <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", lineHeight: 1.6 }}>
                           {item}
                         </Typography>
                       </Stack>
@@ -621,7 +625,9 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                   sx={{
                     p: { xs: 4, md: 6 },
                     borderRadius: 4,
-                    bgcolor: "primary.main",
+                    bgcolor: "rgba(255,255,255,0.05)",
+                    border: "1px solid",
+                    borderColor: "rgba(255,255,255,0.1)",
                     color: "white",
                     textAlign: "center",
                     mt: 4,
