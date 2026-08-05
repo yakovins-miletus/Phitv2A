@@ -21,7 +21,7 @@ export interface GroundStop {
 
 /** `closing` is in HOME_SECTIONS for the rails but is never rendered, so it has no
  *  element to anchor a stop to. */
-const UNRENDERED = new Set(["closing"]);
+const UNRENDERED = new Set(["closing", "hero-flatten", "hero-align", "hero-reveal", "hero-dwell"]);
 
 export const GROUND_STOPS: readonly GroundStop[] = HOME_SECTIONS.filter(
   (s) => !UNRENDERED.has(s.id),

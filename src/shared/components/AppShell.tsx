@@ -19,6 +19,7 @@ import { MONO } from "@/shared/theme/theme";
 import { motion, AnimatePresence } from "motion/react";
 
 import { CommandPalette } from "./CommandPalette";
+import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
 import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
 // Removed Magnetic imports
@@ -539,7 +540,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s cubic-bezier(0.16,1,0.3,1), border-color 0.6s cubic-bezier(0.16,1,0.3,1), box-shadow 0.6s cubic-bezier(0.16,1,0.3,1)`,
           }}
         >
-          <Container maxWidth={isStandard ? "lg" : (isMinimal ? false : "xl")} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isStandard ? undefined : (isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined) }}>
+          <Container maxWidth={isStandard ? "2xl" : (isMinimal ? false : "xl")} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isStandard ? undefined : (isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined) }}>
             <Toolbar
               disableGutters
               sx={{
@@ -836,6 +837,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           currentNarration={currentNarration}
         />
         <CommandPalette />
+        <FloatingIdOverlay />
 
       </Box>
     </EntrancePhaseContext.Provider>

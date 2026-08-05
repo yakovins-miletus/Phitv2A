@@ -381,9 +381,9 @@ export function CandidatesAndCareersSection() {
                                   sx={{
                                     fontFamily: MONO,
                                     fontSize: "0.65rem",
-                                    bgcolor: "rgba(255,255,255,0.12)",
-                                    color: "white",
-                                    border: "1px solid rgba(255,255,255,0.18)",
+                                    bgcolor: "rgba(10, 42, 102, 0.08)",
+                                    color: "#0A2A66",
+                                    border: "1px solid rgba(10, 42, 102, 0.18)",
                                     borderRadius: 1,
                                     height: "22px",
                                     "& .MuiChip-label": { px: 1 },

@@ -15,7 +15,8 @@ import { GROUNDS } from "@/shared/theme/grounds";
 // they only differ in how.
 
 test("every rendered section has a stop, in scroll order", () => {
-  const rendered = HOME_SECTIONS.filter((s) => s.id !== "closing").map((s) => s.id);
+  const UNRENDERED = ["closing", "hero-flatten", "hero-align", "hero-reveal", "hero-dwell"];
+  const rendered = HOME_SECTIONS.filter((s) => !UNRENDERED.includes(s.id)).map((s) => s.id);
   expect(GROUND_STOPS.map((s) => s.id)).toEqual(rendered);
 });
 

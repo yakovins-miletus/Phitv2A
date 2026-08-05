@@ -1,26 +1,74 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import ButtonBase from "@mui/material/ButtonBase";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 
-interface ElementIdItem {
+interface SnapshotItem {
   id: string;
   top: number;
   left: number;
-  tagName: string;
-  type: "section" | "heading" | "text" | "interactive" | "media" | "container";
+  width: number;
+  height: number;
+  type: "dialog" | "section" | "heading" | "text" | "interactive" | "media" | "container";
 }
 
+const STORAGE_KEY = "phitopolis_id_overlay_enabled";
+
 /**
- * FloatingIdOverlay — Automatically assigns and renders a floating text ID badge
- * for EVERY granular element on the home page (text, headings, grids, buttons,
- * cards, media, and containers).
+ * FloatingIdOverlay — High-performance snapshot-based element inspector.
+ *
+ * Captures a static snapshot of elements visible in the viewport and renders
+ * all bounding boxes and text badges onto a single zero-overhead Canvas layer.
+ * Eliminates continuous DOM reflows and guarantees silky 60fps scrolling.
  */
 export function FloatingIdOverlay() {
-  const [items, setItems] = useState<ElementIdItem[]>([]);
+  const [enabled, setEnabled] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored === null ? true : stored === "true";
+    } catch {
+      return true;
+    }
+  });
 
-  useEffect(() => {
+  const [snapshotCount, setSnapshotCount] = useState<number>(0);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const snapshotTimeoutRef = useRef<number | null>(null);
+
+  const toggleOverlay = () => {
+    setEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_KEY, String(next));
+      } catch {
+        // Fallback
+      }
+      return next;
+    });
+  };
+
+  // Perform a fast single-pass snapshot of visible elements
+  const takeSnapshot = () => {
+    if (!enabled || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
     let elementCounters: Record<string, number> = {};
 
     const getOrAssignId = (el: HTMLElement): string => {
@@ -29,17 +77,34 @@ export function FloatingIdOverlay() {
       }
 
       const tag = el.tagName.toLowerCase();
-      
-      // Determine semantic prefix
-      let prefix = tag;
-      if (/^h[1-6]$/.test(tag)) prefix = "heading";
-      else if (tag === "p" || tag === "span" || tag === "label") prefix = "text";
-      else if (tag === "button" || tag === "a" || tag === "input") prefix = "action";
-      else if (tag === "img" || tag === "svg" || tag === "canvas" || tag === "video") prefix = "media";
-      else if (el.classList.contains("MuiCard-root") || el.getAttribute("role") === "gridcell") prefix = "card";
-      else prefix = "el";
+      const role = el.getAttribute("role") || "";
+      const className = typeof el.className === "string" ? el.className : "";
 
-      // Build descriptive text slug if available
+      let prefix = tag;
+      if (role === "dialog" || className.includes("MuiDialog") || className.includes("MuiDrawer") || className.includes("MuiPopover")) {
+        prefix = "dialog";
+      } else if (/^h[1-6]$/.test(tag)) {
+        prefix = "heading";
+      } else if (tag === "p" || tag === "span" || tag === "label") {
+        prefix = "text";
+      } else if (tag === "button" || tag === "a" || tag === "input" || tag === "textarea") {
+        prefix = "action";
+      } else if (tag === "img" || tag === "svg" || tag === "canvas" || tag === "video") {
+        prefix = "media";
+      } else if (className.includes("MuiCard") || role === "gridcell" || className.includes("card")) {
+        prefix = "card";
+      } else if (tag === "dialog" || tag === "aside") {
+        prefix = "modal";
+      } else if (className.includes("MuiGrid") || className.includes("grid") || role === "grid") {
+        prefix = "grid";
+      } else if (className.includes("MuiStack") || className.includes("stack") || className.includes("flex")) {
+        prefix = "flex-row";
+      } else if (className.includes("MuiContainer") || className.includes("container") || className.includes("wrapper")) {
+        prefix = "wrapper";
+      } else {
+        prefix = "box";
+      }
+
       const rawText = el.textContent || "";
       const textSlug = rawText
         .trim()
@@ -56,12 +121,14 @@ export function FloatingIdOverlay() {
         ? `${prefix}-${textSlug}-${count}`
         : `${prefix}-${count}`;
 
-      // Assign ID to the DOM element
       el.id = newId;
       return newId;
     };
 
-    const getTypeCategory = (tagName: string, id: string): ElementIdItem["type"] => {
+    const getTypeCategory = (tagName: string, id: string, className: string, role: string): SnapshotItem["type"] => {
+      if (role === "dialog" || className.includes("MuiDialog") || className.includes("MuiDrawer") || className.includes("MuiPopover") || id.startsWith("dialog") || id.startsWith("modal")) {
+        return "dialog";
+      }
       if (id.includes("-sequence") || id.includes("zone") || tagName === "section" || tagName === "main") {
         return "section";
       }
@@ -80,157 +147,241 @@ export function FloatingIdOverlay() {
       return "container";
     };
 
-    const scanElements = () => {
-      const container = document.getElementById("home-main") || document.body;
-      elementCounters = {};
+    // Query elements currently visible in the viewport
+    const elements = Array.from(
+      document.body.querySelectorAll<HTMLElement>(
+        "h1, h2, h3, h4, h5, h6, p, span, button, a, canvas, svg, img, section, header, footer, nav, dialog, aside, [role='dialog'], [role='modal'], [data-act], [data-stage-section], div"
+      )
+    ).filter((el) => {
+      if (el.dataset.floatingBadge === "true" || el.closest("[data-floating-control='true']")) {
+        return false;
+      }
+      if (["path", "g", "defs", "circle", "rect", "line"].includes(el.tagName.toLowerCase())) {
+        return false;
+      }
 
-      // Target all elements within the home main tree except floating badges themselves
-      const allElements = Array.from(
-        container.querySelectorAll<HTMLElement>(
-          "h1, h2, h3, h4, h5, h6, p, span, button, a, canvas, svg, img, section, header, footer, nav, [data-act], [data-stage-section], div"
-        )
-      ).filter((el) => {
-        // Exclude overlay elements
-        if (el.dataset.floatingBadge === "true" || el.closest("[data-floating-overlay='true']")) {
-          return false;
-        }
-        // Exclude inline SVG internal paths or zero-size elements
-        if (["path", "g", "defs", "circle", "rect", "line"].includes(el.tagName.toLowerCase())) {
-          return false;
-        }
-        const rect = el.getBoundingClientRect();
-        return rect.width > 12 && rect.height > 12;
-      });
-
-      const newItems: ElementIdItem[] = [];
-      const seenIds = new Set<string>();
-
-      allElements.forEach((el) => {
-        const id = getOrAssignId(el);
-        if (seenIds.has(id)) return;
-        seenIds.add(id);
-
-        const rect = el.getBoundingClientRect();
-        const tagName = el.tagName.toLowerCase();
-
-        newItems.push({
-          id,
-          top: rect.top + window.scrollY,
-          left: Math.max(6, rect.left + window.scrollX),
-          tagName,
-          type: getTypeCategory(tagName, id),
-        });
-      });
-
-      setItems(newItems);
-    };
-
-    // Initial scan
-    scanElements();
-
-    // Event listeners
-    window.addEventListener("resize", scanElements);
-    window.addEventListener("scroll", scanElements, { passive: true });
-
-    const observer = new MutationObserver(scanElements);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "style"],
+      const rect = el.getBoundingClientRect();
+      // Viewport bounds check: must intersect current viewport
+      return (
+        rect.width > 14 &&
+        rect.height > 14 &&
+        rect.bottom >= 0 &&
+        rect.right >= 0 &&
+        rect.top <= h &&
+        rect.left <= w
+      );
     });
 
-    return () => {
-      window.removeEventListener("resize", scanElements);
-      window.removeEventListener("scroll", scanElements);
-      observer.disconnect();
-    };
-  }, []);
+    const items: SnapshotItem[] = [];
+    const seen = new Set<string>();
 
-  const getBadgeColors = (type: ElementIdItem["type"]) => {
-    switch (type) {
-      case "section":
-        return { bg: "rgba(6, 18, 38, 0.95)", border: NOIR.gold, text: NOIR.gold, dot: NOIR.gold };
-      case "heading":
-        return { bg: "rgba(10, 42, 102, 0.92)", border: "#FFD966", text: "#FFD966", dot: "#FFD966" };
-      case "interactive":
-        return { bg: "rgba(4, 30, 24, 0.92)", border: "#3AA189", text: "#4BB89B", dot: "#3AA189" };
-      case "text":
-        return { bg: "rgba(15, 23, 42, 0.88)", border: "#509BD9", text: "#698AD5", dot: "#509BD9" };
-      case "media":
-        return { bg: "rgba(30, 15, 45, 0.92)", border: "#AABD55", text: "#AABD55", dot: "#AABD55" };
-      default:
-        return { bg: "rgba(10, 18, 32, 0.85)", border: "rgba(255,255,255,0.25)", text: NOIR.frost, dot: "#94A3B8" };
-    }
+    elements.forEach((el) => {
+      const id = getOrAssignId(el);
+      if (seen.has(id)) return;
+      seen.add(id);
+
+      const rect = el.getBoundingClientRect();
+      const tagName = el.tagName.toLowerCase();
+      const className = typeof el.className === "string" ? el.className : "";
+      const role = el.getAttribute("role") || "";
+
+      items.push({
+        id,
+        top: Math.round(rect.top),
+        left: Math.round(rect.left),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        type: getTypeCategory(tagName, id, className, role),
+      });
+    });
+
+    // Color definitions
+    const getColors = (type: SnapshotItem["type"]) => {
+      switch (type) {
+        case "dialog":
+          return { bg: "rgba(255, 199, 44, 0.95)", border: "#FFC72C", text: "#06183B" };
+        case "section":
+          return { bg: "rgba(6, 18, 38, 0.95)", border: NOIR.gold, text: NOIR.gold };
+        case "heading":
+          return { bg: "rgba(10, 42, 102, 0.95)", border: "#FFD966", text: "#FFD966" };
+        case "interactive":
+          return { bg: "rgba(4, 30, 24, 0.95)", border: "#3AA189", text: "#4BB89B" };
+        case "text":
+          return { bg: "rgba(15, 23, 42, 0.90)", border: "#509BD9", text: "#698AD5" };
+        case "media":
+          return { bg: "rgba(30, 15, 45, 0.95)", border: "#AABD55", text: "#AABD55" };
+        default:
+          return { bg: "rgba(10, 18, 32, 0.88)", border: "#94A3B8", text: NOIR.frost };
+      }
+    };
+
+    // Draw all items onto the canvas in a single ultra-fast pass
+    ctx.font = "bold 10px 'IBM Plex Mono', SFMono-Regular, Consolas, monospace";
+
+    items.forEach((item) => {
+      const colors = getColors(item.type);
+
+      // 1. Draw dashed bounding box
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(item.left + 0.5, item.top + 0.5, item.width, item.height);
+
+      // 2. Draw floating ID text pill
+      const text = `#${item.id}`;
+      const textMetrics = ctx.measureText(text);
+      const paddingX = 6;
+      const pillW = textMetrics.width + paddingX * 2 + 8;
+      const pillH = 16;
+      const badgeX = Math.max(4, item.left);
+      const badgeY = Math.max(4, item.top - pillH / 2);
+
+      // Pill background
+      ctx.fillStyle = colors.bg;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, pillW, pillH, 4);
+      ctx.fill();
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Dot indicator
+      ctx.fillStyle = colors.border;
+      ctx.beginPath();
+      ctx.arc(badgeX + 7, badgeY + pillH / 2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Text label
+      ctx.fillStyle = colors.text;
+      ctx.fillText(text, badgeX + 13, badgeY + 11.5);
+    });
+
+    setSnapshotCount(items.length);
   };
 
+  useEffect(() => {
+    if (!enabled) {
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext("2d");
+        if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+      setSnapshotCount(0);
+      return;
+    }
+
+    // Initial snapshot after rendering settles
+    const timer = setTimeout(takeSnapshot, 150);
+
+    // Debounced scroll listener (updates snapshot 250ms after scroll settles)
+    const handleScroll = () => {
+      if (snapshotTimeoutRef.current !== null) {
+        window.clearTimeout(snapshotTimeoutRef.current);
+      }
+      snapshotTimeoutRef.current = window.setTimeout(takeSnapshot, 250);
+    };
+
+    const handleResize = () => {
+      takeSnapshot();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.altKey && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        toggleOverlay();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      if (snapshotTimeoutRef.current !== null) clearTimeout(snapshotTimeoutRef.current);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [enabled]);
+
   return (
-    <Box
-      aria-hidden="true"
-      data-floating-overlay="true"
-      sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-        zIndex: 99999,
-        overflow: "visible",
-      }}
-    >
-      {items.map((item) => {
-        const colors = getBadgeColors(item.type);
-        return (
+    <>
+      {/* Fixed Canvas Overlay (Zero DOM Node Overhead) */}
+      <canvas
+        ref={canvasRef}
+        aria-hidden="true"
+        data-floating-control="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 999999,
+          display: enabled ? "block" : "none",
+        }}
+      />
+
+      {/* Floating Snapshot Control Toolbar */}
+      <Box
+        data-floating-control="true"
+        sx={{
+          position: "fixed",
+          bottom: 24,
+          left: 24,
+          zIndex: 1000000,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          pointerEvents: "auto",
+        }}
+      >
+        <ButtonBase
+          onClick={toggleOverlay}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1,
+            px: 1.75,
+            py: 0.75,
+            borderRadius: "20px",
+            bgcolor: enabled ? "rgba(6, 18, 38, 0.95)" : "rgba(15, 23, 42, 0.85)",
+            backdropFilter: "blur(8px)",
+            border: `1px solid ${enabled ? NOIR.gold : "rgba(255,255,255,0.2)"}`,
+            boxShadow: enabled
+              ? `0 4px 16px rgba(0,0,0,0.6), 0 0 10px ${NOIR.gold}40`
+              : "0 2px 10px rgba(0,0,0,0.4)",
+            cursor: "pointer",
+            transition: "all 0.25s ease",
+            "&:hover": {
+              borderColor: NOIR.gold,
+              transform: "scale(1.03)",
+            },
+          }}
+        >
           <Box
-            key={item.id}
-            data-floating-badge="true"
             sx={{
-              position: "absolute",
-              top: item.top,
-              left: item.left,
-              transform: "translateY(-50%)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "3px",
-              px: "6px",
-              py: "2px",
-              borderRadius: "4px",
-              bgcolor: colors.bg,
-              backdropFilter: "blur(4px)",
-              border: `1px solid ${colors.border}`,
-              boxShadow: `0 2px 8px rgba(0,0,0,0.4)`,
-              pointerEvents: "none",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              bgcolor: enabled ? NOIR.gold : "#64748B",
+              boxShadow: enabled ? `0 0 8px ${NOIR.gold}` : "none",
+              transition: "all 0.25s ease",
+            }}
+          />
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.7rem",
+              fontWeight: 800,
+              letterSpacing: "0.1em",
+              color: enabled ? NOIR.gold : "#94A3B8",
               userSelect: "none",
-              transition: "top 0.1s ease-out, left 0.1s ease-out",
             }}
           >
-            <Box
-              sx={{
-                width: 5,
-                height: 5,
-                borderRadius: "50%",
-                bgcolor: colors.dot,
-                boxShadow: `0 0 4px ${colors.dot}`,
-              }}
-            />
-            <Typography
-              component="span"
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.6rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                color: colors.text,
-                lineHeight: 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              #{item.id}
-            </Typography>
-          </Box>
-        );
-      })}
-    </Box>
+            ID OVERLAY: {enabled ? `ON (${snapshotCount})` : "OFF"}
+          </Typography>
+        </ButtonBase>
+      </Box>
+    </>
   );
 }

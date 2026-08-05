@@ -46,10 +46,10 @@ export function HeroGallery() {
             borderRadius: 4,
             overflow: "hidden",
             position: "relative",
-            border: "1px solid rgba(255, 255, 255, 0.25)",
-            boxShadow: "0 20px 44px rgba(0, 0, 0, 0.45)",
+            border: "1px solid rgba(10, 42, 102, 0.18)",
+            boxShadow: "0 12px 36px rgba(10, 42, 102, 0.12)",
             backdropFilter: "blur(12px)",
-            bgcolor: "rgba(10, 42, 102, 0.4)",
+            bgcolor: "rgba(244, 247, 252, 0.85)",
           }}
         >
           <Box
@@ -191,7 +191,7 @@ export function HeroGallery() {
             borderRadius: 4,
             overflow: "hidden",
             position: "relative",
-            border: "1.5px solid rgba(255, 255, 255, 0.3)",
+            border: "1.5px solid rgba(10, 42, 102, 0.25)",
             boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
             backdropFilter: "blur(12px)",
             bgcolor: "rgba(10, 42, 102, 0.5)",
@@ -224,7 +224,7 @@ export function HeroGallery() {
               left: 12,
               bgcolor: "rgba(10, 42, 102, 0.9)",
               color: "common.white",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
+              border: "1px solid rgba(10, 42, 102, 0.2)",
               fontFamily: MONO,
               fontSize: "0.62rem",
               fontWeight: 700,

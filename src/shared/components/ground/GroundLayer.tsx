@@ -103,7 +103,6 @@ export function GroundLayer() {
      * Document offsets of each stop's section.
      *
      * These MUST be re-measured after every ScrollTrigger refresh, not just at
-     * mount. `hero` is pinned for +=3000% and `daily-life` is pinned too, and
      * GSAP inserts pin-spacer elements when it builds those triggers — which moves
      * every section below them. Measuring once at mount produced offsets from the
      * pre-pin layout, and the sampler then never advanced past `reach`: the People

@@ -63,10 +63,6 @@ void main() {
     base = mix(base, uTo, edge);
   }
 
-  // Soft radial vignette — gives light grounds a soft, warm edge falloff.
-  vec2 d = vUv - 0.5;
-  base *= 1.0 - dot(d, d) * 0.18;
-
   // Ordered dither below the 8-bit step, then grain. Without this the navies band
   // in wide viewports; with it the gradient is smooth at any width.
   float n = hash(gl_FragCoord.xy) - 0.5;

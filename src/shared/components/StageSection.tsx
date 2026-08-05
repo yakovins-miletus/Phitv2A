@@ -158,7 +158,7 @@ export function StageSection({ section, muted = false, children }: StageSectionP
         overflow: "visible",
       }}
     >
-      <Container maxWidth="lg" sx={{ position: "relative", height: "100%", overflow: "visible" }}>
+      <Container maxWidth="2xl" sx={{ position: "relative", height: "100%", overflow: "visible" }}>
         <div className="stage-inner" style={{ position: "relative", zIndex: 1, overflow: "visible" }}>
           <Stack spacing={4}>
             {section.kicker ? <StageKicker index={section.kicker} label={section.label} /> : null}

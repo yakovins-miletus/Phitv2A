@@ -72,7 +72,7 @@ test("every section EyeFlow can land on resolves, including the rail-only one", 
   // because "EyeFlow draws one rail dot per entry" — that described the retired
   // ScrollRail. EyeFlow renders one label per chapter, not per section.)
   expect(HOME_SECTIONS.map((s) => s.id)).toContain("closing");
-  expect(homeSection("closing").chapter).toBe(5);
+  expect(homeSection("closing").chapter).toBe(9);
   expect(chapterTarget(homeSection("closing").chapter)).toBe("blog");
 });
 
@@ -87,7 +87,7 @@ test("chapters are contiguous and non-decreasing down the page", () => {
   for (let i = 1; i < chapters.length; i += 1) {
     expect(chapters[i]!).toBeGreaterThanOrEqual(chapters[i - 1]!);
   }
-  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5]));
+  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
   // Every declared chapter is actually used by a section, so the rail never
   // renders a label you cannot scroll to.
   expect(new Set(CHAPTERS.map((c) => c.index))).toEqual(new Set(chapters));

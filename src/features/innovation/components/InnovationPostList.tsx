@@ -107,14 +107,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
                 },
               }}
             />
-            {/* Subtle Gradient Vignette */}
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(180deg, rgba(6, 24, 59, 0.25) 0%, rgba(6, 24, 59, 0.65) 100%)",
-              }}
-            />
+
             {/* Floating Glassmorphic Icon Emblem Badge */}
             <Box
               sx={{

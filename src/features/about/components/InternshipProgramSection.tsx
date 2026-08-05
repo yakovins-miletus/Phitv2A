@@ -11,6 +11,7 @@ import FastForwardIcon from "@mui/icons-material/FastForward";
 import { Section } from "@/shared/components/Section";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 
 interface ProgramPillar {
   icon: React.ComponentType<any>;
@@ -151,22 +152,24 @@ export function InternshipProgramSection() {
             sx={{
               p: { xs: 4, md: 6 },
               borderRadius: { xs: 5, md: 7 },
-              background: "linear-gradient(135deg, #0A2A66 0%, #14418D 100%)",
-              color: "common.white",
+              bgcolor: "rgba(244, 247, 252, 0.95)",
+              border: "1px solid rgba(10, 42, 102, 0.18)",
+              color: NOIR.navyField,
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
               alignItems: { xs: "flex-start", md: "center" },
               justifyContent: "space-between",
               gap: 3,
+              boxShadow: "0 8px 30px rgba(10, 42, 102, 0.08)",
             }}
           >
             <Stack spacing={1.5} sx={{ maxWidth: 680 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <FastForwardIcon sx={{ color: "#FFC72C", fontSize: "1.3rem" }} />
+                <FastForwardIcon sx={{ color: NOIR.goldDark, fontSize: "1.3rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: "#FFC72C",
+                    color: NOIR.goldDark,
                     fontWeight: 800,
                     letterSpacing: "0.15em",
                     fontFamily: MONO,
@@ -176,10 +179,10 @@ export function InternshipProgramSection() {
                   DIRECT PATHWAY TO FULL-TIME FELLOWSHIP
                 </Typography>
               </Box>
-              <Typography variant="h3" component="h3" sx={{ fontWeight: 800, color: "common.white", fontSize: { xs: "1.6rem", md: "2.1rem" } }}>
+              <Typography variant="h3" component="h3" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.6rem", md: "2.1rem" } }}>
                 Fast-Track to Technical Graduate Program
               </Typography>
-              <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.65, fontSize: "1.05rem" }}>
+              <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.82)", lineHeight: 1.65, fontSize: "1.05rem" }}>
                 Top-performing interns receive priority evaluation and direct offers for our full-time Technical Graduate Program before graduation.
               </Typography>
             </Stack>

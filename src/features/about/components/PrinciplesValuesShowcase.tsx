@@ -120,8 +120,8 @@ export function PrinciplesValuesShowcase() {
           top: 0,
           height: "100vh",
           width: "100%",
-          bgcolor: NOIR.navyDeep,
-          color: "common.white",
+          bgcolor: NOIR.void,
+          color: NOIR.navyField,
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
@@ -133,7 +133,7 @@ export function PrinciplesValuesShowcase() {
           sx={{
             position: "absolute",
             inset: 0,
-            background: "radial-gradient(circle at 80% 20%, rgba(255, 199, 44, 0.12) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(10, 42, 102, 0.5) 0%, transparent 60%)",
+            background: "radial-gradient(circle at 80% 20%, rgba(255, 199, 44, 0.08) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(10, 42, 102, 0.04) 0%, transparent 60%)",
             pointerEvents: "none",
           }}
         />
@@ -141,13 +141,13 @@ export function PrinciplesValuesShowcase() {
         <Container maxWidth="xl" sx={{ height: "100%", py: { xs: 4, md: 8 }, px: { xs: 3, md: 8 }, position: "relative", zIndex: 1 }}>
           <Stack spacing={{ xs: 4, md: 6 }} sx={{ height: "100%", justifyContent: "center" }}>
             {/* Section Overhead Title Bar */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2, borderBottom: "1px solid rgba(255, 255, 255, 0.12)" }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2, borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <AutoAwesomeIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+                <AutoAwesomeIcon sx={{ color: NOIR.goldDark, fontSize: "1.2rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: "#FFC72C",
+                    color: NOIR.goldDark,
                     fontWeight: 800,
                     letterSpacing: "0.2em",
                     fontSize: "0.85rem",
@@ -158,7 +158,7 @@ export function PrinciplesValuesShowcase() {
                 </Typography>
               </Box>
 
-              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", fontSize: "0.78rem" }}>
+              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(10, 42, 102, 0.82)", fontSize: "0.78rem" }}>
                 SCROLL TO EXPLORE ({activeIndex + 1} / {VALUES_DATA.length})
               </Typography>
             </Stack>
@@ -183,15 +183,12 @@ export function PrinciplesValuesShowcase() {
                             width: 54,
                             height: 54,
                             borderRadius: 3,
-                            bgcolor: "#FFC72C",
-                            color: "#0A2A66",
+                            bgcolor: NOIR.gold,
+                            color: NOIR.navyField,
                             display: "flex",
                             alignItems: "center",
-                            // Was `justify: "center"` — not a CSS property, so it was
-                            // dropped silently and the icon sat at flex-start,
-                            // hugging the left edge of this 54x54 tile.
                             justifyContent: "center",
-                            boxShadow: "0 8px 24px rgba(255, 199, 44, 0.3)",
+                            boxShadow: "0 8px 24px rgba(10, 42, 102, 0.15)",
                           }}
                         >
                           <Icon sx={{ fontSize: "1.8rem" }} />
@@ -202,7 +199,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: "#FFC72C",
+                            color: NOIR.goldDark,
                             fontSize: "1.5rem",
                             letterSpacing: "0.1em",
                           }}
@@ -212,7 +209,7 @@ export function PrinciplesValuesShowcase() {
                       </Box>
 
                       {/* Main Headline */}
-                      <Typography variant="h2" component="h2" sx={{ fontWeight: 800, color: "common.white", fontSize: { xs: "1.8rem", md: "2.5rem" }, lineHeight: 1.2 }}>
+                      <Typography variant="h2" component="h2" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.8rem", md: "2.5rem" }, lineHeight: 1.2 }}>
                         {activeValue.headline}
                       </Typography>
 
@@ -221,9 +218,11 @@ export function PrinciplesValuesShowcase() {
                         sx={{
                           p: { xs: 3, md: 4 },
                           borderRadius: 4,
-                          bgcolor: "rgba(255, 255, 255, 0.05)",
-                          borderLeft: "4px solid #FFC72C",
-                          backdropFilter: "blur(12px)",
+                          bgcolor: "rgba(244, 247, 252, 0.95)",
+                          borderLeft: `4px solid ${NOIR.goldDark}`,
+                          border: "1px solid rgba(10, 42, 102, 0.12)",
+                          borderLeftWidth: "4px",
+                          boxShadow: "0 4px 20px rgba(10, 42, 102, 0.06)",
                         }}
                       >
                         <Typography
@@ -231,7 +230,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: "#FFC72C",
+                            color: NOIR.goldDark,
                             fontSize: "0.72rem",
                             letterSpacing: "0.12em",
                             display: "block",
@@ -240,7 +239,7 @@ export function PrinciplesValuesShowcase() {
                         >
                           OUR COMMITMENT
                         </Typography>
-                        <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "1.08rem", lineHeight: 1.65 }}>
+                        <Typography variant="body1" sx={{ color: NOIR.navyField, fontSize: "1.08rem", lineHeight: 1.65, fontWeight: 500 }}>
                           "{activeValue.definition}"
                         </Typography>
                       </Box>
@@ -250,8 +249,10 @@ export function PrinciplesValuesShowcase() {
                         sx={{
                           p: { xs: 3, md: 4 },
                           borderRadius: 4,
-                          bgcolor: "rgba(10, 42, 102, 0.5)",
-                          borderLeft: "4px solid #0A2A66",
+                          bgcolor: "rgba(10, 42, 102, 0.04)",
+                          borderLeft: `4px solid ${NOIR.navyField}`,
+                          border: "1px solid rgba(10, 42, 102, 0.12)",
+                          borderLeftWidth: "4px",
                         }}
                       >
                         <Typography
@@ -259,7 +260,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: "rgba(255, 255, 255, 0.6)",
+                            color: NOIR.navyField,
                             fontSize: "0.72rem",
                             letterSpacing: "0.12em",
                             display: "block",
@@ -268,7 +269,7 @@ export function PrinciplesValuesShowcase() {
                         >
                           VALUE DELIVERED TO CLIENTS
                         </Typography>
-                        <Typography variant="body1" sx={{ color: "common.white", fontSize: "1.02rem", lineHeight: 1.65, fontWeight: 500 }}>
+                        <Typography variant="body1" sx={{ color: NOIR.navyField, fontSize: "1.02rem", lineHeight: 1.65, fontWeight: 500 }}>
                           {activeValue.valueToClient}
                         </Typography>
                       </Box>
@@ -345,8 +346,8 @@ export function PrinciplesValuesShowcase() {
                       px: 2,
                       py: 1,
                       borderRadius: 4,
-                      bgcolor: isActive ? "#FFC72C" : "rgba(255, 255, 255, 0.08)",
-                      color: isActive ? "#0A2A66" : "rgba(255, 255, 255, 0.6)",
+                      bgcolor: isActive ? NOIR.gold : "rgba(10, 42, 102, 0.06)",
+                      color: isActive ? NOIR.navyField : "rgba(10, 42, 102, 0.72)",
                       transition: "all 0.3s ease",
                     }}
                   >
@@ -355,7 +356,7 @@ export function PrinciplesValuesShowcase() {
                         width: 8,
                         height: 8,
                         borderRadius: "50%",
-                        bgcolor: isActive ? "#0A2A66" : "rgba(255, 255, 255, 0.4)",
+                        bgcolor: isActive ? NOIR.navyField : "rgba(10, 42, 102, 0.4)",
                       }}
                     />
                     <Typography

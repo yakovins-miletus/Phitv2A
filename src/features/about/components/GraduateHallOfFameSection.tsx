@@ -9,6 +9,7 @@ import { Section } from "@/shared/components/Section";
 import { Reveal } from "@/shared/components/Reveal";
 import { RouterButton } from "@/shared/components/RouterLink";
 import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 interface Cohort {
@@ -321,23 +322,24 @@ export function GraduateHallOfFameSection() {
                 mt: { xs: 6, md: 10 },
                 p: { xs: 4, md: 6 },
                 borderRadius: { xs: 5, md: 7 },
-                background: "linear-gradient(135deg, #0A2A66 0%, #14418D 100%)",
-                color: "common.white",
+                bgcolor: "rgba(244, 247, 252, 0.95)",
+                border: "1px solid rgba(10, 42, 102, 0.18)",
+                color: NOIR.navyField,
                 display: "flex",
                 flexDirection: { xs: "column", md: "row" },
                 alignItems: { xs: "flex-start", md: "center" },
                 justifyContent: "space-between",
                 gap: 4,
-                boxShadow: "0 20px 50px rgba(10, 42, 102, 0.2)",
+                boxShadow: "0 8px 30px rgba(10, 42, 102, 0.08)",
               }}
             >
               <Stack spacing={1.5} sx={{ maxWidth: 680 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <EmojiEventsIcon sx={{ color: "#FFC72C", fontSize: "1.3rem" }} />
+                  <EmojiEventsIcon sx={{ color: NOIR.goldDark, fontSize: "1.3rem" }} />
                   <Typography
                     variant="overline"
                     sx={{
-                      color: "#FFC72C",
+                      color: NOIR.goldDark,
                       fontWeight: 800,
                       letterSpacing: "0.15em",
                       fontFamily: MONO,
@@ -347,10 +349,10 @@ export function GraduateHallOfFameSection() {
                     BECOME A PHITOPOLIS R&D FELLOW
                   </Typography>
                 </Box>
-                <Typography variant="h3" component="h3" sx={{ fontWeight: 800, color: "common.white", fontSize: { xs: "1.6rem", md: "2.1rem" } }}>
+                <Typography variant="h3" component="h3" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.6rem", md: "2.1rem" } }}>
                   Ready to Shape the Future of Production Systems?
                 </Typography>
-                <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.65, fontSize: "1.05rem" }}>
+                <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.82)", lineHeight: 1.65, fontSize: "1.05rem" }}>
                   Applications for our next Technical Graduate Program intake and paid R&D internships are now open. Start your engineering career with world-class mentorship.
                 </Typography>
               </Stack>

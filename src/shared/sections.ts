@@ -19,9 +19,8 @@ export const ACT_LABELS: Record<Act, string> = {
   people: "PEOPLE",
 };
 
-/** Chapter index. Six chapters, three per act — the act boundary falls
- *  between 2 and 3 and nothing may straddle it. */
-export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5;
+/** Chapter index. Ten chapters, seven for services, three for people. */
+export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export interface ChapterDef {
   index: ChapterIndex;
@@ -29,18 +28,18 @@ export interface ChapterDef {
   act: Act;
 }
 
-/** Chapters in scroll order. This is the ONLY place an act is bound to a
- *  chapter, so a section's act is always derived (see `actOfChapter`) and can
- *  never disagree with its chapter — the previous model let `chapter: 2` hold
- *  both `reach` and `daily-life`, which put the Services|People seam *inside*
- *  a chapter and made the rail read REACH over the people film. */
+/** Chapters in scroll order, including the detailed hero phases. */
 export const CHAPTERS: readonly ChapterDef[] = [
-  { index: 0, label: "ORIGIN", act: "services" },
-  { index: 1, label: "PRACTICE", act: "services" },
-  { index: 2, label: "REACH", act: "services" },
-  { index: 3, label: "BEHIND THE CODE", act: "people" },
-  { index: 4, label: "TALENT", act: "people" },
-  { index: 5, label: "SIGNAL", act: "people" },
+  { index: 0, label: "FLATTEN", act: "services" },
+  { index: 1, label: "ALIGN", act: "services" },
+  { index: 2, label: "REVEAL", act: "services" },
+  { index: 3, label: "DWELL", act: "services" },
+  { index: 4, label: "QUANTITATIVE R&D", act: "services" },
+  { index: 5, label: "PRACTICE", act: "services" },
+  { index: 6, label: "REACH", act: "services" },
+  { index: 7, label: "BEHIND THE CODE", act: "people" },
+  { index: 8, label: "TALENT", act: "people" },
+  { index: 9, label: "SIGNAL", act: "people" },
 ];
 
 /** One home-page section: single source of truth for snap points, the left
@@ -51,7 +50,7 @@ export interface SectionDef {
   /** Display number shown in the kicker, e.g. "02". Absent on unnumbered sections. */
   kicker?: string;
   label: string;
-  /** Groups sections into the six EyeFlow chapters. The act is derived from
+  /** Groups sections into the EyeFlow chapters. The act is derived from
    *  this, never stored alongside it. */
   chapter: ChapterIndex;
   /** Stage entrance choreography; StageSection defaults to 'rise'. */
@@ -86,29 +85,33 @@ export const STAGE_ATTR = "data-stage-section";
  *  that deliberately does not line up with these — see NavbarContext.tsx. */
 export const HOME_SECTIONS: readonly SectionDef[] = [
   // ── ACT I · SERVICES ──────────────────────────────────────────────────────
-  { id: "hero", label: "Signal Core", chapter: 0, ground: "void" },
-  { id: "hero-mission", label: "Core Mission", chapter: 0, choreo: "rise", ground: "panel" },
+  { id: "hero-flatten", label: "Logo Flatten", chapter: 0, ground: "void" },
+  { id: "hero-align", label: "Logo Align", chapter: 1, ground: "void" },
+  { id: "hero-reveal", label: "Wordmark Reveal", chapter: 2, ground: "void" },
+  { id: "hero-dwell", label: "Logo Dwell", chapter: 3, ground: "void" },
+  { id: "hero", label: "Signal Core", chapter: 4, ground: "void" },
+  { id: "hero-mission", label: "Core Mission", chapter: 4, choreo: "rise", ground: "panel" },
   {
     id: "hero-pillars",
     label: "Operating Pillars",
-    chapter: 0,
+    chapter: 4,
     choreo: "grow-left",
     ground: "void",
   },
   {
     id: "hero-position",
     label: "Market Position",
-    chapter: 0,
+    chapter: 4,
     choreo: "grow-right",
     ground: "panel",
   },
-  { id: "services", label: "Capabilities", chapter: 0, ground: "void" },
-  { id: "use-cases", label: "Architectural Use-Cases", chapter: 1, ground: "panel" },
-  { id: "process", label: "Process Pipeline", chapter: 1, ground: "void" },
+  { id: "services", label: "Capabilities", chapter: 4, ground: "void" },
+  { id: "use-cases", label: "Architectural Use-Cases", chapter: 5, ground: "panel" },
+  { id: "process", label: "Process Pipeline", chapter: 5, ground: "void" },
   {
     id: "reach",
     label: "Global Footprint",
-    chapter: 2,
+    chapter: 6,
     choreo: "spotlight-clip",
     ground: "white",
   },
@@ -117,14 +120,14 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   {
     id: "daily-life",
     label: "Behind The Code",
-    chapter: 3,
+    chapter: 7,
     choreo: "zoom-center",
     ground: "void",
   },
-  { id: "candidates", label: "Talent & Careers", chapter: 4, choreo: "zoom-center", ground: "panel" },
-  { id: "blog", label: "Intelligence Feed", chapter: 5, choreo: "grow-right", ground: "void" },
+  { id: "candidates", label: "Talent & Careers", chapter: 8, choreo: "zoom-center", ground: "panel" },
+  { id: "blog", label: "Intelligence Feed", chapter: 9, choreo: "grow-right", ground: "void" },
   // Never rendered; carries a ground only so the stop list needs no special case.
-  { id: "closing", label: "Horizon Gateway", chapter: 5, choreo: "zoom-center", ground: "panel" },
+  { id: "closing", label: "Horizon Gateway", chapter: 9, choreo: "zoom-center", ground: "panel" },
 ];
 
 export function homeSection(id: string): SectionDef {

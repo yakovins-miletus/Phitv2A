@@ -138,16 +138,16 @@ export function InnovationHero() {
           <Reveal delay={0.3}>
             <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ pt: 1 }}>
               <Chip
-                icon={<CodeIcon sx={{ color: "#FFC72C !important" }} />}
+                icon={<CodeIcon sx={{ color: `${NOIR.goldDark} !important` }} />}
                 label="100% ENGINEER INITIATED"
                 sx={{
-                  bgcolor: "rgba(6, 24, 59, 0.65)",
+                  bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "common.white",
+                  color: "#0A2A66",
                   fontFamily: MONO,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: "0.75rem",
-                  border: "1px solid rgba(255, 199, 44, 0.4)",
+                  border: "1px solid rgba(10, 42, 102, 0.22)",
                   py: 2,
                 }}
               />
@@ -155,27 +155,27 @@ export function InnovationHero() {
                 icon={<MemoryIcon sx={{ color: `${NOIR.live} !important` }} />}
                 label="9 LIVE R&D EXPERIMENTS"
                 sx={{
-                  bgcolor: "rgba(6, 24, 59, 0.65)",
+                  bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "common.white",
+                  color: "#0A2A66",
                   fontFamily: MONO,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: "0.75rem",
                   border: `1px solid ${alpha(NOIR.live, 0.5)}`,
                   py: 2,
                 }}
               />
               <Chip
-                icon={<AutoAwesomeIcon sx={{ color: "#FFC72C !important" }} />}
+                icon={<AutoAwesomeIcon sx={{ color: `${NOIR.goldDark} !important` }} />}
                 label="C++ / RUST / PYTHON / AI"
                 sx={{
-                  bgcolor: "rgba(6, 24, 59, 0.65)",
+                  bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "common.white",
+                  color: "#0A2A66",
                   fontFamily: MONO,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: "0.75rem",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  border: "1px solid rgba(10, 42, 102, 0.22)",
                   py: 2,
                 }}
               />

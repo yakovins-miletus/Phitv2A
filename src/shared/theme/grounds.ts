@@ -59,23 +59,23 @@ export interface Ground {
 export const GROUNDS: Record<GroundName, Ground> = {
   void: {
     bg: NOIR.void,
-    fg: NOIR.ink,
-    muted: NOIR.mist,
-    rule: NOIR.hairline,
+    fg: NOIR.navyField,
+    muted: "rgba(10, 42, 102, 0.82)",
+    rule: "rgba(10, 42, 102, 0.18)",
     dark: false,
   },
   panel: {
     bg: NOIR.panel,
-    fg: NOIR.ink,
-    muted: NOIR.mist,
-    rule: NOIR.hairline,
+    fg: NOIR.navyField,
+    muted: "rgba(10, 42, 102, 0.82)",
+    rule: "rgba(10, 42, 102, 0.18)",
     dark: false,
   },
   white: {
     bg: NOIR.white,
-    fg: NOIR.ink,
-    muted: NOIR.mist,
-    rule: NOIR.hairline,
+    fg: NOIR.navyField,
+    muted: "rgba(10, 42, 102, 0.82)",
+    rule: "rgba(10, 42, 102, 0.18)",
     dark: false,
   },
   floor: {

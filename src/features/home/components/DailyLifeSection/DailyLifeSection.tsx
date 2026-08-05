@@ -196,7 +196,7 @@ export function DailyLifeSection() {
               tracer={CONTENT.ledes.dailyLife.tracer}
               eyebrow="Daily Life"
               component="h3"
-              tone="dark"
+              tone="light"
             />
           </Box>
 

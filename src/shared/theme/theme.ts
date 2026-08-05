@@ -3,6 +3,13 @@ import { createTheme } from "@mui/material/styles";
 import { components } from "./components";
 import { palette } from "./palette";
 
+declare module "@mui/material/styles" {
+  interface BreakpointOverrides {
+    "2xl": true;
+    "3xl": true;
+  }
+}
+
 /** The display font — headings and interactive elements. */
 export const DISPLAY_FONT = "'Outfit', -apple-system, 'Helvetica Neue', Arial, sans-serif";
 
@@ -17,6 +24,17 @@ export const MONO = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
 
 export const theme = createTheme({
   palette,
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 900,
+      lg: 1200,
+      xl: 1536,
+      "2xl": 1536,
+      "3xl": 1920,
+    },
+  },
   /**
    * Stays 4 — do not "align" this with the glass system's 12px control radius.
    *
@@ -58,3 +76,4 @@ export const theme = createTheme({
   },
   components,
 });
+

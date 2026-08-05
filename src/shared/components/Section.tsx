@@ -20,7 +20,7 @@ export function Section({ children, muted = false }: SectionProps) {
         borderColor: "divider",
       }}
     >
-      <Container maxWidth="lg">{children}</Container>
+      <Container maxWidth="2xl">{children}</Container>
     </Box>
   );
 }

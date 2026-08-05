@@ -7,7 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { useStagePresence } from "@/shared/components/StageSection";
-import { STAGE_ATTR } from "@/shared/sections";
+import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
@@ -20,7 +20,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /** The hero holds for viewport height to give room for 3 logo phases,
  *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
-const HERO_PIN_DISTANCE = "+=3000%";
+const HERO_PIN_DISTANCE = "+=1800%";
 
 /**
  * The three directory link pills below the hero card.
@@ -38,28 +38,27 @@ const HERO_PIN_DISTANCE = "+=3000%";
 const LINK_PILL_SX = {
   borderRadius: "var(--r-control)",
   textDecoration: "none !important",
-  border: "1px solid var(--glass-border-1)",
-  backgroundColor: "var(--glass-under)",
-  backgroundImage: "linear-gradient(var(--glass-fill-1), var(--glass-fill-1))",
-  backdropFilter: "var(--glass-filter)",
-  WebkitBackdropFilter: "var(--glass-filter)",
-  boxShadow: "var(--glass-shadow-1)",
-  transition: "var(--t-glass)",
+  border: `1px solid rgba(10, 42, 102, 0.28)`,
+  backgroundColor: "rgba(244, 247, 252, 0.92)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  boxShadow: "0 4px 16px rgba(10, 42, 102, 0.08)",
+  transition: "all 0.25s ease",
   "&, & *": {
     textDecoration: "none !important",
   },
   "@media (hover: hover)": {
     "&:hover": {
       transform: "translateY(-2px)",
-      backgroundImage: "linear-gradient(var(--accent-15), var(--accent-15))",
-      borderColor: "var(--accent-border)",
-      boxShadow: "var(--glass-shadow-2), 0 0 20px var(--accent-15)",
+      borderColor: NOIR.gold,
+      backgroundColor: NOIR.navyField,
+      boxShadow: `0 4px 20px rgba(10, 42, 102, 0.25), 0 0 12px ${NOIR.gold}40`,
       "& .btn-text": {
-        color: "var(--accent-fg) !important",
+        color: `${NOIR.gold} !important`,
       },
     },
   },
-  "&:active": { transform: "translateY(0)", boxShadow: "var(--glass-inset)" },
+  "&:active": { transform: "translateY(0)" },
   "@media (prefers-reduced-motion: reduce)": {
     "&:hover, &:active": { transform: "none" },
   },
@@ -131,6 +130,19 @@ export function HeroSignalCore() {
           // Per-frame: one batch of custom-property writes. No React render.
           writeHeroVars(el, heroVars(p, false));
           canvasHandleRef.current?.setProgress(p);
+
+          // Update active section ID dynamically to match the current phase
+          if (p < 0.20) {
+            setActiveSection("hero-flatten");
+          } else if (p < 0.35) {
+            setActiveSection("hero-align");
+          } else if (p < 0.50) {
+            setActiveSection("hero-reveal");
+          } else if (p < 0.60) {
+            setActiveSection("hero-dwell");
+          } else {
+            setActiveSection("hero");
+          }
 
           // Coarse state: only commit when a boolean actually flips, which happens
           // roughly four times across the entire 30-viewport pin.
@@ -472,7 +484,7 @@ export function HeroSignalCore() {
               fontWeight: 800,
               fontSize: { xs: "2.0rem", md: "2.60rem" },
               lineHeight: 1.15,
-              color: "var(--text-1)",
+              color: NOIR.navyField,
               letterSpacing: "-0.03em",
             }}
           >
@@ -502,9 +514,9 @@ export function HeroSignalCore() {
             sx={{
               fontFamily: MONO,
               fontSize: "0.65rem",
-              fontWeight: 700,
+              fontWeight: 800,
               letterSpacing: "0.16em",
-              color: "var(--text-2)",
+              color: NOIR.navyField,
               textTransform: "uppercase",
             }}
           >
@@ -538,9 +550,9 @@ export function HeroSignalCore() {
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   letterSpacing: "0.14em",
-                  color: "var(--text-1)",
+                  color: NOIR.navyField,
                   textTransform: "uppercase",
                   transition: "color var(--dur) var(--ease-out)",
                 }}
@@ -567,9 +579,9 @@ export function HeroSignalCore() {
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   letterSpacing: "0.14em",
-                  color: "var(--text-1)",
+                  color: NOIR.navyField,
                   textTransform: "uppercase",
                   transition: "color var(--dur) var(--ease-out)",
                 }}
@@ -596,9 +608,9 @@ export function HeroSignalCore() {
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   letterSpacing: "0.14em",
-                  color: "var(--text-1)",
+                  color: NOIR.navyField,
                   textTransform: "uppercase",
                   transition: "color var(--dur) var(--ease-out)",
                 }}

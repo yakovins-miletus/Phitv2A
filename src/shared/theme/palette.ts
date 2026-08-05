@@ -160,8 +160,8 @@ export const palette: PaletteOptions = {
   mode: "light",
   background: { default: NOIR.void, paper: NOIR.panel },
   text: {
-    primary: NOIR.ink,
-    secondary: NOIR.mist,
+    primary: NOIR.navyField,
+    secondary: "rgba(10, 42, 102, 0.82)",
     disabled: "rgba(10, 42, 102, 0.38)",
   },
   primary: {
@@ -176,7 +176,7 @@ export const palette: PaletteOptions = {
     dark: NOIR.goldDark,
     contrastText: NOIR.navyInk,
   },
-  divider: NOIR.hairline,
+  divider: "rgba(10, 42, 102, 0.18)",
   action: {
     hover: "rgba(10, 42, 102, 0.04)",
     selected: "rgba(10, 42, 102, 0.08)",
