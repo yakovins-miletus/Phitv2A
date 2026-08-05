@@ -7,7 +7,9 @@ import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { NOIR } from "@/shared/theme/palette";
 
-const GROUND = GROUNDS.navyDeep;
+// Follows the section registry rather than naming a ground twice — see the same
+// note in MarketPosition.tsx.
+const GROUND = GROUNDS[homeSection("hero-mission").ground ?? "deep"];
 
 /**
  * Act I, beat 1 — the claim.

@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import { motion, useInView } from "motion/react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { MONO } from "@/shared/theme/theme";
@@ -31,11 +31,11 @@ export function SignalDiagram() {
   // (and forces compositing) even when scrolled far away.
   const inView = useInView(rootRef, { amount: 0.2 });
 
-  // Lock animation once triggered — acts as `once: true` without relying on
-  // per-element IntersectionObservers that fail inside GSAP's pinned scrub.
-  const hasPlayed = useRef(false);
-  if (inView) hasPlayed.current = true;
-  const show = reduced === true || hasPlayed.current;
+  const [hasPlayed, setHasPlayed] = useState(false);
+  useEffect(() => {
+    if (inView) setHasPlayed(true);
+  }, [inView]);
+  const show = reduced === true || hasPlayed;
 
   return (
     <Box ref={rootRef} sx={{ width: 1, overflow: "hidden" }}>

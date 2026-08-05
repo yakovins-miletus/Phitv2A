@@ -24,3 +24,19 @@ export const EASE_OUT_EXPO_CSS = css(EASE_OUT_EXPO);
 /** Symmetric and heavy at both ends — the page-curtain and preloader wipe. */
 export const EASE_IN_OUT_QUART: CubicBezier = [0.76, 0, 0.24, 1];
 export const EASE_IN_OUT_QUART_CSS = css(EASE_IN_OUT_QUART);
+
+/**
+ * Overshoot-then-settle — the only curve here that leaves the 0..1 range.
+ *
+ * Added for the glass toggle, whose spec asks for a "spring-like" thumb. MUI's
+ * SwitchBase is not a `motion` component, so the spring has to be a CSS timing
+ * function rather than a physics simulation; a bezier with a control point above 1
+ * gives the same read — the thumb passes its mark and comes back — in one
+ * declaration and on the compositor.
+ *
+ * Reserved for small, discrete state flips (a thumb, a checkmark). Do not use it on
+ * anything large or scroll-driven: an overshoot on a big surface reads as a bounce,
+ * which is the opposite of what this design is after.
+ */
+export const EASE_SPRING_SOFT: CubicBezier = [0.34, 1.56, 0.64, 1];
+export const EASE_SPRING_SOFT_CSS = css(EASE_SPRING_SOFT);

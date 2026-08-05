@@ -17,6 +17,19 @@ export const MONO = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
 
 export const theme = createTheme({
   palette,
+  /**
+   * Stays 4 — do not "align" this with the glass system's 12px control radius.
+   *
+   * In `sx`, `borderRadius: n` means n × this value, and the codebase has ~40 such
+   * multiplier call sites (`borderRadius: 3` appears 13 times, `4` nine times,
+   * `5` in SiteFooter). Raising the base to 12 would silently triple every one of
+   * them — a 12px card corner becoming 36px with nothing in the diff to show it.
+   *
+   * The corner language is owned explicitly instead, by --r-control / --r-card /
+   * --r-panel / --r-pill in glass.css, applied through the component overrides in
+   * ./components.ts. Since those overrides cover every MUI surface the site
+   * actually renders, this default is only ever a fallback.
+   */
   shape: { borderRadius: 4 },
   typography: {
     fontFamily: BODY_FONT,

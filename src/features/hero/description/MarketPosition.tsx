@@ -8,7 +8,10 @@ import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 
-const GROUND = GROUNDS.void;
+// Read from the section registry rather than named directly: this beat and the
+// scroll-driven ground layer must agree on one ground, and naming it twice is how
+// they drift. `sections.ts` is the source; this follows it.
+const GROUND = GROUNDS[homeSection("hero-position").ground ?? "deep"];
 
 /**
  * Act I, beat 3 — the proof, and where the act breaks into light.

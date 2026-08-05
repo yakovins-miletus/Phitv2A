@@ -112,14 +112,14 @@ test("buffer segments: nothing new starts during buffer zones", () => {
   // Post-gunshot buffer (0.70 → 0.74): gunshot done, smoking hasn't started
   expect(gunshotProgress(0.72)).toBe(1);
   expect(smokingProgress(0.72)).toBe(0);
-  expect(containerScale(0.72)).toBeCloseTo(0.4, 6);  // container already scaled down
+  expect(containerScale(0.72)).toBeCloseTo(0.34, 6);  // container already scaled down
   expect(flankOpacity(0.72)).toBe(0);
   expect(topPanelX(0.72)).toBe(0);
   expect(bottomPanelX(0.72)).toBe(0);
 
   // Post-smoking buffer (0.82 → 0.86): smoking done, P/AT transform hasn't started
   expect(smokingProgress(0.84)).toBe(1);
-  expect(containerScale(0.84)).toBeCloseTo(0.4, 6);
+  expect(containerScale(0.84)).toBeCloseTo(0.34, 6);
   expect(logoAtCrossfadeProgress(0.84)).toBe(0);
 });
 
@@ -133,10 +133,10 @@ test("wordmark lift runs -110% (hidden) to 0% (in place)", () => {
 test("gunshot: images slide in AND container scales down together", () => {
   // Container scales during gunshot
   expect(containerScale(DWELL_END)).toBe(1);
-  expect(containerScale(GUNSHOT_END)).toBeCloseTo(0.4, 6);
-  // Container stays at 0.4 after gunshot
-  expect(containerScale(0.72)).toBeCloseTo(0.4, 6);
-  expect(containerScale(1.0)).toBeCloseTo(0.4, 6);
+  expect(containerScale(GUNSHOT_END)).toBeCloseTo(0.34, 6);
+  // Container stays at 0.34 after gunshot
+  expect(containerScale(0.72)).toBeCloseTo(0.34, 6);
+  expect(containerScale(1.0)).toBeCloseTo(0.34, 6);
   // Flanking texts must stay invisible during gunshot
   expect(flankOpacity(0.65)).toBe(0);
   expect(flankOpacity(GUNSHOT_END)).toBe(0);
@@ -147,18 +147,18 @@ test("gunshot: images slide in AND container scales down together", () => {
   expect(bottomPanelX(GUNSHOT_END)).toBeCloseTo(0, 6);
 });
 
-test("smoking: only texts appear vertically, container stays at 0.4", () => {
-  expect(containerScale(SMOKING_START)).toBeCloseTo(0.4, 6);
-  expect(containerScale(SMOKING_END)).toBeCloseTo(0.4, 6);
+test("smoking: only texts appear vertically, container stays at 0.34", () => {
+  expect(containerScale(SMOKING_START)).toBeCloseTo(0.34, 6);
+  expect(containerScale(SMOKING_END)).toBeCloseTo(0.34, 6);
   // Flanking texts appear during smoking
   expect(flankOpacity(SMOKING_START)).toBe(0);
   expect(flankOpacity(SMOKING_END)).toBe(1);
   // Left text moves upward (negative Y)
   expect(leftFlankY(SMOKING_START)).toBe(0);
-  expect(leftFlankY(SMOKING_END)).toBe(-25);
+  expect(leftFlankY(SMOKING_END)).toBe(-18);
   // Right text moves downward (positive Y)
   expect(rightFlankY(SMOKING_START)).toBe(0);
-  expect(rightFlankY(SMOKING_END)).toBe(25);
+  expect(rightFlankY(SMOKING_END)).toBe(18);
   // Images stay parked (no drift)
   expect(topPanelX(SMOKING_START)).toBe(0);
   expect(topPanelX(SMOKING_END)).toBe(0);

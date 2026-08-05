@@ -103,14 +103,14 @@ export function smokingProgress(p: number): number {
 }
 
 /**
- * Container scale: scales down from 1.0 to 0.4 during gunshot (alongside images).
- * Stays at 0.4 through smoking, buffers, and container transform.
+ * Container scale: scales down from 1.0 to 0.34 during gunshot (alongside images).
+ * Stays at 0.34 through smoking, buffers, and container transform.
  */
 export function containerScale(p: number): number {
   if (p <= DWELL_END) return 1;
-  if (p >= GUNSHOT_END) return 0.4;
+  if (p >= GUNSHOT_END) return 0.34;
   const g = gunshotEaseOut(p);
-  return 1 - g * 0.6; // 1.0 → 0.4
+  return 1 - g * 0.66; // 1.0 → 0.34
 }
 
 /**
@@ -145,22 +145,22 @@ export function rightFlankX(_p: number): number {
   return 0;
 }
 
-/** Left flanking text Y translation vh: 0 → -25vh (upward) during smoking only. */
+/** Left flanking text Y translation vh: 0 → -18vh (upward) during smoking only. */
 export function leftFlankY(p: number): number {
   if (p <= SMOKING_START) return 0;
-  if (p >= SMOKING_END) return -25;
+  if (p >= SMOKING_END) return -18;
   const s = smokingProgress(p);
   const eased = 1 - Math.pow(1 - s, 2); // ease-out quad
-  return -eased * 25;
+  return -eased * 18;
 }
 
-/** Right flanking text Y translation vh: 0 → +25vh (downward) during smoking only. */
+/** Right flanking text Y translation vh: 0 → +18vh (downward) during smoking only. */
 export function rightFlankY(p: number): number {
   if (p <= SMOKING_START) return 0;
-  if (p >= SMOKING_END) return 25;
+  if (p >= SMOKING_END) return 18;
   const s = smokingProgress(p);
   const eased = 1 - Math.pow(1 - s, 2); // ease-out quad
-  return eased * 25;
+  return eased * 18;
 }
 
 /** Flanking text opacity: 0 until smoking starts, then 0→1 during smoking. */

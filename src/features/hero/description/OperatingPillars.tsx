@@ -15,7 +15,9 @@ import { useReducedMotion } from "@/shared/motion";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const GROUND = GROUNDS.navyPanel;
+// Follows the section registry rather than naming a ground twice — see the same
+// note in MarketPosition.tsx.
+const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "deep"];
 
 /**
  * Act I, beat 2 — the structure.

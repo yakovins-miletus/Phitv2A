@@ -203,7 +203,12 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
         style={{
           position: "absolute",
           inset: 0,
-          background: "#FFFFFF",
+          // The base ground, matching index.html's pre-JS paint exactly, so the
+          // handoff from the static <style> to this overlay is invisible. Not glass:
+          // this covers the whole viewport with nothing behind it to blur, and it is
+          // the first thing painted — a backdrop-filter here would be pure cost.
+          background: "var(--g-base)",
+          backgroundColor: "var(--g-ink)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -227,7 +232,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
             <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
               {/* Background guide lines */}
               {PULSE_ARCS.map((arc) => (
-                <path key={`guide-${arc.delay}`} d={arc.d} fill="none" stroke="rgba(10, 42, 102, 0.04)" strokeWidth="1.5" />
+                <path key={`guide-${arc.delay}`} d={arc.d} fill="none" stroke="var(--glass-divider)" strokeWidth="1.5" />
               ))}
 
               {/* Animated gold pulses */}
@@ -236,7 +241,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
               ))}
 
               {/* Progress Circle Ring */}
-              <circle cx="140" cy="140" r="76" fill="none" stroke="rgba(10, 42, 102, 0.05)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
+              <circle cx="140" cy="140" r="76" fill="none" stroke="var(--glass-border-1)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
               <motion.circle
                 cx="140"
                 cy="140"
@@ -296,7 +301,8 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
                 fontFamily: MONO,
                 fontWeight: 700,
                 letterSpacing: "0.28em",
-                color: "primary.main",
+                // Was `primary.main` — navy, which on the navy overlay is invisible.
+                color: "var(--text-1)",
                 fontSize: "1.1rem",
               }}
             >
@@ -308,10 +314,12 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
             <Typography
               sx={{
                 fontFamily: MONO,
-                color: "text.secondary",
+                // --text-3, not text.secondary at opacity 0.7: that compounded to an
+                // effective 0.49 alpha, which measures under the 4.5:1 body floor.
+                // The muted token is 0.60 and verified against every surface.
+                color: "var(--text-3)",
                 fontSize: "0.65rem",
                 letterSpacing: "0.2em",
-                opacity: 0.7,
               }}
             >
               {isCompleteOrLater ? "READY" : `WARMING — ${lastLabel}`}

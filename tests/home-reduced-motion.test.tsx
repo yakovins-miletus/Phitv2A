@@ -70,10 +70,30 @@ test("reduced motion: the ground layer paints one static ground and starts no lo
 
   // A ground is painted — the page is never a flash of unstyled white — but the
   // WebGL canvas stays hidden and no renderer is created under reduce.
-  expect(host!.style.backgroundColor).not.toBe("");
+  //
+  // Asserted as the specific colour rather than merely "non-empty": non-empty would
+  // also accept a light ground regressing back into the track, which is the failure
+  // that matters now that every foreground is off-white. `hero` opens on `base`.
+  expect(host!.style.backgroundColor).toBe("rgb(244, 247, 252)");
+
   const canvas = host!.querySelector("canvas");
   expect(canvas).not.toBeNull();
   expect(canvas!.style.opacity).toBe("0");
+});
+
+test("reduced motion: the glass blur gate is off", async () => {
+  await renderHome();
+
+  // The one place glass cost is gated (theme/useGlassGate.ts) lives in Providers,
+  // and this passes only if it really does. setup.ts stubs
+  // prefers-reduced-motion: reduce at module scope, so the reduce half of the gate
+  // is what is being asserted — jsdom exposes no hardwareConcurrency or
+  // deviceMemory, so useIsLowPowerDevice() reads "high" here.
+  //
+  // glass.css also gates blur in an @media (prefers-reduced-motion: reduce) block,
+  // which is what covers users before React mounts; media queries are stubbed in
+  // jsdom, so the hook is the observable half.
+  expect(document.documentElement.dataset.glass).toBe("off");
 });
 
 test("the ground layer is not occluded by the root backgrounds", async () => {
@@ -82,7 +102,7 @@ test("the ground layer is not occluded by the root backgrounds", async () => {
   // Regression guard for a bug that made the entire layer invisible while every
   // other signal said it was working.
   //
-  // `index.html` paints `html { background: #f8fafc }` as a pre-JS anti-flash
+  // `index.html` paints `html { background: #061226 }` as a pre-JS anti-flash
   // colour, and CssBaseline paints `body` with `background.default`. Because *html*
   // carries a background of its own, body's stops propagating to the viewport
   // canvas and paints as an ordinary in-flow block instead — which per CSS painting

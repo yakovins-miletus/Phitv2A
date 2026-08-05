@@ -18,8 +18,8 @@ import {
   GRID_CELLS,
   PLANE_SIZE,
   RGB_GOLD,
-  RGB_NAVY,
   RGB_SHADOW,
+  RGB_STEEL,
   SERVICE_NODES,
   SERVICE_NODE_SIZE,
   SIGNAL_LOOPS,
@@ -124,7 +124,8 @@ function buildGridSprite(): HTMLCanvasElement {
   const ctx = c.getContext("2d");
   if (!ctx) return c;
 
-  ctx.strokeStyle = rgba(RGB_NAVY, 0.11);
+  // Navy/steel hairlines for clean, soft structure on light ground
+  ctx.strokeStyle = rgba(RGB_STEEL, 0.2);
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let i = 0; i <= GRID_CELLS; i++) {
@@ -136,13 +137,14 @@ function buildGridSprite(): HTMLCanvasElement {
   }
   ctx.stroke();
 
-  // Radial fade so the field dissolves at its edges, matching the old mask-image.
+  // Smooth, continuous radial fade so all grid lines dissolve uniformly without patchy spots
   const mask = ctx.createRadialGradient(
-    PLANE_SIZE / 2, PLANE_SIZE / 2, PLANE_SIZE * 0.3,
-    PLANE_SIZE / 2, PLANE_SIZE / 2, PLANE_SIZE * 0.52,
+    PLANE_SIZE / 2, PLANE_SIZE / 2, 0,
+    PLANE_SIZE / 2, PLANE_SIZE / 2, PLANE_SIZE * 0.55,
   );
   mask.addColorStop(0, "rgba(0,0,0,1)");
-  mask.addColorStop(0.7, "rgba(0,0,0,0.4)");
+  mask.addColorStop(0.4, "rgba(0,0,0,0.75)");
+  mask.addColorStop(0.75, "rgba(0,0,0,0.3)");
   mask.addColorStop(1, "rgba(0,0,0,0)");
   ctx.globalCompositeOperation = "destination-in";
   ctx.fillStyle = mask;
@@ -355,7 +357,8 @@ function drawGrid(
 
   ctx.save();
   ctx.globalAlpha = state.gridOpacity;
-  ctx.strokeStyle = rgba(RGB_NAVY, 0.15);
+  // Phitopolis Navy hairline for crisp, visible structure on soft off-white ground
+  ctx.strokeStyle = rgba(RGB_STEEL, 0.15);
   ctx.lineWidth = 1;
 
   // Extended grid bounds: -8 cells to 30 cells (39x39 grid lines) for full-bleed coverage
@@ -382,9 +385,10 @@ function drawGrid(
   ctx.stroke();
 
   // Perspective-tilted isometric elliptical radial fade centered on plane origin
+  // Balanced radial blur fade (full grid opacity up to 30% plane radius, smooth falloff to 0% at 75% radius)
   const center = project(cam, PLANE_SIZE / 2, PLANE_SIZE / 2, 0);
-  const innerR = PLANE_SIZE * 0.35 * cam.scale;
-  const outerR = PLANE_SIZE * 0.88 * cam.scale;
+  const innerR = PLANE_SIZE * 0.30 * cam.scale;
+  const outerR = PLANE_SIZE * 0.75 * cam.scale;
 
   ctx.save();
   ctx.globalCompositeOperation = "destination-in";
@@ -393,7 +397,8 @@ function drawGrid(
 
   const mask = ctx.createRadialGradient(0, 0, innerR, 0, 0, outerR);
   mask.addColorStop(0, "rgba(0,0,0,1)");
-  mask.addColorStop(0.60, "rgba(0,0,0,0.5)");
+  mask.addColorStop(0.40, "rgba(0,0,0,0.5)");
+  mask.addColorStop(0.70, "rgba(0,0,0,0.12)");
   mask.addColorStop(1, "rgba(0,0,0,0)");
 
   ctx.fillStyle = mask;
@@ -491,7 +496,8 @@ function collectCube(
   state: HeroFrameState,
   sprites: HeroSprites,
 ): void {
-  const base: Rgb = spec.type === "navy" ? RGB_NAVY : RGB_GOLD;
+  // "navy" cubes are the scene's cool mass. On the dark card they read as steel.
+  const base: Rgb = spec.type === "navy" ? RGB_STEEL : RGB_GOLD;
   const x0 = spec.c * GRID_CELL;
   const y0 = spec.r * GRID_CELL;
   const x1 = x0 + GRID_CELL;
@@ -575,9 +581,11 @@ function collectNode(
         for (let i = 0; i < numSlabs; i++) {
           const z = (i / (numSlabs - 1)) * ez;
           const ratio = i / (numSlabs - 1);
-          const r = Math.round(6 + (10 - 6) * ratio);
-          const g = Math.round(14 + (24 - 14) * ratio);
-          const b = Math.round(32 + (51 - 32) * ratio);
+          // Extrusion slabs climb from the card's own navy up to the top face's
+          // navyField, so the side of a node reads as a lit edge rather than a void.
+          const r = Math.round(10 + (10 - 10) * ratio);
+          const g = Math.round(24 + (42 - 24) * ratio);
+          const b = Math.round(51 + (102 - 51) * ratio);
           traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
           ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
           ctx.fill();
@@ -593,7 +601,10 @@ function collectNode(
         // `border: 2px solid gold` at HeroSignalP.tsx:525-527. Traced once, filled and
         // stroked, so the radius skews with the camera.
         traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, top, NODE_RADIUS);
-        ctx.fillStyle = "rgb(10, 24, 51)";
+        // Was rgb(10, 24, 51) — byte-identical to the card's navyPanel, so the
+        // node face vanished into it. navyField is one step lighter: the node reads
+        // as a raised surface, which is how elevation works on a dark ground.
+        ctx.fillStyle = "rgb(10, 42, 102)";
         ctx.fill();
 
         // Outer glow, standing in for `boxShadow: 0 0 28px gold@0.5`.
@@ -808,7 +819,7 @@ function drawLogo(
 
   const mobile = w < 600;
   const baseW = mobile ? 200 : w < 900 ? 280 : 380;
-  const shift = mobile ? 160 : w < 900 ? 200 : 260;
+  const shift = mobile ? 150 : w < 900 ? 260 : 340;
 
   const lw = baseW * (mobile ? 1 - state.moveLeft * 0.25 : 1);
   const lh = lw * sprites.logoAspect;

@@ -3,6 +3,8 @@ import {
   EASE_IN_OUT_QUART_CSS,
   EASE_OUT_EXPO,
   EASE_OUT_EXPO_CSS,
+  EASE_SPRING_SOFT,
+  EASE_SPRING_SOFT_CSS,
 } from "@/shared/motion/easing";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 
@@ -28,10 +30,19 @@ test("the CSS strings match the tuples they are derived from", () => {
   }
 });
 
-test("both curves are valid cubic-beziers: control abscissae inside 0..1", () => {
+test("the spring curve overshoots on y only, and its CSS string matches", () => {
+  expect(EASE_SPRING_SOFT).toEqual([0.34, 1.56, 0.64, 1]);
+  expect(EASE_SPRING_SOFT_CSS).toBe("cubic-bezier(0.34, 1.56, 0.64, 1)");
+  // The overshoot is the point — a thumb that passes its mark and settles. It must
+  // be on y (the second control ordinate); an x outside 0..1 would make the browser
+  // drop the declaration entirely, which is what the next test guards for all three.
+  expect(EASE_SPRING_SOFT[1]).toBeGreaterThan(1);
+});
+
+test("every curve is a valid cubic-bezier: control abscissae inside 0..1", () => {
   // x outside [0,1] is not a function of time and the browser drops the whole
   // declaration. y may legitimately overshoot; x may not.
-  for (const [x1, , x2] of [EASE_OUT_EXPO, EASE_IN_OUT_QUART]) {
+  for (const [x1, , x2] of [EASE_OUT_EXPO, EASE_IN_OUT_QUART, EASE_SPRING_SOFT]) {
     expect(x1).toBeGreaterThanOrEqual(0);
     expect(x1).toBeLessThanOrEqual(1);
     expect(x2).toBeGreaterThanOrEqual(0);

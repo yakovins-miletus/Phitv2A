@@ -2,8 +2,18 @@ import { screen } from "@testing-library/react";
 
 import { MetricCard } from "@/shared/components/MetricCard";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { NOIR } from "@/shared/theme/palette";
+import { theme } from "@/shared/theme/theme";
 
 import { renderWithProviders } from "./test-utils";
+
+test("the theme is the light quant-noir palette", () => {
+  expect(theme.palette.mode).toBe("light");
+  expect(theme.palette.background.default).toBe(NOIR.void);
+  expect(theme.palette.text.primary).toBe(NOIR.ink);
+  expect(theme.palette.secondary.contrastText).toBe(NOIR.navyInk);
+  expect(theme.shape.borderRadius).toBe(4);
+});
 
 test("PageHeader renders the quant-noir display heading", () => {
   renderWithProviders(

@@ -4,11 +4,22 @@ import type { PaletteOptions } from "@mui/material/styles";
     can't take theme callbacks (motion.div style, canvas) import NOIR directly
     so no raw hex ever lives outside this file. */
 export const NOIR = {
+  /* ── Legacy light grounds ──────────────────────────────────────────────────
+     The site was light until the glass revamp. These four tokens described that
+     palette and are still referenced by the components the sweep has not reached
+     yet, so they stay until it does — deleting them here would turn the
+     foundation change into a twelve-file redesign and break `tsc -b`.
+
+     @deprecated Retired with the light palette. Do not reach for these in new
+     code: on a dark ground use `frost` / `--text-1` for primary text,
+     `--text-2` for secondary, and `--glass-divider` for hairlines. */
   void: "#F4F7FC", // Soft cool off-white with subtle primary blue hue
+  /** @deprecated See `void` above. */
   panel: "#F8FAFC", // Surface (cool off-white, matches brand reference)
   gold: "#FFC72C",
   goldLight: "#FFD966",
   goldDark: "#E5B228",
+  /** @deprecated Primary text on a *light* ground. On dark use `frost`. */
   ink: "#0A2A66", // Primary text uses Phitopolis Navy
   /** Secondary text.
    *
@@ -19,8 +30,11 @@ export const NOIR = {
    *  it appears against, so the palette's character is unchanged:
    *      void 4.54:1 · panel 4.66:1 · white 4.88:1
    *  Light grounds only — on the navy sections, secondary text uses white at
-   *  alpha, not this token. */
+   *  alpha, not this token.
+   *
+   *  @deprecated The site has no light grounds. Use `--text-2` (white at 0.70). */
   mist: "#5C719D",
+  /** @deprecated Light-ground divider. On dark use `--glass-divider`. */
   hairline: "#D1D5DB", // Divider/Border
   /**
    * Pure white.
@@ -32,9 +46,29 @@ export const NOIR = {
    * `void` (#F4F7FC) — so it earns a token rather than another inline literal.
    */
   white: "#FFFFFF",
+
+  /**
+   * Primary text on every dark ground — the off-white the glass system reads
+   * against.
+   *
+   * Deliberately the same value as the retired light ground `void`: a cool
+   * off-white was always the right neutral here, and only its role changed when
+   * the palette inverted. Kept as its own token rather than an alias because
+   * `void`'s meaning is "a light page background" and it is on its way out,
+   * while this is load-bearing forever.
+   *
+   * Measured: 17.43:1 on navyInk, 12.73:1 on navyField, and 8.95:1 in the worst
+   * case the design produces — elevation-3 glass over navyField. Pure #FFFFFF
+   * would be harsher for no legibility gain.
+   */
+  frost: "#F4F7FC",
+
   /** rgb triplets for rgba() composition */
   goldRgb: "255, 199, 44",
   voidRgb: "244, 247, 252",
+  frostRgb: "244, 247, 252",
+  navyInkRgb: "6, 18, 38",
+  navyDeepRgb: "6, 24, 59",
   /** Phitopolis brand navy — the sitewide primary color. */
   navyField: "#0A2A66",
   navyFieldRgb: "10, 42, 102",
@@ -56,7 +90,14 @@ export const NOIR = {
   /** "Live" status indicator — the footer's lab-active dot, the innovation-lab
       badges. Was a raw `#00E676` neon green in four places, a colour in no token
       file and off-key next to navy and gold. Re-cut as a desaturated signal green
-      that still reads as "live" without shouting. */
+      that still reads as "live" without shouting.
+
+      STATUS INDICATOR ONLY — never text. It clears AA on the dark grounds
+      themselves (4.28–5.16:1) but measures 3.04–3.65:1 on glass over `navyField`,
+      so a "live" *label* in this colour would fail on a lifted glass surface.
+      Use it for the dot; use `--text-2` or `--accent-fg` for the word next to it.
+      tests/a11y-contrast.test.ts pins that sub-AA reading deliberately, the same
+      way it pins the two broken white alphas. */
   live: "#3AA189",
 } as const;
 
@@ -72,14 +113,30 @@ export const NOIR = {
  * colour carries the same information the timeline does: the story warms toward
  * the present, ending on the brand's own gold. Chapter colour becomes meaning
  * rather than decoration.
+ *
+ * RE-CUT FOR THE DARK PALETTE. The original ramp started at `#2E4C8F`, which was
+ * a reasonable deep blue against an off-white page and measures **2.27:1 against
+ * navyInk** — and JourneyTimeline renders it as *text*. `#2F6FA8` was 3.30:1.
+ * When the page went dark the cold end of the ramp collapsed into the ground it
+ * was drawn on. Every stop was lifted until the whole ramp clears AA on the two
+ * grounds the timeline actually sits on, while preserving both contracts: strictly
+ * monotonic luminance, and landing on the brand gold.
+ *
+ * Measured, on the grounds this ramp is allowed to appear on:
+ *     navyInk  5.52 → 11.99      navyDeep  5.16 → 11.20
+ *
+ * CONSTRAINT: those two grounds only. On `navyField` the 2019 stop is 4.03:1, and
+ * on elevation-3 glass over navyField it is 2.84:1. The timeline sits on `base`
+ * and `deep` and must not be moved onto lifted or glass surfaces without lifting
+ * 2019–2020 further. tests/a11y-contrast.test.ts pins the ink/deep floor.
  */
 export const CHAPTER_ACCENTS: Record<string, string> = {
-  "2019": "#2E4C8F",
-  "2020": "#2F6FA8",
-  "2021": "#2E8C9E",
-  "2022": "#3AA189",
-  "2023": "#6FAE6A",
-  "2024": "#B3B14E",
+  "2019": "#698AD5",
+  "2020": "#509BD9",
+  "2021": "#42ABBE",
+  "2022": "#4BB89B",
+  "2023": "#7DBD71",
+  "2024": "#AABD55",
   "2025": "#E5B228",
   "2026": "#FFC72C",
 };
@@ -89,30 +146,40 @@ export const CHAPTER_ACCENTS: Record<string, string> = {
  *
  * `dev`/`infra`/`data` were Tailwind violet-400 / blue-400 / emerald-400 next to
  * a brand-gold `ai`. Re-cut from the same navy→gold ramp above so the four read
- * as one family.
+ * as one family — and re-cut again with it for the dark palette, where the old
+ * `dev` (#2F6FA8) measured 3.30:1 on navyDeep. These are the 2020/2021/2022 stops.
  */
 export const TECH_CAT_ACCENTS: Record<string, string> = {
   ai: NOIR.gold,
-  dev: "#2F6FA8",
-  infra: "#2E8C9E",
-  data: "#3AA189",
+  dev: "#509BD9",
+  infra: "#42ABBE",
+  data: "#4BB89B",
 };
 
 export const palette: PaletteOptions = {
   mode: "light",
   background: { default: NOIR.void, paper: NOIR.panel },
-  text: { primary: NOIR.ink, secondary: NOIR.mist },
+  text: {
+    primary: NOIR.ink,
+    secondary: NOIR.mist,
+    disabled: "rgba(10, 42, 102, 0.38)",
+  },
   primary: {
     main: NOIR.navyField,
     light: "#14418D",
     dark: "#081F4D",
-    contrastText: "#FFFFFF",
+    contrastText: NOIR.white,
   },
   secondary: {
     main: NOIR.gold,
     light: NOIR.goldLight,
     dark: NOIR.goldDark,
-    contrastText: "#FFFFFF",
+    contrastText: NOIR.navyInk,
   },
   divider: NOIR.hairline,
+  action: {
+    hover: "rgba(10, 42, 102, 0.04)",
+    selected: "rgba(10, 42, 102, 0.08)",
+    disabledBackground: "rgba(10, 42, 102, 0.06)",
+  },
 };

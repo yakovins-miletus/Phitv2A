@@ -6,6 +6,7 @@ import { MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
 
 import { theme } from "@/shared/theme/theme";
+import { useGlassGate } from "@/shared/theme/useGlassGate";
 
 interface ProvidersProps {
   queryClient: QueryClient;
@@ -13,6 +14,11 @@ interface ProvidersProps {
 }
 
 export function Providers({ queryClient, children }: ProvidersProps) {
+  // The one place glass cost is gated. Here rather than in AppShell because this
+  // is the true root: portalled overlays and the test harness both mount it,
+  // AppShell wraps neither.
+  useGlassGate();
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

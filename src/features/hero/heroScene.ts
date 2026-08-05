@@ -30,11 +30,32 @@ export const PLANE_SIZE = GRID_CELLS * GRID_CELL;
 /** CSS `perspective` on the old scene container. */
 export const PERSPECTIVE = 1600;
 
-/* ── Palette, as numeric triplets so the renderer never parses strings per frame ── */
+/* ── Palette, as numeric triplets so the renderer never parses strings per frame ──
+ *
+ * RE-CUT FOR THE DARK CARD. The hero card was `#FFFFFF`; it is `NOIR.navyPanel`
+ * (#0A1833) now, which inverted what these values mean. `RGB_NAVY` was the scene's
+ * *structural* colour — grid lines, the non-gold cubes, one of the signal loops — and
+ * navy structure on a navy panel is invisible. Worse, the old `RGB_SHADOW` [10,24,51]
+ * is now byte-identical to the card it was casting a shadow onto.
+ *
+ * So structure moves to light-on-dark, and the shadow to real black. `RGB_NAVY` is
+ * kept: it is still the right fill for the raised service-node faces, which now read
+ * as *lifted* against the darker panel — dark-mode elevation is the lighter surface. */
+
+/** Brand navy. Now a *raised surface* fill, not a structural stroke. */
 export const RGB_NAVY: Rgb = [10, 42, 102];
 export const RGB_GOLD: Rgb = [255, 199, 44];
-/** Deep navy used for cast/contact shadows. */
-export const RGB_SHADOW: Rgb = [10, 24, 51];
+/**
+ * Structural marks that used to be navy-on-white: the non-gold cubes and the cool
+ * signal loop. This is the cool end of the palette's navy→gold accent ramp
+ * (CHAPTER_ACCENTS 2019), so the scene stays inside the brand family, and it measures
+ * 5.52:1 on the base ground.
+ */
+export const RGB_STEEL: Rgb = [105, 138, 213];
+/** Off-white, for hairline structure: the isometric grid. Matches NOIR.frost. */
+export const RGB_FROST: Rgb = [244, 247, 252];
+/** Contact and cast shadows. Black, not navy — a navy shadow on a navy panel is nothing. */
+export const RGB_SHADOW: Rgb = [0, 0, 0];
 
 export type Rgb = readonly [number, number, number];
 
@@ -149,7 +170,9 @@ function buildSignalLoops(): SignalLoop[] {
     // Loop 1: inner quad orbiting the P logo through the four icon centres.
     { waypoints: [quant, fullstack, ops, data, quant], color: RGB_GOLD, pulseOffsets: [0, 0.5] },
     // Loop 2: mid-perimeter highway.
-    { waypoints: [midTL, midTR, midBR, midBL, midTL], color: RGB_NAVY, pulseOffsets: [0.25, 0.75] },
+    // Steel, not navy: this loop is a stroke on the dark card, so it has to be the
+    // light end of the pair. The gold loops either side of it are unchanged.
+    { waypoints: [midTL, midTR, midBR, midBL, midTL], color: RGB_STEEL, pulseOffsets: [0.25, 0.75] },
     // Loop 3: outer grid boundary.
     { waypoints: [outerTL, outerTR, outerBR, outerBL, outerTL], color: RGB_GOLD, pulseOffsets: [0.1, 0.6] },
   ] as const;

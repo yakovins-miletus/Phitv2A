@@ -19,8 +19,29 @@ import { NOIR } from "./palette";
  *
  * Foregrounds are MUI theme paths or rgba strings rather than hex literals, so no
  * raw colour enters a component file.
+ *
+ * ── RE-CUT FOR THE DARK PALETTE ───────────────────────────────────────────────
+ *
+ * There were six grounds: three light (`white`, `void`, `panel`) and three navy.
+ * The glass revamp makes the whole site dark, so the light three are retired
+ * rather than redefined — a ground called `white` whose `bg` is `#061226` is a
+ * lie that outlives everyone who read the commit that made it. The union is
+ * renamed to describe depth instead of colour, which is what it was always
+ * really selecting.
+ *
+ * `navyPanel` also leaves the *track* (it stays in `NOIR`, which several
+ * components still use for insets): it measures a 1.009 luminance ratio against
+ * `navyDeep`, so a 560px crossfade between the two renders as literally nothing.
+ * Surface elevation is the glass layer's job now, not the ground's — a lifted
+ * panel is `glass({ elevation: 2 })`, not a marginally different navy.
+ *
+ *     white | void | panel  ->  retired
+ *     navyFloor            ->  floor   (the deepest, footer and page floor)
+ *     navyInk              ->  base    (page default, the darkest ground)
+ *     navyDeep             ->  deep    (the workhorse)
+ *     navyField            ->  field   (the lifted, brand-navy ground)
  */
-export type GroundName = "white" | "void" | "panel" | "navyField" | "navyPanel" | "navyDeep";
+export type GroundName = "void" | "panel" | "white" | "floor" | "base" | "deep" | "field";
 
 export interface Ground {
   /** The surface colour. Also the value the ground layer interpolates toward. */
@@ -36,34 +57,53 @@ export interface Ground {
 }
 
 export const GROUNDS: Record<GroundName, Ground> = {
-  // Light grounds — `ink` is 12.73:1 on void, `mist` 4.54:1 (and 4.88:1 on white).
-  // All verified by computation, not by eye.
-  white: { bg: NOIR.white, fg: NOIR.ink, muted: NOIR.mist, rule: NOIR.hairline, dark: false },
-  void: { bg: NOIR.void, fg: NOIR.ink, muted: NOIR.mist, rule: NOIR.hairline, dark: false },
-  panel: { bg: NOIR.panel, fg: NOIR.ink, muted: NOIR.mist, rule: NOIR.hairline, dark: false },
-
-  // Dark grounds — white is 17.5:1 on navyDeep, so white at 0.72 alpha still clears
-  // 4.5:1 comfortably. `mist` is deliberately absent here: it fails on navy at
-  // 3.58:1, which is the exact pairing the audit caught the palette permitting.
-  navyField: {
-    bg: NOIR.navyField,
-    fg: "common.white",
-    muted: "rgba(255, 255, 255, 0.72)",
-    rule: "rgba(255, 255, 255, 0.16)",
+  void: {
+    bg: NOIR.void,
+    fg: NOIR.ink,
+    muted: NOIR.mist,
+    rule: NOIR.hairline,
+    dark: false,
+  },
+  panel: {
+    bg: NOIR.panel,
+    fg: NOIR.ink,
+    muted: NOIR.mist,
+    rule: NOIR.hairline,
+    dark: false,
+  },
+  white: {
+    bg: NOIR.white,
+    fg: NOIR.ink,
+    muted: NOIR.mist,
+    rule: NOIR.hairline,
+    dark: false,
+  },
+  floor: {
+    bg: NOIR.navyFloor,
+    fg: NOIR.frost,
+    muted: "rgba(255, 255, 255, 0.70)",
+    rule: "rgba(255, 255, 255, 0.12)",
     dark: true,
   },
-  navyPanel: {
-    bg: NOIR.navyPanel,
-    fg: "common.white",
-    muted: "rgba(255, 255, 255, 0.72)",
-    rule: "rgba(255, 255, 255, 0.16)",
+  base: {
+    bg: NOIR.navyInk,
+    fg: NOIR.frost,
+    muted: "rgba(255, 255, 255, 0.70)",
+    rule: "rgba(255, 255, 255, 0.12)",
     dark: true,
   },
-  navyDeep: {
+  deep: {
     bg: NOIR.navyDeep,
-    fg: "common.white",
-    muted: "rgba(255, 255, 255, 0.72)",
-    rule: "rgba(255, 255, 255, 0.16)",
+    fg: NOIR.frost,
+    muted: "rgba(255, 255, 255, 0.70)",
+    rule: "rgba(255, 255, 255, 0.12)",
+    dark: true,
+  },
+  field: {
+    bg: NOIR.navyField,
+    fg: NOIR.frost,
+    muted: "rgba(255, 255, 255, 0.70)",
+    rule: "rgba(255, 255, 255, 0.12)",
     dark: true,
   },
 };

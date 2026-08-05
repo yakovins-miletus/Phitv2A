@@ -32,9 +32,9 @@ export const GROUND_STOPS: readonly GroundStop[] = HOME_SECTIONS.filter(
     id: section.id,
     // Sections without a declared ground inherit the page default rather than
     // punching a hole in the track.
-    ground: section.ground ?? "void",
+    ground: section.ground ?? "deep",
     act,
-    color: GROUNDS[section.ground ?? "void"].bg,
+    color: GROUNDS[section.ground ?? "deep"].bg,
     actBreak: prev !== undefined && actOfChapter(prev.chapter) !== act,
   };
 });

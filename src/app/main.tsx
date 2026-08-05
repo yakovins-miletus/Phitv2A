@@ -1,4 +1,8 @@
 import "@/shared/theme/fonts.css";
+// The glass token layer. Imported here, as a real stylesheet, so every
+// custom property resolves before the first Emotion insertion and before
+// Preloader or GroundLayer paint their first frame. See glass.css's docblock.
+import "@/shared/theme/glass.css";
 
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";

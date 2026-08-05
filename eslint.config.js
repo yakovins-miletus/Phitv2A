@@ -94,4 +94,20 @@ export default tseslint.config(
       "no-restricted-syntax": "off",
     },
   },
+  {
+    // The gates that assert *on* colours and curves. a11y-contrast keeps a denylist
+    // of off-brand values that must never re-enter the palette — the whole point is
+    // to name them literally — and ground-stops feeds parseGround known-good and
+    // known-bad hex. easing.test asserts the cubic-bezier strings the rule elsewhere
+    // forbids. Telling them to import a token would defeat what they check.
+    files: [
+      "tests/a11y-contrast.test.ts",
+      "tests/glass-tokens.test.ts",
+      "tests/motion/ground-stops.test.ts",
+      "tests/motion/easing.test.ts",
+    ],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
 );

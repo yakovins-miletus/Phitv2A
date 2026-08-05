@@ -10,6 +10,7 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import { Section } from "@/shared/components/Section";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 import { CONTENT } from "@/shared/content";
 
 export function CertificationsSection() {
@@ -29,11 +30,11 @@ export function CertificationsSection() {
         <Stack spacing={2} sx={{ maxWidth: 840 }}>
           <Reveal>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-              <VerifiedUserIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+              <VerifiedUserIcon sx={{ color: NOIR.gold, fontSize: "1.2rem" }} />
               <Typography
                 variant="overline"
                 sx={{
-                  color: "#FFC72C",
+                  color: NOIR.gold,
                   fontWeight: 800,
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",
@@ -78,10 +79,10 @@ export function CertificationsSection() {
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",
-                  bgcolor: selectedProvider === "all" ? "#0A2A66" : "background.paper",
+                  bgcolor: selectedProvider === "all" ? NOIR.navyField : "background.paper",
                   color: selectedProvider === "all" ? "common.white" : "text.secondary",
                   border: "1px solid",
-                  borderColor: selectedProvider === "all" ? "#0A2A66" : "divider",
+                  borderColor: selectedProvider === "all" ? NOIR.navyField : "divider",
                   cursor: "pointer",
                   py: 2,
                   px: 1,
@@ -99,10 +100,10 @@ export function CertificationsSection() {
                       fontFamily: MONO,
                       fontWeight: 700,
                       fontSize: "0.72rem",
-                      bgcolor: isSelected ? "#0A2A66" : "background.paper",
+                      bgcolor: isSelected ? NOIR.navyField : "background.paper",
                       color: isSelected ? "common.white" : "text.secondary",
                       border: "1px solid",
-                      borderColor: isSelected ? "#0A2A66" : "divider",
+                      borderColor: isSelected ? NOIR.navyField : "divider",
                       cursor: "pointer",
                       py: 2,
                       px: 0.8,
@@ -114,7 +115,7 @@ export function CertificationsSection() {
             </Stack>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <WorkspacePremiumIcon sx={{ color: "#FFC72C", fontSize: "1.1rem" }} />
+              <WorkspacePremiumIcon sx={{ color: NOIR.gold, fontSize: "1.1rem" }} />
               <Typography variant="caption" sx={{ fontFamily: MONO, fontWeight: 700, color: "text.secondary", letterSpacing: "0.05em" }}>
                 {totalCerts} ACTIVE ENTERPRISE CERTIFICATIONS
               </Typography>
@@ -131,7 +132,7 @@ export function CertificationsSection() {
                   <Stack spacing={3}>
                     {/* Provider Subheader */}
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <Typography variant="h4" component="h3" sx={{ fontWeight: 800, color: "#0A2A66" }}>
+                      <Typography variant="h4" component="h3" sx={{ fontWeight: 800, color: NOIR.navyField }}>
                         {group.provider}
                       </Typography>
                       <Typography variant="caption" sx={{ fontFamily: MONO, fontWeight: 800, color: "text.secondary" }}>

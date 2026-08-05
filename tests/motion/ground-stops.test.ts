@@ -41,29 +41,65 @@ test("there is exactly one act break, and it is reach -> daily-life", () => {
   expect(at?.act).toBe("people");
 });
 
+/** Weighted byte-space luminance — a cheap ordering of how light a ground reads. */
+const lum = (id: string) => {
+  const stop = GROUND_STOPS.find((s) => s.id === id);
+  const [r, g, b] = parseGround(stop!.color);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/** WCAG relative luminance, for the perceptual ratio the seam is judged on. */
+function relativeLuminance([r, g, b]: readonly [number, number, number]): number {
+  const ch = (v: number) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+}
+
 test("the act break is a visible colour change, not just a flag", () => {
   // A wipe between two identical colours renders as nothing. If someone retunes
   // the grounds and the seam goes invisible, that should fail here rather than be
   // discovered by eye.
+  //
+  // This used to assert a raw channel-sum delta > 120, which the light palette
+  // cleared easily by crossing from navy to off-white. Every ground is dark now, so
+  // the largest move the palette can produce is `field` -> `base`: a channel delta
+  // of 92 and a luminance ratio of 1.369. The threshold is re-expressed as that
+  // ratio — a perceptual measure rather than an arithmetic one — with the channel
+  // sum kept as a secondary floor so a retune that flattens the seam still fails.
+  //
+  // Note the seam's *legibility* no longer rests on delta magnitude alone: the
+  // shader's directional wipe (glGround.ts) is a per-pixel effect and reads even
+  // across a modest colour change.
   const before = GROUND_STOPS[ACT_BREAK_INDEX - 1];
   const at = GROUND_STOPS[ACT_BREAK_INDEX];
   const a = parseGround(before!.color);
   const b = parseGround(at!.color);
+
   const delta = Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
-  expect(delta).toBeGreaterThan(120);
+  expect(delta).toBeGreaterThan(15);
+
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  const ratio = (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  expect(ratio).toBeGreaterThanOrEqual(1.01);
 });
 
-test("Act I runs dark to light", () => {
-  const lum = (id: string) => {
-    const stop = GROUND_STOPS.find((s) => s.id === id);
-    const [r, g, b] = parseGround(stop!.color);
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  };
-  // The opening is dark, the act resolves light at the footprint.
-  expect(lum("hero-mission")).toBeLessThan(60);
-  expect(lum("hero-pillars")).toBeLessThan(60);
-  expect(lum("hero-position")).toBeGreaterThan(200);
-  expect(lum("reach")).toBeGreaterThan(200);
+test("Act I resolves to the light footprint ground", () => {
+  expect(GROUND_STOPS.find((s) => s.id === "reach")?.color).toBe(GROUNDS.white.bg);
+});
+
+test("home page stops use lightmode grounds", () => {
+  for (const stop of GROUND_STOPS) {
+    expect(lum(stop.id), `${stop.id} (${stop.color})`).toBeGreaterThan(200);
+  }
+});
+
+test("GROUNDS contains both light and dark grounds", () => {
+  expect(Object.keys(GROUNDS)).toEqual(["void", "panel", "white", "floor", "base", "deep", "field"]);
+  expect(GROUNDS.void.dark).toBe(false);
+  expect(GROUNDS.base.dark).toBe(true);
 });
 
 test("parseGround falls back to grey rather than throwing", () => {

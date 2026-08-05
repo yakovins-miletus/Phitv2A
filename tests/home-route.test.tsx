@@ -2,6 +2,7 @@ import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/rea
 import { screen } from "@testing-library/react";
 
 import { routeTree } from "@/routeTree.gen";
+import { CONTENT } from "@/shared/content";
 
 import { makeTestQueryClient, renderWithProviders } from "./test-utils";
 
@@ -48,9 +49,14 @@ test("home route loads via the router: hero, services, new visual sections", asy
   expect(screen.getByText("Full-Stack Development")).toBeInTheDocument();
   expect(screen.getByText("From problem to production")).toBeInTheDocument();
   // ReachSection's heading became a SectionLede bound to CONTENT.ledes.reach.
-  expect(
-    screen.getByText("Two offices. Two client regions. One clock that never stops."),
-  ).toBeInTheDocument();
+  //
+  // Asserted against the lede's current copy rather than a literal typed in here.
+  // This test was already red before the glass revamp: it pinned the string "Two
+  // offices. Two client regions. One clock that never stops.", which content.ts
+  // stopped carrying. Reading the value from CONTENT keeps the real assertion — that
+  // ReachSection renders its bound lede — without re-freezing prose that the copy
+  // deck owns.
+  expect(screen.getByText(CONTENT.ledes.reach.gunshot)).toBeInTheDocument();
   // Careers panel 1 heading, now bound to CONTENT.targetCandidates.
   expect(
     screen.getByText("For talents that outgrow large institutions"),

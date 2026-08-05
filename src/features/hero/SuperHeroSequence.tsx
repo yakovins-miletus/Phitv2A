@@ -22,6 +22,49 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
 const HERO_PIN_DISTANCE = "+=3000%";
 
+/**
+ * The three directory link pills below the hero card.
+ *
+ * These were three byte-identical 17-line `sx` blocks — a repeated treatment, so it
+ * earns a token rather than a third copy. Glass is safe here: the pills are siblings
+ * of the scaled card, not children of it, so nothing re-samples their backdrop per
+ * frame. (Anything *inside* the pin must stay opaque — see the note on the card's own
+ * bgcolor.)
+ *
+ * The old `transition: all 0.9s` is gone twice over: `all` swept in `backdrop-filter`,
+ * which recomputes the blur on every frame of the transition, and 0.9s is nearly three
+ * times the interaction ceiling.
+ */
+const LINK_PILL_SX = {
+  borderRadius: "var(--r-control)",
+  textDecoration: "none !important",
+  border: "1px solid var(--glass-border-1)",
+  backgroundColor: "var(--glass-under)",
+  backgroundImage: "linear-gradient(var(--glass-fill-1), var(--glass-fill-1))",
+  backdropFilter: "var(--glass-filter)",
+  WebkitBackdropFilter: "var(--glass-filter)",
+  boxShadow: "var(--glass-shadow-1)",
+  transition: "var(--t-glass)",
+  "&, & *": {
+    textDecoration: "none !important",
+  },
+  "@media (hover: hover)": {
+    "&:hover": {
+      transform: "translateY(-2px)",
+      backgroundImage: "linear-gradient(var(--accent-15), var(--accent-15))",
+      borderColor: "var(--accent-border)",
+      boxShadow: "var(--glass-shadow-2), 0 0 20px var(--accent-15)",
+      "& .btn-text": {
+        color: "var(--accent-fg) !important",
+      },
+    },
+  },
+  "&:active": { transform: "translateY(0)", boxShadow: "var(--glass-inset)" },
+  "@media (prefers-reduced-motion: reduce)": {
+    "&:hover, &:active": { transform: "none" },
+  },
+} as const;
+
 // Stage 01: Hero Signal Core Landing Stage (Pinned scroll sequence with 3D-to-2D transition)
 //
 // Scroll drives this sequence WITHOUT React state. `onUpdate` writes CSS custom
@@ -121,11 +164,14 @@ export function HeroSignalCore() {
           justifyContent: "center",
           // The centre stop was an opaque `#FFFFFF`, which made the hero its own
           // ground and produced the hard cut into the mission section below it.
-          // GroundLayer paints `white` here now (NOIR.white, the same value), so
-          // this is only the vignette — transparent in the middle, tinting toward
-          // the edges — and the hero's ground can interpolate into navyDeep instead
-          // of switching.
-          background: `radial-gradient(ellipse at center, transparent 65%, ${alpha(NOIR.panel, 0.4)} 88%, ${alpha(NOIR.navyField, 0.02)} 100%)`,
+          // GroundLayer owns the hero's ground (`base`) now, so this is only the
+          // vignette — transparent in the middle, darkening toward the edges — and
+          // the ground can interpolate into `deep` below instead of switching.
+          //
+          // The tint inverted with the palette: it used to be navy-at-low-alpha
+          // darkening a white page, and is now black darkening a dark one.
+          // Standard plain black radial vignette: transparent 60% -> rgba(0,0,0,0.40) at 100%
+          background: "radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.40) 100%)",
           pt: 0,
           pb: 0,
           px: 0,
@@ -152,7 +198,7 @@ export function HeroSignalCore() {
                 width: "100%",
                 height: "50vh",
                 overflow: "hidden",
-                borderBottom: "1px solid rgba(255,255,255,0.2)",
+                borderBottom: "1px solid rgba(10, 42, 102, 0.15)",
               }}
             >
               <Box
@@ -163,7 +209,7 @@ export function HeroSignalCore() {
                   width: "140%",
                   height: "100%",
                   objectFit: "cover",
-                  filter: "brightness(0.85) contrast(1.05)",
+                  filter: "brightness(0.92) contrast(1.02)",
                   willChange: "transform",
                   animation: "autoPanTop 25s linear infinite alternate",
                   "@keyframes autoPanTop": {
@@ -183,7 +229,7 @@ export function HeroSignalCore() {
                 width: "100%",
                 height: "50vh",
                 overflow: "hidden",
-                borderTop: "1px solid rgba(255,255,255,0.2)",
+                borderTop: "1px solid rgba(10, 42, 102, 0.15)",
               }}
             >
               <Box
@@ -194,7 +240,7 @@ export function HeroSignalCore() {
                   width: "140%",
                   height: "100%",
                   objectFit: "cover",
-                  filter: "brightness(0.85) contrast(1.05)",
+                  filter: "brightness(0.92) contrast(1.02)",
                   willChange: "transform",
                   animation: "autoPanBottom 25s linear infinite alternate",
                   "@keyframes autoPanBottom": {
@@ -207,7 +253,7 @@ export function HeroSignalCore() {
           </Box>
         )}
 
-        {/* Primary Navy Layer (60% transparent) */}
+        {/* Primary Soft Overlay during Gunshot */}
         {stage.gunshot && (
           <Box
             aria-hidden
@@ -215,7 +261,7 @@ export function HeroSignalCore() {
               position: "absolute",
               inset: 0,
               zIndex: 3,
-              bgcolor: alpha(NOIR.navyField, 0.60),
+              bgcolor: alpha(NOIR.navyField, 0.15),
               pointerEvents: "none",
             }}
           />
@@ -245,8 +291,8 @@ export function HeroSignalCore() {
                   fontWeight: 800,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: stage.borderDone ? NOIR.gold : "#FFFFFF",
-                  textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
+                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
+                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
@@ -278,8 +324,8 @@ export function HeroSignalCore() {
                   fontWeight: 800,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: stage.borderDone ? NOIR.gold : "#FFFFFF",
-                  textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.8)",
+                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
+                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
@@ -304,10 +350,14 @@ export function HeroSignalCore() {
             zIndex: 5,
             transform: "scale(var(--hp-scale, 1))",
             transformOrigin: "center center",
-            bgcolor: "#FFFFFF",
+            /**
+             * Soft primary color with ~98% whiter ground (NOIR.void - #F4F7FC),
+             * synced with webpage background color.
+             */
+            bgcolor: NOIR.void,
             borderRadius: "calc(var(--hp-g, 0) * 24px)",
-            border: "1px solid rgba(0,0,0,calc(0.08 * var(--hp-g, 0)))",
-            boxShadow: "0 24px 60px rgba(0, 0, 0, calc(0.35 * var(--hp-g, 0)))",
+            border: "1px solid rgba(10,42,102,calc(0.12 * var(--hp-g, 0)))",
+            boxShadow: "0 20px 50px rgba(10, 42, 102, calc(0.12 * var(--hp-g, 0)))",
             maxWidth: "100%",
             maxHeight: "100%",
             m: "auto",
@@ -349,8 +399,8 @@ export function HeroSignalCore() {
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
               left: {
                 xs: "50%",
-                sm: "calc(50% - 10px)",
-                md: "calc(50% - 20px)",
+                sm: "calc(50% - 65px)",
+                md: "calc(50% - 95px)",
               },
               width: "auto",
               textAlign: { xs: "center", sm: "left" },
@@ -377,6 +427,7 @@ export function HeroSignalCore() {
                   lineHeight: 1,
                   textTransform: "uppercase",
                   userSelect: "none",
+                  color: NOIR.navyField,
                   transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
                 }}
               >
@@ -387,7 +438,7 @@ export function HeroSignalCore() {
         </Box>
 
 
-        {/* Ultra-Subtle Corner Vignette */}
+        {/* Plain Black Radial Vignette */}
         <Box
           aria-hidden
           sx={{
@@ -395,7 +446,7 @@ export function HeroSignalCore() {
             inset: 0,
             zIndex: 1,
             pointerEvents: "none",
-            background: `radial-gradient(ellipse at center, transparent 90%, ${alpha(NOIR.navyField, 0.03)} 100%)`,
+            background: "radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.40) 100%)",
           }}
         />
 
@@ -421,7 +472,7 @@ export function HeroSignalCore() {
               fontWeight: 800,
               fontSize: { xs: "2.0rem", md: "2.60rem" },
               lineHeight: 1.15,
-              color: NOIR.navyField,
+              color: "var(--text-1)",
               letterSpacing: "-0.03em",
             }}
           >
@@ -453,7 +504,7 @@ export function HeroSignalCore() {
               fontSize: "0.65rem",
               fontWeight: 700,
               letterSpacing: "0.16em",
-              color: alpha(NOIR.navyField, 0.88),
+              color: "var(--text-2)",
               textTransform: "uppercase",
             }}
           >
@@ -479,24 +530,7 @@ export function HeroSignalCore() {
                 gap: 1.2,
                 px: 3,
                 py: 1.2,
-                borderRadius: "8px",
-                textDecoration: "none !important",
-                border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-                bgcolor: alpha(NOIR.panel, 0.75),
-                backdropFilter: "blur(12px)",
-                boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-                transition: `all 0.9s ${EASE_OUT_EXPO_CSS}`,
-                "&, & *": {
-                  textDecoration: "none !important",
-                },
-                "&:hover": {
-                  bgcolor: NOIR.navyField,
-                  borderColor: NOIR.navyField,
-                  boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-                  "& .btn-text": {
-                    color: "#FFFFFF !important",
-                  },
-                },
+                ...LINK_PILL_SX,
               }}
             >
               <Typography
@@ -506,9 +540,9 @@ export function HeroSignalCore() {
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   letterSpacing: "0.14em",
-                  color: "text.primary",
+                  color: "var(--text-1)",
                   textTransform: "uppercase",
-                  transition: "color 0.9s ease",
+                  transition: "color var(--dur) var(--ease-out)",
                 }}
               >
                 ABOUT PHITOPOLIS <Box component="span" sx={{ ml: 0.5 }}>→</Box>
@@ -525,24 +559,7 @@ export function HeroSignalCore() {
                 gap: 1.2,
                 px: 3,
                 py: 1.2,
-                borderRadius: "8px",
-                textDecoration: "none !important",
-                border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-                bgcolor: alpha(NOIR.panel, 0.75),
-                backdropFilter: "blur(12px)",
-                boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-                transition: `all 0.9s ${EASE_OUT_EXPO_CSS}`,
-                "&, & *": {
-                  textDecoration: "none !important",
-                },
-                "&:hover": {
-                  bgcolor: NOIR.navyField,
-                  borderColor: NOIR.navyField,
-                  boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-                  "& .btn-text": {
-                    color: "#FFFFFF !important",
-                  },
-                },
+                ...LINK_PILL_SX,
               }}
             >
               <Typography
@@ -552,9 +569,9 @@ export function HeroSignalCore() {
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   letterSpacing: "0.14em",
-                  color: "text.primary",
+                  color: "var(--text-1)",
                   textTransform: "uppercase",
-                  transition: "color 0.9s ease",
+                  transition: "color var(--dur) var(--ease-out)",
                 }}
               >
                 WHAT WE DO <Box component="span" sx={{ ml: 0.5 }}>→</Box>
@@ -571,24 +588,7 @@ export function HeroSignalCore() {
                 gap: 1.2,
                 px: 3,
                 py: 1.2,
-                borderRadius: "8px",
-                textDecoration: "none !important",
-                border: `1px solid ${alpha(NOIR.navyField, 0.25)}`,
-                bgcolor: alpha(NOIR.panel, 0.75),
-                backdropFilter: "blur(12px)",
-                boxShadow: `0 8px 24px ${alpha(NOIR.navyField, 0.08)}`,
-                transition: `all 0.9s ${EASE_OUT_EXPO_CSS}`,
-                "&, & *": {
-                  textDecoration: "none !important",
-                },
-                "&:hover": {
-                  bgcolor: NOIR.navyField,
-                  borderColor: NOIR.navyField,
-                  boxShadow: `0 10px 30px ${alpha(NOIR.navyField, 0.35)}`,
-                  "& .btn-text": {
-                    color: "#FFFFFF !important",
-                  },
-                },
+                ...LINK_PILL_SX,
               }}
             >
               <Typography
@@ -598,9 +598,9 @@ export function HeroSignalCore() {
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   letterSpacing: "0.14em",
-                  color: "text.primary",
+                  color: "var(--text-1)",
                   textTransform: "uppercase",
-                  transition: "color 0.9s ease",
+                  transition: "color var(--dur) var(--ease-out)",
                 }}
               >
                 EXPLORE COMMUNITY <Box component="span" sx={{ ml: 0.5 }}>→</Box>

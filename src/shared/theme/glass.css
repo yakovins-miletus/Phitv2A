@@ -1,0 +1,203 @@
+/**
+ * The glass token layer — the single source of truth for every surface value in
+ * the macOS-inspired dark system.
+ *
+ * WHY A STYLESHEET and not MUI `cssVariables` or `MuiCssBaseline.styleOverrides`:
+ *
+ *  - These tokens must resolve *before* React mounts. The pre-JS paint in
+ *    index.html, Preloader (which renders before the app), and GroundLayer's
+ *    first synchronous frame all need them. A `styleOverrides` callback cannot
+ *    exist that early.
+ *  - `styleOverrides` is a `(theme) => ({...})` callback, so Emotion would
+ *    re-serialize ~60 global declarations that can never change — the exact cost
+ *    src/features/hero/heroVars.ts was written to avoid.
+ *  - MUI `cssVariables` only vends the *palette*. It gives nothing for blur,
+ *    saturate, rim, radii or duration, which is most of this set.
+ *  - The three gate blocks at the bottom (@media reduce, [data-glass=off],
+ *    @supports not) are cascade constructs. They belong in the cascade.
+ *
+ * Two consequences, both deliberate:
+ *
+ *  1. A handful of hex values are mirrored here from palette.ts. ESLint's
+ *     no-restricted-syntax rule only sees TS nodes, so .css is invisible to it.
+ *     The mirror is enforced by tests/glass-tokens.test.ts instead, which reads
+ *     this file and string-compares against NOIR. Change a value here without
+ *     changing palette.ts and the suite fails.
+ *  2. Vitest stubs .css imports, so `var(--glass-*)` resolves to nothing in
+ *     jsdom. No test may assert a computed backdropFilter or background. Glass
+ *     assertions are arithmetic on the token *source* — which is how
+ *     tests/a11y-contrast.test.ts already works.
+ *
+ * THE TINT / UNDERSTUDY SPLIT is the load-bearing idea. Every glass surface
+ * paints `--glass-under` (an opaque-ish navy) *behind* `--glass-fill-N` (a white
+ * tint). When the gate fires, `--glass-under-a` rises 0.55 -> 0.94 in the same
+ * declaration block that drops `--glass-blur` to 0, so the surface becomes a
+ * solid navy panel atomically. There is no per-component branching and no window
+ * in which a 6%-white surface sits over unblurred content with text on it.
+ *
+ * It also means every contrast figure in tests/a11y-contrast.test.ts is a lower
+ * bound: the understudy only ever darkens a surface toward navyInk, so the tests
+ * model `--glass-under-a: 0` as the worst case.
+ */
+
+:root {
+  /* UA rendering for scrollbars and form controls */
+  color-scheme: light dark;
+
+  /* ── Grounds — mirrored from NOIR (guarded by tests/glass-tokens.test.ts) ── */
+  --g-void: #f4f7fc;  /* NOIR.void     — light ground default */
+  --g-panel: #f8fafc; /* NOIR.panel    — light surface panel */
+  --g-white: #ffffff; /* NOIR.white    — pure white ground */
+  --g-floor: #04122e; /* NOIR.navyFloor */
+  --g-ink: #061226;   /* NOIR.navyInk   — dark ground base */
+  --g-deep: #06183b;  /* NOIR.navyDeep  — dark ground deep */
+  --g-field: #0a2a66; /* NOIR.navyField — dark ground field */
+
+  /* The layered base. Never a flat fill — a flat near-black reads as a dead
+     surface and bands badly on wide viewports. Home's ground is owned by
+     GroundLayer, which interpolates these same four values; this gradient is
+     what every other route sits on. */
+  --g-base: radial-gradient(120% 80% at 50% 0%, var(--g-deep) 0%, var(--g-ink) 62%, var(--g-floor) 100%);
+  --g-grid-line: rgba(255, 255, 255, 0.03);
+  --g-grid-size: 64px;
+  --g-noise-opacity: 0.035;
+
+  /* ── Glass: the translucent white tint ──────────────────────────────────── */
+  --glass-fill-1: rgba(255, 255, 255, 0.06); /* chrome, chips, inline controls */
+  --glass-fill-2: rgba(255, 255, 255, 0.09); /* cards, panels                 */
+  --glass-fill-3: rgba(255, 255, 255, 0.12); /* overlays, drawers, sheets     */
+
+  /* ── Glass: the solid understudy painted UNDERNEATH the tint ────────────── */
+  --glass-under-rgb: 6, 18, 38; /* = NOIR.navyInkRgb */
+  --glass-under-a: 0.55; /* GATED -> 0.94 */
+  --glass-under: rgba(var(--glass-under-rgb), var(--glass-under-a));
+
+  /* ── Blur — the gated numbers ───────────────────────────────────────────── */
+  --glass-blur: 20px; /* GATED -> 0px  */
+  --glass-saturate: 160%; /* GATED -> 100% */
+  --glass-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+
+  /* ── Edges ──────────────────────────────────────────────────────────────── */
+  --glass-border-color: rgba(255, 255, 255, 0.15);
+  --glass-border-1: rgba(255, 255, 255, 0.15);
+  --glass-border-2: rgba(255, 255, 255, 0.3); /* hover: opacity doubles */
+  --glass-border: 1px solid var(--glass-border-1);
+  --glass-rim: rgba(255, 255, 255, 0.25); /* the top-edge light catch */
+  --glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-inset: inset 0 1px 2px rgba(0, 0, 0, 0.35); /* input wells, pressed */
+  --glass-divider: rgba(255, 255, 255, 0.08); /* hairline inside a panel */
+  --hairline: rgba(255, 255, 255, 0.07);
+
+  /* ── Shadows: one outer drop + one inner glow, per elevation ─────────────── */
+  --glass-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  /* ── Radii ──────────────────────────────────────────────────────────────── */
+  --r-control: 12px;
+  --r-card: 16px;
+  --r-panel: 20px;
+  --r-pill: 999px;
+
+  /* ── Accent — brand gold, and nothing else ──────────────────────────────── */
+  --accent-rgb: 255, 199, 44; /* = NOIR.goldRgb */
+  --accent: rgb(var(--accent-rgb));
+  --accent-15: rgba(var(--accent-rgb), 0.15);
+  --accent-20: rgba(var(--accent-rgb), 0.2);
+  --accent-25: rgba(var(--accent-rgb), 0.25);
+  --accent-40: rgba(var(--accent-rgb), 0.4); /* focused input border */
+  --accent-border: rgba(var(--accent-rgb), 0.38);
+  --accent-fg: #ffc72c; /* = NOIR.gold — accent as text/icon */
+  --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
+
+  /* ── Destructive ────────────────────────────────────────────────────────── */
+  --danger-rgb: 224, 92, 92;
+  --danger-15: rgba(var(--danger-rgb), 0.15);
+  --danger-border: rgba(var(--danger-rgb), 0.4);
+  --danger-fg: #f2a3a3;
+
+  /* ── Text. Every value verified against every glass elevation on every
+         ground in tests/a11y-contrast.test.ts. --text-3 is 0.60 rather than the
+         0.50 a generic glass spec would use because 0.50 measures 3.71:1 on
+         elevation 3 over --g-field and fails AA. ─────────────────────────── */
+  --text-1: #f4f7fc; /* = NOIR.frost — 8.95:1 worst case */
+  --text-2: rgba(255, 255, 255, 0.7); /* 5.12:1 worst case */
+  --text-3: rgba(255, 255, 255, 0.6); /* 4.61:1 worst case */
+  --text-disabled: rgba(255, 255, 255, 0.38); /* deliberately sub-AA */
+  --divider: rgba(255, 255, 255, 0.12);
+
+  /* ── Chrome ─────────────────────────────────────────────────────────────── */
+  --nav-fill: rgba(var(--glass-under-rgb), 0.6);
+  --nav-blur: 30px; /* GATED -> 0px */
+  --nav-filter: blur(var(--nav-blur)) saturate(var(--glass-saturate));
+  --scrim: rgba(0, 0, 0, 0.55);
+  --scrim-blur: 8px; /* GATED -> 0px */
+  --scrim-filter: blur(var(--scrim-blur));
+
+  /* ── Motion. --dur-max is the micro-interaction ceiling (hover, focus,
+         press, toggle) — NOT a ceiling on scroll-entrance reveals, which are
+         the site's narrative cadence at 0.5-0.6s and live in
+         shared/components/Reveal.tsx. ───────────────────────────────────── */
+  --dur-fast: 0.15s;
+  --dur: 0.2s;
+  --dur-slow: 0.3s;
+  --dur-max: 0.35s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* = EASE_OUT_EXPO_CSS */
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1); /* = EASE_IN_OUT_QUART_CSS */
+  --stagger: 50ms;
+
+  /* backdrop-filter is deliberately ABSENT from this list. Transitioning a blur
+     recomputes it on every frame of the transition, which is the single most
+     expensive thing here. Animate the tint and the border instead. */
+  --t-glass:
+    background-color var(--dur) var(--ease-out), background-image var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+/**
+ * THE GATE. One attribute, one coordinated set of values.
+ *
+ * Set by src/shared/theme/useGlassGate.ts from useIsLowPowerDevice(). An
+ * attribute rather than three setProperty calls because the values must move
+ * together — a half-applied gate is a 6%-white surface over unblurred content.
+ *
+ * useDeviceTier's docblock already names "a header backdrop-blur" as a measured
+ * cause of jank on 4-core machines. This is where that gets honoured.
+ */
+html[data-glass="off"] {
+  --glass-blur: 0px;
+  --glass-saturate: 100%;
+  --glass-under-a: 0.94;
+  --nav-blur: 0px;
+  --scrim-blur: 0px;
+}
+
+/* Reduced motion is gated in the cascade as well as in the hook, so blur is off
+   before React mounts for users who asked for less. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --glass-blur: 0px;
+    --glass-saturate: 100%;
+    --glass-under-a: 0.94;
+    --nav-blur: 0px;
+    --scrim-blur: 0px;
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+    --dur-slow: 0.01ms;
+    --dur-max: 0.01ms;
+    --stagger: 0ms;
+  }
+}
+
+/* No backdrop-filter support (Firefox before 103, older WebViews): the solid
+   understudy carries the surface on its own. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-blur: 0px;
+    --glass-saturate: 100%;
+    --glass-under-a: 0.94;
+    --nav-blur: 0px;
+    --scrim-blur: 0px;
+  }
+}

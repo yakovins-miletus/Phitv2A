@@ -86,64 +86,43 @@ export const STAGE_ATTR = "data-stage-section";
  *  that deliberately does not line up with these — see NavbarContext.tsx. */
 export const HOME_SECTIONS: readonly SectionDef[] = [
   // ── ACT I · SERVICES ──────────────────────────────────────────────────────
-  // The act opens dark and resolves into light at the footprint, so the ground
-  // layer has one long gradient to travel instead of alternating slabs.
-  { id: "hero", label: "Signal Core", chapter: 0, ground: "white" },
-  // Three stages, not one pinned deck: `hero-desc` used to be a single 100vh pin
-  // that swapped four beats with `display: none` inside one centred glass card, so
-  // the beats were indistinguishable and beats 1-3 were unreachable entirely under
-  // prefers-reduced-motion (the pin never ran, so the beat index never advanced).
-  // Each is now a real scrolling section with its own ground and choreo.
-  { id: "hero-mission", label: "Core Mission", chapter: 0, choreo: "rise", ground: "navyDeep" },
+  { id: "hero", label: "Signal Core", chapter: 0, ground: "void" },
+  { id: "hero-mission", label: "Core Mission", chapter: 0, choreo: "rise", ground: "panel" },
   {
     id: "hero-pillars",
     label: "Operating Pillars",
     chapter: 0,
     choreo: "grow-left",
-    ground: "navyPanel",
+    ground: "void",
   },
   {
     id: "hero-position",
     label: "Market Position",
     chapter: 0,
     choreo: "grow-right",
-    ground: "void",
+    ground: "panel",
   },
-  // One stage, not four: the capabilities used to be four near-identical
-  // full-viewport templates in a row. CapabilityRack collapses them into a
-  // single stage whose rows expand in place — see CapabilityRack.tsx.
   { id: "services", label: "Capabilities", chapter: 0, ground: "void" },
-  { id: "use-cases", label: "Architectural Use-Cases", chapter: 1, ground: "void" },
-  { id: "process", label: "Process Pipeline", chapter: 1, ground: "panel" },
-  // Closes Act I. The last thing a prospective client sees before the page
-  // changes who it is talking to.
+  { id: "use-cases", label: "Architectural Use-Cases", chapter: 1, ground: "panel" },
+  { id: "process", label: "Process Pipeline", chapter: 1, ground: "void" },
   {
     id: "reach",
     label: "Global Footprint",
     chapter: 2,
     choreo: "spotlight-clip",
-    ground: "panel",
+    ground: "white",
   },
 
   // ── ACT II · PEOPLE ───────────────────────────────────────────────────────
-  // `daily-life` opens Act II. It used to sit in chapter 2 beside `reach`,
-  // which is what made the rail claim REACH while the people film played.
-  //
-  // The act opens dark deliberately: this is the film, and it is the one ground
-  // change on the page the layer wipes rather than crossfades.
-  // `navyDeep`, not `navyField`: the film card is itself `primary.main`
-  // (navyField), so a matching ground would erase it. A deeper ground makes the
-  // card read as a lifted surface — dark-mode elevation comes from the lighter
-  // surface, not from a bigger shadow.
   {
     id: "daily-life",
     label: "Behind The Code",
     chapter: 3,
     choreo: "zoom-center",
-    ground: "navyDeep",
+    ground: "void",
   },
   { id: "candidates", label: "Talent & Careers", chapter: 4, choreo: "zoom-center", ground: "panel" },
-  { id: "blog", label: "Intelligence Feed", chapter: 5, choreo: "grow-right", ground: "panel" },
+  { id: "blog", label: "Intelligence Feed", chapter: 5, choreo: "grow-right", ground: "void" },
   // Never rendered; carries a ground only so the stop list needs no special case.
   { id: "closing", label: "Horizon Gateway", chapter: 5, choreo: "zoom-center", ground: "panel" },
 ];
