@@ -20,7 +20,10 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /** The hero holds for viewport height to give room for 3 logo phases,
  *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
-const HERO_PIN_DISTANCE = "+=1800%";
+/** Pin distance: 1800% for the hero animation + 100% extra overlap window
+ *  where the overlay sheet slides up over the still-pinned hero. */
+const HERO_PIN_DISTANCE = "+=1900%";
+const ANIM_LIMIT = 1800 / 1900;
 
 /**
  * The three directory link pills below the hero card.
@@ -125,11 +128,25 @@ export function HeroSignalCore() {
         scrub: 0.6,
         pin: true,
         onUpdate: (self) => {
-          const p = self.progress;
+          // Clamp so animations complete at 1800/1900 of the pin.
+          // The final 100vh of pin time is dead air for the overlay transition.
+          const p = Math.min(1.0, self.progress / ANIM_LIMIT);
 
           // Per-frame: one batch of custom-property writes. No React render.
           writeHeroVars(el, heroVars(p, false));
           canvasHandleRef.current?.setProgress(p);
+
+          // Parallax drift: during the overlap phase (progress > ANIM_LIMIT),
+          // translate the hero content upward at ~30% of the scroll rate.
+          // This makes the hero appear to recede slowly while the overlay
+          // sheet slides over it at full scroll speed — true parallax.
+          if (self.progress > ANIM_LIMIT) {
+            const overlapT = (self.progress - ANIM_LIMIT) / (1 - ANIM_LIMIT);
+            const drift = overlapT * -30; // up to -30vh upward drift
+            el.style.transform = `translateY(${drift}vh)`;
+          } else {
+            el.style.transform = "";
+          }
 
           // Update active section ID dynamically to match the current phase
           if (p < 0.20) {
@@ -145,7 +162,7 @@ export function HeroSignalCore() {
           }
 
           // Coarse state: only commit when a boolean actually flips, which happens
-          // roughly four times across the entire 30-viewport pin.
+          // roughly four times across the whole 30-viewport pin.
           const next = heroStage(p, false);
           if (!sameStage(stageRef.current, next)) {
             stageRef.current = next;
@@ -265,7 +282,7 @@ export function HeroSignalCore() {
           </Box>
         )}
 
-        {/* Primary Soft Overlay during Gunshot */}
+        {/* Primary Soft Overlay during Gunshot (80% opacity overlay) */}
         {stage.gunshot && (
           <Box
             aria-hidden
@@ -273,7 +290,7 @@ export function HeroSignalCore() {
               position: "absolute",
               inset: 0,
               zIndex: 3,
-              bgcolor: alpha(NOIR.navyField, 0.15),
+              bgcolor: alpha(NOIR.navyField, 0.80),
               pointerEvents: "none",
             }}
           />
@@ -282,69 +299,117 @@ export function HeroSignalCore() {
         {/* Flanking Text Elements (Appear during Smoking — vertical movement) */}
         {stage.flank && (
           <>
-            {/* Top Text: 7 YEARS OF EXCELLENCE — starts at center, moves upward */}
+            {/* Top Text: 7 YEARS OF EXCELLENCE — 2 rows fitting top 50vh, vertically centered */}
             <Box
               sx={{
                 position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, calc(-50% + var(--hp-lefty, 0) * 1vh))",
+                left: 0,
+                right: 0,
+                top: 0,
+                height: "50vh",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                // Translate using a tighter drift parameter to keep it centered on its half
+                transform: "translateY(calc(var(--hp-lefty, 0) * 0.45vh))",
                 opacity: "var(--hp-flank, 0)",
                 pointerEvents: "none",
                 zIndex: 4,
-                whiteSpace: "nowrap",
-                textAlign: "center",
+                overflow: "hidden",
+                px: { xs: 2, md: 4 },
               }}
             >
               <Typography
                 sx={{
                   fontFamily: MONO,
-                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
-                  fontWeight: 800,
-                  letterSpacing: "0.16em",
+                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
+                  fontWeight: 950,
+                  lineHeight: 0.9,
+                  letterSpacing: "-0.03em",
                   textTransform: "uppercase",
-                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
-                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  transition: "color 0.15s ease-out",
+                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
+                  textAlign: "center",
                 }}
               >
-                7 YEARS OF EXCELLENCE
+                7 YEARS OF
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
+                  fontWeight: 950,
+                  lineHeight: 0.9,
+                  letterSpacing: "-0.03em",
+                  textTransform: "uppercase",
+                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
+                  textAlign: "center",
+                }}
+              >
+                EXCELLENCE
               </Typography>
             </Box>
 
-            {/* Bottom Text: GENERATIONS OF COMPETITIVENESS — starts at center, moves downward */}
+            {/* Bottom Text: GENERATIONS OF COMPETITIVENESS — 2 rows fitting bottom 50vh, vertically centered */}
             <Box
               sx={{
                 position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, calc(-50% + var(--hp-righty, 0) * 1vh))",
+                left: 0,
+                right: 0,
+                top: "50vh",
+                height: "50vh",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                // Translate using a tighter drift parameter to keep it centered on its half
+                transform: "translateY(calc(var(--hp-righty, 0) * 0.45vh))",
                 opacity: "var(--hp-flank, 0)",
                 pointerEvents: "none",
                 zIndex: 4,
-                whiteSpace: "nowrap",
-                textAlign: "center",
+                overflow: "hidden",
+                px: { xs: 2, md: 4 },
               }}
             >
               <Typography
                 sx={{
                   fontFamily: MONO,
-                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
-                  fontWeight: 800,
-                  letterSpacing: "0.16em",
+                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
+                  fontWeight: 950,
+                  lineHeight: 0.9,
+                  letterSpacing: "-0.03em",
                   textTransform: "uppercase",
-                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
-                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  transition: "color 0.15s ease-out",
+                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
+                  textAlign: "center",
                 }}
               >
-                GENERATIONS OF COMPETITIVENESS
+                GENERATIONS OF
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
+                  fontWeight: 950,
+                  lineHeight: 0.9,
+                  letterSpacing: "-0.03em",
+                  textTransform: "uppercase",
+                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
+                  textAlign: "center",
+                }}
+              >
+                COMPETITIVENESS
               </Typography>
             </Box>
           </>
@@ -360,7 +425,7 @@ export function HeroSignalCore() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 5,
-            transform: "scale(var(--hp-scale, 1))",
+            transform: "scale(calc(1.0 - (1.0 - var(--hp-scale, 1)) * 1.15))",
             transformOrigin: "center center",
             /**
              * Soft primary color with ~98% whiter ground (NOIR.void - #F4F7FC),
@@ -373,19 +438,6 @@ export function HeroSignalCore() {
             maxWidth: "100%",
             maxHeight: "100%",
             m: "auto",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              inset: "-1px",
-              border: "6px solid",
-              borderColor: NOIR.gold,
-              borderRadius: "inherit",
-              pointerEvents: "none",
-              clipPath:
-                "polygon(0% 0%, 100% 0%, 100% calc(var(--hp-border, 0) * 100%), 0% calc(var(--hp-border, 0) * 100%))",
-              opacity: "var(--hp-border, 0)",
-              willChange: "clip-path",
-            }
           }}
         >
           {/* Interactive Signal Canvas Layer (Grid, Signal lines, cubes, service nodes,
@@ -456,7 +508,7 @@ export function HeroSignalCore() {
           sx={{
             position: "absolute",
             inset: 0,
-            zIndex: 1,
+            zIndex: 3,
             pointerEvents: "none",
             background: "radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.40) 100%)",
           }}

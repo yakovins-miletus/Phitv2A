@@ -64,21 +64,36 @@ function HomePage() {
           announces the cut instead of absorbing it, and it fought the ground
           transitions directly. Separation is space and ground change now. */}
       <Box component="main" id="home-main" sx={{ position: "relative", overflowX: "clip" }}>
-        {/* 01. Hero Sequence */}
-        <Box component="section" id="hero-sequence" aria-label="Hero Sequence" data-act="services">
+        {/* 01. Hero Sequence — stays GSAP-pinned (position: fixed) during
+            the scroll animation. The overlay sheet below uses negative margin
+            to slide up and cover it while it is still pinned. */}
+        <Box
+          component="section"
+          id="hero-sequence"
+          aria-label="Hero Sequence"
+          data-act="services"
+          sx={{ position: "relative", zIndex: 1 }}
+        >
           <SuperHeroSequence />
         </Box>
 
-        {/* 02-04. The pitch, as three sections rather than one pinned four-beat deck.
-            Grounds run navyDeep → navyPanel → void, so Act I opens dark and resolves
-            into light at the footprint instead of alternating slabs. */}
-        <Box data-act="services">
+        {/* 02-04. Parallax overlay sheet — negative margin pulls it up into
+            the last 100vh of the hero pin, so it slides over the still-fixed
+            hero content. Rounded corners + shadow = About-page card overlay. */}
+        <Box
+          data-act="services"
+          sx={{
+            position: "relative",
+            zIndex: 2,
+            mt: "-100vh",
+            bgcolor: "background.default",
+            borderTopLeftRadius: { xs: 28, md: 48 },
+            borderTopRightRadius: { xs: 28, md: 48 },
+            boxShadow: "0 -24px 60px rgba(0, 0, 0, 0.45)",
+          }}
+        >
           <MissionStatement />
-        </Box>
-        <Box data-act="services">
           <OperatingPillars />
-        </Box>
-        <Box data-act="services">
           <MarketPosition />
         </Box>
 

@@ -90,7 +90,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   { id: "hero-reveal", label: "Wordmark Reveal", chapter: 2, ground: "void" },
   { id: "hero-dwell", label: "Logo Dwell", chapter: 3, ground: "void" },
   { id: "hero", label: "Signal Core", chapter: 4, ground: "void" },
-  { id: "hero-mission", label: "Core Mission", chapter: 4, choreo: "rise", ground: "panel" },
+  { id: "hero-mission", label: "Core Mission", chapter: 4, ground: "panel" },
   {
     id: "hero-pillars",
     label: "Operating Pillars",
