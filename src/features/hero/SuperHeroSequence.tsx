@@ -9,8 +9,10 @@ import { RouterLink } from "@/shared/components/RouterLink";
 import { useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
-import { HeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
+import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
+import { R3FHeroCanvas } from "./R3FHeroCanvas";
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
+import Switch from "@mui/material/Switch";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
@@ -84,6 +86,8 @@ export function HeroSignalCore() {
   const canvasHandleRef = useRef<HeroCanvasHandle | null>(null);
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
+
+  const [use3D, setUse3D] = useState(false);
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -457,7 +461,11 @@ export function HeroSignalCore() {
               transition: "opacity 0.6s ease-out",
             }}
           >
-            <HeroCanvas handleRef={canvasHandleRef} />
+            {use3D ? (
+              <R3FHeroCanvas handleRef={canvasHandleRef} />
+            ) : (
+              <LegacyHeroCanvas handleRef={canvasHandleRef} />
+            )}
           </Box>
 
 
@@ -519,6 +527,82 @@ export function HeroSignalCore() {
             opacity: "var(--hp-panel, 1)",
           }}
         />
+
+        {/* Toggle Switch */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: { xs: 70, md: 84 },
+            right: { xs: 32, md: 72 },
+            zIndex: 10,
+            opacity: ready ? "var(--hp-panel, 1)" : 0,
+            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            px: 2,
+            py: 0.75,
+            borderRadius: "9999px",
+            border: `1px solid rgba(10, 42, 102, 0.15)`,
+            backgroundColor: "rgba(244, 247, 252, 0.8)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            boxShadow: "0 4px 16px rgba(10, 42, 102, 0.06)",
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.7rem",
+              color: use3D ? NOIR.gold : NOIR.navyField,
+              fontWeight: "bold",
+              letterSpacing: "0.12em",
+              userSelect: "none",
+              lineHeight: 1,
+            }}
+          >
+            3D PLAYGROUND
+          </Typography>
+          <Switch
+            checked={use3D}
+            onChange={(e) => setUse3D(e.target.checked)}
+            size="small"
+            sx={{
+              margin: 0,
+              padding: 0,
+              width: 32,
+              height: 18,
+              display: "flex",
+              "& .MuiSwitch-switchBase": {
+                padding: 0,
+                margin: "2px",
+                transitionDuration: "250ms",
+                color: "rgba(10, 42, 102, 0.6)",
+                "&.Mui-checked": {
+                  transform: "translateX(14px)",
+                  color: "#ffffff",
+                  "& + .MuiSwitch-track": {
+                    backgroundColor: NOIR.gold,
+                    opacity: 1,
+                    border: 0,
+                  },
+                },
+              },
+              "& .MuiSwitch-thumb": {
+                boxSizing: "border-box",
+                width: 14,
+                height: 14,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              },
+              "& .MuiSwitch-track": {
+                borderRadius: 9,
+                backgroundColor: "rgba(10, 42, 102, 0.15)",
+                opacity: 1,
+                transition: "background-color 250ms",
+              },
+            }}
+          />
+        </Box>
 
         {/* Top Left Motto Section */}
         <Box

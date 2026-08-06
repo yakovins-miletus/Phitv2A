@@ -9,8 +9,8 @@ import { MONO } from "@/shared/theme/theme";
 import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
-import { ServiceVector } from "./ServiceDrawer";
 import { Reveal } from "@/shared/components/Reveal";
+import { ServiceVector } from "./ServiceDrawer";
 
 export function CapabilityRack() {
   return (
@@ -21,170 +21,104 @@ export function CapabilityRack() {
         eyebrow="Capabilities"
       />
 
-      <Stack spacing={{ xs: 8, md: 14 }} sx={{ mt: { xs: 6, md: 8 } }}>
-        {CONTENT.services.map((service, index) => {
+      <Stack spacing={0} sx={{ mt: { xs: 6, md: 8 } }}>
+        {CONTENT.services.map((service) => {
           return (
             <Box
               key={service.id}
               sx={{
-                pt: { xs: 6, md: 8 },
+                py: { xs: 8, md: 12 },
                 borderTop: 1,
                 borderColor: "divider",
                 position: "relative",
               }}
             >
-              <Grid container spacing={{ xs: 4, lg: 8 }}>
-                {/* Left Column: What they are */}
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <Reveal>
-                    <Stack spacing={3}>
-                      {/* Section Kicker */}
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <Typography
-                          sx={{
-                            fontFamily: MONO,
-                            fontSize: "0.78rem",
-                            letterSpacing: "0.2em",
-                            color: NOIR.goldDark,
-                            fontWeight: 700,
-                          }}
-                        >
-                          0{index + 1}
-                        </Typography>
-                        <Box sx={{ width: 24, height: "1px", bgcolor: NOIR.gold }} />
-                        <Typography
-                          sx={{
-                            fontFamily: MONO,
-                            fontSize: "0.78rem",
-                            letterSpacing: "0.15em",
-                            textTransform: "uppercase",
-                            color: "text.secondary",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {service.title}
-                        </Typography>
-                      </Box>
-
-                      {/* Main Gunshot Heading */}
+              <Reveal>
+                <Grid container spacing={{ xs: 6, md: 8 }} alignItems="center">
+                  <Grid size={{ xs: 12, md: 7 }}>
+                    <Stack spacing={4}>
                       <Typography
-                        variant="h3"
+                        variant="overline"
+                        sx={{
+                          fontFamily: MONO,
+                          color: NOIR.goldDark,
+                          letterSpacing: "0.15em",
+                          fontWeight: 700,
+                          fontSize: "0.85rem",
+                          display: "block",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {service.title}
+                      </Typography>
+                      
+                      <Typography
+                        variant="h2"
                         component="h3"
                         sx={{
                           fontWeight: 800,
-                          fontSize: { xs: "1.6rem", sm: "2rem", md: "2.4rem" },
-                          lineHeight: 1.25,
-                          letterSpacing: "-0.02em",
+                          fontSize: { xs: "2rem", sm: "2.8rem", md: "3.5rem", lg: "4rem" },
+                          lineHeight: 1.1,
+                          letterSpacing: "-0.03em",
                           color: "text.primary",
                         }}
                       >
                         {service.gunshot}
                       </Typography>
 
-                      {/* Summary Description */}
+                      <Box
+                        sx={{
+                          borderLeft: 4,
+                          borderColor: NOIR.gold,
+                          pl: 3,
+                          py: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            fontWeight: 400,
+                            color: "text.secondary",
+                            lineHeight: 1.6,
+                            fontSize: { xs: "1.2rem", md: "1.4rem" }
+                          }}
+                        >
+                          {service.tracer}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 5 }}>
+                    <Stack spacing={4} alignItems={{ xs: "flex-start", md: "flex-end" }} textAlign={{ xs: "left", md: "right" }}>
                       <Typography
                         variant="body1"
                         sx={{
-                          fontSize: "1.05rem",
-                          lineHeight: 1.65,
+                          fontSize: "1.1rem",
+                          lineHeight: 1.7,
                           color: "text.secondary",
+                          maxWidth: 400,
                         }}
                       >
                         {service.summary}
                       </Typography>
-                    </Stack>
-                  </Reveal>
-                </Grid>
 
-                {/* Right Column: What they do */}
-                <Grid size={{ xs: 12, md: 7 }}>
-                  <Reveal>
-                    <Grid container spacing={4} alignItems="center">
-                      <Grid size={{ xs: 12, sm: 7 }}>
-                        <Stack spacing={4}>
-                          <Box>
-                            <Typography
-                              variant="overline"
-                              sx={{
-                                color: "text.secondary",
-                                letterSpacing: "0.15em",
-                                display: "block",
-                                mb: 1.5,
-                                fontWeight: 700,
-                              }}
-                            >
-                              Operational Details
-                            </Typography>
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                lineHeight: 1.75,
-                                fontSize: "1.05rem",
-                                color: "text.secondary",
-                              }}
-                            >
-                              {service.details}
-                            </Typography>
-                          </Box>
-
-                          {/* Tracer Callout Box */}
-                          <Box
-                            sx={{
-                              borderLeft: 3,
-                              borderColor: NOIR.gold,
-                              pl: 2.5,
-                              py: 0.5,
-                              bgcolor: "rgba(10,42,102,0.02)",
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontStyle: "italic",
-                                lineHeight: 1.7,
-                                color: "text.secondary",
-                                fontSize: "0.95rem",
-                              }}
-                            >
-                              {service.tracer}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </Grid>
-
-                      {/* Vector Illustration Grid Slat */}
-                      <Grid
-                        size={{ xs: 12, sm: 5 }}
+                      <Box
                         sx={{
+                          width: "100%",
+                          maxWidth: { xs: 260, md: 320 },
+                          aspectRatio: "1/1",
                           display: "flex",
-                          justifyContent: "center",
                           alignItems: "center",
-                          pt: { xs: 4, sm: 0 },
+                          justifyContent: "center",
                         }}
                       >
-                        <Box
-                          sx={{
-                            width: "100%",
-                            maxWidth: { xs: 220, sm: 260 },
-                            height: { xs: 220, sm: 260 },
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            bgcolor: "rgba(10,42,102,0.03)",
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: "24px",
-                            p: 2,
-                            boxShadow: "inset 0 0 20px rgba(0,0,0,0.02)",
-                          }}
-                        >
-                          <ServiceVector id={service.id} />
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Reveal>
+                        <ServiceVector id={service.id} />
+                      </Box>
+                    </Stack>
+                  </Grid>
                 </Grid>
-              </Grid>
+              </Reveal>
             </Box>
           );
         })}
