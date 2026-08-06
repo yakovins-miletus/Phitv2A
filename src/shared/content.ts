@@ -372,10 +372,12 @@ export const CONTENT = {
     }
   ],
   process: [
+    { number: "00", label: "Ideas", caption: "The raw potential waiting to be materialized" },
     { number: "01", label: "Discover", caption: "Frame the problem with our partners" },
     { number: "02", label: "Research", caption: "Prototype models against real data" },
     { number: "03", label: "Build", caption: "Engineer production-grade systems" },
-    { number: "04", label: "Operate", caption: "Run and support them around the clock" }
+    { number: "04", label: "Operate", caption: "Run and support them around the clock" },
+    { number: "05", label: "Products", caption: "Materialized ideas shaping the market" }
   ],
   stats: [
     { value: 2, label: "R&D offices" },

@@ -1,9 +1,7 @@
-import { useRef } from "react";
+import React, { useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 import { CONTENT } from "@/shared/content";
 import { StageSection } from "@/shared/components/StageSection";
@@ -13,122 +11,180 @@ import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 
-gsap.registerPlugin(ScrollTrigger);
-
-// Follows the section registry rather than naming a ground twice — see the same
-// note in MarketPosition.tsx.
 const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "deep"];
 
-/**
- * Act I, beat 2 — the structure.
- *
- * The deck rendered this as `repeat(3, 1fr)` of identical glass cards: AP-L01, the
- * three-card row, with nothing to indicate which pillar leads. Content forced into a
- * shape it does not have.
- *
- * The identity here is **a rack, not a grid** — three full-width rows separated by
- * hairlines, indexed with tabular mono numerals, following the precedent
- * `CapabilityRack` set when it collapsed four look-alike full-viewport templates
- * into one stage whose rows expand in place. Rows light as they reach centre, so
- * the section reads on one pass with no interaction and no hover dependency.
- */
-export function OperatingPillars() {
-  const { pillars } = CONTENT.hero.salesPitch;
-  const rootRef = useRef<HTMLDivElement>(null);
+// 3D Tilt Card Component
+function PillarCard({ pillar, index }: { pillar: any; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
   const reduced = useReducedMotion();
 
-  useGSAP(
-    () => {
-      // Reduced motion keeps every row at its lit resting state — the DOM default
-      // below is already the final state, so there is nothing to undo.
-      if (reduced === true || !rootRef.current) return;
-      const rows = rootRef.current.querySelectorAll<HTMLElement>("[data-pillar-row]");
+  // Smooth out the raw mouse values
+  const mouseX = useSpring(x, { stiffness: 300, damping: 30 });
+  const mouseY = useSpring(y, { stiffness: 300, damping: 30 });
 
-      rows.forEach((row) => {
-        gsap.fromTo(
-          row,
-          { autoAlpha: 0.35, x: -24 },
-          {
-            autoAlpha: 1,
-            x: 0,
-            ease: "none",
-            scrollTrigger: {
-              trigger: row,
-              // Lights through the lower third and holds once it reaches centre.
-              start: "top 85%",
-              end: "top 45%",
-              scrub: true,
-              invalidateOnRefresh: true,
-            },
+  // Rotate based on mouse position relative to the center of the card
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], reduced ? [0, 0] : ["5deg", "-5deg"]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], reduced ? [0, 0] : ["-5deg", "5deg"]);
+  
+  // Highlight gradient based on mouse position
+  const glowX = useTransform(mouseX, [-0.5, 0.5], ["0%", "100%"]);
+  const glowY = useTransform(mouseY, [-0.5, 0.5], ["0%", "100%"]);
+
+  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    // Normalized position from -0.5 to 0.5
+    const mouseXPos = event.clientX - rect.left;
+    const mouseYPos = event.clientY - rect.top;
+    x.set(mouseXPos / width - 0.5);
+    y.set(mouseYPos / height - 0.5);
+  }
+
+  function handleMouseLeave() {
+    x.set(0);
+    y.set(0);
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }}
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+        perspective: 1000,
+        height: "100%",
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          height: "100%",
+          p: { xs: 4, md: 5 },
+          borderRadius: "32px",
+          bgcolor: "rgba(255, 255, 255, 0.02)",
+          backdropFilter: "blur(40px)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          transition: "border-color 0.3s ease",
+          "&:hover": {
+            borderColor: "rgba(255, 255, 255, 0.2)",
           },
-        );
-      });
-    },
-    { scope: rootRef, dependencies: [reduced] },
+        }}
+      >
+        {/* Dynamic Glow Mesh */}
+        <motion.div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `radial-gradient(circle at center, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0) 60%)`,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
+          whileHover={{ opacity: 1, scale: 1.5 }}
+          transition={{ duration: 0.4 }}
+        />
+        
+        {/* Giant Watermark Number */}
+        <Typography
+          sx={{
+            position: "absolute",
+            top: { xs: "-10px", md: "-20px" },
+            right: { xs: "-10px", md: "-20px" },
+            fontFamily: MONO,
+            fontSize: { xs: "8rem", md: "12rem" },
+            lineHeight: 1,
+            fontWeight: 800,
+            color: "rgba(255,255,255,0.03)",
+            pointerEvents: "none",
+            userSelect: "none",
+            transform: "translateZ(-20px)",
+          }}
+        >
+          {pillar.id}
+        </Typography>
+
+        {/* Content */}
+        <Box sx={{ position: "relative", zIndex: 1, transform: "translateZ(30px)", flex: 1, display: "flex", flexDirection: "column" }}>
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "1rem",
+              color: NOIR.gold,
+              mb: 3,
+            }}
+          >
+            {pillar.id}
+          </Typography>
+
+          <Typography variant="h4" component="h3" sx={{ mb: 2, fontWeight: 600, color: "#fff" }}>
+            {pillar.name}
+          </Typography>
+
+          <Typography sx={{ color: GROUND.muted, lineHeight: 1.7, fontSize: "1.05rem" }}>
+            {pillar.detail}
+          </Typography>
+        </Box>
+      </Box>
+    </motion.div>
   );
+}
+
+export function OperatingPillars() {
+  const { pillars } = CONTENT.hero.salesPitch;
 
   return (
     <StageSection section={homeSection("hero-pillars")}>
-      <Box ref={rootRef} sx={{ width: "100%" }}>
-        <Typography
-          component="p"
-          variant="overline"
-          sx={{ fontFamily: MONO, color: NOIR.gold, display: "block", mb: 1 }}
-        >
-          Organizational structure
-        </Typography>
-        <Typography variant="h2" component="h2" sx={{ mb: { xs: 4, md: 6 }, maxWidth: "18ch" }}>
-          Three integrated operating pillars
-        </Typography>
+      <Box sx={{ width: "100%", position: "relative" }}>
+        
+        {/* Title Area */}
+        <Box sx={{ mb: { xs: 8, md: 12 }, textAlign: { xs: "left", md: "center" } }}>
+          <Typography
+            component="p"
+            variant="overline"
+            sx={{ fontFamily: MONO, color: NOIR.gold, display: "block", mb: 2 }}
+          >
+            Organizational structure
+          </Typography>
+          <Typography variant="h2" component="h2" sx={{ maxWidth: "20ch", mx: { md: "auto" } }}>
+            Three integrated operating pillars
+          </Typography>
+        </Box>
 
-        <Box sx={{ borderTop: `1px solid ${GROUND.rule}` }}>
-          {pillars.map((pillar) => (
-            <Box
-              key={pillar.id}
-              data-pillar-row
-              sx={{
-                display: "grid",
-                // Asymmetric by intent: the numeral column is a rail, the detail
-                // column carries the weight. An even 3-up would be the grid again.
-                gridTemplateColumns: { xs: "3rem 1fr", md: "6rem minmax(0, 20ch) 1fr" },
-                alignItems: "baseline",
-                columnGap: { xs: 2, md: 4 },
-                rowGap: 1,
-                py: { xs: 3, md: 4 },
-                borderBottom: `1px solid ${GROUND.rule}`,
+        {/* Staggered Glassmorphic Grid */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+            gap: { xs: 4, md: 4 },
+            perspective: 2000,
+          }}
+        >
+          {pillars.map((pillar, i) => (
+            <Box 
+              key={pillar.id} 
+              sx={{ 
+                // Staggered vertical layout
+                mt: { md: i === 1 ? 6 : i === 2 ? 12 : 0 },
+                mb: { md: i === 0 ? 12 : i === 1 ? 6 : 0 } 
               }}
             >
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  // Numerals sit in a column, so they must not shimmy between rows.
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: { xs: "1rem", md: "1.5rem" },
-                  color: NOIR.gold,
-                  lineHeight: 1,
-                }}
-              >
-                {pillar.id}
-              </Typography>
-
-              <Typography
-                variant="h4"
-                component="h3"
-                sx={{ gridColumn: { xs: "2", md: "auto" }, lineHeight: 1.2 }}
-              >
-                {pillar.name}
-              </Typography>
-
-              <Typography
-                sx={{
-                  gridColumn: { xs: "2", md: "auto" },
-                  color: GROUND.muted,
-                  lineHeight: 1.6,
-                  maxWidth: "60ch",
-                }}
-              >
-                {pillar.detail}
-              </Typography>
+              <PillarCard pillar={pillar} index={i} />
             </Box>
           ))}
         </Box>

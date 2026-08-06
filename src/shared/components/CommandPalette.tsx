@@ -7,10 +7,10 @@ import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
 import { useNavbar } from "./NavbarContext";
 
-const GROUP_ORDER = ["NAVIGATE", "ACTION", "SYSTEM"] as const;
-type Group = (typeof GROUP_ORDER)[number];
+export const GROUP_ORDER = ["NAVIGATE", "ACTION", "SYSTEM"] as const;
+export type Group = (typeof GROUP_ORDER)[number];
 
-const COMMANDS = [
+export const COMMANDS = [
   { id: "nav-home", group: "NAVIGATE", label: "Home", keywords: "index landing start root", run: { kind: "nav", to: "/" } },
   { id: "nav-about", group: "NAVIGATE", label: "About", keywords: "firm team story who we are", run: { kind: "nav", to: "/about" } },
   { id: "nav-services", group: "NAVIGATE", label: "Services", keywords: "offering consulting engineering what we do", run: { kind: "nav", to: "/services" } },
@@ -27,12 +27,13 @@ const COMMANDS = [
   { id: "sys-nav-immersive", group: "SYSTEM", label: "Navbar: Immersive Mode", keywords: "navbar immersive full", run: { kind: "navbar-mode", mode: "immersive" } },
   { id: "sys-nav-notch", group: "SYSTEM", label: "Navbar: Notch Mode", keywords: "navbar notch macbook camera capsule dark island", run: { kind: "navbar-mode", mode: "notch" } },
   { id: "sys-nav-standard", group: "SYSTEM", label: "Navbar: Standard Mode", keywords: "navbar standard wide stretch full top normal center nav items", run: { kind: "navbar-mode", mode: "standard" } },
+  { id: "sys-nav-glassmorphism", group: "SYSTEM", label: "Navbar: Glassmorphism Mode", keywords: "navbar glass blur modern apple translucent mode gradient", run: { kind: "navbar-mode", mode: "glassmorphism" } },
   { id: "sys-nav-autohide", group: "SYSTEM", label: "Toggle Navigation Autohide", keywords: "navigation autohide navbar scroll hide show toggle", run: { kind: "toggle-autohide" } },
   { id: "sys-toggle-motto", group: "SYSTEM", label: "Toggle Logo Motto", keywords: "motto slogan tagline company header show hide toggle brand text", run: { kind: "toggle-motto" } },
   { id: "sys-toggle-id-overlay", group: "SYSTEM", label: "Toggle ID Overlay", keywords: "id overlay developer outline tag inspect elements box layout toggle", run: { kind: "toggle-id-overlay" } },
 ] as const;
 
-type Cmd = (typeof COMMANDS)[number];
+export type Cmd = (typeof COMMANDS)[number];
 
 const SIGNAL_TEXT = ["> pinging desk… ", "> latency: 87µs", "> signal acquired ▲"].join("\n");
 const LISTBOX_ID = "cmdk-listbox";

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
@@ -7,11 +8,16 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Modal from "@mui/material/Modal";
 import Slide from "@mui/material/Slide";
+import InputBase from "@mui/material/InputBase";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useRouter, useLocation } from "@tanstack/react-router";
 
 import { MONO } from "@/shared/theme/theme";
+import { COMMANDS, GROUP_ORDER } from "./CommandPalette";
+import type { Group, Cmd } from "./CommandPalette";
+import { useNavbar } from "./NavbarContext";
+import { useReducedMotion } from "@/shared/motion";
 
 export interface NavSectionItem {
   to: string;
@@ -78,32 +84,153 @@ interface TopNavMegaDrawerProps {
   onClose: () => void;
 }
 
+const SIGNAL_TEXT = ["> pinging desk… ", "> latency: 87µs", "> signal acquired ▲"].join("\n");
+const LISTBOX_ID = "drawer-cmdk-listbox";
+const optId = (id: string) => `drawer-cmdk-opt-${id}`;
+
 export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
   const [activeItem, setActiveItem] = useState<NavSectionItem>(MEGA_NAV_ITEMS[0]!);
   const router = useRouter();
   const location = useLocation();
+
+  // Command Palette State
+  const [query, setQuery] = useState("");
+  const [isCommandMode, setIsCommandMode] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [signalChars, setSignalChars] = useState<number | null>(null);
+  
+  const reducedMotion = useReducedMotion();
+  const { setOverrideMode, toggleAutohide, toggleMotto } = useNavbar();
+  const copyTimer = useRef<number | null>(null);
+  const twTimer = useRef<number | null>(null);
 
   const handleNavigate = (to: string) => {
     onClose();
     router.navigate({ to });
   };
 
-  // This is the site's PRIMARY navigation, and it used to be a bare `motion.div`
-  // at `position: fixed; inset: 0; zIndex: 4000` — no role, no accessible name,
-  // no focus trap, no focus restore, no background inerting and no scroll lock,
-  // with `<Box onClick>` nav items that were not focusable at all. A keyboard user
-  // could open the menu and then tab straight through it into the page underneath,
-  // which was still fully interactive behind an opaque overlay. The menu could not
-  // be operated by keyboard.
-  //
-  // MUI's Modal supplies the trap, the restore, the inerting, the scroll lock and
-  // the Escape handler (which is why the hand-rolled keydown listener is gone).
-  //
-  // The slide uses MUI's own `Slide` rather than motion's AnimatePresence. With
-  // AnimatePresence the panel mounted a tick after Modal opened, so the focus trap
-  // built its candidate list against an empty subtree — tabbing past the last item
-  // then dropped focus onto document.body and out of the dialog entirely. Modal is
-  // built to drive a transition child directly, and keeps the trap in step with it.
+  const stopTypewriter = useCallback(() => {
+    if (twTimer.current !== null) {
+      window.clearInterval(twTimer.current);
+      twTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setIsCommandMode(false);
+      setActiveIndex(0);
+      setSignalChars(null);
+      setCopiedId(null);
+      stopTypewriter();
+    }
+  }, [open, stopTypewriter]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [...COMMANDS];
+    return COMMANDS.filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q));
+  }, [query]);
+
+  const activeCmd: Cmd | undefined = filtered[activeIndex];
+  const activeId = activeCmd ? optId(activeCmd.id) : undefined;
+
+  useEffect(() => {
+    if (!open || !isCommandMode || !activeId) return;
+    document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
+  }, [open, isCommandMode, activeId]);
+
+  const runSignal = useCallback(() => {
+    stopTypewriter();
+    if (reducedMotion) {
+      setSignalChars(SIGNAL_TEXT.length);
+      return;
+    }
+    setSignalChars(0);
+    twTimer.current = window.setInterval(() => {
+      setSignalChars((c) => {
+        const next = Math.min((c ?? 0) + 1, SIGNAL_TEXT.length);
+        if (next >= SIGNAL_TEXT.length) stopTypewriter();
+        return next;
+      });
+    }, 28);
+  }, [reducedMotion, stopTypewriter]);
+
+  const copyAddress = useCallback((id: string, address: string) => {
+    navigator.clipboard
+      .writeText(address)
+      .then(() => {
+        setCopiedId(id);
+        if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
+        copyTimer.current = window.setTimeout(() => setCopiedId(null), 1600);
+      })
+      .catch(() => {});
+  }, []);
+
+  const execute = useCallback(
+    (cmd: Cmd) => {
+      switch (cmd.run.kind) {
+        case "nav":
+          onClose();
+          void router.navigate({ to: cmd.run.to });
+          break;
+        case "copy":
+          copyAddress(cmd.id, cmd.run.address);
+          break;
+        case "signal":
+          runSignal();
+          break;
+        case "navbar-mode":
+          onClose();
+          setOverrideMode(cmd.run.mode);
+          break;
+        case "toggle-autohide":
+          onClose();
+          toggleAutohide();
+          break;
+        case "toggle-motto":
+          onClose();
+          toggleMotto();
+          break;
+        case "toggle-id-overlay":
+          onClose();
+          window.dispatchEvent(new CustomEvent("phitopolis-toggle-id-overlay"));
+          break;
+      }
+    },
+    [onClose, router, copyAddress, runSignal, setOverrideMode, toggleAutohide, toggleMotto],
+  );
+
+  const onInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (filtered.length ? (i + 1) % filtered.length : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (filtered.length ? (i - 1 + filtered.length) % filtered.length : 0));
+    } else if (e.key === "Home" && filtered.length) {
+      e.preventDefault();
+      setActiveIndex(0);
+    } else if (e.key === "End" && filtered.length) {
+      e.preventDefault();
+      setActiveIndex(filtered.length - 1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const cmd = filtered[activeIndex];
+      if (cmd) execute(cmd);
+    }
+  };
+
+  const monoLabelSx = {
+    fontFamily: MONO,
+    fontSize: 10,
+    letterSpacing: "0.16em",
+    color: "rgba(255,255,255,0.4)",
+    textTransform: "uppercase",
+  } as const;
+
   return (
     <Modal
       open={open}
@@ -112,7 +239,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
       slotProps={{ backdrop: { sx: { bgcolor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(16px)" } } }}
       sx={{ zIndex: (theme) => theme.zIndex.modal + 10 }}
     >
-    <Slide in={open} direction="down" timeout={450} appear>
+      <Slide in={open} direction="down" timeout={450} appear>
         <Box
           role="dialog"
           aria-modal="true"
@@ -168,7 +295,6 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
             />
           </Box>
 
-          {/* Full Screen Menu Content Wrapper */}
           <Container
             maxWidth="xl"
             sx={{
@@ -181,7 +307,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               px: { xs: 3, md: 8 },
             }}
           >
-            {/* Header Close Bar */}
+            {/* Header / Command Search Bar */}
             <Stack
               direction="row"
               justifyContent="space-between"
@@ -192,21 +318,45 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                 flexShrink: 0,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#FFC72C" }} />
-                <Typography
-                  id="mega-drawer-title"
-                  component="h2"
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.8rem",
-                    letterSpacing: "0.22em",
-                    color: "#FFC72C",
-                    fontWeight: 800,
-                  }}
-                >
-                  PHITOPOLIS R&D // NAVIGATION
-                </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#FFC72C", display: { xs: "none", md: "block" } }} />
+                
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, maxWidth: 600, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1.5, px: 2, py: 1, border: "1px solid rgba(255,255,255,0.1)", transition: "border-color 0.2s", "&:focus-within": { borderColor: "#FFC72C" } }}>
+                  <Typography component="span" aria-hidden sx={{ fontFamily: MONO, fontSize: 14, color: "#FFC72C", lineHeight: 1 }}>
+                    ❯
+                  </Typography>
+                  <InputBase
+                    fullWidth
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setActiveIndex(0);
+                    }}
+                    onFocus={() => setIsCommandMode(true)}
+                    onBlur={() => {
+                      if (!query) setIsCommandMode(false);
+                    }}
+                    onKeyDown={onInputKeyDown}
+                    placeholder="Search pages or type a command..."
+                    inputProps={{
+                      role: "combobox",
+                      "aria-expanded": isCommandMode,
+                      "aria-controls": LISTBOX_ID,
+                      "aria-autocomplete": "list",
+                      "aria-label": "Search commands",
+                      autoCapitalize: "off",
+                      autoCorrect: "off",
+                      spellCheck: false,
+                      ...(activeId !== undefined ? { "aria-activedescendant": activeId } : {}),
+                    }}
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: 14,
+                      color: "#FFF",
+                      "& input::placeholder": { color: "rgba(255,255,255,0.4)", opacity: 1 },
+                    }}
+                  />
+                </Box>
               </Box>
 
               <IconButton
@@ -217,6 +367,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                   bgcolor: "rgba(255, 255, 255, 0.08)",
                   border: "1px solid rgba(255, 199, 44, 0.4)",
                   p: 1.2,
+                  ml: 4,
                   transition: "all 0.25s ease",
                   "&:hover": {
                     bgcolor: "#FFC72C",
@@ -229,21 +380,21 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               </IconButton>
             </Stack>
 
-            {/* Immersive Navigation Grid (Full Screen Split) */}
+            {/* Immersive Navigation Grid */}
             <Grid
               container
               spacing={{ xs: 4, md: 8 }}
-              alignItems="center"
+              alignItems="stretch"
               sx={{
                 flex: 1,
                 my: "auto",
                 py: { xs: 2, md: 4 },
-                overflowY: "auto",
+                overflow: "hidden", // We handle scroll on children
               }}
             >
               {/* Left Column: Full-Height Interactive Navigation Menu */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Stack spacing={{ xs: 1.5, md: 2 }}>
+              <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex", flexDirection: "column" }}>
+                <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ overflowY: "auto", pr: 2, flex: 1 }}>
                   {MEGA_NAV_ITEMS.map((item) => {
                     const isActiveRoute = location.pathname === item.to;
                     const isSelected = activeItem.to === item.to;
@@ -254,11 +405,16 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                         component="button"
                         type="button"
                         aria-current={isActiveRoute ? "page" : undefined}
-                        onMouseEnter={() => setActiveItem(item)}
-                        onFocus={() => setActiveItem(item)}
+                        onMouseEnter={() => {
+                          setActiveItem(item);
+                          if (!query) setIsCommandMode(false);
+                        }}
+                        onFocus={() => {
+                          setActiveItem(item);
+                          if (!query) setIsCommandMode(false);
+                        }}
                         onClick={() => handleNavigate(item.to)}
                         sx={{
-                          // Was a <Box onClick> — not reachable by keyboard at all.
                           appearance: "none",
                           background: "none",
                           border: 0,
@@ -273,7 +429,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                           borderRadius: 4,
                           cursor: "pointer",
                           transition: "all 0.25s ease",
-                          bgcolor: isSelected ? "rgba(255, 199, 44, 0.12)" : "transparent",
+                          bgcolor: (isSelected && !isCommandMode) ? "rgba(255, 199, 44, 0.12)" : "transparent",
                           "&:hover": {
                             bgcolor: "rgba(255, 199, 44, 0.18)",
                             transform: "translateX(8px)",
@@ -287,7 +443,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                 fontFamily: MONO,
                                 fontSize: { xs: "0.85rem", md: "1.1rem" },
                                 fontWeight: 800,
-                                color: isSelected ? "#FFC72C" : "rgba(255, 255, 255, 0.4)",
+                                color: (isSelected && !isCommandMode) ? "#FFC72C" : "rgba(255, 255, 255, 0.4)",
                                 transition: "color 0.25s ease",
                               }}
                             >
@@ -299,7 +455,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                               sx={{
                                 fontSize: { xs: "1.8rem", sm: "2.2rem", md: "2.8rem" },
                                 fontWeight: 800,
-                                color: isSelected || isActiveRoute ? "common.white" : "rgba(255, 255, 255, 0.75)",
+                                color: (isSelected && !isCommandMode) || isActiveRoute ? "common.white" : "rgba(255, 255, 255, 0.75)",
                                 transition: "color 0.25s ease",
                                 letterSpacing: "-0.02em",
                               }}
@@ -312,8 +468,8 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                             sx={{
                               color: "#FFC72C",
                               fontSize: "1.6rem",
-                              opacity: isSelected ? 1 : 0,
-                              transform: isSelected ? "translateX(0)" : "translateX(-16px)",
+                              opacity: (isSelected && !isCommandMode) ? 1 : 0,
+                              transform: (isSelected && !isCommandMode) ? "translateX(0)" : "translateX(-16px)",
                               transition: "all 0.25s ease",
                             }}
                           />
@@ -324,80 +480,187 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                 </Stack>
               </Grid>
 
-              {/* Right Column: High-Performance Preview Display */}
-              <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" } }}>
-                <Box
-                  aria-hidden
-                  onClick={() => handleNavigate(activeItem.to)}
-                  sx={{
-                    borderRadius: 6,
-                    overflow: "hidden",
-                    border: "1px solid rgba(255, 199, 44, 0.4)",
-                    bgcolor: "rgba(10, 42, 102, 0.4)",
-                    boxShadow: "0 24px 60px rgba(0, 0, 0, 0.4)",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      borderColor: "#FFC72C",
-                      transform: "scale(1.01)",
-                    },
-                  }}
-                >
-                  <Box sx={{ position: "relative", width: "100%", height: 380, overflow: "hidden" }}>
+              {/* Right Column: Dynamic View (Preview vs Command Palette) */}
+              <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" }, height: "100%" }}>
+                {isCommandMode ? (
+                  /* Command Palette Results */
+                  <Box
+                    sx={{
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      bgcolor: "rgba(10, 42, 102, 0.7)",
+                      backdropFilter: "blur(12px)",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column"
+                    }}
+                  >
                     <Box
-                      component="img" decoding="async" loading="lazy"
-                      key={activeItem.to}
-                      src={activeItem.preview}
-                      alt={activeItem.label}
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "linear-gradient(to top, rgba(6, 24, 59, 0.95) 0%, transparent 60%)",
-                      }}
-                    />
-
-                    <Stack
-                      spacing={1}
-                      sx={{
-                        position: "absolute",
-                        bottom: 24,
-                        left: 24,
-                        right: 24,
-                        color: "common.white",
-                      }}
+                      component="ul"
+                      role="listbox"
+                      id={LISTBOX_ID}
+                      aria-label="Commands"
+                      sx={{ listStyle: "none", m: 0, p: 0, py: 1, flex: 1, overflowY: "auto" }}
                     >
-                      <Typography
-                        variant="overline"
+                      {filtered.length === 0 && (
+                        <Typography component="li" role="presentation" sx={{ ...monoLabelSx, px: 3, py: 2 }}>
+                          no match — 0 results
+                        </Typography>
+                      )}
+                      {GROUP_ORDER.map((group: Group) => {
+                        const rows = filtered.filter((c) => c.group === group);
+                        if (rows.length === 0) return null;
+                        return (
+                          <Box component="li" role="group" aria-label={group} key={group} sx={{ px: 0 }}>
+                            <Typography aria-hidden sx={{ ...monoLabelSx, px: 3, pt: 2, pb: 1, color: "rgba(255,255,255,0.3)" }}>
+                              {group}
+                            </Typography>
+                            <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+                              {rows.map((cmd) => {
+                                const index = filtered.indexOf(cmd);
+                                const selected = index === activeIndex;
+                                const copied = copiedId === cmd.id;
+                                return (
+                                  <Box
+                                    component="li"
+                                    key={cmd.id}
+                                    id={optId(cmd.id)}
+                                    role="option"
+                                    aria-selected={selected}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => execute(cmd)}
+                                    onMouseMove={() => {
+                                      if (!selected) setActiveIndex(index);
+                                    }}
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      gap: 2,
+                                      px: 3,
+                                      py: 1.5,
+                                      cursor: "pointer",
+                                      borderLeft: `2px solid ${selected ? "#FFC72C" : "transparent"}`,
+                                      backgroundColor: selected ? "rgba(255, 199, 44, 0.15)" : "transparent",
+                                    }}
+                                  >
+                                    <Typography sx={{ fontFamily: MONO, fontSize: 13, color: selected ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                                      {cmd.label}
+                                    </Typography>
+                                    <Typography
+                                      component="span"
+                                      sx={{
+                                        ...monoLabelSx,
+                                        flexShrink: 0,
+                                        color: copied ? "#FFC72C" : (selected ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.3)"),
+                                      }}
+                                    >
+                                      {copied ? "copied ✓" : cmd.run.kind === "nav" ? cmd.run.to : cmd.run.kind === "copy" ? cmd.run.address : "run"}
+                                    </Typography>
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+
+                    {signalChars !== null && (
+                      <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.1)", px: 3, py: 2, bgcolor: "rgba(0,0,0,0.2)" }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", pb: 1 }}>
+                          <Typography sx={monoLabelSx}>signal</Typography>
+                          <Typography sx={{ ...monoLabelSx, color: "#FFC72C" }}>sim</Typography>
+                        </Box>
+                        <Box
+                          component="pre"
+                          aria-hidden
+                          sx={{ m: 0, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, color: "#FFF", whiteSpace: "pre-wrap", minHeight: "calc(3 * 1.7em)" }}
+                        >
+                          {SIGNAL_TEXT.slice(0, signalChars)}
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  /* High-Performance Preview Display */
+                  <Box
+                    aria-hidden
+                    onClick={() => handleNavigate(activeItem.to)}
+                    sx={{
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      border: "1px solid rgba(255, 199, 44, 0.4)",
+                      bgcolor: "rgba(10, 42, 102, 0.4)",
+                      boxShadow: "0 24px 60px rgba(0, 0, 0, 0.4)",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      "&:hover": {
+                        borderColor: "#FFC72C",
+                        transform: "scale(1.01)",
+                      },
+                    }}
+                  >
+                    <Box sx={{ position: "relative", width: "100%", flex: 1, overflow: "hidden" }}>
+                      <Box
+                        component="img" decoding="async" loading="lazy"
+                        key={activeItem.to}
+                        src={activeItem.preview}
+                        alt={activeItem.label}
                         sx={{
-                          fontFamily: MONO,
-                          color: "#FFC72C",
-                          fontWeight: 800,
-                          letterSpacing: "0.15em",
-                          fontSize: "0.75rem",
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "linear-gradient(to top, rgba(6, 24, 59, 0.95) 0%, transparent 60%)",
+                        }}
+                      />
+
+                      <Stack
+                        spacing={1}
+                        sx={{
+                          position: "absolute",
+                          bottom: 32,
+                          left: 32,
+                          right: 32,
+                          color: "common.white",
                         }}
                       >
-                        EXPLORE {activeItem.label.toUpperCase()}
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 800, fontSize: "1.8rem" }}>
-                        {activeItem.sub}
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, color: "#FFC72C" }}>
-                        <Typography sx={{ fontFamily: MONO, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.1em" }}>
-                          NAVIGATE TO PAGE
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            fontFamily: MONO,
+                            color: "#FFC72C",
+                            fontWeight: 800,
+                            letterSpacing: "0.15em",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          EXPLORE {activeItem.label.toUpperCase()}
                         </Typography>
-                        <ArrowForwardIcon fontSize="small" />
-                      </Box>
-                    </Stack>
+                        <Typography variant="h3" sx={{ fontWeight: 800, fontSize: "2rem" }}>
+                          {activeItem.sub}
+                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, color: "#FFC72C" }}>
+                          <Typography sx={{ fontFamily: MONO, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.1em" }}>
+                            NAVIGATE TO PAGE
+                          </Typography>
+                          <ArrowForwardIcon fontSize="small" />
+                        </Box>
+                      </Stack>
+                    </Box>
                   </Box>
-                </Box>
+                )}
               </Grid>
             </Grid>
 
@@ -415,13 +678,20 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", fontSize: "0.72rem" }}>
                 PHITOPOLIS R&D FIRM • BGC MANILA & CLARK
               </Typography>
-              <Typography variant="caption" sx={{ fontFamily: MONO, color: "#FFC72C", fontSize: "0.72rem", fontWeight: 700 }}>
-                PRESS [ESC] TO CLOSE
-              </Typography>
+              <Box sx={{ display: "flex", gap: 3 }}>
+                {isCommandMode && (
+                  <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", fontSize: "0.72rem" }}>
+                    ↑↓ NAVIGATE • ↵ EXECUTE
+                  </Typography>
+                )}
+                <Typography variant="caption" sx={{ fontFamily: MONO, color: "#FFC72C", fontSize: "0.72rem", fontWeight: 700 }}>
+                  PRESS [ESC] TO CLOSE
+                </Typography>
+              </Box>
             </Stack>
           </Container>
         </Box>
-    </Slide>
+      </Slide>
     </Modal>
   );
 }

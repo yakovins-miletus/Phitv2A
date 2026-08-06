@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 
-export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch' | 'standard';
+export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch' | 'standard' | 'glassmorphism';
 
 /**
  * Navbar anchors — the SECOND of the page's "what is on screen" registries, and
@@ -35,6 +35,8 @@ export const NAV_ANCHORS = {
   ABOUT_TIMELINE: 'timeline',
   /** The About page's values section. */
   ABOUT_VALUES: 'about-values',
+  /** The immersive process section on the home page. */
+  PROCESS_IMMERSIVE: 'process-immersive',
   /** AppShell's footer, on every route. */
   SITE_FOOTER: 'site-footer',
 } as const;
