@@ -233,10 +233,18 @@ export interface Camera {
   originY: number;
 }
 
-export function makeCamera(flatten: number, originX: number, originY: number, viewScale: number): Camera {
-  // Verbatim from HeroSignalP.tsx:557-559.
-  const rotXDeg = 55 * (1 - flatten);
-  const rotZDeg = -45 * (1 - flatten);
+export function makeCamera(
+  flatten: number,
+  originX: number,
+  originY: number,
+  viewScale: number,
+  tiltX = 0,
+  tiltY = 0
+): Camera {
+  // Verbatim from HeroSignalP.tsx:557-559, modified with optional mouse tilt offsets.
+  // We multiply the tilt by (1 - flatten) so it naturally fades out as the scene flattens.
+  const rotXDeg = 55 * (1 - flatten) + (tiltY * 180 / Math.PI) * (1 - flatten);
+  const rotZDeg = -45 * (1 - flatten) + (tiltX * 180 / Math.PI) * (1 - flatten);
   const wrapperScale = 1.25 - 0.25 * flatten;
   const rx = (rotXDeg * Math.PI) / 180;
   const rz = (rotZDeg * Math.PI) / 180;

@@ -29,6 +29,7 @@ const COMMANDS = [
   { id: "sys-nav-standard", group: "SYSTEM", label: "Navbar: Standard Mode", keywords: "navbar standard wide stretch full top normal center nav items", run: { kind: "navbar-mode", mode: "standard" } },
   { id: "sys-nav-autohide", group: "SYSTEM", label: "Toggle Navigation Autohide", keywords: "navigation autohide navbar scroll hide show toggle", run: { kind: "toggle-autohide" } },
   { id: "sys-toggle-motto", group: "SYSTEM", label: "Toggle Logo Motto", keywords: "motto slogan tagline company header show hide toggle brand text", run: { kind: "toggle-motto" } },
+  { id: "sys-toggle-id-overlay", group: "SYSTEM", label: "Toggle ID Overlay", keywords: "id overlay developer outline tag inspect elements box layout toggle", run: { kind: "toggle-id-overlay" } },
 ] as const;
 
 type Cmd = (typeof COMMANDS)[number];
@@ -171,6 +172,10 @@ export function CommandPalette() {
         case "toggle-motto":
           handleClose();
           toggleMotto();
+          break;
+        case "toggle-id-overlay":
+          handleClose();
+          window.dispatchEvent(new CustomEvent("phitopolis-toggle-id-overlay"));
           break;
       }
     },

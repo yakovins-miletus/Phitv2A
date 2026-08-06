@@ -1,8 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import ButtonBase from "@mui/material/ButtonBase";
-import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 
 interface SnapshotItem {
@@ -27,13 +23,13 @@ export function FloatingIdOverlay() {
   const [enabled, setEnabled] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored === null ? true : stored === "true";
+      return stored === null ? false : stored === "true";
     } catch {
-      return true;
+      return false;
     }
   });
 
-  const [snapshotCount, setSnapshotCount] = useState<number>(0);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const snapshotTimeoutRef = useRef<number | null>(null);
 
@@ -69,7 +65,7 @@ export function FloatingIdOverlay() {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    let elementCounters: Record<string, number> = {};
+    const elementCounters: Record<string, number> = {};
 
     const getOrAssignId = (el: HTMLElement): string => {
       if (el.id && el.id.trim().length > 0) {
@@ -80,7 +76,7 @@ export function FloatingIdOverlay() {
       const role = el.getAttribute("role") || "";
       const className = typeof el.className === "string" ? el.className : "";
 
-      let prefix = tag;
+      let prefix: string;
       if (role === "dialog" || className.includes("MuiDialog") || className.includes("MuiDrawer") || className.includes("MuiPopover")) {
         prefix = "dialog";
       } else if (/^h[1-6]$/.test(tag)) {
@@ -257,7 +253,7 @@ export function FloatingIdOverlay() {
       ctx.fillText(text, badgeX + 13, badgeY + 11.5);
     });
 
-    setSnapshotCount(items.length);
+
   };
 
   useEffect(() => {
@@ -266,7 +262,7 @@ export function FloatingIdOverlay() {
         const ctx = canvasRef.current.getContext("2d");
         if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       }
-      setSnapshotCount(0);
+
       return;
     }
 
@@ -305,83 +301,28 @@ export function FloatingIdOverlay() {
     };
   }, [enabled]);
 
-  return (
-    <>
-      {/* Fixed Canvas Overlay (Zero DOM Node Overhead) */}
-      <canvas
-        ref={canvasRef}
-        aria-hidden="true"
-        data-floating-control="true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          zIndex: 999999,
-          display: enabled ? "block" : "none",
-        }}
-      />
+  useEffect(() => {
+    const handleToggle = () => {
+      toggleOverlay();
+    };
+    window.addEventListener("phitopolis-toggle-id-overlay", handleToggle);
+    return () => {
+      window.removeEventListener("phitopolis-toggle-id-overlay", handleToggle);
+    };
+  }, []);
 
-      {/* Floating Snapshot Control Toolbar */}
-      <Box
-        data-floating-control="true"
-        sx={{
-          position: "fixed",
-          bottom: 24,
-          left: 24,
-          zIndex: 1000000,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          pointerEvents: "auto",
-        }}
-      >
-        <ButtonBase
-          onClick={toggleOverlay}
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1.75,
-            py: 0.75,
-            borderRadius: "20px",
-            bgcolor: enabled ? "rgba(6, 18, 38, 0.95)" : "rgba(15, 23, 42, 0.85)",
-            backdropFilter: "blur(8px)",
-            border: `1px solid ${enabled ? NOIR.gold : "rgba(255,255,255,0.2)"}`,
-            boxShadow: enabled
-              ? `0 4px 16px rgba(0,0,0,0.6), 0 0 10px ${NOIR.gold}40`
-              : "0 2px 10px rgba(0,0,0,0.4)",
-            cursor: "pointer",
-            transition: "all 0.25s ease",
-            "&:hover": {
-              borderColor: NOIR.gold,
-              transform: "scale(1.03)",
-            },
-          }}
-        >
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              bgcolor: enabled ? NOIR.gold : "#64748B",
-              boxShadow: enabled ? `0 0 8px ${NOIR.gold}` : "none",
-              transition: "all 0.25s ease",
-            }}
-          />
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.7rem",
-              fontWeight: 800,
-              letterSpacing: "0.1em",
-              color: enabled ? NOIR.gold : "#94A3B8",
-              userSelect: "none",
-            }}
-          >
-            ID OVERLAY: {enabled ? `ON (${snapshotCount})` : "OFF"}
-          </Typography>
-        </ButtonBase>
-      </Box>
-    </>
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      data-floating-control="true"
+      style={{
+        position: "fixed",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 999999,
+        display: enabled ? "block" : "none",
+      }}
+    />
   );
 }

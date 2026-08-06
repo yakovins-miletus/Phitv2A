@@ -109,6 +109,9 @@ export function HeroSignalCore() {
     if (!el) return;
     const isReduced = reduced === true;
     writeHeroVars(el, heroVars(0, isReduced));
+    if (pinRef.current) {
+      writeHeroVars(pinRef.current, heroVars(0, isReduced));
+    }
     const next = heroStage(0, isReduced);
     stageRef.current = next;
     setStage(next);
@@ -134,6 +137,9 @@ export function HeroSignalCore() {
 
           // Per-frame: one batch of custom-property writes. No React render.
           writeHeroVars(el, heroVars(p, false));
+          if (pinRef.current) {
+            writeHeroVars(pinRef.current, heroVars(p, false));
+          }
           canvasHandleRef.current?.setProgress(p);
 
           // Parallax drift: during the overlap phase (progress > ANIM_LIMIT),
@@ -200,7 +206,6 @@ export function HeroSignalCore() {
           // The tint inverted with the palette: it used to be navy-at-low-alpha
           // darkening a white page, and is now black darkening a dark one.
           // Standard plain black radial vignette: transparent 60% -> rgba(0,0,0,0.40) at 100%
-          background: "radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.40) 100%)",
           pt: 0,
           pb: 0,
           px: 0,
@@ -502,7 +507,7 @@ export function HeroSignalCore() {
         </Box>
 
 
-        {/* Plain Black Radial Vignette */}
+        {/* Plain Navy Radial Vignette */}
         <Box
           aria-hidden
           sx={{
@@ -510,7 +515,8 @@ export function HeroSignalCore() {
             inset: 0,
             zIndex: 3,
             pointerEvents: "none",
-            background: "radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.40) 100%)",
+            background: "radial-gradient(ellipse at center, transparent 60%, rgba(10, 42, 102, 0.15) 100%)",
+            opacity: "var(--hp-panel, 1)",
           }}
         />
 

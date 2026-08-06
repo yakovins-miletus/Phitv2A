@@ -319,6 +319,12 @@ export function drawHeroFrame(
   w: number,
   h: number,
   elapsed: number,
+  playground?: {
+    tiltX: number;
+    tiltY: number;
+    cubeBounceOffsets?: number[];
+    nodeBounceOffsets?: number[];
+  }
 ): void {
   ctx.clearRect(0, 0, w, h);
 
@@ -326,7 +332,9 @@ export function drawHeroFrame(
   // Zoomed out further than the original fit (0.86) so the full scene — grid, cubes,
   // service nodes and the P mark — reads with more breathing room around it.
   const viewScale = Math.min(w, h) / (PLANE_SIZE * 1.05);
-  const cam = makeCamera(state.flatten, w / 2, h / 2, viewScale);
+  const tiltX = playground?.tiltX ?? 0;
+  const tiltY = playground?.tiltY ?? 0;
+  const cam = makeCamera(state.flatten, w / 2, h / 2, viewScale, tiltX, tiltY);
 
   drawGrid(ctx, cam, sprites, state, w, h);
   drawSignals(ctx, cam, state, elapsed);
@@ -334,8 +342,16 @@ export function drawHeroFrame(
   if (!state.flat) {
     // Painter's algorithm: everything standing on the plane, sorted back to front.
     const items: Drawable[] = [];
-    for (const cube of CUBE_POSITIONS) collectCube(items, ctx, cam, cube, state, sprites);
-    for (const node of SERVICE_NODES) collectNode(items, ctx, cam, node, state, sprites);
+    for (let i = 0; i < CUBE_POSITIONS.length; i++) {
+      const cube = CUBE_POSITIONS[i]!;
+      const bounce = playground?.cubeBounceOffsets?.[i] ?? 0;
+      collectCube(items, ctx, cam, cube, state, sprites, bounce);
+    }
+    for (let i = 0; i < SERVICE_NODES.length; i++) {
+      const node = SERVICE_NODES[i]!;
+      const bounce = playground?.nodeBounceOffsets?.[i] ?? 0;
+      collectNode(items, ctx, cam, node, state, sprites, bounce);
+    }
     items.sort((a, b) => a.depth - b.depth);
     for (const item of items) item.draw();
   }
@@ -495,6 +511,7 @@ function collectCube(
   spec: { c: number; r: number; h: number; type: "gold" | "navy" },
   state: HeroFrameState,
   sprites: HeroSprites,
+  bounceOffset = 0,
 ): void {
   // "navy" cubes are the scene's cool mass. On the dark card they read as steel.
   const base: Rgb = spec.type === "navy" ? RGB_STEEL : RGB_GOLD;
@@ -503,7 +520,7 @@ function collectCube(
   const x1 = x0 + GRID_CELL;
   const y1 = y0 + GRID_CELL;
   // HeroSignalP.tsx:346 — extrusion collapses linearly with flatten.
-  const hz = Math.max(0, spec.h * (1 - state.flatten));
+  const hz = Math.max(0, (spec.h + bounceOffset) * (1 - state.flatten));
   const centre = project(cam, x0 + GRID_CELL / 2, y0 + GRID_CELL / 2, hz);
 
   out.push({
@@ -558,13 +575,14 @@ function collectNode(
   spec: { cx: number; cy: number; elevation: number; icon: NodeIcon },
   state: HeroFrameState,
   sprites: HeroSprites,
+  bounceOffset = 0,
 ): void {
   const half = SERVICE_NODE_SIZE / 2;
   const x0 = spec.cx - half;
   const y0 = spec.cy - half;
   const x1 = spec.cx + half;
   const y1 = spec.cy + half;
-  const ez = Math.max(0, spec.elevation * (1 - state.flatten));
+  const ez = Math.max(0, (spec.elevation + bounceOffset) * (1 - state.flatten));
   const centre = project(cam, spec.cx, spec.cy, ez);
 
   out.push({

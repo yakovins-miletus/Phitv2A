@@ -19,7 +19,6 @@ import { CandidatesAndCareersSection } from "@/features/home/components/Candidat
 import { DailyLifeSection } from "@/features/home/components/DailyLifeSection/DailyLifeSection";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
-import { FloatingIdOverlay } from "@/shared/components/FloatingIdOverlay";
 
 // No gsap/lenis imports at route-module scope: this file stays in the eager
 // bundle even with autoCodeSplitting, so anything imported here ships to every
@@ -170,7 +169,6 @@ function HomePage() {
             <BlogSection />
           </Box>
         </Box>
-        <FloatingIdOverlay />
       </Box>
       {/* No footer here: AppShell renders the site footer for every route */}
     </>
