@@ -233,6 +233,7 @@ export function CareersIndexPage() {
                           color: selectedCategory === cat.label ? "common.white" : NOIR.navyField,
                           border: "1px solid",
                           borderColor: selectedCategory === cat.label ? NOIR.navyField : "rgba(10, 42, 102, 0.18)",
+                          "& .MuiChip-label": { color: "inherit" },
                           cursor: "pointer",
                           py: 2,
                           px: 1,
@@ -295,6 +296,7 @@ export function CareersIndexPage() {
                               bgcolor: position.category === "Graduate Program" ? "rgba(255, 199, 44, 0.25)" : "rgba(10, 42, 102, 0.08)",
                               color: NOIR.navyField,
                               border: "1px solid rgba(10, 42, 102, 0.15)",
+                              "& .MuiChip-label": { color: "inherit" },
                             }}
                           />
                         </Box>
@@ -328,6 +330,7 @@ export function CareersIndexPage() {
                                 bgcolor: "rgba(10, 42, 102, 0.08)",
                                 color: NOIR.navyField,
                                 border: "1px solid rgba(10, 42, 102, 0.15)",
+                                "& .MuiChip-label": { color: "inherit" },
                               }}
                             />
                           ))}

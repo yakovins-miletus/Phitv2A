@@ -45,6 +45,8 @@ export const NAV_ANCHORS = {
   HOME_BLOG_SECTION: 'home-blog-section',
   /** AppShell's footer, on every route. */
   SITE_FOOTER: 'site-footer',
+  /** The Innovation Lab coming soon page. */
+  INNOVATION_LAB: 'innovation-lab',
 } as const;
 
 export type NavAnchorId = (typeof NAV_ANCHORS)[keyof typeof NAV_ANCHORS];

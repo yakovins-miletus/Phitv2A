@@ -18,6 +18,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
+import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 const UPCOMING_PILLARS = [
@@ -55,6 +56,7 @@ export function InnovationLabComingSoon() {
   const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.INNOVATION_LAB, { dark: true });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +66,7 @@ export function InnovationLabComingSoon() {
   };
 
   return (
-    <Box sx={{ width: "100%", bgcolor: NOIR.navyDeep, minHeight: "100vh", position: "relative" }}>
+    <Box ref={anchorRef} sx={{ width: "100%", bgcolor: NOIR.navyDeep, minHeight: "100vh", position: "relative" }}>
       {/* ── Background Video / Ambient Stage ── */}
       <Box
         ref={containerRef}

@@ -27,12 +27,28 @@ interface BlogToolbarProps {
 
 /** Search + sort controls for the blog list. Input state is local so typing
     stays instant; the URL (single source of truth) is updated ~300ms behind. */
+const lightTextFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "rgba(10, 42, 102, 0.03)",
+    color: "text.primary",
+    borderRadius: "12px",
+    "& fieldset": { borderColor: "rgba(10, 42, 102, 0.18)" },
+    "&:hover fieldset": { borderColor: "primary.main" },
+    "&.Mui-focused fieldset": { borderColor: "primary.main", borderWidth: 1 },
+  },
+  "& .MuiInputLabel-root": {
+    color: "text.secondary",
+    "&.Mui-focused": { color: "primary.main" },
+  },
+  "& .MuiSvgIcon-root": {
+    color: "text.secondary",
+  }
+};
+
 export function BlogToolbar({ q, sort, onQChange, onSortChange }: BlogToolbarProps) {
   const [value, setValue] = useState(q);
   const timerRef = useRef<number | undefined>(undefined);
 
-  // Sync from the URL when it changes externally (back/forward, clear chip) —
-  // but never while our own debounce is in flight, or it echoes stale text.
   useEffect(() => {
     if (timerRef.current === undefined) {
       setValue((current) => (current.trim() === q ? current : q));
@@ -64,7 +80,7 @@ export function BlogToolbar({ q, sort, onQChange, onSortChange }: BlogToolbarPro
         }}
         size="small"
         placeholder="Search posts…"
-        sx={{ flexGrow: 1 }}
+        sx={{ flexGrow: 1, ...lightTextFieldSx }}
         slotProps={{
           input: {
             startAdornment: (
@@ -83,7 +99,7 @@ export function BlogToolbar({ q, sort, onQChange, onSortChange }: BlogToolbarPro
           onSortChange(event.target.value as BlogSort);
         }}
         size="small"
-        sx={{ minWidth: 180 }}
+        sx={{ minWidth: 180, ...lightTextFieldSx }}
         slotProps={{ select: { "aria-label": "Sort posts" } }}
       >
         {SORT_OPTIONS.map((option) => (

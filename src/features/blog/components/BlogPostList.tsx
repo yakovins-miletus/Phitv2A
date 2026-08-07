@@ -103,7 +103,16 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
               {DATE_FORMAT.format(new Date(post.published_on))}
             </Typography>
             {post.featured ? (
-              <Chip label="Featured" size="small" color="primary" variant="outlined" />
+              <Chip
+                label="Featured"
+                size="small"
+                sx={{
+                  bgcolor: "rgba(10, 42, 102, 0.08)",
+                  color: "#0A2A66",
+                  border: "1px solid rgba(10, 42, 102, 0.15)",
+                  "& .MuiChip-label": { color: "inherit" },
+                }}
+              />
             ) : null}
           </Stack>
           <Typography 
@@ -140,11 +149,22 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
         <Chip
           label={post.category}
           size="small"
-          color={post.category === activeCategory ? "primary" : "default"}
-          variant={post.category === activeCategory ? "filled" : "outlined"}
           onClick={(e) => {
             e.stopPropagation();
             onCategoryChange(post.category === activeCategory ? null : post.category);
+          }}
+          sx={post.category === activeCategory ? {
+            bgcolor: "#0A2A66",
+            color: "#FFFFFF",
+            border: "1px solid #0A2A66",
+            "& .MuiChip-label": { color: "inherit" },
+            "&:hover": { bgcolor: "#081F4D" },
+          } : {
+            bgcolor: "rgba(10, 42, 102, 0.08)",
+            color: "#0A2A66",
+            border: "1px solid rgba(10, 42, 102, 0.15)",
+            "& .MuiChip-label": { color: "inherit" },
+            "&:hover": { bgcolor: "rgba(10, 42, 102, 0.12)" },
           }}
         />
       </Box>
@@ -186,9 +206,15 @@ export function BlogPostList({
           <Chip
             label={activeCategory}
             size="small"
-            color="primary"
             onDelete={() => {
               onCategoryChange(null);
+            }}
+            sx={{
+              bgcolor: "#0A2A66",
+              color: "#FFFFFF",
+              border: "1px solid #0A2A66",
+              "& .MuiChip-label": { color: "inherit" },
+              "& .MuiChip-deleteIcon": { color: "rgba(255, 255, 255, 0.7)", "&:hover": { color: "#FFFFFF" } }
             }}
           />
         </Stack>

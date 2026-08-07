@@ -22,6 +22,21 @@ import { pageHead } from "@/shared/seo";
 import { MONO } from "@/shared/theme/theme";
 import { useSubmitContactMessage } from "@/features/contact/api";
 
+const lightTextFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "rgba(10, 42, 102, 0.03)",
+    color: "text.primary",
+    borderRadius: "12px",
+    "& fieldset": { borderColor: "rgba(10, 42, 102, 0.18)" },
+    "&:hover fieldset": { borderColor: "primary.main" },
+    "&.Mui-focused fieldset": { borderColor: "primary.main", borderWidth: 1 },
+  },
+  "& .MuiInputLabel-root": {
+    color: "text.secondary",
+    "&.Mui-focused": { color: "primary.main" },
+  },
+};
+
 export const Route = createFileRoute("/careers/$jobId")({
   head: ({ params }) => {
     const job = CAREER_POSITIONS.find((p) => p.id === params.jobId);
@@ -73,7 +88,7 @@ function JobDetailPage() {
   };
 
   return (
-    <Box sx={{ width: "100%", pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 } }}>
+    <Box sx={{ width: "100%", bgcolor: "background.default", pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 } }}>
       <Section>
         <Stack spacing={{ xs: 6, md: 8 }}>
           {/* Back Navigation Button */}
@@ -122,7 +137,7 @@ function JobDetailPage() {
             </Reveal>
 
             <Reveal delay={0.1}>
-              <Typography variant="h1" component="h1" sx={{ fontWeight: 800 }}>
+              <Typography variant="h1" component="h1" sx={{ fontWeight: 800, color: "text.primary" }}>
                 {job.title}
               </Typography>
             </Reveal>
@@ -153,7 +168,7 @@ function JobDetailPage() {
               <Stack spacing={5}>
                 {/* Overview */}
                 <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800 }}>
+                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
                     Program Overview
                   </Typography>
                   <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7, fontSize: "1.05rem" }}>
@@ -163,7 +178,7 @@ function JobDetailPage() {
 
                 {/* Key Responsibilities */}
                 <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800 }}>
+                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
                     Key Responsibilities
                   </Typography>
                   <Stack spacing={1.5}>
@@ -180,7 +195,7 @@ function JobDetailPage() {
 
                 {/* Candidate Requirements */}
                 <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800 }}>
+                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
                     Qualifications & Requirements
                   </Typography>
                   <Stack spacing={1.5}>
@@ -197,7 +212,7 @@ function JobDetailPage() {
 
                 {/* Program Benefits */}
                 <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800 }}>
+                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
                     What We Offer
                   </Typography>
                   <Stack spacing={1.5}>
@@ -244,7 +259,7 @@ function JobDetailPage() {
                 ) : (
                   <Stack component="form" onSubmit={handleSubmit} spacing={3}>
                     <Stack spacing={1}>
-                      <Typography variant="h3" component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem" }}>
+                      <Typography variant="h3" component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "text.primary" }}>
                         Apply for this Position
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -258,6 +273,7 @@ function JobDetailPage() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       fullWidth
+                      sx={lightTextFieldSx}
                     />
 
                     <TextField
@@ -267,6 +283,7 @@ function JobDetailPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       fullWidth
+                      sx={lightTextFieldSx}
                     />
 
                     <TextField
@@ -276,6 +293,7 @@ function JobDetailPage() {
                       onChange={(e) => setUniversity(e.target.value)}
                       placeholder="e.g. DLSU, Ateneo, UP, or Current Firm"
                       fullWidth
+                      sx={lightTextFieldSx}
                     />
 
                     <TextField
@@ -286,6 +304,7 @@ function JobDetailPage() {
                       onChange={(e) => setCoverNote(e.target.value)}
                       placeholder="Tell us briefly about your technical background or GitHub portfolio..."
                       fullWidth
+                      sx={lightTextFieldSx}
                     />
 
                     <Button

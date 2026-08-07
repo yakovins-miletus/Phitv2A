@@ -14,6 +14,21 @@ import { messageFromError } from "@/shared/api/errors";
 
 import { useSubmitContactMessage } from "../api";
 
+const lightTextFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "rgba(10, 42, 102, 0.03)",
+    color: "text.primary",
+    borderRadius: "12px",
+    "& fieldset": { borderColor: "rgba(10, 42, 102, 0.18)" },
+    "&:hover fieldset": { borderColor: "primary.main" },
+    "&.Mui-focused fieldset": { borderColor: "primary.main", borderWidth: 1 },
+  },
+  "& .MuiInputLabel-root": {
+    color: "text.secondary",
+    "&.Mui-focused": { color: "primary.main" },
+  },
+};
+
 /** Mirrors the server's ContactMessageIn constraints exactly. */
 const RULES = {
   name: { min: 2, max: 100, label: "Name" },
@@ -138,6 +153,7 @@ export function ContactForm() {
               helperText={errors.name ?? " "}
               required
               fullWidth
+              sx={lightTextFieldSx}
             />
             <TextField
               label="Email"
@@ -148,6 +164,7 @@ export function ContactForm() {
               helperText={errors.email ?? " "}
               required
               fullWidth
+              sx={lightTextFieldSx}
             />
             <TextField
               label="Subject"
@@ -157,6 +174,7 @@ export function ContactForm() {
               helperText={errors.subject ?? " "}
               required
               fullWidth
+              sx={lightTextFieldSx}
             />
             <TextField
               label="Message"
@@ -168,6 +186,7 @@ export function ContactForm() {
               minRows={6}
               required
               fullWidth
+              sx={lightTextFieldSx}
             />
           </Stack>
         </Box>
