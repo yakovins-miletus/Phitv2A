@@ -62,7 +62,7 @@ interface NavbarContextValue {
 const NavbarContext = createContext<NavbarContextValue | null>(null);
 
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('minimal');
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('dynamic');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
   const [activeAnchors, setActiveAnchors] = useState<Set<string>>(new Set());
@@ -161,7 +161,7 @@ export function useNavbarAnchor(id: NavAnchorId, options?: { dark?: boolean; roo
       },
       {
         root: null,
-        rootMargin: customMargin ?? "-80px 0px -90% 0px", // Trigger only when section crosses the navbar height
+        rootMargin: customMargin ?? "-40px 0px -95% 0px", // Trigger only when section crosses the navbar height
         threshold: customThreshold ?? 0,
       }
     );

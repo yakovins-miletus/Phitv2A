@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { motion, useMotionValue, useTransform } from "motion/react";
+import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
 import { gsap } from "gsap";
 
 import { MONO } from "@/shared/theme/theme";
@@ -187,34 +187,45 @@ export function EyeFlow() {
                 {ACT_LABELS[act]}
               </Typography>
 
-              {chapters.map(({ index, label }) => {
-                const isActiveChapter = index === activeChapter;
-                return (
-                  <Typography
-                    key={index}
-                    onClick={() => scrollToChapter(index)}
-                    sx={{
-                      fontFamily: MONO,
-                      fontSize: "0.6rem",
-                      letterSpacing: "0.18em",
-                      color: isActiveChapter ? NOIR.gold : "text.secondary",
-                      opacity: isActiveChapter ? 1 : isActiveAct ? 0.45 : 0.2,
-                      cursor: "pointer",
-                      userSelect: "none",
-                      display: "block",
-                      transformOrigin: "right center",
-                      transition: "color 0.4s ease, opacity 0.4s ease, transform 0.3s ease",
-                      "&:hover": {
-                        color: NOIR.gold,
-                        opacity: 1,
-                        transform: "translateX(-4px)",
-                      },
-                    }}
+              <AnimatePresence initial={false}>
+                {isActiveAct && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    style={{ overflow: "hidden" }}
                   >
-                    {label}
-                  </Typography>
-                );
-              })}
+                    {chapters.map(({ index, label }) => {
+                      const isActiveChapter = index === activeChapter;
+                      return (
+                        <Typography
+                          key={index}
+                          onClick={() => scrollToChapter(index)}
+                          sx={{
+                            fontFamily: MONO,
+                            fontSize: "0.6rem",
+                            letterSpacing: "0.18em",
+                            color: isActiveChapter ? NOIR.gold : "text.secondary",
+                            opacity: isActiveChapter ? 1 : isActiveAct ? 0.45 : 0.2,
+                            cursor: "pointer",
+                            userSelect: "none",
+                            display: "block",
+                            transformOrigin: "right center",
+                            transition: "color 0.4s ease, opacity 0.4s ease, transform 0.3s ease",
+                            "&:hover": {
+                              color: NOIR.gold,
+                              opacity: 1,
+                              transform: "translateX(-4px)",
+                            },
+                          }}
+                        >
+                          {label}
+                        </Typography>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Box>
           );
         })}

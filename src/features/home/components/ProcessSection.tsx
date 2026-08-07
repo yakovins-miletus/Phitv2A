@@ -9,7 +9,7 @@ import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext"
 
 // Immersive pipeline sequence
 export function ProcessSection() {
-  const anchorRef = useNavbarAnchor(NAV_ANCHORS.PROCESS_IMMERSIVE, { dark: true, rootMargin: "-80px 0px -60% 0px" });
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.PROCESS_IMMERSIVE, { dark: true });
 
   return (
     <Box ref={anchorRef} sx={{ bgcolor: NOIR.navyField, color: "#FFFFFF", position: "relative", zIndex: 1, overflow: "hidden" }}>

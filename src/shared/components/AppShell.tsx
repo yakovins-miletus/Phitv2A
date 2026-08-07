@@ -118,42 +118,23 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
   const router = useRouter();
-  const { overrideMode } = useNavbar();
-  const isMinimal = overrideMode === "minimal";
   const onDark = variant === "onDark";
 
   const isPrimary = hovered || clicked;
-  let btnBgColor: string;
-  let btnBorderColor: string;
-  let btnTextColor: string;
+  
+  let btnBgColor = onDark 
+    ? (isPrimary ? NOIR.gold : "rgba(255, 255, 255, 0.15)") 
+    : (isPrimary ? NOIR.navyField : "#FFFFFF");
+    
+  let btnTextColor = onDark 
+    ? "#FFFFFF"
+    : (isPrimary ? "#FFFFFF" : NOIR.navyField);
 
-  if (isMinimal) {
-    if (onDark) {
-      if (isPrimary) {
-        btnBgColor = NOIR.gold;
-        btnBorderColor = NOIR.gold;
-        btnTextColor = "#FFFFFF";
-      } else {
-        btnBgColor = "rgba(255, 255, 255, 0.75)";
-        btnBorderColor = "rgba(255, 255, 255, 0.75)";
-        btnTextColor = "rgba(10, 42, 102, 0.7)";
-      }
-    } else {
-      if (isPrimary) {
-        btnBgColor = NOIR.navyField;
-        btnBorderColor = NOIR.navyField;
-        btnTextColor = "#FFFFFF";
-      } else {
-        btnBgColor = "rgba(255, 255, 255, 0.75)";
-        btnBorderColor = alpha(NOIR.navyField, 0.75);
-        btnTextColor = NOIR.navyField;
-      }
-    }
-  } else {
-    btnBgColor = isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(10,42,102,0.05)") : "transparent";
-    btnBorderColor = onDark ? (hovered ? NOIR.gold : "#FFFFFF") : "primary.main";
-    btnTextColor = onDark ? "#FFFFFF" : "primary.main";
+  if (isActive && !isPrimary) {
+    btnBgColor = onDark ? "rgba(255, 199, 44, 0.2)" : "rgba(10, 42, 102, 0.08)";
   }
+
+  const shadowMd = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -173,20 +154,17 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
       onClick={handleClick}
       sx={{
         borderRadius: "10px",
-        borderColor: btnBorderColor,
+        border: "none !important",
         color: btnTextColor,
         bgcolor: btnBgColor,
-        boxShadow: isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : "none",
+        boxShadow: isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : shadowMd,
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         transform: clicked ? "scale(0.95)" : "scale(1)",
         "&:hover": {
-          bgcolor: isMinimal 
-            ? (onDark ? NOIR.gold : NOIR.navyField) 
-            : (isActive ? (onDark ? "rgba(255,199,44,0.14)" : "rgba(0, 0, 0, 0.03)") : "transparent"),
-          color: isMinimal ? "#FFFFFF" : (onDark ? "#FFFFFF" : "primary.main"),
-          borderColor: isMinimal 
-            ? (onDark ? NOIR.gold : NOIR.navyField) 
-            : (isActive ? (onDark ? NOIR.gold : "primary.main") : "transparent"),
+          border: "none !important",
+          bgcolor: onDark ? NOIR.gold : NOIR.navyField,
+          color: "#FFFFFF",
+          boxShadow: shadowMd,
         },
         ...sx,
       }}
@@ -296,102 +274,60 @@ function AnimatedMenuButton({
   isImmersiveDark,
   ariaLabel,
   sx,
-  noBorder = false,
+  noBorder,
 }: {
   active: boolean;
   onClick: () => void;
-  isNotch: boolean;
+  isNotch?: boolean;
   isImmersiveDark: boolean;
   ariaLabel: string;
   sx?: object;
   noBorder?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const { overrideMode } = useNavbar();
-  const isMinimal = overrideMode === "minimal";
-
   const isPrimary = hovered || active;
-  let bgColor: string;
-  let borderColor: string;
-  let iconColor: string;
+  
+  const bgColor = isImmersiveDark 
+    ? (isPrimary ? NOIR.gold : "rgba(255, 255, 255, 0.15)") 
+    : (isPrimary ? NOIR.navyField : "#FFFFFF");
+    
+  const iconColor = isImmersiveDark 
+    ? "#FFFFFF" 
+    : (isPrimary ? "#FFFFFF" : NOIR.navyField);
 
-  if (noBorder) {
-    bgColor = "transparent";
-    borderColor = "transparent";
-    if (isImmersiveDark) {
-      iconColor = isPrimary ? NOIR.gold : "#FFFFFF";
-    } else {
-      iconColor = isPrimary ? NOIR.gold : NOIR.navyField;
-    }
-  } else if (isMinimal) {
-    if (isImmersiveDark) {
-      if (isPrimary) {
-        bgColor = NOIR.gold;
-        borderColor = NOIR.gold;
-        iconColor = "#FFFFFF";
-      } else {
-        bgColor = "rgba(255, 255, 255, 0.75)";
-        borderColor = "rgba(255, 255, 255, 0.75)";
-        iconColor = "rgba(10, 42, 102, 0.7)";
-      }
-    } else {
-      if (isPrimary) {
-        bgColor = NOIR.navyField;
-        borderColor = NOIR.navyField;
-        iconColor = "#FFFFFF";
-      } else {
-        bgColor = "rgba(255, 255, 255, 0.75)";
-        borderColor = alpha(NOIR.navyField, 0.75);
-        iconColor = NOIR.navyField;
-      }
-    }
-  } else if (isImmersiveDark) {
-    if (isPrimary) {
-      bgColor = NOIR.gold;
-      borderColor = NOIR.gold;
-      iconColor = "#FFFFFF";
-    } else {
-      bgColor = "transparent";
-      borderColor = "#FFFFFF";
-      iconColor = "#FFFFFF";
-    }
-  } else {
-    if (isPrimary) {
-      bgColor = NOIR.navyField;
-      borderColor = NOIR.navyField;
-      iconColor = "#FFFFFF";
-    } else {
-      bgColor = isNotch ? "transparent" : "#FFFFFF";
-      borderColor = isNotch ? "rgba(255,255,255,0.25)" : NOIR.navyField;
-      iconColor = isNotch ? "#FFFFFF" : NOIR.navyField;
-    }
-  }
+  const shadowMd = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
 
   return (
     <Box
       component="button"
-      aria-label={ariaLabel}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      aria-label={ariaLabel}
       sx={{
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
+        width: 42,
+        height: 42,
         borderRadius: "10px",
-        border: noBorder ? "none" : `1px solid ${borderColor}`,
-        backgroundColor: bgColor,
-        height: noBorder ? "28px" : "42px",
-        width: noBorder ? "36px" : "42px",
-        p: 0,
+        border: "none !important",
+        bgcolor: bgColor,
+        color: iconColor,
+        boxShadow: shadowMd,
         cursor: "pointer",
         outline: "none",
-        boxShadow: hovered && !noBorder ? `0 6px 20px ${alpha(NOIR.navyField, 0.25)}` : "none",
         transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
+        "&:hover": {
+          border: "none !important",
+          bgcolor: isImmersiveDark ? NOIR.gold : NOIR.navyField,
+          color: "#FFFFFF",
+          boxShadow: shadowMd,
+        },
       }}
     >
-      <ThreeBarMenuIcon isHovered={hovered} color={iconColor} />
+      <ThreeBarMenuIcon isHovered={hovered || active} color={iconColor} />
     </Box>
   );
 }
@@ -490,24 +426,29 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsAtTop(window.scrollY < 50);
+      if (pathname === '/') {
+        setIsAtTop(window.scrollY < window.innerHeight * 19);
+      } else {
+        setIsAtTop(window.scrollY < 50);
+      }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [pathname]);
 
-  const isMinimal = overrideMode === "minimal";
-  const isGlass = overrideMode === "glassmorphism";
-  const isNotch = overrideMode === "notch";
-  const isStandard = overrideMode === "standard";
+  const effectiveMode = isAtTop ? "minimal" : overrideMode;
+
+  const isMinimal = effectiveMode === "minimal";
+  const isGlass = effectiveMode === "glassmorphism";
+  const isNotch = effectiveMode === "notch";
+  const isStandard = effectiveMode === "standard";
   const isStandardOrGlass = isStandard || isGlass;
-  const isIsland = overrideMode === "island";
+  const isIsland = effectiveMode === "island";
   
-  // Ensure the navbar correctly defaults to light mode at the absolute top of the page
-  // rather than getting stuck in a stale dark mode anchor state on load.
-  const onDark = (isNotch || (isOverDarkSection && !isAtTop)) && !isIsland;
-  const isImmersive = overrideMode === "immersive";
+  // The dark mode should accurately reflect the anchors, even at the top.
+  const onDark = (isNotch || isOverDarkSection) && !isIsland;
+  const isImmersive = effectiveMode === "immersive";
   const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
 
   return (
@@ -579,13 +520,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
               }}
             />
           )}
-          <Container maxWidth={isStandardOrGlass ? "2xl" : (isMinimal ? false : "xl")} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none', px: isStandardOrGlass ? undefined : (isMinimal ? { xs: 3, md: 6, lg: 8 } : undefined) }}>
+          <Container disableGutters maxWidth={false} sx={{ display: "flex", justifyContent: "center", pointerEvents: 'none' }}>
             <Toolbar
               disableGutters
               sx={{
                 position: "relative",
                 width: "100%",
-                maxWidth: isStandardOrGlass ? "100%" : (isNotch ? "100%" : (derivedIsCompact ? "1200px" : "100%")),
+                maxWidth: isMinimal 
+                  ? "100vw" 
+                  : (isStandardOrGlass 
+                    ? "1536px" 
+                    : (isNotch 
+                      ? "100vw" 
+                      : (derivedIsCompact ? "1200px" : "1536px"))),
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -627,21 +574,34 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     : isImmersive
                       ? "28px"
                       : (derivedIsCompact ? "100px" : "0px")),
-                padding: isStandardOrGlass
-                  ? "8px 0px"
-                  : (isNotch
-                    ? "4px 20px"
-                    : isImmersive
-                      ? "10px 24px"
-                      : (derivedIsCompact ? "2px 32px" : "8px 0px")),
+                padding: isMinimal
+                  ? { xs: "8px 32px", md: "8px 72px" }
+                  : (isStandardOrGlass
+                    ? { xs: "8px 16px", sm: "8px 24px" }
+                    : (isNotch
+                      ? "4px 20px"
+                      : isImmersive
+                        ? "10px 24px"
+                        : (derivedIsCompact ? "2px 32px" : { xs: "8px 16px", sm: "8px 24px" }))),
                 boxShadow: isIsland ? "0 8px 32px rgba(0,0,0,0.08)" : "none",
                 display: "flex",
-                justifyContent: isNotch ? "center" : "space-between",
+                justifyContent: isNotch ? "center" : "center",
                 alignItems: "center",
                 gap: isNotch ? 2.5 : 4,
                 mx: "auto",
               }}
             >
+              <Box
+                sx={{
+                  display: "flex",
+                  width: "100%",
+                  maxWidth: isMinimal ? "100%" : (isNotch ? "720px" : "1536px"),
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mx: "auto",
+                  px: isMinimal ? 0 : 0,
+                }}
+              >
               <RouterLink
                 to="/"
                 underline="none"
@@ -805,6 +765,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   noBorder={isStandardOrGlass || isIsland}
                   sx={{ display: { xs: "inline-flex", md: "none" } }}
                 />
+              </Box>
               </Box>
             </Toolbar>
           </Container>

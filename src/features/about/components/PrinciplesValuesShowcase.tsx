@@ -296,7 +296,10 @@ export function PrinciplesValuesShowcase() {
                         borderRadius: { xs: 5, md: 8 },
                         overflow: "hidden",
                         border: "1px solid rgba(255, 199, 44, 0.3)",
-                        boxShadow: "0 24px 60px rgba(0, 0, 0, 0.5)",
+                        boxShadow: "0 12px 40px rgba(10, 42, 102, 0.15)",
+                        transform: "translateZ(0)",
+                        WebkitTransform: "translateZ(0)",
+                        willChange: "transform, opacity, box-shadow",
                       }}
                     >
                       <Box

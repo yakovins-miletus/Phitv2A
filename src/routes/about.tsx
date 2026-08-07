@@ -325,7 +325,7 @@ function AboutPage() {
           bgcolor: "background.default",
           borderTopLeftRadius: { xs: 28, md: 48 },
           borderTopRightRadius: { xs: 28, md: 48 },
-          boxShadow: "0 -24px 60px rgba(0, 0, 0, 0.45)",
+          boxShadow: "0 -16px 48px rgba(0, 0, 0, 0.22)",
           pt: { xs: 8, md: 14 },
           pb: { xs: 12, md: 16 },
           display: "flex",

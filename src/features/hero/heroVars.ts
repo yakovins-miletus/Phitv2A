@@ -201,7 +201,7 @@ export function heroStage(progress: number, reduced: boolean): HeroStage {
     container: progress >= CONTAINER_START,
     borderDone: borderAnimProgress(progress) >= 0.99,
     navActive: progress >= DWELL_END,
-    navDark: progress >= GUNSHOT_END,
+    navDark: progress >= GUNSHOT_END && progress < 1.045,
     panelInteractive: progress <= PANEL_POINTER_CUTOFF,
   };
 }

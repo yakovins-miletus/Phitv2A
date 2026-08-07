@@ -97,6 +97,7 @@ export const components: Components<Theme> = {
       // Skip link: off-screen until focused, then pinned top-left. A glass pill now,
       // but the translateY mechanic and the reduced-motion guard are unchanged.
       ".skip-to-content": {
+        display: "inline-block",
         position: "fixed",
         top: 0,
         left: 0,
@@ -109,10 +110,11 @@ export const components: Components<Theme> = {
         fontWeight: 700,
         textDecoration: "none",
         borderBottomRightRadius: "var(--r-control)",
-        boxShadow: "var(--glass-shadow-2)",
+        boxShadow: "none",
         transform: "translateY(-120%)",
         "&:focus-visible": {
           transform: "translateY(0)",
+          boxShadow: "var(--glass-shadow-2)",
           ...focusRing(theme),
         },
       },

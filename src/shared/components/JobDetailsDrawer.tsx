@@ -236,11 +236,11 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
 function RoleVisualAid({ roleId }: { roleId: string }) {
   if (roleId === "quant-researcher") {
     return (
-    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
+      <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <PsychologylIcon sx={{ color: NOIR.goldDark }} />
-            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+            <PsychologylIcon sx={{ color: NOIR.gold }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
               RESEARCH PIPELINE ARCHITECTURE
             </Typography>
           </Stack>
@@ -261,11 +261,11 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "software-engineer") {
     return (
-    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
+      <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <SpeedIcon sx={{ color: NOIR.goldDark }} />
-            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+            <SpeedIcon sx={{ color: NOIR.gold }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
               ULTRA-LOW LATENCY CORE
             </Typography>
           </Stack>
@@ -286,11 +286,11 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "full-stack-developer") {
     return (
-    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
+      <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <CodeIcon sx={{ color: NOIR.goldDark }} />
-            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+            <CodeIcon sx={{ color: NOIR.gold }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
               SAAS PLATFORM STACK
             </Typography>
           </Stack>
@@ -311,11 +311,11 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "data-scientist") {
     return (
-    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
+      <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <StorageIcon sx={{ color: NOIR.goldDark }} />
-            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+            <StorageIcon sx={{ color: NOIR.gold }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
               ETL & DATA LAKE ARCHITECTURE
             </Typography>
           </Stack>
@@ -336,11 +336,11 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
   }
   if (roleId === "rd-internship-program") {
     return (
-    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid", borderColor: "rgba(255,255,255,0.1)" }}>
+      <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <CodeIcon sx={{ color: NOIR.goldDark }} />
-            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+            <CodeIcon sx={{ color: NOIR.gold }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
               R&D INTERNSHIP PATHWAY
             </Typography>
           </Stack>
@@ -360,11 +360,11 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
     );
   }
   return (
-    <Box sx={{ p: 3, borderRadius: 3, bgcolor: "rgba(10,42,102,0.06)", border: "1px solid", borderColor: "divider" }}>
+    <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
       <Stack spacing={2}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <CloudQueueIcon sx={{ color: NOIR.goldDark }} />
-          <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.1em" }}>
+          <CloudQueueIcon sx={{ color: NOIR.gold }} />
+          <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
             24x7 CLOUD INFRASTRUCTURE
           </Typography>
         </Stack>
@@ -389,17 +389,17 @@ function PaperBox({ label, sub, highlight }: { label: string; sub: string; highl
     <Box
       sx={{
         p: 2,
-        borderRadius: 2,
-        bgcolor: highlight ? "primary.main" : "rgba(255,255,255,0.05)",
+        borderRadius: 2.5,
+        bgcolor: highlight ? "rgba(255, 199, 44, 0.15)" : "rgba(255, 255, 255, 0.04)",
         color: "white",
         border: "1px solid",
-        borderColor: highlight ? "primary.main" : "rgba(255,255,255,0.1)",
+        borderColor: highlight ? "rgba(255, 199, 44, 0.4)" : "rgba(255, 255, 255, 0.08)",
       }}
     >
-      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: "0.85rem" }}>
+      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: "0.85rem", color: highlight ? NOIR.gold : "rgba(244, 247, 252, 0.95)" }}>
         {label}
       </Typography>
-      <Typography variant="caption" sx={{ opacity: 0.8, display: "block", fontSize: "0.72rem", mt: 0.5 }}>
+      <Typography variant="caption" sx={{ opacity: 0.75, display: "block", fontSize: "0.72rem", mt: 0.5, fontFamily: MONO }}>
         {sub}
       </Typography>
     </Box>
@@ -425,8 +425,8 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
       slotProps={{
         backdrop: {
           sx: {
-            bgcolor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "blur(16px)",
+            bgcolor: "rgba(3, 10, 22, 0.45)",
+            backdropFilter: "blur(4px)",
           },
         },
       }}
@@ -441,14 +441,14 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
           data-lenis-prevent
           sx={{
             position: "relative",
-            width: { xs: "95vw", sm: "85vw", md: "60vw" },
-            height: { xs: "90vh", sm: "85vh", md: "80vh" },
-            bgcolor: "rgba(10, 42, 102, 0.6)",
-            backdropFilter: "blur(24px)",
+            width: { xs: "95vw", sm: "88vw", md: "65vw", lg: "58vw" },
+            height: { xs: "92vh", sm: "88vh", md: "82vh" },
+            bgcolor: "rgba(6, 18, 38, 0.80)",
+            backdropFilter: "blur(32px)",
             color: "common.white",
-            borderRadius: 4,
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            boxShadow: 24,
+            borderRadius: 5,
+            border: "1px solid rgba(255, 255, 255, 0.14)",
+            boxShadow: "0 24px 64px rgba(0, 0, 0, 0.7), 0 0 40px rgba(10, 42, 102, 0.4)",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
@@ -460,11 +460,11 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
             sx={{
               flexShrink: 0,
               px: { xs: 3, sm: 4, md: 5 },
-              py: 2,
-              borderBottom: 1,
-              borderColor: "rgba(255,255,255,0.1)",
-              bgcolor: "transparent",
-              borderRadius: "16px 16px 0 0",
+              py: 2.2,
+              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              bgcolor: "rgba(6, 24, 59, 0.6)",
+              backdropFilter: "blur(12px)",
+              borderRadius: "20px 20px 0 0",
               zIndex: 10,
             }}
           >
@@ -472,25 +472,52 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
               <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={onClose}
-                sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 600, "&:hover": { color: "white" } }}
+                sx={{
+                  color: "rgba(255, 255, 255, 0.75)",
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: "0.78rem",
+                  "&:hover": { color: NOIR.gold, bgcolor: "rgba(255, 255, 255, 0.05)" },
+                }}
               >
-                Back to Positions
+                BACK TO POSITIONS
               </Button>
 
               <Stack direction="row" spacing={2} alignItems="center">
                 <Button
                   variant="contained"
-                  color="primary"
                   href={detail.applyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   endIcon={<LaunchIcon fontSize="small" />}
-                  sx={{ borderRadius: "100px", px: 3.5, py: 1.2, fontWeight: 700 }}
+                  sx={{
+                    borderRadius: "100px",
+                    px: 3.5,
+                    py: 1,
+                    fontFamily: MONO,
+                    fontWeight: 800,
+                    fontSize: "0.78rem",
+                    bgcolor: NOIR.gold,
+                    color: NOIR.navyInk,
+                    boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
+                    "&:hover": {
+                      bgcolor: NOIR.goldLight,
+                      boxShadow: "0 6px 20px rgba(255, 199, 44, 0.4)",
+                    },
+                  }}
                 >
-                  Apply Now
+                  APPLY NOW
                 </Button>
-                <IconButton onClick={onClose} aria-label="Close Job Details" sx={{ color: "white" }}>
-                  <CloseIcon />
+                <IconButton
+                  onClick={onClose}
+                  aria-label="Close Job Details"
+                  sx={{
+                    color: "rgba(255, 255, 255, 0.8)",
+                    bgcolor: "rgba(255, 255, 255, 0.06)",
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)", color: "white" },
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
                 </IconButton>
               </Stack>
             </Stack>
@@ -505,51 +532,66 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
               overflowY: "auto",
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
-              py: { xs: 4, md: 8 },
+              py: { xs: 4, md: 6 },
+              px: { xs: 1, sm: 2 },
             }}
           >
             <Container maxWidth="lg">
-              <Stack spacing={5}>
+              <Stack spacing={4.5}>
             
                 {/* Title & Metadata Header */}
                 <Stack spacing={2.5}>
-                  <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
                     <Chip
-                      icon={<LocationOnIcon sx={{ fontSize: "0.9rem !important" }} />}
+                      icon={<LocationOnIcon sx={{ fontSize: "0.9rem !important", color: `${NOIR.gold} !important` }} />}
                       label={detail.location}
                       size="small"
-                      sx={{ bgcolor: "primary.main", color: "white", fontWeight: 600 }}
+                      sx={{
+                        bgcolor: "rgba(255, 199, 44, 0.12)",
+                        color: NOIR.gold,
+                        border: "1px solid rgba(255, 199, 44, 0.3)",
+                        fontWeight: 700,
+                        fontFamily: MONO,
+                        fontSize: "0.72rem",
+                      }}
                     />
                     <Chip
-                      icon={<WorkOutlineIcon sx={{ fontSize: "0.9rem !important" }} />}
+                      icon={<WorkOutlineIcon sx={{ fontSize: "0.9rem !important", color: "rgba(244, 247, 252, 0.7) !important" }} />}
                       label={detail.type}
                       size="small"
                       variant="outlined"
-                      sx={{ borderColor: "rgba(255,255,255,0.2)", color: "white", fontWeight: 600 }}
+                      sx={{
+                        borderColor: "rgba(255, 255, 255, 0.2)",
+                        color: "rgba(244, 247, 252, 0.9)",
+                        fontWeight: 600,
+                        fontFamily: MONO,
+                        fontSize: "0.72rem",
+                      }}
                     />
                   </Stack>
 
-                  <Typography variant="h2" sx={{ fontSize: { xs: "2rem", sm: "3rem", md: "3.5rem" }, fontWeight: 800 }}>
+                  <Typography variant="h2" sx={{ fontSize: { xs: "2rem", sm: "2.6rem", md: "3.2rem" }, fontWeight: 800, color: NOIR.frost, lineHeight: 1.15 }}>
                     {detail.title}
                   </Typography>
 
-                  <Typography variant="h5" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 500, lineHeight: 1.5, maxWidth: 850 }}>
+                  <Typography variant="h5" sx={{ color: "rgba(244, 247, 252, 0.78)", fontWeight: 400, lineHeight: 1.6, maxWidth: 850 }}>
                     {detail.role}
                   </Typography>
 
                   {/* Tech Stack Pills */}
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ pt: 1 }}>
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ pt: 0.5 }}>
                     {detail.stack.map((tech) => (
                       <Chip
                         key={tech}
                         label={tech}
                         sx={{
                           fontFamily: MONO,
-                          fontSize: "0.8rem",
-                          bgcolor: "rgba(255,255,255,0.05)",
-                          border: "1px solid",
-                          borderColor: "rgba(255,255,255,0.1)",
-                          color: "white",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          bgcolor: "rgba(255, 255, 255, 0.06)",
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
+                          color: "rgba(244, 247, 252, 0.9)",
+                          py: 0.5,
                         }}
                       />
                     ))}
@@ -560,25 +602,25 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                 <RoleVisualAid roleId={detail.id} />
 
                 {/* Role Overview */}
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>
-                    Role Overview
+                <Box sx={{ p: 3.5, borderRadius: 4, bgcolor: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5, color: NOIR.frost, fontFamily: MONO, fontSize: "1.1rem" }}>
+                    ROLE OVERVIEW
                   </Typography>
-                  <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.7, fontSize: "1.05rem" }}>
+                  <Typography variant="body1" sx={{ color: "rgba(244, 247, 252, 0.75)", lineHeight: 1.75, fontSize: "1.02rem" }}>
                     {detail.overview}
                   </Typography>
                 </Box>
 
                 {/* Responsibilities */}
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 2.5, color: NOIR.frost, fontSize: "1.3rem" }}>
                     Key Responsibilities
                   </Typography>
-                  <Stack spacing={1.5}>
+                  <Stack spacing={1.8}>
                     {detail.responsibilities.map((item, index) => (
                       <Stack key={`resp-${String(index)}`} direction="row" spacing={2} alignItems="flex-start">
-                        <CheckCircleOutlineIcon sx={{ color: "primary.main", mt: 0.3, fontSize: "1.2rem" }} />
-                        <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", lineHeight: 1.6 }}>
+                        <CheckCircleOutlineIcon sx={{ color: NOIR.gold, mt: 0.3, fontSize: "1.2rem", flexShrink: 0 }} />
+                        <Typography variant="body1" sx={{ color: "rgba(244, 247, 252, 0.8)", fontSize: "1rem", lineHeight: 1.65 }}>
                           {item}
                         </Typography>
                       </Stack>
@@ -588,14 +630,14 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
 
                 {/* Requirements */}
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 2.5, color: NOIR.frost, fontSize: "1.3rem" }}>
                     Required for the Role
                   </Typography>
-                  <Stack spacing={1.5}>
+                  <Stack spacing={1.8}>
                     {detail.requirements.map((item, index) => (
                       <Stack key={`req-${String(index)}`} direction="row" spacing={2} alignItems="flex-start">
-                        <CheckCircleOutlineIcon sx={{ color: NOIR.goldDark, mt: 0.3, fontSize: "1.2rem" }} />
-                        <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", lineHeight: 1.6 }}>
+                        <CheckCircleOutlineIcon sx={{ color: NOIR.goldDark, mt: 0.3, fontSize: "1.2rem", flexShrink: 0 }} />
+                        <Typography variant="body1" sx={{ color: "rgba(244, 247, 252, 0.8)", fontSize: "1rem", lineHeight: 1.65 }}>
                           {item}
                         </Typography>
                       </Stack>
@@ -605,14 +647,14 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
 
                 {/* Desirable Skills */}
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 2.5, color: NOIR.frost, fontSize: "1.3rem" }}>
                     Desirable Skills & Experience
                   </Typography>
-                  <Stack spacing={1.5}>
+                  <Stack spacing={1.8}>
                     {detail.desirable.map((item, index) => (
                       <Stack key={`des-${String(index)}`} direction="row" spacing={2} alignItems="flex-start">
-                        <StarOutlineIcon sx={{ color: "primary.main", mt: 0.3, fontSize: "1.2rem" }} />
-                        <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", lineHeight: 1.6 }}>
+                        <StarOutlineIcon sx={{ color: NOIR.gold, mt: 0.3, fontSize: "1.2rem", flexShrink: 0 }} />
+                        <Typography variant="body1" sx={{ color: "rgba(244, 247, 252, 0.8)", fontSize: "1rem", lineHeight: 1.65 }}>
                           {item}
                         </Typography>
                       </Stack>
@@ -623,21 +665,21 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                 {/* Bottom Apply CTA Card */}
                 <Box
                   sx={{
-                    p: { xs: 4, md: 6 },
+                    p: { xs: 4, md: 5 },
                     borderRadius: 4,
-                    bgcolor: "rgba(255,255,255,0.05)",
-                    border: "1px solid",
-                    borderColor: "rgba(255,255,255,0.1)",
+                    bgcolor: "rgba(6, 24, 59, 0.8)",
+                    border: "1px solid rgba(255, 199, 44, 0.25)",
+                    boxShadow: "0 12px 32px rgba(0, 0, 0, 0.4)",
                     color: "white",
                     textAlign: "center",
-                    mt: 4,
-                    mb: 6,
+                    mt: 2,
+                    mb: 4,
                   }}
                 >
-                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 1.5 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5, color: NOIR.frost }}>
                     Ready to Join Phitopolis?
                   </Typography>
-                  <Typography variant="body1" sx={{ opacity: 0.9, maxWidth: 600, mx: "auto", mb: 3.5 }}>
+                  <Typography variant="body1" sx={{ color: "rgba(244, 247, 252, 0.75)", maxWidth: 600, mx: "auto", mb: 3.5, fontSize: "1.02rem" }}>
                     Submit your application to join our dynamic team in Bonifacio Global City (BGC), Manila.
                   </Typography>
                   <Button
@@ -649,15 +691,17 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     endIcon={<LaunchIcon />}
                     sx={{
                       bgcolor: NOIR.gold,
-                      color: NOIR.ink,
+                      color: NOIR.navyInk,
+                      fontFamily: MONO,
                       fontWeight: 800,
                       px: 5,
                       py: 1.5,
                       borderRadius: "100px",
-                      "&:hover": { bgcolor: NOIR.goldLight },
+                      boxShadow: "0 6px 20px rgba(255, 199, 44, 0.3)",
+                      "&:hover": { bgcolor: NOIR.goldLight, boxShadow: "0 8px 25px rgba(255, 199, 44, 0.45)" },
                     }}
                   >
-                    Apply Now for {detail.title}
+                    APPLY NOW FOR {detail.title.toUpperCase()}
                   </Button>
                 </Box>
 

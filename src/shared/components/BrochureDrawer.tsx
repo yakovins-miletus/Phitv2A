@@ -33,18 +33,20 @@ export function BrochureDrawer({
       slotProps={{
         backdrop: {
           sx: {
-            bgcolor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "none",
+            bgcolor: "rgba(3, 10, 22, 0.45)",
+            backdropFilter: "blur(4px)",
           },
         },
         paper: {
           sx: {
             height: "100vh",
             maxHeight: "100vh",
-            bgcolor: "background.paper",
+            bgcolor: "rgba(6, 18, 38, 0.80)",
+            backdropFilter: "blur(32px)",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            color: "common.white",
           },
         },
       }}
@@ -56,19 +58,19 @@ export function BrochureDrawer({
         alignItems="center"
         sx={{
           flexShrink: 0,
-          px: { xs: 2, sm: 4 },
-          py: 1.5,
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.default",
+          px: { xs: 2.5, sm: 4 },
+          py: 2,
+          borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+          bgcolor: "rgba(6, 24, 59, 0.9)",
+          backdropFilter: "blur(16px)",
           zIndex: 10,
         }}
       >
         <Stack direction="row" spacing={2} alignItems="center">
-          <PictureAsPdfIcon sx={{ color: NOIR.goldDark, fontSize: "1.6rem" }} />
+          <PictureAsPdfIcon sx={{ color: NOIR.gold, fontSize: "1.7rem" }} />
           <Box>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Typography variant="h6" sx={{ fontWeight: 700, fontSize: { xs: "1rem", sm: "1.2rem" } }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: "1rem", sm: "1.2rem" }, color: NOIR.frost }}>
                 {title}
               </Typography>
               <Chip
@@ -77,16 +79,18 @@ export function BrochureDrawer({
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.7rem",
-                  bgcolor: "primary.main",
-                  color: "white",
-                  height: 20,
+                  fontWeight: 800,
+                  bgcolor: "rgba(255, 199, 44, 0.18)",
+                  color: NOIR.gold,
+                  border: "1px solid rgba(255, 199, 44, 0.3)",
+                  height: 22,
                 }}
               />
             </Stack>
           </Box>
         </Stack>
 
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Button
             variant="outlined"
             size="small"
@@ -98,7 +102,18 @@ export function BrochureDrawer({
             sx={{
               display: { xs: "none", sm: "inline-flex" },
               borderRadius: "100px",
-              px: 2,
+              px: 2.5,
+              py: 0.8,
+              fontFamily: MONO,
+              fontWeight: 700,
+              fontSize: "0.75rem",
+              borderColor: "rgba(255, 255, 255, 0.25)",
+              color: "rgba(244, 247, 252, 0.9)",
+              "&:hover": {
+                borderColor: NOIR.gold,
+                color: NOIR.gold,
+                bgcolor: "rgba(255, 255, 255, 0.05)",
+              },
             }}
           >
             Open in New Tab
@@ -106,7 +121,6 @@ export function BrochureDrawer({
 
           <Button
             variant="contained"
-            color="primary"
             size="small"
             component="a"
             href={pdfUrl}
@@ -114,14 +128,34 @@ export function BrochureDrawer({
             startIcon={<DownloadIcon fontSize="small" />}
             sx={{
               borderRadius: "100px",
-              px: 2.5,
+              px: 3,
+              py: 0.8,
+              fontFamily: MONO,
+              fontWeight: 800,
+              fontSize: "0.75rem",
+              bgcolor: NOIR.gold,
+              color: NOIR.navyInk,
+              boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
+              "&:hover": {
+                bgcolor: NOIR.goldLight,
+                boxShadow: "0 6px 18px rgba(255, 199, 44, 0.4)",
+              },
             }}
           >
             Download
           </Button>
 
-          <IconButton onClick={onClose} aria-label="Close Brochure Drawer" sx={{ color: "text.primary", ml: 1 }}>
-            <CloseIcon />
+          <IconButton
+            onClick={onClose}
+            aria-label="Close Brochure Drawer"
+            sx={{
+              color: "rgba(255, 255, 255, 0.8)",
+              bgcolor: "rgba(255, 255, 255, 0.06)",
+              ml: 1,
+              "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)", color: "white" },
+            }}
+          >
+            <CloseIcon fontSize="small" />
           </IconButton>
         </Stack>
       </Stack>
@@ -132,10 +166,10 @@ export function BrochureDrawer({
         sx={{
           flexGrow: 1,
           width: "100%",
-          height: "calc(100vh - 60px)",
+          height: "calc(100vh - 65px)",
           overflow: "auto",
           WebkitOverflowScrolling: "touch",
-          bgcolor: "#1E1E1E",
+          bgcolor: "#050D1B",
         }}
       >
         <object

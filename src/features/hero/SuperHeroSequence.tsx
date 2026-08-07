@@ -41,12 +41,10 @@ const ANIM_LIMIT = 1800 / 1900;
  * times the interaction ceiling.
  */
 const LINK_PILL_SX = {
-  borderRadius: "var(--r-control)",
+  borderRadius: "100px",
   textDecoration: "none !important",
-  border: `1px solid rgba(10, 42, 102, 0.28)`,
-  backgroundColor: "rgba(244, 247, 252, 0.92)",
-  backdropFilter: "blur(8px)",
-  WebkitBackdropFilter: "blur(8px)",
+  border: "none",
+  backgroundColor: "#FFFFFF",
   boxShadow: "0 4px 16px rgba(10, 42, 102, 0.08)",
   transition: "all 0.25s ease",
   "&, & *": {
@@ -55,7 +53,6 @@ const LINK_PILL_SX = {
   "@media (hover: hover)": {
     "&:hover": {
       transform: "translateY(-2px)",
-      borderColor: NOIR.gold,
       backgroundColor: NOIR.navyField,
       boxShadow: `0 4px 20px rgba(10, 42, 102, 0.25), 0 0 12px ${NOIR.gold}40`,
       "& .btn-text": {

@@ -674,7 +674,7 @@ export function JourneyTimeline() {
                 display: "flex",
                 alignItems: "center",
                 padding: isMobile ? "80px 24px 120px" : "0 clamp(48px, 6vw, 96px)",
-                overflow: "hidden",
+                overflow: "visible",
               }}
             >
               <div
