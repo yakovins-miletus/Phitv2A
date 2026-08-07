@@ -62,7 +62,7 @@ interface NavbarContextValue {
 const NavbarContext = createContext<NavbarContextValue | null>(null);
 
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('dynamic');
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('island');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
   const [activeAnchors, setActiveAnchors] = useState<Set<string>>(new Set());

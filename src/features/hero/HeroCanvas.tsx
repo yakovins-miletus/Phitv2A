@@ -152,8 +152,36 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
 
       if (indicatorRef.current) {
         if (isPlaygroundActive) {
+          const state = heroFrameState(progressRef.current, isStatic, CONTAINER_START);
+          const mobile = width < 900;
+          const baseW = width < 600 ? 200 : width < 900 ? 280 : 380;
+          
+          let textX = PLANE_SIZE / 2;
+          let textY = PLANE_SIZE / 2;
+          let translateStyle = "translate(-50%, -50%)";
+          
+          if (!mobile) {
+            const padding = 32;
+            textX = PLANE_SIZE / 2 - baseW / 2 - padding;
+            textY = PLANE_SIZE / 2;
+            translateStyle = "translate(-100%, -50%)";
+          } else {
+            textX = PLANE_SIZE / 2;
+            textY = PLANE_SIZE / 2 + baseW / 2 + 80;
+            translateStyle = "translate(-50%, -50%)";
+          }
+
+          const textZ = 8 * (1 - state.flatten);
+          const viewScale = Math.min(width, height) / (PLANE_SIZE * 1.05);
+          const cam = makeCamera(state.flatten, width / 2, height / 2, viewScale, mouseCurrent.x * 0.14, mouseCurrent.y * 0.14);
+          const proj = project(cam, textX, textY, textZ);
+
           indicatorRef.current.style.opacity = Math.max(0, 1 - progressRef.current / 0.02).toString();
-          indicatorRef.current.style.transform = `translateX(-50%) translateY(${progressRef.current * 300}px)`;
+          indicatorRef.current.style.left = `${proj.sx}px`;
+          indicatorRef.current.style.top = `${proj.sy}px`;
+          indicatorRef.current.style.bottom = "auto";
+          indicatorRef.current.style.transform = translateStyle;
+          indicatorRef.current.style.textAlign = mobile ? "center" : "right";
         } else {
           indicatorRef.current.style.opacity = "0";
         }
@@ -411,19 +439,16 @@ export function HeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) 
         ref={indicatorRef}
         style={{
           position: "absolute",
-          bottom: "16%",
-          left: "50%",
-          transform: "translateX(-50%)",
           color: "rgba(105, 138, 213, 0.7)",
           fontFamily: "monospace",
           fontSize: "0.7rem",
           letterSpacing: "0.18em",
           pointerEvents: "none",
-          transition: "opacity 0.3s ease, transform 0.3s ease",
+          transition: "opacity 0.3s ease",
           zIndex: 10,
-          textAlign: "center",
           opacity: 0,
           textTransform: "uppercase",
+          whiteSpace: "nowrap",
         }}
       >
         [ Playground active: move cursor to tilt // click elements to ripple ]

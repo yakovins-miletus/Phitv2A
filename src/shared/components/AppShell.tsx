@@ -8,7 +8,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CloseIcon from "@mui/icons-material/Close";
-import { alpha } from "@mui/material/styles";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -114,7 +113,19 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
   return signals;
 }
 
-function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { label: string, sx?: any, isActive?: boolean, variant?: "default" | "onDark" }) {
+function AnimatedContactButton({
+  label,
+  sx,
+  isActive,
+  variant = "default",
+  noBorder = false,
+}: {
+  label: string;
+  sx?: any;
+  isActive?: boolean;
+  variant?: "default" | "onDark";
+  noBorder?: boolean;
+}) {
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
   const router = useRouter();
@@ -155,16 +166,16 @@ function AnimatedContactButton({ label, sx, isActive, variant = "default" }: { l
       sx={{
         borderRadius: "10px",
         border: "none !important",
-        color: btnTextColor,
-        bgcolor: btnBgColor,
-        boxShadow: isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : shadowMd,
+        color: noBorder && (hovered || clicked) ? `${NOIR.gold} !important` : (noBorder ? (onDark ? "#FFFFFF" : NOIR.navyField) : btnTextColor),
+        bgcolor: noBorder ? "transparent !important" : btnBgColor,
+        boxShadow: noBorder ? "none !important" : (isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : shadowMd),
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         transform: clicked ? "scale(0.95)" : "scale(1)",
         "&:hover": {
           border: "none !important",
-          bgcolor: onDark ? NOIR.gold : NOIR.navyField,
-          color: "#FFFFFF",
-          boxShadow: shadowMd,
+          bgcolor: noBorder ? "transparent !important" : (onDark ? NOIR.gold : NOIR.navyField),
+          color: noBorder ? `${NOIR.gold} !important` : "#FFFFFF",
+          boxShadow: noBorder ? "none !important" : shadowMd,
         },
         ...sx,
       }}
@@ -270,7 +281,7 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
 function AnimatedMenuButton({
   active,
   onClick,
-  isNotch,
+  isNotch: _isNotch,
   isImmersiveDark,
   ariaLabel,
   sx,
@@ -312,22 +323,22 @@ function AnimatedMenuButton({
         height: 42,
         borderRadius: "10px",
         border: "none !important",
-        bgcolor: bgColor,
-        color: iconColor,
-        boxShadow: shadowMd,
+        bgcolor: noBorder ? "transparent !important" : bgColor,
+        color: noBorder && (hovered || active) ? `${NOIR.gold} !important` : iconColor,
+        boxShadow: noBorder ? "none !important" : shadowMd,
         cursor: "pointer",
         outline: "none",
         transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
         "&:hover": {
           border: "none !important",
-          bgcolor: isImmersiveDark ? NOIR.gold : NOIR.navyField,
-          color: "#FFFFFF",
-          boxShadow: shadowMd,
+          bgcolor: noBorder ? "transparent !important" : (isImmersiveDark ? NOIR.gold : NOIR.navyField),
+          color: noBorder ? `${NOIR.gold} !important` : "#FFFFFF",
+          boxShadow: noBorder ? "none !important" : shadowMd,
         },
       }}
     >
-      <ThreeBarMenuIcon isHovered={hovered || active} color={iconColor} />
+      <ThreeBarMenuIcon isHovered={hovered || active} color={noBorder && (hovered || active) ? NOIR.gold : iconColor} />
     </Box>
   );
 }
@@ -532,7 +543,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     ? "1536px" 
                     : (isNotch 
                       ? "100vw" 
-                      : (derivedIsCompact ? "1200px" : "1536px"))),
+                      : (derivedIsCompact ? { xs: "1200px", "2xl": "1536px" } : "1536px"))),
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -620,7 +631,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               >
                 <Box sx={{ color: onDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
-                    style={{ height: isStandardOrGlass ? 28 : 42, width: 'auto' }}
+                    style={{ height: (isStandardOrGlass || isIsland) ? 22 : 32, width: 'auto', transition: "height 0.4s ease" }}
                     color="currentColor"
                     accentColor={NOIR.gold}
                   />
@@ -634,7 +645,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: isStandardOrGlass ? "1.1rem" : "1.4rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease" }}
+                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
@@ -719,28 +730,18 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   label="Contact"
                   isActive={onContactPage}
                   variant={onDark ? "onDark" : "default"}
+                  noBorder={isStandardOrGlass || isIsland}
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
-                    height: isStandardOrGlass ? "28px" : "42px",
-                    fontSize: isStandardOrGlass ? "0.72rem" : undefined,
-                    fontWeight: isStandardOrGlass ? 700 : undefined,
-                    fontFamily: isStandardOrGlass ? MONO : undefined,
-                    letterSpacing: isStandardOrGlass ? "0.08em" : undefined,
-                    textTransform: isStandardOrGlass ? "none" : undefined,
-                    padding: isStandardOrGlass ? "2px 0px" : undefined,
-                    minWidth: isStandardOrGlass ? "auto" : undefined,
-                    ...((isStandardOrGlass || isIsland) && {
-                      border: "none !important",
-                      borderColor: "transparent !important",
-                      bgcolor: "transparent !important",
-                      boxShadow: "none !important",
-                      "&:hover": {
-                        borderColor: "transparent !important",
-                        bgcolor: "transparent !important",
-                        color: NOIR.gold + " !important",
-                      }
-                    })
+                    height: (isStandardOrGlass || isIsland) ? "28px" : "42px",
+                    fontSize: (isStandardOrGlass || isIsland) ? "0.72rem" : undefined,
+                    fontWeight: (isStandardOrGlass || isIsland) ? 700 : undefined,
+                    fontFamily: (isStandardOrGlass || isIsland) ? MONO : undefined,
+                    letterSpacing: (isStandardOrGlass || isIsland) ? "0.08em" : undefined,
+                    textTransform: (isStandardOrGlass || isIsland) ? "none" : undefined,
+                    padding: (isStandardOrGlass || isIsland) ? "2px 0px" : undefined,
+                    minWidth: (isStandardOrGlass || isIsland) ? "auto" : undefined,
                   }}
                 />
 
@@ -752,7 +753,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
                   noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "none", md: "inline-flex" } }}
+                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland) ? "28px" : "42px", width: (isStandardOrGlass || isIsland) ? "36px" : "42px" }}
                 />
 
                 {/* Mobile 3-Bar Menu Button */}
@@ -763,7 +764,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
                   noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "inline-flex", md: "none" } }}
+                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland) ? "28px" : "42px", width: (isStandardOrGlass || isIsland) ? "36px" : "42px" }}
                 />
               </Box>
               </Box>

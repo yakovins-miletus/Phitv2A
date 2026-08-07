@@ -1,11 +1,16 @@
 import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Float, Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
 export function PlaygroundScene({ progressRef }: { progressRef: React.MutableRefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
   const cursorRef = useRef<THREE.Mesh>(null);
+  const indicatorHtmlRef = useRef<HTMLDivElement>(null);
+
+  const { size } = useThree();
+  const isMobileSize = size.width < 900;
+  const indicatorPosition: [number, number, number] = isMobileSize ? [0, -3.2, 0] : [-3.6, 0, 0];
 
   // Nodes config
   const nodes = [
@@ -18,6 +23,11 @@ export function PlaygroundScene({ progressRef }: { progressRef: React.MutableRef
   useFrame((state) => {
     // Scroll progress affects scene (e.g. rotation or scale)
     const p = progressRef.current;
+    const isPlaygroundActive = p < 0.02;
+
+    if (indicatorHtmlRef.current) {
+      indicatorHtmlRef.current.style.opacity = isPlaygroundActive ? Math.max(0, 1 - p / 0.02).toString() : "0";
+    }
     
     if (groupRef.current) {
       // Gentle rotation based on scroll or time
@@ -47,6 +57,27 @@ export function PlaygroundScene({ progressRef }: { progressRef: React.MutableRef
 
       {/* Grid background for depth */}
       <gridHelper args={[50, 50, "#202835", "#151a24"]} position={[0, -5, 0]} />
+
+      {/* Playground Active Indicator positioned flat in 3D scene but outside orbiting group */}
+      <Html position={indicatorPosition} center>
+        <div
+          ref={indicatorHtmlRef}
+          style={{
+            color: "rgba(105, 138, 213, 0.7)",
+            fontFamily: "monospace",
+            fontSize: "0.7rem",
+            letterSpacing: "0.18em",
+            pointerEvents: "none",
+            transition: "opacity 0.3s ease",
+            textAlign: isMobileSize ? "center" : "right",
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            transform: isMobileSize ? "none" : "translateX(-50%)",
+          }}
+        >
+          [ Playground active: move cursor to tilt & heal // click to ripple ]
+        </div>
+      </Html>
 
       <group ref={groupRef}>
         {/* Central Logo Placeholder */}

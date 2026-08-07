@@ -75,7 +75,6 @@ export const CONTENT = {
       ],
       positioning: {
         target: "Quantitative Finance, Data Providers & Fintech Leaders",
-        why: "We solve high-stakes technical problems where latency, precision, and architectural elegance determine success.",
       },
       differentiators: [
         {

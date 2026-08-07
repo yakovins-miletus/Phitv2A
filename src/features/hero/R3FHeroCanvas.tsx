@@ -49,26 +49,6 @@ export function R3FHeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProp
           <PlaygroundScene progressRef={progressRef} />
         </Canvas>
       </div>
-      
-      <div
-        style={{
-          position: "absolute",
-          bottom: "16%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          color: "rgba(105, 138, 213, 0.7)",
-          fontFamily: "monospace",
-          fontSize: "0.7rem",
-          letterSpacing: "0.18em",
-          pointerEvents: "none",
-          transition: "opacity 0.3s ease, transform 0.3s ease",
-          zIndex: 10,
-          textAlign: "center",
-          textTransform: "uppercase",
-        }}
-      >
-        [ Playground active: move cursor to tilt & heal // click to ripple ]
-      </div>
     </>
   );
 }
