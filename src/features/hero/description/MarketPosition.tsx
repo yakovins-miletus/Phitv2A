@@ -13,7 +13,7 @@ import { NOIR } from "@/shared/theme/palette";
 const GROUND = GROUNDS[homeSection("hero-position").ground ?? "panel"];
 
 export function MarketPosition() {
-  const { positioning, differentiators } = CONTENT.hero.salesPitch;
+  const { differentiators } = CONTENT.hero.salesPitch;
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
