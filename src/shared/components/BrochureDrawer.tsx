@@ -30,6 +30,7 @@ export function BrochureDrawer({
       anchor="bottom"
       open={open}
       onClose={onClose}
+      transitionDuration={650}
       slotProps={{
         backdrop: {
           sx: {

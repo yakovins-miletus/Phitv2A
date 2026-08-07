@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,52 +41,73 @@ export function MarketPosition() {
           }}
         >
           {/* Central Anchor (Target) */}
-          <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+          <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: "100%", perspective: "1000px" }}>
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
+              initial={{ scale: 0.8, opacity: 0, rotateX: 20, rotateY: -10 }}
+              whileInView={{ scale: 1, opacity: 1, rotateX: 0, rotateY: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
               style={{
                 width: "100%",
                 aspectRatio: "1",
-                maxWidth: "400px",
+                maxWidth: "450px",
                 borderRadius: "50%",
-                background: `radial-gradient(circle at center, rgba(10, 42, 102, 0.05) 0%, rgba(10, 42, 102, 0) 70%)`,
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 position: "relative",
+                transformStyle: "preserve-3d"
               }}
             >
-              {/* Spinning Ring */}
+              {/* Orbital Ring 1 - Dashed */}
               <motion.div
-                animate={{ rotate: 360 }}
+                animate={{ rotateZ: 360, rotateX: [60, 65, 60], rotateY: [20, 30, 20] }}
                 transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
                 style={{
                   position: "absolute",
-                  inset: 0,
+                  inset: "-10%",
                   borderRadius: "50%",
-                  border: `1px dashed rgba(10, 42, 102, 0.2)`,
+                  border: `1px dashed rgba(10, 42, 102, 0.3)`,
+                  boxShadow: "0 0 20px rgba(10, 42, 102, 0.1)",
                 }}
               />
+              
+              {/* Orbital Ring 2 - Solid */}
               <motion.div
-                animate={{ rotate: -360 }}
+                animate={{ rotateZ: -360, rotateX: [70, 60, 70], rotateY: [-20, -10, -20] }}
                 transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
                 style={{
                   position: "absolute",
-                  inset: "20px",
+                  inset: "5%",
                   borderRadius: "50%",
-                  border: `1px solid rgba(10, 42, 102, 0.1)`,
+                  border: `1px solid rgba(10, 42, 102, 0.15)`,
+                  boxShadow: "inset 0 0 15px rgba(212, 175, 55, 0.05)",
+                }}
+              />
+              
+              {/* Orbital Ring 3 - Gold Accent */}
+              <motion.div
+                animate={{ rotateZ: 180, rotateX: [40, 50, 40], rotateY: [40, 20, 40] }}
+                transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+                style={{
+                  position: "absolute",
+                  inset: "15%",
+                  borderRadius: "50%",
+                  border: `1px solid rgba(212, 175, 55, 0.2)`,
+                  borderBottomColor: "transparent",
+                  borderLeftColor: "transparent",
                 }}
               />
 
-              <Box sx={{ textAlign: "center", p: 4, zIndex: 1 }}>
+              <Box sx={{ textAlign: "center", p: 4, zIndex: 1, transform: "translateZ(30px)" }}>
                 <Typography variant="h3" component="h2" sx={{ lineHeight: 1.15, fontWeight: 700, color: NOIR.navyField }}>
-                  Built for
+                  Professional
                 </Typography>
-                <Typography variant="h4" sx={{ mt: 2, color: NOIR.gold, fontWeight: 600 }}>
-                  {positioning.target}
+                <Typography variant="h4" sx={{ mt: 1, color: NOIR.gold, fontWeight: 600, letterSpacing: "-0.02em" }}>
+                  Leadership
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 2, color: GROUND.muted, maxWidth: "200px", mx: "auto", fontWeight: 500 }}>
+                  Decades of Wall St. & Tier-1 Banking tenure
                 </Typography>
               </Box>
             </motion.div>

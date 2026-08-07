@@ -5,7 +5,7 @@ import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { alpha, useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -155,22 +155,23 @@ export function CandidatesAndCareersSection() {
           }}
         >
           <Button
-            variant="outlined"
-            color="primary"
+            variant="contained"
             onClick={openBrochure}
             startIcon={<PictureAsPdfIcon />}
             sx={{
               borderRadius: "100px",
-              px: 3,
+              px: 3.5,
               py: 1.2,
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              borderColor: (theme) => alpha(theme.palette.primary.main, 0.4),
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+              fontFamily: MONO,
+              fontWeight: 800,
+              fontSize: "0.78rem",
+              bgcolor: NOIR.gold,
+              color: NOIR.navyInk,
+              boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
               "&:hover": {
-                bgcolor: "primary.main",
-                color: "white",
-                borderColor: "primary.main",
+                bgcolor: NOIR.goldLight,
+                boxShadow: "0 6px 18px rgba(255, 199, 44, 0.4)",
+                transform: "translateY(-1px)",
               },
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               whiteSpace: "nowrap",

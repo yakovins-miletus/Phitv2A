@@ -1,5 +1,6 @@
 import React from "react";
 import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -10,6 +11,7 @@ import FastForwardIcon from "@mui/icons-material/FastForward";
 
 import { Section } from "@/shared/components/Section";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
+import { RouterButton } from "@/shared/components/RouterLink";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 
@@ -47,7 +49,8 @@ const INTERNSHIP_PILLARS: ProgramPillar[] = [
 
 export function InternshipProgramSection() {
   return (
-    <Section>
+    <Box component="section" sx={{ bgcolor: NOIR.navyField, color: 'common.white', py: { xs: 8, md: 12 } }}>
+      <Container maxWidth="2xl">
       <Stack spacing={{ xs: 6, md: 8 }} sx={{ width: "100%" }}>
         {/* Section Header */}
         <Stack spacing={2} sx={{ maxWidth: 740 }}>
@@ -74,75 +77,142 @@ export function InternshipProgramSection() {
             </Typography>
           </Reveal>
           <Reveal delay={0.2}>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: "1.15rem", lineHeight: 1.6 }}>
+            <Typography variant="subtitle1" color="rgba(255,255,255,0.7)" sx={{ fontSize: "1.15rem", lineHeight: 1.6 }}>
               Bridging academic excellence and industry leadership — providing top undergraduate talent with paid, immersive R&D internships and direct fast-track paths to our Technical Graduate Program.
             </Typography>
           </Reveal>
         </Stack>
 
-        {/* Bounded Pillars Grid */}
+        {/* Spatial Bento Grid */}
         <StaggerGroup>
-          <Grid container spacing={{ xs: 5, md: 6 }}>
-            {INTERNSHIP_PILLARS.map((pillar) => {
-              const Icon = pillar.icon;
-              return (
-                <Grid size={{ xs: 12, md: 4 }} key={pillar.title}>
-                  <StaggerItem>
-                    <Stack spacing={3}>
-                      {/* Frameless Floating Image Frame */}
-                      <Box
-                        sx={{
-                          position: "relative",
-                          width: "100%",
-                          aspectRatio: "16/10",
-                          borderRadius: { xs: 5, md: 6 },
-                          overflow: "hidden",
-                        }}
-                      >
-                        <Box
-                          component="img" decoding="async" loading="lazy"
-                          src={pillar.image}
-                          alt={pillar.title}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                        />
+          <Grid container spacing={{ xs: 3, md: 4 }}>
+            {/* Pillar 0: University Engagement (Wide) */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <StaggerItem style={{ height: '100%' }}>
+                <Box
+                  sx={{
+                    height: '100%',
+                    minHeight: { xs: 400, md: 480 },
+                    borderRadius: { xs: 5, md: 6 },
+                    overflow: 'hidden',
+                    bgcolor: "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative'
+                  }}
+                >
+                  <Box sx={{ p: { xs: 4, md: 5 }, flex: 1, zIndex: 1 }}>
+                    <Stack spacing={2} sx={{ maxWidth: { xs: 400, md: '42%' } }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <SchoolIcon sx={{ color: "primary.main", fontSize: "1.1rem" }} />
+                        <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: "0.68rem", fontFamily: MONO, letterSpacing: "0.1em" }}>
+                          {INTERNSHIP_PILLARS[0].subtitle}
+                        </Typography>
                       </Box>
-
-                      {/* Clean Text Content */}
-                      <Stack spacing={1.5}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                          <Icon sx={{ color: "primary.main", fontSize: "1.1rem" }} />
-                          <Typography
-                            variant="overline"
-                            sx={{
-                              color: "text.secondary",
-                              fontWeight: 700,
-                              fontSize: "0.68rem",
-                              fontFamily: MONO,
-                              letterSpacing: "0.1em",
-                            }}
-                          >
-                            {pillar.subtitle}
-                          </Typography>
-                        </Box>
-
-                        <Typography variant="h4" component="h3" sx={{ fontWeight: 800, fontSize: { xs: "1.35rem", md: "1.55rem" }, minHeight: { md: "3.8rem" }, display: "flex", alignItems: "flex-start" }}>
-                          {pillar.title}
-                        </Typography>
-
-                        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.65, fontSize: "1rem" }}>
-                          {pillar.description}
-                        </Typography>
-                      </Stack>
+                      <Typography variant="h3" component="h3" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", md: "1.8rem" } }}>
+                        {INTERNSHIP_PILLARS[0].title}
+                      </Typography>
+                      <Typography variant="body1" color="rgba(255,255,255,0.7)" sx={{ lineHeight: 1.6 }}>
+                        {INTERNSHIP_PILLARS[0].description}
+                      </Typography>
                     </Stack>
-                  </StaggerItem>
-                </Grid>
-              );
-            })}
+                  </Box>
+                  {/* Image placed spatially */}
+                  <Box
+                    sx={{
+                      position: { xs: 'relative', md: 'absolute' },
+                      right: { md: -1 },
+                      bottom: { md: -1 },
+                      width: { xs: '100%', md: '55%' },
+                      height: { xs: 240, md: '75%' },
+                      borderRadius: { xs: 0, md: '32px 0 0 0' },
+                      overflow: 'hidden',
+                      boxShadow: { md: '-10px -10px 40px rgba(0,0,0,0.05)' },
+                      borderTop: { md: "1px solid rgba(255, 255, 255, 0.08)" },
+                      borderLeft: { md: "1px solid rgba(255, 255, 255, 0.08)" },
+                    }}
+                  >
+                    <Box component="img" loading="lazy" decoding="async" src={INTERNSHIP_PILLARS[0].image} alt={INTERNSHIP_PILLARS[0].title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  </Box>
+                </Box>
+              </StaggerItem>
+            </Grid>
+
+            {/* Pillar 1: 1-on-1 Mentorship (Tall) */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <StaggerItem style={{ height: '100%' }}>
+                <Box
+                  sx={{
+                    height: '100%',
+                    minHeight: { xs: 400, md: 480 },
+                    borderRadius: { xs: 5, md: 6 },
+                    overflow: 'hidden',
+                    bgcolor: "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <Box sx={{ p: { xs: 4, md: 5 }, flex: 0 }}>
+                    <Stack spacing={2}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CodeIcon sx={{ color: "primary.main", fontSize: "1.1rem" }} />
+                        <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: "0.68rem", fontFamily: MONO, letterSpacing: "0.1em" }}>
+                          {INTERNSHIP_PILLARS[1].subtitle}
+                        </Typography>
+                      </Box>
+                      <Typography variant="h3" component="h3" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", md: "1.8rem" } }}>
+                        {INTERNSHIP_PILLARS[1].title}
+                      </Typography>
+                      <Typography variant="body1" color="rgba(255,255,255,0.7)" sx={{ lineHeight: 1.6 }}>
+                        {INTERNSHIP_PILLARS[1].description}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  <Box sx={{ flex: 1, minHeight: 220, position: 'relative' }}>
+                    <Box component="img" loading="lazy" decoding="async" src={INTERNSHIP_PILLARS[1].image} alt={INTERNSHIP_PILLARS[1].title} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', display: 'block' }} />
+                  </Box>
+                </Box>
+              </StaggerItem>
+            </Grid>
+
+            {/* Pillar 2: Production R&D (Full Width Horizontal) */}
+            <Grid size={{ xs: 12, md: 12 }}>
+              <StaggerItem style={{ height: '100%' }}>
+                <Box
+                  sx={{
+                    borderRadius: { xs: 5, md: 6 },
+                    overflow: 'hidden',
+                    bgcolor: "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    display: 'flex',
+                    flexDirection: { xs: 'column-reverse', md: 'row' },
+                    alignItems: 'stretch',
+                  }}
+                >
+                  <Box sx={{ p: { xs: 4, md: 6 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <Stack spacing={2} sx={{ maxWidth: 500 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <AutoAwesomeIcon sx={{ color: "primary.main", fontSize: "1.1rem" }} />
+                        <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: "0.68rem", fontFamily: MONO, letterSpacing: "0.1em" }}>
+                          {INTERNSHIP_PILLARS[2].subtitle}
+                        </Typography>
+                      </Box>
+                      <Typography variant="h3" component="h3" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", md: "2rem" } }}>
+                        {INTERNSHIP_PILLARS[2].title}
+                      </Typography>
+                      <Typography variant="body1" color="rgba(255,255,255,0.7)" sx={{ lineHeight: 1.6, fontSize: "1.05rem" }}>
+                        {INTERNSHIP_PILLARS[2].description}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  <Box sx={{ width: { xs: '100%', md: '45%' }, minHeight: { xs: 260, md: 360 }, position: 'relative' }}>
+                    <Box component="img" loading="lazy" decoding="async" src={INTERNSHIP_PILLARS[2].image} alt={INTERNSHIP_PILLARS[2].title} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', display: 'block' }} />
+                  </Box>
+                </Box>
+              </StaggerItem>
+            </Grid>
           </Grid>
         </StaggerGroup>
 
@@ -186,9 +256,39 @@ export function InternshipProgramSection() {
                 Top-performing interns receive priority evaluation and direct offers for our full-time Technical Graduate Program before graduation.
               </Typography>
             </Stack>
+            
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "center", mt: { xs: 2, md: 0 }, minWidth: { md: 240 } }}>
+              <RouterButton
+                to="/careers"
+                variant="contained"
+                endIcon={<SchoolIcon />}
+                sx={{
+                  bgcolor: "primary.main",
+                  color: "#FFFFFF",
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  letterSpacing: "0.08em",
+                  px: { xs: 4, md: 6 },
+                  py: 1.5,
+                  borderRadius: 12,
+                  boxShadow: "0 6px 16px rgba(10, 42, 102, 0.15)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  "&:hover": {
+                    bgcolor: NOIR.gold,
+                    color: NOIR.navyField,
+                    boxShadow: "0 8px 24px rgba(10, 42, 102, 0.25)",
+                    transform: "translateY(-2px)",
+                  }
+                }}
+              >
+                View Opportunities
+              </RouterButton>
+            </Box>
           </Box>
         </Reveal>
       </Stack>
-    </Section>
+      </Container>
+    </Box>
   );
 }

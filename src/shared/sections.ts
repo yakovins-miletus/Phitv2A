@@ -124,6 +124,13 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     choreo: "zoom-center",
     ground: "void",
   },
+  {
+    id: "testimonials",
+    label: "Hear From Our People",
+    chapter: 7,
+    choreo: "zoom-center",
+    ground: "panel",
+  },
   { id: "candidates", label: "Talent & Careers", chapter: 8, choreo: "zoom-center", ground: "panel" },
   { id: "blog", label: "Intelligence Feed", chapter: 9, choreo: "grow-right", ground: "field" },
   // Never rendered; carries a ground only so the stop list needs no special case.

@@ -68,7 +68,7 @@ const VALUES_DATA: ValueItem[] = [
 
 export function PrinciplesValuesShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const valuesAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_VALUES, { dark: true });
+  const valuesAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_VALUES, { dark: false });
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Track scroll through the 400vh container

@@ -118,34 +118,16 @@ function AnimatedContactButton({
   sx,
   isActive,
   variant = "default",
-  noBorder = false,
 }: {
   label: string;
   sx?: any;
   isActive?: boolean;
   variant?: "default" | "onDark";
-  noBorder?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
   const router = useRouter();
   const onDark = variant === "onDark";
-
-  const isPrimary = hovered || clicked;
-  
-  let btnBgColor = onDark 
-    ? (isPrimary ? NOIR.gold : "rgba(255, 255, 255, 0.15)") 
-    : (isPrimary ? NOIR.navyField : "#FFFFFF");
-    
-  let btnTextColor = onDark 
-    ? "#FFFFFF"
-    : (isPrimary ? "#FFFFFF" : NOIR.navyField);
-
-  if (isActive && !isPrimary) {
-    btnBgColor = onDark ? "rgba(255, 199, 44, 0.2)" : "rgba(10, 42, 102, 0.08)";
-  }
-
-  const shadowMd = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -166,16 +148,24 @@ function AnimatedContactButton({
       sx={{
         borderRadius: "10px",
         border: "none !important",
-        color: noBorder && (hovered || clicked) ? `${NOIR.gold} !important` : (noBorder ? (onDark ? "#FFFFFF" : NOIR.navyField) : btnTextColor),
-        bgcolor: noBorder ? "transparent !important" : btnBgColor,
-        boxShadow: noBorder ? "none !important" : (isActive ? "inset 0 2px 4px rgba(0,0,0,0.08)" : shadowMd),
+        color: (hovered || clicked || isActive) ? `${NOIR.gold} !important` : (onDark ? "rgba(255,255,255,0.9)" : "text.secondary"),
+        bgcolor: "transparent !important",
+        background: "none !important",
+        backgroundImage: "none !important",
+        boxShadow: "none !important",
+        backdropFilter: "none !important",
+        WebkitBackdropFilter: "none !important",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         transform: clicked ? "scale(0.95)" : "scale(1)",
         "&:hover": {
           border: "none !important",
-          bgcolor: noBorder ? "transparent !important" : (onDark ? NOIR.gold : NOIR.navyField),
-          color: noBorder ? `${NOIR.gold} !important` : "#FFFFFF",
-          boxShadow: noBorder ? "none !important" : shadowMd,
+          bgcolor: "transparent !important",
+          background: "none !important",
+          backgroundImage: "none !important",
+          boxShadow: "none !important",
+          backdropFilter: "none !important",
+          WebkitBackdropFilter: "none !important",
+          color: `${NOIR.gold} !important`,
         },
         ...sx,
       }}
@@ -189,7 +179,7 @@ function AnimatedContactButton({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.15 }}
-              style={{ position: "absolute", whiteSpace: "nowrap" }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
             >
               {label}
             </motion.div>
@@ -200,7 +190,7 @@ function AnimatedContactButton({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.15 }}
-              style={{ position: "absolute", display: "flex", alignItems: "center", whiteSpace: "nowrap" }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
             >
               {label}
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: 8 }}>
@@ -448,7 +438,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
 
-  const effectiveMode = isAtTop ? "minimal" : overrideMode;
+  const effectiveMode = (pathname === '/' && isAtTop) ? "minimal" : overrideMode;
 
   const isMinimal = effectiveMode === "minimal";
   const isGlass = effectiveMode === "glassmorphism";
@@ -491,7 +481,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               ? "transparent"
               : isStandard
               ? (isOverDarkSection
-                ? `rgba(${NOIR.navyFieldRgb}, 0.45)`
+                ? "rgba(30, 30, 30, 0.45)"
                 : "rgba(255, 255, 255, 0.55)")
               : "transparent",
             backdropFilter: isGlass ? "none" : (isStandard ? "blur(20px) saturate(160%)" : "none"),
@@ -525,7 +515,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 // Gradient mask to fade out the blur
                 WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)",
                 maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)",
-                bgcolor: isOverDarkSection ? `rgba(${NOIR.navyFieldRgb}, 0.25)` : "rgba(255, 255, 255, 0.4)",
+                bgcolor: isOverDarkSection ? "rgba(30, 30, 30, 0.25)" : "rgba(255, 255, 255, 0.4)",
                 transition: "background-color 0.6s cubic-bezier(0.16,1,0.3,1)",
                 borderBottom: isOverDarkSection ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.02)",
               }}
@@ -561,11 +551,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   : (isMinimal
                     ? "transparent"
                     : isNotch
-                    ? NOIR.navyField
+                    ? "#1E1E1E"
                     : isIsland
                     ? "rgba(255, 255, 255, 0.65)"
                     : isOverDarkSection
-                      ? `rgba(${NOIR.navyFieldRgb}, 0.28)`
+                      ? "rgba(30, 30, 30, 0.28)"
                       : (derivedIsCompact ? "#FFFFFF" : "transparent")),
                 backdropFilter: isStandardOrGlass
                   ? "none"
@@ -586,14 +576,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
                       ? "28px"
                       : (derivedIsCompact ? "100px" : "0px")),
                 padding: isMinimal
-                  ? { xs: "8px 32px", md: "8px 72px" }
+                  ? { xs: "4px 32px", md: "4px 72px" }
                   : (isStandardOrGlass
-                    ? { xs: "8px 16px", sm: "8px 24px" }
+                    ? { xs: "4px 16px", sm: "4px 24px" }
                     : (isNotch
-                      ? "4px 20px"
+                      ? "2px 20px"
                       : isImmersive
-                        ? "10px 24px"
-                        : (derivedIsCompact ? "2px 32px" : { xs: "8px 16px", sm: "8px 24px" }))),
+                        ? "6px 24px"
+                        : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" }))),
                 boxShadow: isIsland ? "0 8px 32px rgba(0,0,0,0.08)" : "none",
                 display: "flex",
                 justifyContent: isNotch ? "center" : "center",
@@ -631,7 +621,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               >
                 <Box sx={{ color: onDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
-                    style={{ height: (isStandardOrGlass || isIsland) ? 22 : 32, width: 'auto', transition: "height 0.4s ease" }}
+                    style={{ height: (isStandardOrGlass || isIsland) ? 18 : 24, width: 'auto', transition: "height 0.4s ease" }}
                     color="currentColor"
                     accentColor={NOIR.gold}
                   />
@@ -730,11 +720,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   label="Contact"
                   isActive={onContactPage}
                   variant={onDark ? "onDark" : "default"}
-                  noBorder={isStandardOrGlass || isIsland}
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
-                    height: (isStandardOrGlass || isIsland) ? "28px" : "42px",
+                    height: (isStandardOrGlass || isIsland) ? "24px" : "32px",
                     fontSize: (isStandardOrGlass || isIsland) ? "0.72rem" : undefined,
                     fontWeight: (isStandardOrGlass || isIsland) ? 700 : undefined,
                     fontFamily: (isStandardOrGlass || isIsland) ? MONO : undefined,
@@ -753,7 +742,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
                   noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland) ? "28px" : "42px", width: (isStandardOrGlass || isIsland) ? "36px" : "42px" }}
+                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px" }}
                 />
 
                 {/* Mobile 3-Bar Menu Button */}
@@ -764,7 +753,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
                   noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland) ? "28px" : "42px", width: (isStandardOrGlass || isIsland) ? "36px" : "42px" }}
+                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px" }}
                 />
               </Box>
               </Box>

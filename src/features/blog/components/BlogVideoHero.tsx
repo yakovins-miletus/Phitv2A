@@ -13,7 +13,7 @@ import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext"
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 export function BlogVideoHero() {
-  const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
+  const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.BLOG_HERO, { dark: true });
   const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
 
   return (
@@ -132,52 +132,54 @@ export function BlogVideoHero() {
           </Reveal>
         </Stack>
 
-        {/* Floating Scroll Down Cue */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: { xs: -60, md: -80 },
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1,
-          }}
+      </Container>
+
+      {/* Floating Scroll Down Cue (positioned relative to parent Box to center between text and white section) */}
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: { xs: "4%", md: "7%" },
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 1,
+          zIndex: 2,
+        }}
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                border: "1px solid rgba(255, 199, 44, 0.4)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#FFC72C",
-                bgcolor: "rgba(255, 199, 44, 0.1)",
-              }}
-            >
-              <ArrowDownwardIcon fontSize="small" />
-            </Box>
-          </motion.div>
-          <Typography
+          <Box
             sx={{
-              fontFamily: MONO,
-              fontSize: "0.72rem",
-              letterSpacing: "0.18em",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: "1px solid rgba(255, 199, 44, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               color: "#FFC72C",
-              fontWeight: 800,
+              bgcolor: "rgba(255, 199, 44, 0.1)",
             }}
           >
-            EXPLORE ARTICLES
-          </Typography>
-        </Box>
-      </Container>
+            <ArrowDownwardIcon fontSize="small" />
+          </Box>
+        </motion.div>
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: "0.72rem",
+            letterSpacing: "0.18em",
+            color: "#FFC72C",
+            fontWeight: 800,
+          }}
+        >
+          EXPLORE ARTICLES
+        </Typography>
+      </Box>
     </Box>
   );
 }

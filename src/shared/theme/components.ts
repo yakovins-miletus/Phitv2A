@@ -114,7 +114,6 @@ export const components: Components<Theme> = {
         transform: "translateY(-120%)",
         "&:focus-visible": {
           transform: "translateY(0)",
-          boxShadow: "var(--glass-shadow-2)",
           ...focusRing(theme),
         },
       },

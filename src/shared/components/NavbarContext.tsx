@@ -35,8 +35,14 @@ export const NAV_ANCHORS = {
   ABOUT_TIMELINE: 'timeline',
   /** The About page's values section. */
   ABOUT_VALUES: 'about-values',
+  /** The About page's academic pathways section. */
+  ABOUT_ACADEMICS: 'about-academics',
   /** The immersive process section on the home page. */
   PROCESS_IMMERSIVE: 'process-immersive',
+  /** The Blog page's hero section. */
+  BLOG_HERO: 'blog-hero',
+  /** The Home page's blog section. */
+  HOME_BLOG_SECTION: 'home-blog-section',
   /** AppShell's footer, on every route. */
   SITE_FOOTER: 'site-footer',
 } as const;
@@ -62,7 +68,7 @@ interface NavbarContextValue {
 const NavbarContext = createContext<NavbarContextValue | null>(null);
 
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('island');
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('glassmorphism');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
   const [activeAnchors, setActiveAnchors] = useState<Set<string>>(new Set());

@@ -40,7 +40,7 @@ export function ServiceVector({ id }: { id: string }) {
           stroke={NOIR.goldDark}
           strokeWidth="2.5"
           strokeDasharray="8 8"
-          style={{ originX: "200px", originY: "200px" }}
+          style={{ transformOrigin: "200px 200px" }}
         />
 
         {/* Directional Curved Arrows Connecting the 4 Phases */}

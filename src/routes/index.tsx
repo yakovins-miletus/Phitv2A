@@ -17,6 +17,7 @@ import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrat
 import { BlogSection } from "@/features/home/components/BlogSection";
 import { CandidatesAndCareersSection } from "@/features/home/components/CandidatesAndCareersSection";
 import { DailyLifeSection } from "@/features/home/components/DailyLifeSection/DailyLifeSection";
+import { TestimonialsSection } from "@/features/home/components/TestimonialsSection";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
 
@@ -88,7 +89,6 @@ function HomePage() {
             bgcolor: "background.default",
             borderTopLeftRadius: { xs: 28, md: 48 },
             borderTopRightRadius: { xs: 28, md: 48 },
-            boxShadow: "0 -16px 48px rgba(0, 0, 0, 0.22)",
           }}
         >
           <MissionStatement />
@@ -149,6 +149,15 @@ function HomePage() {
             data-act="people"
           >
             <DailyLifeSection />
+          </Box>
+
+          <Box
+            component="section"
+            id="testimonials-sequence"
+            aria-label="Hear From Our People"
+            data-act="people"
+          >
+            <TestimonialsSection />
           </Box>
 
           <Box

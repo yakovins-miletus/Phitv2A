@@ -88,11 +88,7 @@ export const CONTENT = {
         {
           heading: "Wall St. & Banking Leadership",
           body: "Led by executives with senior tenure at Morgan Stanley, Merrill Lynch, JPMorgan, Deutsche Bank, and Macquarie Bank.",
-        },
-        {
-          heading: "Prime Global Location",
-          body: "Headquartered at Ecotower Building, Bonifacio Global City (BGC), Taguig, Manila, Philippines.",
-        },
+        }
       ],
       // `leadershipNote` and `cta` lived here for the deck's fourth beat
       // ("Leadership credibility & consultative executive CTA"), which has been cut.

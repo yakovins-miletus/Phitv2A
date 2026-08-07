@@ -223,6 +223,7 @@ function TalentSection() {
 function AboutPage() {
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
   const timelineAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TIMELINE, { dark: true });
+  const academicsAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_ACADEMICS, { dark: true });
 
   return (
     <Box sx={{ pt: 0, pb: 0, position: "relative" }}>
@@ -355,7 +356,9 @@ function AboutPage() {
 
         <GraduateHallOfFameSection />
 
-        <InternshipProgramSection />
+        <Box ref={academicsAnchorRef}>
+          <InternshipProgramSection />
+        </Box>
         
         <SmoothSection>
           <CertificationsSection />

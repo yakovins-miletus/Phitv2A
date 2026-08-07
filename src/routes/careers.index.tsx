@@ -152,22 +152,25 @@ export function CareersIndexPage() {
                     </Stack>
 
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       onClick={() => setBrochureOpen(true)}
                       startIcon={<PictureAsPdfIcon />}
                       sx={{
                         borderRadius: "100px",
+                        px: 3.5,
                         py: 1.2,
                         fontFamily: MONO,
                         fontWeight: 800,
                         fontSize: "0.78rem",
-                        borderColor: NOIR.navyField,
-                        color: NOIR.navyField,
-                        bgcolor: "rgba(10, 42, 102, 0.04)",
+                        bgcolor: NOIR.gold,
+                        color: NOIR.navyInk,
+                        boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
                         "&:hover": {
-                          bgcolor: "rgba(10, 42, 102, 0.08)",
-                          borderColor: NOIR.navyField,
+                          bgcolor: NOIR.goldLight,
+                          boxShadow: "0 6px 18px rgba(255, 199, 44, 0.4)",
+                          transform: "translateY(-1px)",
                         },
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                     >
                       VIEW PROGRAM BROCHURE (PDF)

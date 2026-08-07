@@ -312,15 +312,20 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                       </Box>
                       <Stack spacing={2}>
                         {/* BGC Office moved above General Inquiries */}
-                        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.2 }}>
-                          <LocationOnIcon sx={{ color: NOIR.gold, fontSize: "1.1rem", mt: 0.2 }} />
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: "common.white", fontSize: "0.88rem" }}>
-                              BGC Office (Taguig, Metro Manila)
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.6)", display: "block", fontSize: "0.72rem" }}>
-                              27/F Ecotower, 32nd St. cor. 9th Ave, Bonifacio Global City
-                            </Typography>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", display: "block", mb: 0.8, fontSize: "0.68rem" }}>
+                            LOCATION
+                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.2 }}>
+                            <LocationOnIcon sx={{ color: NOIR.gold, fontSize: "1.1rem", mt: 0.2 }} />
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: "common.white", fontSize: "0.88rem" }}>
+                                BGC Office (Taguig, Metro Manila)
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.6)", display: "block", fontSize: "0.72rem" }}>
+                                27/F Ecotower, 32nd St. cor. 9th Ave, Bonifacio Global City
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
 
