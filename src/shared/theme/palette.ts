@@ -102,6 +102,66 @@ export const NOIR = {
 } as const;
 
 /**
+ * The dawn sky ramp for the default hero (stage 4 of `docs/hero-upgrade/`).
+ *
+ * A sibling of `NOIR`, not folded into it: `NOIR`'s docblock scopes it to
+ * quant-noir *surface* tokens (grounds, glass, text), and a sky is a different
+ * concern — it exists for exactly one feature, is a vertical ramp rather than
+ * a set of independent roles, and its darkest stop is lighter than `NOIR`'s
+ * lightest ground. Keeping it separate means neither file's docblock has to
+ * carry an exception for the other.
+ *
+ * Eight stops, hue-walked top → bottom from navy (220°) to gold (44°) — the
+ * same walk `CHAPTER_ACCENTS` above already establishes for the same brand,
+ * just run once across a sky instead of eight times across a timeline.
+ *
+ * WHY THIS IS PHITOPOLIS AND NOT THE REFERENCE SITE: the award-site pattern
+ * this borrows the "sky + disc" idea from ramps a cool teal into its warm
+ * end. Every cool stop here (`zenith`, `upper`, `mid`) is instead our own
+ * `RGB_STEEL` hue at high lightness, and every warm stop (`warm`, `ember`) is
+ * our own `RGB_GOLD` hue walked down toward the horizon. No off-brand hue —
+ * teal, violet, anything not already in this file's ramp family — enters the
+ * palette. The sun core and lit cloud tops reuse `NOIR.gold` / `NOIR.white`
+ * outright rather than duplicating them under a new name.
+ *
+ * WCAG. The only persistent text drawn over this sky is the hero motto
+ * (`SuperHeroSequence.tsx`, `NOIR.navyField` at 2.0–2.6rem / 800 weight —
+ * large text, so the floor is 3:1, not the 4.5:1 body-text floor). Computed
+ * against every stop (`NOIR.navyField` vs. each hex below, WCAG relative
+ * luminance):
+ *     zenith 5.56:1 · upper 7.78:1 · mid 10.34:1 · haze 11.15:1
+ *     warm 10.42:1 · ember 8.88:1
+ * The coolest stop (`zenith`) is the worst case at 5.56:1 — comfortably
+ * clear of even the 4.5:1 body-text floor, let alone the 3:1 large-text one.
+ * `warm` (10.42:1) is pinned alongside it in tests/a11y-contrast.test.ts as
+ * the second reference point, matching the two figures this token set was
+ * designed around. Every other stop falls between these two.
+ */
+export const DAWN = {
+  /** Top of frame — the `RGB_STEEL` hue at high lightness. */
+  zenith: "#8FA6D0",
+  /** Upper sky. */
+  upper: "#B6C4DF",
+  /** Neutral pivot — sits on `NOIR.void`'s own hue. */
+  mid: "#DCE0E9",
+  /** Cream, top of the cloud sea (stage 5's clouds sit on this). */
+  haze: "#F2E6DC",
+  /** Peach band. */
+  warm: "#F8DCC2",
+  /** Gold walked down to the horizon. */
+  ember: "#F6C98B",
+  /** Cream cloud body — stage 5. */
+  cloudMid: "#F1E8E0",
+  /** Cool shadowed cloud underside — stage 5. */
+  cloudLo: "#C9C6D2",
+
+  /** rgb triplets for rgba() composition, matching NOIR's goldRgb/voidRgb convention. */
+  zenithRgb: "143, 166, 208",
+  warmRgb: "248, 220, 194",
+  cloudLoRgb: "201, 198, 210",
+} as const;
+
+/**
  * The About timeline's per-chapter accents.
  *
  * These were the Tailwind default palette — violet-400, sky-400, blue-400,

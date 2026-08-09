@@ -1,4 +1,4 @@
-import { createContext, useContext, useSyncExternalStore } from "react";
+import { createContext, useContext } from "react";
 
 /** Single reduced-motion source for the whole app (MOTION INVENTORY, Global). */
 export { useReducedMotion } from "motion/react";
@@ -31,17 +31,8 @@ export function useEntranceSettled(): boolean {
 /** Device capability tiering — gates cost, where usePointerFine gates affordances. */
 export { useDeviceTier, useIsLowPowerDevice, type DeviceTier } from "./useDeviceTier";
 
-const POINTER_FINE = "(pointer: fine)";
+/** Shared pointer-driven perspective: one vanishing point per section. */
+export { usePointerSpace, useDepthLayer, type PointerSpace } from "./usePointerSpace";
 
 /** Magnetic hovers exist only for precise pointers (inventory row 6). */
-export function usePointerFine(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const mql = window.matchMedia(POINTER_FINE);
-      mql.addEventListener("change", onChange);
-      return () => mql.removeEventListener("change", onChange);
-    },
-    () => window.matchMedia(POINTER_FINE).matches,
-    () => false,
-  );
-}
+export { usePointerFine } from "./usePointerFine";

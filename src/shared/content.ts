@@ -14,23 +14,6 @@
  *  and `details`, so their copy is unaffected by home-page edits. */
 export const CONTENT = {
   hero: {
-    /**
-     * Build-status notice rendered in the hero.
-     *
-     * TEMPORARY. This exists so nobody — client, stakeholder, or a teammate
-     * sharing a link — mistakes the current site for a finished product. It is
-     * deliberately the first thing in the hero's top-left block, above the motto,
-     * rather than a corner ribbon that reads as decoration.
-     *
-     * TO REMOVE AT MVP: delete this `buildStatus` key and the `{buildStatus && …}`
-     * block in `features/hero/SuperHeroSequence.tsx`. Setting it to `null` also
-     * hides it, which is the safer move if a demo needs it gone for an hour.
-     */
-    buildStatus: {
-      label: "Proof of concept · pre-MVP",
-      detail:
-        "Scaffolding build. Structure, copy, and data are provisional and not yet reviewed for client presentation.",
-    } as { label: string; detail: string } | null,
     tagline: "Making tomorrow's technology available today",
     description:
       "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and latest trends in Artificial Intelligence.",
@@ -49,7 +32,7 @@ export const CONTENT = {
         },
         {
           title: "PRODUCT & CLOUD ENGINEERING",
-          desc: "High-performance systems designed to run seamlessly in public and private cloud environments.",
+          desc: "High-performance systems that run in public and private cloud environments.",
         },
         {
           title: "TECHNICAL SUPPORT & OPERATIONS",
@@ -65,7 +48,7 @@ export const CONTENT = {
         {
           id: "02",
           name: "Development Pillar",
-          detail: "Public & Private Cloud Architecture, Big Data Systems & Scalable Software",
+          detail: "Public & Private Cloud Architecture, Big Data Systems & Software",
         },
         {
           id: "03",
@@ -78,7 +61,7 @@ export const CONTENT = {
       },
       differentiators: [
         {
-          heading: "Elite Technical Talent",
+          heading: "Technical Talent",
           body: "Smart, efficient engineers and data scientists with exceptional English communication skills.",
         },
         {
@@ -140,11 +123,13 @@ export const CONTENT = {
   about: {
     title: "About Us",
     body: "The architectural backbone of modern quantitative engineering",
-    sub: "Born where mathematics and modern engineering meet, backed by elite investors across the USA, Europe, and Hong Kong.",
+    // "elite investors" → the geography IS the claim. Naming three continents is
+    // checkable; "elite" is not, and it dilutes the fact standing next to it.
+    sub: "Born where mathematics and modern engineering meet, backed by investors across the USA, Europe, and Hong Kong.",
     /** /about page header — the full company narrative. */
     overline: "Who We Are",
-    heading: "A top-tier R&D firm, built in Manila for global markets",
-    lead: "Born from international technical expertise and built by Manila's elite technology talent, we deliver high-performance R&D engineering for demanding global markets.",
+    heading: "An R&D firm, built in Manila for global markets",
+    lead: "Built in Manila from international technical expertise, we deliver R&D engineering for demanding global markets.",
   },
   /** The four values Phitopolis is rooted in. */
   principles: {
@@ -289,10 +274,10 @@ export const CONTENT = {
     {
       id: "data-science",
       title: "Data Science",
-      gunshot: "Automated data pipelines and scalable data architectures.",
+      gunshot: "Automated data pipelines and data architectures.",
       tracer:
         "We design data systems with quality checks at every stage, ensuring engineering and analytics teams work with clean data.",
-      summary: "Scalable data pipelines and storage solutions engineered for analytics",
+      summary: "Data pipelines and storage engineered for analytics",
       details:
         "We design automated ETL pipelines and data storage solutions with validation at every step, ensuring all downstream applications receive clean, reliable data.",
       techStack: ["Python", "AWS", "NoSQL", "Postgres", "Docker", "ETL"]
@@ -312,21 +297,46 @@ export const CONTENT = {
   partnerships: [
     {
       name: "Quantbot Technologies",
+      // Was: "elite infrastructure, data science pipelines, and cutting-edge software
+      // engineering, so math-driven strategies deploy seamlessly". Strip the three
+      // adjectives and the residue was "we give them infrastructure, pipelines and
+      // software" — true of every vendor. What is actually specific is WHO they are
+      // and WHO inside the firm we build for, so the sentence keeps only that.
+      // [VERIFY] A number would make this land — scale of the data, or deploy frequency.
       description:
-        "A premier global quantitative investment adviser. We arm their researchers and portfolio managers with elite infrastructure, data science pipelines, and cutting-edge software engineering, so math-driven strategies deploy seamlessly across global markets"
+        "A global quantitative investment adviser. We build the infrastructure, data pipelines, and software their researchers and portfolio managers use to deploy math-driven strategies across global markets"
     },
     {
       name: "CodeWilling",
+      // Was: "supercharge our quant pipelines … maximum efficiency and minimal friction",
+      // which says the partner's computers make our computers faster. Kept the one
+      // concrete thing: what they provide and what it runs.
+      // [VERIFY] Scale of the data lakes would replace the deleted adjectives.
       description:
-        "Experts in financial data management and high-performance computing. Their specialized data lakes and computing environments supercharge our quant pipelines, processing complex financial datasets with maximum efficiency and minimal friction"
+        "Specialists in financial data management and high-performance computing. Their data lakes and compute environments run our quant pipelines over complex financial datasets"
     }
   ],
+  /**
+   * Rendered on /about as five labelled cards under "Core Competencies".
+   *
+   * The intensifiers are gone — "Bold", "Proactive", "Seamless". No company would
+   * claim the opposite ("Timid Innovation", "Reactive Communication"), so a word
+   * nobody would disclaim carries no information and only makes the line read as
+   * filler. What is left is at least honest about being a category label.
+   *
+   * [VERIFY — needs your call, not mine] These are still five abstractions, and
+   * stripping adjectives cannot fix that. Each one becomes real only when it names
+   * a practice a candidate could observe. The file already asserts one such
+   * practice — 24/7 follow-the-sun continuity (see `services` gunshot ":288" and
+   * the reach line ":457") — which is the honest replacement for "Teamwork". The
+   * others need a fact I do not have, so I have not invented one.
+   */
   culture: [
     "Critical Thinking",
-    "Bold Innovation",
-    "Proactive Communication",
+    "Innovation",
+    "Communication",
     "Technical Excellence",
-    "Seamless Teamwork"
+    "Teamwork"
   ],
   targetCandidates: {
     line: "For talents that outgrow large institutions",
@@ -347,7 +357,7 @@ export const CONTENT = {
     },
     {
       title: "Full Stack Developer",
-      role: "Architect our SaaS platforms and the breathtaking interfaces that sit on top of them",
+      role: "Architect our SaaS platforms and the interfaces that sit on top of them",
       stack: ["TypeScript", "React", "GraphQL", "Three.js", "CI/CD"]
     },
     {
@@ -390,7 +400,7 @@ export const CONTENT = {
   story: {
     title: "Born from the ultimate intellectual puzzle",
     body:
-      "Phitopolis began where deep mathematics met modern engineering and bleeding-edge cloud. We chose finance not as a legacy sector but as the hardest problem available, and we have been solving it ever since. Our philosophy is continuous reinvention, because in the AI era, standing still is the only losing move",
+      "Phitopolis began where deep mathematics met modern engineering and cloud. We chose finance not as a legacy sector but as the hardest problem available, and we have been solving it ever since",
   },
   /** Insight teasers drawn from the flagship projects in the source of truth. */
   blog: [
@@ -445,14 +455,14 @@ export const CONTENT = {
       id: "uc-1",
       title: "Algorithmic Signal Generation",
       tag: "Quantitative Finance",
-      line: "Deep learning over petabytes of ticks and alternative data, distilled into robust trading signals for global funds",
+      line: "Deep learning over petabytes of ticks and alternative data, distilled into trading signals for global funds",
       stats: ["US HEDGE FUNDS", "DEEP LEARNING"]
     },
     {
       id: "uc-2",
       title: "Cloud-Native Infrastructure",
       tag: "Full-Stack & Data",
-      line: "Event-driven ingestion and processing architectures that make petabyte-scale systems feel effortless",
+      line: "Event-driven ingestion and processing architectures for petabyte-scale systems",
       stats: ["UK CLIENTS", "RAPID ANALYTICS"]
     },
     {
@@ -463,8 +473,57 @@ export const CONTENT = {
       stats: ["24/7 GLOBAL CONTINUITY", "ZERO DOWNTIME"]
     }
   ],
+  /**
+   * The closing section — rendered by `features/home/components/ClosingShelf`.
+   *
+   * `statement` used to be the hero tagline verbatim, which meant a reader who made
+   * it to the bottom was told the same thing they were told at the top. A close has
+   * to resolve the opening, not repeat it: the hero promises tomorrow's technology
+   * *today*, and this answers where it is and where it runs.
+   *
+   * [VERIFY — the number was changed] The brief said "four time zones". The reach map
+   * has Manila (HQ), Hong Kong, London, New York and Miami — but Manila and Hong Kong
+   * are both UTC+8, and New York and Miami are both US Eastern, so those five cities
+   * span THREE zones, not four. Say "four markets" or name the cities if you want a
+   * four in the line; "four time zones" is checkable and wrong.
+   */
   closing: {
-    statement: "Making tomorrow's technology available today",
+    statement: "Built in Manila. Running in three time zones. Available today.",
     farewell: "Join Our Team",
+    /** Frames on the shelf, largest first. Order is the render order. */
+    shelf: [
+      {
+        id: "capabilities",
+        kicker: "01",
+        label: "What we build",
+        line: "Four disciplines, one delivery contract — research, engineering, data, and 24/7 operations.",
+        href: "/services",
+        cta: "See the capabilities",
+      },
+      {
+        id: "journey",
+        kicker: "02",
+        label: "How we got here",
+        line: "Founded in Manila in 2019. Eight chapters from a first small team to the partner clients came back to.",
+        href: "/about",
+        cta: "Read the journey",
+      },
+      {
+        id: "people",
+        kicker: "03",
+        label: "Who does the work",
+        line: "Engineers and researchers in Manila, working alongside client teams across global markets.",
+        href: "/careers",
+        cta: "See open roles",
+      },
+      {
+        id: "writing",
+        kicker: "04",
+        label: "What we published",
+        line: "Logs from the team — engineering, platforms, operations, written by the people doing the work.",
+        href: "/blog",
+        cta: "Read the feed",
+      },
+    ],
   }
 };

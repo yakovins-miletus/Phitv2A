@@ -15,6 +15,7 @@ import { MarketPosition } from "@/features/hero/description/MarketPosition";
 import { CapabilityRack } from "@/features/services/components/CapabilityRack";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
 import { BlogSection } from "@/features/home/components/BlogSection";
+import { ClosingShelf } from "@/features/home/components/ClosingShelf";
 import { CandidatesAndCareersSection } from "@/features/home/components/CandidatesAndCareersSection";
 import { DailyLifeSection } from "@/features/home/components/DailyLifeSection/DailyLifeSection";
 import { TestimonialsSection } from "@/features/home/components/TestimonialsSection";
@@ -177,6 +178,12 @@ function HomePage() {
           >
             <BlogSection />
           </Box>
+
+          {/* The close. `sections.ts` has carried a `closing` entry ("Horizon
+              Gateway") since the section list was written and nothing ever
+              rendered it — this is that slot, finally filled. It looks back over
+              both acts and resolves the hero's promise instead of repeating it. */}
+          <ClosingShelf />
         </Box>
       </Box>
       {/* No footer here: AppShell renders the site footer for every route */}

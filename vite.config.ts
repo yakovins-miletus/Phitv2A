@@ -28,11 +28,44 @@ function preloadFonts(): Plugin {
   };
 }
 
+/**
+ * Fail the production build when `VITE_API_URL` is unset or still a placeholder.
+ *
+ * `.env.production` shipped `https://phitv2.phit.b.com` — a hostname that does not
+ * resolve. Dev was unaffected (it points at localhost:8000), so nothing surfaced
+ * until a production build was actually loaded, where every data-driven surface
+ * died on ERR_NAME_NOT_RESOLVED. A broken API base is not something the site can
+ * degrade around, so it stops the build rather than shipping.
+ */
+function assertApiUrl(): Plugin {
+  const PLACEHOLDER = /(\.b\.com|example\.(com|org)|changeme|your-domain|TODO|localhost)/i;
+  return {
+    name: "assert-api-url",
+    apply: "build",
+    configResolved(config) {
+      if (config.mode !== "production") return;
+      const url = config.env.VITE_API_URL as string | undefined;
+      if (url === undefined || url === "") {
+        throw new Error(
+          "VITE_API_URL is not set. Set it in .env.production — `/` for the same-origin Nginx deployment.",
+        );
+      }
+      if (PLACEHOLDER.test(url)) {
+        throw new Error(
+          `VITE_API_URL is a placeholder or a dev host: ${url}\n` +
+            "Set it to `/` (same-origin behind Nginx) or to the real API origin.",
+        );
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
     preloadFonts(),
+    assertApiUrl(),
     // Precompressed assets (.gz + .br) emitted at build time so any static
     // host/nginx can serve them with zero runtime cost.
     compression({ algorithms: ["gzip", "brotliCompress"] }),

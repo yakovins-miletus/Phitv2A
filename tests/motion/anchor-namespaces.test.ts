@@ -41,19 +41,43 @@ test("every anchor id is registered in NAV_ANCHORS, none left as bare strings", 
   // useNavbarAnchor's parameter is typed to NavAnchorId, so a bare string is a
   // compile error. This asserts the registry still covers every live call site,
   // which typing alone cannot tell you.
-  const sources = await Promise.all(
-    [
-      "../../src/routes/index.tsx",
-      "../../src/routes/about.tsx",
-      "../../src/shared/components/AppShell.tsx",
-      "../../src/features/home/components/DailyLifeSection/DailyLifeSection.tsx",
-    ].map(async (rel) => {
-      const { readFile } = await import("node:fs/promises");
-      const { fileURLToPath } = await import("node:url");
-      return readFile(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
-    }),
+  //
+  // This used to scan a hand-written list of four files and assert the call count
+  // was exactly 5. Both halves rotted: the count assertion started failing the
+  // moment anyone added an anchor to one of those four files (it was at 6), and the
+  // file list never covered the other nine call sites at all — so the check that
+  // actually matters was not running on most of the codebase. Walking `src/` costs
+  // a few milliseconds and removes both failure modes; the count is no longer
+  // asserted because scanning everything is what the count was standing in for.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const { join, resolve } = await import("node:path");
+
+  // `import.meta.url` is not a file: URL under this vitest project, so resolve from
+  // the process cwd (vitest runs from the package root) rather than from the module.
+  const SRC = resolve(process.cwd(), "src");
+
+  async function walk(dir: string): Promise<string[]> {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(
+      entries.map(async (entry) => {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) return walk(full);
+        return /\.tsx?$/.test(entry.name) ? [full] : [];
+      }),
+    );
+    return files.flat();
+  }
+
+  const files = await walk(SRC);
+  const sources = await Promise.all(files.map((f) => readFile(f, "utf8")));
+
+  const calls = sources.flatMap((src, i) =>
+    [...src.matchAll(/useNavbarAnchor\(([^,)]+)/g)]
+      // The hook's own definition and its import are not call sites.
+      .filter(() => !files[i]!.endsWith("NavbarContext.tsx"))
+      .map((m) => `${files[i]!.slice(SRC.length + 1)}: ${m[1]!.trim()}`),
   );
-  const calls = sources.flatMap((src) => [...src.matchAll(/useNavbarAnchor\(([^,)]+)/g)].map((m) => m[1]!.trim()));
-  expect(calls.length).toBe(5);
-  for (const call of calls) expect(call).toMatch(/^NAV_ANCHORS\./);
+
+  expect(calls.length).toBeGreaterThan(0);
+  for (const call of calls) expect(call).toMatch(/: NAV_ANCHORS\./);
 });

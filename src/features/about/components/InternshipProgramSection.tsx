@@ -35,14 +35,14 @@ const INTERNSHIP_PILLARS: ProgramPillar[] = [
     title: "1-on-1 Engineering Mentorship",
     subtitle: "DIRECT STAFF ENGINEER PAIRING",
     description: "Interns build real features alongside principal staff engineers, receiving daily code reviews and technical guidance.",
-    image: "/images/grads/Coordination.JPG",
+    image: "/images/grads/Coordination.webp",
   },
   {
     icon: AutoAwesomeIcon,
     title: "Production R&D Impact",
     subtitle: "GLOBAL ENTERPRISE EXPOSURE",
     description: "Work on live financial data pipelines, distributed computing modules, and modern web applications shipped globally.",
-    image: "/images/grads/FocusedProgramming.JPG",
+    image: "/images/grads/FocusedProgramming.webp",
   },
 ];
 

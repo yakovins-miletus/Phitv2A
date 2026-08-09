@@ -175,10 +175,16 @@ export function EyeFlow() {
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.7rem",
-                  fontWeight: 800,
                   letterSpacing: "0.24em",
                   color: isActiveAct ? NOIR.gold : "text.secondary",
-                  opacity: isActiveAct ? 1 : 0.4,
+                  // Inactive state is carried by WEIGHT, not by fading the text
+                  // out. `text.secondary` is rgba(10,42,102,0.82); at the old 0.4
+                  // opacity its effective alpha was 0.33, which measures ~2.3:1 on
+                  // the hero's white ground and fails AA for text this size. 0.82
+                  // measures ~5.9:1. The hierarchy still reads, because 800 vs 500
+                  // at 0.24em tracking is a bigger visual step than the fade was.
+                  opacity: isActiveAct ? 1 : 0.82,
+                  fontWeight: isActiveAct ? 800 : 500,
                   cursor: "pointer",
                   userSelect: "none",
                   transition: "color 0.4s ease, opacity 0.4s ease",
@@ -206,7 +212,11 @@ export function EyeFlow() {
                             fontSize: "0.6rem",
                             letterSpacing: "0.18em",
                             color: isActiveChapter ? NOIR.gold : "text.secondary",
-                            opacity: isActiveChapter ? 1 : isActiveAct ? 0.45 : 0.2,
+                            // Same fix as the act label above: weight carries the
+                            // state, opacity stays above the AA floor. The old
+                            // 0.45/0.2 tiers measured 2.5:1 and 1.4:1.
+                            opacity: isActiveChapter ? 1 : 0.82,
+                            fontWeight: isActiveChapter ? 700 : 500,
                             cursor: "pointer",
                             userSelect: "none",
                             display: "block",

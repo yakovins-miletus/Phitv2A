@@ -425,7 +425,10 @@ export function PoweredBySection() {
                     border: "none",
                     cursor: "pointer",
                     p: "4px 0",
-                    outline: "none"
+                    // No `outline: none` — these are real buttons that filter the
+                    // rack. See the note in AppShell: a local suppression outranks
+                    // the theme's `*:focus-visible` ring.
+                    outlineOffset: "4px",
                   }}
                 >
                   <Box

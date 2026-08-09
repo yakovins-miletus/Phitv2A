@@ -12,6 +12,14 @@ interface HeroCanvasProps {
   handleRef: RefObject<HeroCanvasHandle | null>;
   /** Initial progress, used for the first paint and for the static fallback frame. */
   initialProgress?: number;
+  /**
+   * Stage 4: accepted for parity with the legacy canvas fork, ignored here.
+   * The 3D playground is out of scope for this stage (README rule 1); leaving
+   * `--hp-mx` / `--hp-my` unpublished is correct, not a gap — the sky's
+   * `var(--hp-mx, 0)` reads fall back to 0, which is a static (not broken)
+   * disc/sky.
+   */
+  varsHostRef?: RefObject<HTMLElement | null>;
 }
 
 export function R3FHeroCanvas({ handleRef, initialProgress = 0 }: HeroCanvasProps) {

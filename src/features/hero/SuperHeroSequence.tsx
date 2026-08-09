@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { Suspense, lazy, useRef, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
@@ -10,10 +10,21 @@ import { useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
-import { R3FHeroCanvas } from "./R3FHeroCanvas";
+/**
+ * The 3D playground stays (docs/hero-upgrade/README.md standing rule 1), and its
+ * internals are untouched — but it no longer taxes every visitor for a switch that
+ * is off by default. `React.lazy` moves `three` + `@react-three/fiber` + `drei`
+ * out of the route chunk and behind a dynamic import that only runs when someone
+ * actually flips the toggle. Lazy-loading a component is not a change to that
+ * component, so rule 1 holds: `R3FHeroCanvas.tsx` and `PlaygroundScene.tsx` still
+ * show no diff.
+ */
+const R3FHeroCanvas = lazy(() =>
+  import("./R3FHeroCanvas").then((m) => ({ default: m.R3FHeroCanvas })),
+);
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import Switch from "@mui/material/Switch";
-import { NOIR } from "@/shared/theme/palette";
+import { NOIR, DAWN } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
@@ -24,8 +35,17 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
 /** Pin distance: 1800% for the hero animation + 100% extra overlap window
  *  where the overlay sheet slides up over the still-pinned hero. */
-const HERO_PIN_DISTANCE = "+=1900%";
-const ANIM_LIMIT = 1800 / 1900;
+/**
+ * How tall the pin is.
+ *
+ * Was `+=1900%` — nineteen viewport heights of scroll for nine phases, most of it
+ * buffer. The phase boundaries in `heroPhases.ts` are all *fractions* of the pin's
+ * 0..1 progress, so shortening the pin moves none of them and every assertion in
+ * `tests/motion/hero-phases.test.ts` holds unchanged; only the amount of wheel
+ * travel each fraction costs the reader changes. Eight is still generous.
+ */
+const HERO_PIN_DISTANCE = "+=800%";
+const ANIM_LIMIT = 700 / 800;
 
 /**
  * The three directory link pills below the hero card.
@@ -80,6 +100,10 @@ const LINK_PILL_SX = {
 export function HeroSignalCore() {
   const pinRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
+  // Stage 4: the scaled card's own element — the sky/disc parallax publisher
+  // target. A distinct ref from `containerRef` (the outer #hero box) so the
+  // vars are written on the same element the sky Box is a direct child of.
+  const cardRef = useRef<HTMLElement>(null);
   const canvasHandleRef = useRef<HeroCanvasHandle | null>(null);
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
@@ -238,7 +262,7 @@ export function HeroSignalCore() {
             >
               <Box
                 component="img" decoding="async"
-                src="/images/topHalfHero.jpg"
+                src="/images/topHalfHero.webp"
                 alt=""
                 sx={{
                   width: "140%",
@@ -269,7 +293,7 @@ export function HeroSignalCore() {
             >
               <Box
                 component="img" decoding="async"
-                src="/images/botHalfHero.jpg"
+                src="/images/botHalfHero.webp"
                 alt=""
                 sx={{
                   width: "140%",
@@ -423,6 +447,7 @@ export function HeroSignalCore() {
 
         {/* Scaled Hero Container (Houses P Logo, AT Text & Wordmark) */}
         <Box
+          ref={cardRef}
           sx={{
             position: "relative",
             width: "100%",
@@ -446,8 +471,67 @@ export function HeroSignalCore() {
             m: "auto",
           }}
         >
-          {/* Interactive Signal Canvas Layer (Grid, Signal lines, cubes, service nodes,
-              and the extruded P mark) — one canvas replacing ~250 DOM nodes. */}
+          {/*
+            The dawn ground. Lives INSIDE this card — the card is opaque
+            (bgcolor: NOIR.void) and full-bleed at progress 0, so anything
+            placed behind it is invisible (see "the one hard structural
+            fact" in docs/hero-upgrade/stage-4.md). Still no image assets:
+            two `background-image` layers on one Box.
+
+            REPLACES the six-stop vertical DAWN gradient. That gradient ran
+            zenith -> ember top to bottom and filled the frame, which made
+            the card read as *sky*; the brief is a card that reads as
+            *white*, ~70% of it, with the dawn arriving from the left. Two
+            changes carry that:
+
+              1. The sun moved from `82% 20%` (right) to `10% 30%` (left),
+                 and its shine is now a wide, weak warm wash rather than a
+                 hard disc. `--hp-sun` still scales the gold core, so
+                 `sunAltitude()` drives it exactly as before.
+              2. The base gradient runs *horizontally* (100deg), warm at the
+                 left edge and pure white by ~62% across, instead of
+                 vertically through six saturated stops.
+
+            The canvas city's own light agrees with this by construction:
+            `heroCity.ts`'s SHADOW_DIR points along +(1,1) in plane space,
+            which the -45deg camera maps to screen-right — i.e. away from
+            this sun. One light source, two layers, no disagreement.
+
+            No clouds. `DAWN.cloudMid`/`cloudLo` are deliberately unused
+            here; see the decision log.
+
+            Parallax: each layer gets its own `background-position` offset
+            off the same `--hp-mx`/`--hp-my` the canvas's pointer lerp
+            publishes onto `cardRef` — sun 8px (front-most), wash 3px.
+            `backgroundSize` is padded past 100% so parallax travel never
+            exposes an edge.
+
+            Fully gone by CONTAINER_START: opacity is `var(--hp-sky, 1)`,
+            and skyPresence(CONTAINER_START) === 0 exactly (pinned in
+            tests/motion/hero-phases.test.ts), so the card interior returns
+            to pure NOIR.void — byte-identical to what GroundLayer already
+            paints behind it at that point in the pin.
+          */}
+          <Box
+            aria-hidden
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+              opacity: "var(--hp-sky, 1)",
+              backgroundImage: [
+                `radial-gradient(circle at 8% 26%, rgba(${NOIR.goldRgb}, calc(0.26 * var(--hp-sun, 1))) 0%, rgba(${DAWN.warmRgb}, 0.20) 11%, rgba(${DAWN.warmRgb}, 0.07) 26%, rgba(${DAWN.warmRgb}, 0.00) 44%)`,
+                `linear-gradient(100deg, ${DAWN.haze} 0%, ${NOIR.void} 22%, ${NOIR.white} 52%)`,
+              ].join(", "),
+              backgroundRepeat: "no-repeat, no-repeat",
+              backgroundSize: "150% 150%, 108% 108%",
+              backgroundPosition:
+                "calc(10% + var(--hp-mx, 0) * 8px) calc(30% + var(--hp-my, 0) * 8px), calc(50% + var(--hp-mx, 0) * 3px) calc(50% + var(--hp-my, 0) * 3px)",
+            }}
+          />
+
+          {/* The city: streets, buildings, dawn shadows, signal pulses and the P
+              mark's own district — one canvas, no DOM per scene object. */}
           <Box
             aria-hidden
             sx={{
@@ -459,11 +543,30 @@ export function HeroSignalCore() {
             }}
           >
             {use3D ? (
-              <R3FHeroCanvas handleRef={canvasHandleRef} />
+              <Suspense fallback={null}>
+                <R3FHeroCanvas handleRef={canvasHandleRef} varsHostRef={cardRef} />
+              </Suspense>
             ) : (
-              <LegacyHeroCanvas handleRef={canvasHandleRef} />
+              <LegacyHeroCanvas handleRef={canvasHandleRef} varsHostRef={cardRef} />
             )}
           </Box>
+
+          {/*
+            The stage-4 in-card vignette used to live here: a centred ellipse
+            darkening the frame's edges toward `DAWN.cloudLo`. It is gone.
+
+            It existed to give a saturated six-stop sky somewhere to fall off
+            to. Against a ground that is now ~70% white it did the opposite of
+            its job — a grey ring around a white card reads as a rendering
+            artifact, and it fought the one thing the composition is built on,
+            which is that the light comes from a single point off the left
+            edge and nowhere else. A vignette is light coming from everywhere
+            at once.
+
+            Not replaced. The density mask in `heroCity.ts` already fades the
+            lattice toward the plane's margins, so the field has no visible
+            rectangular boundary without painting one.
+          */}
 
 
           {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2 */}
@@ -482,7 +585,14 @@ export function HeroSignalCore() {
               overflow: "hidden",
               clipPath: "inset(0 0 0 0)",
               opacity: "var(--hp-word, 0)",
-              pointerEvents: "auto",
+              // Stage 4 fix (README open question, assigned here): this box sits
+              // at plane centre and was swallowing pointer events even while
+              // invisible (opacity driven by --hp-word, which is 0 for most of
+              // the pin), killing cursor interaction with the canvas underneath
+              // over the middle of the scene. The wordmark inside is decorative
+              // for sighted users and load-bearing only for crawlers (aria-label
+              // "Phitopolis" on the h1) — it must never take input.
+              pointerEvents: "none",
               transform: {
                 xs: "translate(-50%, -50%)",
                 sm: "translate(0, -50%)",
@@ -529,21 +639,30 @@ export function HeroSignalCore() {
         <Box
           sx={{
             position: "absolute",
-            top: { xs: 70, md: 84 },
-            right: { xs: 32, md: 72 },
+            // Desktop only. At 375px it sat on top of the three-line headline —
+            // the chip is a developer affordance, and covering the page's single
+            // most important line to expose it is the wrong trade at any width.
+            // A WebGL playground is also the last thing a phone wants offered.
+            display: { xs: "none", md: "flex" },
+            top: 84,
+            right: 72,
             zIndex: 10,
             opacity: ready ? "var(--hp-panel, 1)" : 0,
             transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
-            display: "flex",
             alignItems: "center",
             gap: 1.5,
             px: 2,
             py: 0.75,
             borderRadius: "9999px",
             border: `1px solid rgba(10, 42, 102, 0.15)`,
-            backgroundColor: "rgba(244, 247, 252, 0.8)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
+            // Opaque, not translucent-with-blur. These two `backdrop-filter`
+            // declarations were the hero's last two blur layers, against a
+            // standing target of zero (docs/hero-upgrade/README.md rule 5, and
+            // the perf-baseline table). Over a ground that is now ~70% white
+            // there is nothing behind the chip worth blurring, so raising the
+            // fill to full opacity costs nothing visually and retires the rule's
+            // last violation.
+            backgroundColor: NOIR.void,
             boxShadow: "0 4px 16px rgba(10, 42, 102, 0.06)",
           }}
         >
@@ -659,7 +778,7 @@ export function HeroSignalCore() {
               textTransform: "uppercase",
             }}
           >
-            EXPLORE PHITOPOLIS // DIRECTORY | (PoC Draft, yet to be presentable)
+            EXPLORE PHITOPOLIS // DIRECTORY
           </Typography>
 
           <Box

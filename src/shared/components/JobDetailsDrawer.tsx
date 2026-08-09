@@ -108,7 +108,7 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
   "Full Stack Developer": {
     id: "full-stack-developer",
     title: "Full Stack Developer",
-    role: "Architect our SaaS platforms and the breathtaking interfaces that sit on top of them",
+    role: "Architect our SaaS platforms and the interfaces that sit on top of them",
     overview:
       "The primary responsibility of this role is to build and maintain production-level software applications, including responsive user interfaces, reliable backend API services, and high-performance database architectures.",
     stack: ["TypeScript", "React", "GraphQL", "NestJS", "PostgreSQL", "MongoDB", "CI/CD"],
@@ -116,10 +116,10 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
     type: "Full-time",
     applyUrl: "https://forms.gle/niyMK6Wkc4v5yfLm7",
     responsibilities: [
-      "Understand business needs and translate them into robust technical specifications",
-      "Exhibit front-end and back-end excellence in building and maintaining scalable web applications",
+      "Understand business needs and translate them into technical specifications",
+      "Build and maintain web applications across the front end and the back end",
       "Make key architectural decisions on project tech stacks and design patterns",
-      "Design user interfaces adhering to state-of-the-art UX principles",
+      "Design user interfaces that hold to established UX principles",
       "Configure CI/CD automation pipelines for continuous production delivery",
       "Collaborate with cross-functional agile teams",
     ],
@@ -151,7 +151,7 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
     type: "Full-time",
     applyUrl: "https://forms.gle/niyMK6Wkc4v5yfLm7",
     responsibilities: [
-      "Build and optimize scalable ETL environments in support of quantitative research and automated trading",
+      "Build and optimize ETL environments supporting quantitative research and automated trading",
       "Implement automated data quality and validation checks for data integrity",
       "Collaborate with the research team to formulate and deliver valuable financial datasets",
       "Handle application deployment, data extraction pipelines, and operational support",
@@ -182,7 +182,7 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
     applyUrl: "https://forms.gle/niyMK6Wkc4v5yfLm7",
     responsibilities: [
       "Operations and support for High-Frequency Trading systems and Financial Market Data Pipelines across AWS/GCP/Azure",
-      "Work with Development, Data, and Research teams to continuously elevate IT operations",
+      "Work with the Development, Data, and Research teams to improve IT operations",
       "Maintain application services using automation tools and CI/CD pipelines",
       "Ensure stability and support for all in-scope applications, executing BAU requests and runbook procedures",
       "Maintain monitoring dashboards using Prometheus, Grafana, and cloud native tools",

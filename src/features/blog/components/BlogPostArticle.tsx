@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { BlogPost } from "../api";
-import { isImageParagraph } from "../bodyImages";
+import { isImageParagraph, preferWebp } from "@/shared/bodyImages";
 
 /** Post bodies are plain text; blank lines separate paragraphs.
  *  React escapes everything — no HTML, no markdown, no XSS surface. The one
@@ -22,7 +22,15 @@ function BodyParagraphs({ text }: { text: string }) {
             <Box
               key={index}
               component="img" decoding="async"
-              src={paragraph}
+              // The stored path may be .png/.jpg; every one has a .webp twin on disk.
+              // See `preferWebp` for why this is resolved here and not migrated in the
+              // backend's post bodies. onError falls back to the stored path, so a
+              // missing twin degrades to the original rather than to a broken image.
+              src={preferWebp(paragraph)}
+              onError={(event) => {
+                const img = event.currentTarget as HTMLImageElement;
+                if (img.src !== paragraph) img.src = paragraph;
+              }}
               alt=""
               loading="lazy"
               sx={{

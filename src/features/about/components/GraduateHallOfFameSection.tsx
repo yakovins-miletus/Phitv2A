@@ -56,7 +56,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     badge: "QUANT & AI RESEARCH",
     title: "2024–2025 Joint Innovation Cohort",
     description: "Cross-functional cohort focused on high-frequency trading tools, automated testing engines, and GenAI integration workflows.",
-    image: "/images/grads/2024B2and2025.jpg",
+    image: "/images/grads/2024B2and2025.webp",
     highlights: ["GenAI Integration", "High-Throughput C++", "Data Analytics"],
   },
   {
@@ -64,7 +64,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     year: "2026 Batch 1",
     badge: "NEXT-GEN LEADERS",
     title: "2026 Batch 1 Tech Graduates",
-    description: "Our newest cohort of elite graduates driving modern web architecture, cloud native pipelines, and autonomous AI agents for global systems.",
+    description: "Our newest cohort, working on web architecture, cloud-native pipelines, and AI agents for global systems.",
     image: "/images/grads/2026B1Grads.webp",
     highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
   },
@@ -125,7 +125,7 @@ export function GraduateHallOfFameSection() {
             </Reveal>
             <Reveal delay={0.2}>
               <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: "1.15rem", lineHeight: 1.6 }}>
-                Celebrating our technical graduate cohorts — world-class engineering and quantitative research fellows trained in Manila for global production systems.
+                Our technical graduate cohorts — engineering and quantitative research fellows trained in Manila for global production systems.
               </Typography>
             </Reveal>
           </Stack>
@@ -353,7 +353,7 @@ export function GraduateHallOfFameSection() {
                   Ready to Shape the Future of Production Systems?
                 </Typography>
                 <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.82)", lineHeight: 1.65, fontSize: "1.05rem" }}>
-                  Applications for our next Technical Graduate Program intake and paid R&D internships are now open. Start your engineering career with world-class mentorship.
+                  Applications for our next Technical Graduate Program intake and paid R&D internships are now open. Start your engineering career with 1-on-1 mentorship.
                 </Typography>
               </Stack>
 

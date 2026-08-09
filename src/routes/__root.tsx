@@ -22,13 +22,37 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   notFoundComponent: () => <ErrorPanel message="This page does not exist." />,
 });
 
+/**
+ * Vercel Analytics only works when Vercel is serving the site.
+ *
+ * Both components fetch `/_vercel/insights/script.js` and
+ * `/_vercel/speed-insights/script.js`, which exist *only* on Vercel's edge — the files
+ * are not in `dist/`. On the EC2 + Nginx deployment they 404 on every single page load
+ * (two failed requests and two console errors per navigation), and the scripts then log
+ * their own "failed to load" warning on top.
+ *
+ * Gated on the host rather than deleted, so a Vercel preview deploy still reports.
+ * `VITE_ANALYTICS=on` forces them on if the site later moves back to Vercel behind a
+ * custom domain.
+ */
+function useVercelAnalytics(): boolean {
+  if (import.meta.env.VITE_ANALYTICS === "on") return true;
+  if (typeof window === "undefined") return false;
+  return /\.vercel\.app$/.test(window.location.hostname);
+}
+
 function RootLayout() {
+  const analytics = useVercelAnalytics();
   return (
     <AppShell>
       <HeadContent />
       <Outlet />
-      <Analytics />
-      <SpeedInsights />
+      {analytics && (
+        <>
+          <Analytics />
+          <SpeedInsights />
+        </>
+      )}
     </AppShell>
   );
 }

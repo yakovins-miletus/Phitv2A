@@ -19,12 +19,16 @@
 import {
   atTightenProgress,
   borderAnimProgress,
+  cloudDrift,
   containerScale,
   flankOpacity,
   gunshotProgress,
+  hazeDensity,
   leftFlankY,
   panelOpacity,
   rightFlankY,
+  skyPresence,
+  sunAltitude,
   wordLiftPercent,
   wordRevealProgress,
 } from "./heroPhases";
@@ -69,6 +73,11 @@ export interface HeroVars {
   panel: number;
   word: number;
   wordlift: number;
+  /** Stage 4: dawn sky choreography. */
+  sun: number;
+  haze: number;
+  sky: number;
+  drift: number;
 }
 
 /** Derive every continuous value for a given pin progress. */
@@ -92,6 +101,13 @@ export function heroVars(progress: number, reduced: boolean): HeroVars {
       panel: 1,
       word: 1,
       wordlift: 0,
+      // The settled sky: sun fully risen, a thin permanent haze, and the sky
+      // itself gone — the motionless final layout this branch models is past
+      // CONTAINER_START, where skyPresence is already 0.
+      sun: 1,
+      haze: 0.10,
+      sky: 0,
+      drift: 0,
     };
   }
 
@@ -112,6 +128,10 @@ export function heroVars(progress: number, reduced: boolean): HeroVars {
     panel: panelOpacity(progress),
     word: wordRevealProgress(progress),
     wordlift: wordLiftPercent(progress),
+    sun: sunAltitude(progress),
+    haze: hazeDensity(progress),
+    sky: skyPresence(progress),
+    drift: cloudDrift(progress),
   };
 }
 
@@ -138,6 +158,10 @@ export function writeHeroVars(el: HTMLElement, v: HeroVars): void {
   s.setProperty("--hp-panel", n(v.panel));
   s.setProperty("--hp-word", n(v.word));
   s.setProperty("--hp-wordlift", n(v.wordlift));
+  s.setProperty("--hp-sun", n(v.sun));
+  s.setProperty("--hp-haze", n(v.haze));
+  s.setProperty("--hp-sky", n(v.sky));
+  s.setProperty("--hp-drift", n(v.drift));
 }
 
 /**

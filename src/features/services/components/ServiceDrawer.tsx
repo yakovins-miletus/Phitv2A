@@ -2,6 +2,21 @@ import { motion } from "motion/react";
 import { NOIR } from "@/shared/theme/palette";
 
 // Simple abstract 2D Vector visualizations based on service ID with continuous animations
+//
+// ── EVERY LOOPING `animate` HERE NEEDS A MATCHING `initial` ──────────────────────
+//
+// These graphics use keyframe arrays with no `initial`. Motion renders SVG geometry
+// (`r`, `height`, `y`, …) by writing its own `latestValues` onto the element as
+// attributes — and it *overwrites* whatever static JSX attribute is there. Before the
+// first keyframe resolves `latestValues` has no entry, so Motion wrote `r="undefined"`
+// and `height="undefined"`, and the browser threw
+//   `<circle> attribute r: Expected length, "undefined".`
+// five times on every home-page load (this component ships inside CapabilityRack).
+//
+// A static `r="120"` is NOT enough — it is what Motion overwrites. The value has to be
+// in `initial`, which seeds `latestValues` on the first render. Both are kept: the
+// static attribute is the correct SVG for a no-JS render, `initial` is what Motion reads.
+// Set `initial` to the animation's FIRST keyframe so nothing jumps on mount.
 export function ServiceVector({ id }: { id: string }) {
   if (id === "development" || id === "service-dev") {
     return (
@@ -10,6 +25,7 @@ export function ServiceVector({ id }: { id: string }) {
         
         {/* Central Core */}
         <motion.circle
+          initial={{ scale: 1, opacity: 0.8 }}
           animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           cx="200"
@@ -20,6 +36,7 @@ export function ServiceVector({ id }: { id: string }) {
           strokeWidth="2"
         />
         <motion.circle
+          initial={{ scale: 1, opacity: 0.3 }}
           animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           cx="200"
@@ -144,22 +161,26 @@ export function ServiceVector({ id }: { id: string }) {
   if (id === "quant-research" || id === "service-quant") {
     return (
       <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <motion.circle 
-          animate={{ r: [120, 130, 120], opacity: [0.6, 1, 0.6] }} 
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} 
-          cx="200" 
-          cy="200" 
-          stroke={NOIR.gold} 
-          strokeWidth="2" 
-          strokeDasharray="4 4" 
+        <motion.circle
+          initial={{ r: 120, opacity: 0.6 }}
+          animate={{ r: [120, 130, 120], opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          cx="200"
+          cy="200"
+          r="120"
+          stroke={NOIR.gold}
+          strokeWidth="2"
+          strokeDasharray="4 4"
         />
-        <motion.circle 
-          animate={{ r: [80, 85, 80], opacity: [0.8, 0.4, 0.8] }} 
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }} 
-          cx="200" 
-          cy="200" 
-          stroke={NOIR.goldLight} 
-          strokeWidth="4" 
+        <motion.circle
+          initial={{ r: 80, opacity: 0.8 }}
+          animate={{ r: [80, 85, 80], opacity: [0.8, 0.4, 0.8] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          cx="200"
+          cy="200"
+          r="80"
+          stroke={NOIR.goldLight}
+          strokeWidth="4"
         />
         <motion.path 
           animate={{ pathLength: [0, 1, 0] }} 
@@ -177,19 +198,22 @@ export function ServiceVector({ id }: { id: string }) {
       <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
         {/* Bars */}
         <motion.rect
+          initial={{ height: 90, y: 260 }}
           animate={{ height: [90, 110, 90], y: [260, 240, 260] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          x="50" width="60" rx="8" fill={NOIR.goldDark}
+          x="50" y="260" width="60" height="90" rx="8" fill={NOIR.goldDark}
         />
         <motion.rect
+          initial={{ height: 180, y: 170 }}
           animate={{ height: [180, 160, 180], y: [170, 190, 170] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          x="170" width="60" rx="8" fill={NOIR.gold}
+          x="170" y="170" width="60" height="180" rx="8" fill={NOIR.gold}
         />
         <motion.rect
+          initial={{ height: 270, y: 80 }}
           animate={{ height: [270, 290, 270], y: [80, 60, 80] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          x="290" width="60" rx="8" fill={NOIR.goldLight}
+          x="290" y="80" width="60" height="270" rx="8" fill={NOIR.goldLight}
         />
 
         {/* Upward Trend Graph Line */}

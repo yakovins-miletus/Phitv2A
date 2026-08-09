@@ -43,7 +43,7 @@ const VALUES_DATA: ValueItem[] = [
     headline: "Complete Ownership of Commitments & Outcomes",
     definition: CONTENT.principles.values[1]!.definition,
     valueToClient: CONTENT.principles.values[1]!.valueToClient,
-    image: "/images/grads/Coordination.JPG",
+    image: "/images/grads/Coordination.webp",
     icon: VerifiedIcon,
   },
   {
@@ -52,7 +52,7 @@ const VALUES_DATA: ValueItem[] = [
     headline: "Anticipating Tomorrow Through Strategy & AI",
     definition: CONTENT.principles.values[2]!.definition,
     valueToClient: CONTENT.principles.values[2]!.valueToClient,
-    image: "/images/quant-research-banner.jpg",
+    image: "/images/quant-research-banner.webp",
     icon: TrendingUpIcon,
   },
   {
@@ -61,7 +61,7 @@ const VALUES_DATA: ValueItem[] = [
     headline: "Relentless Pursuit of Superior Engineering Standards",
     definition: CONTENT.principles.values[3]!.definition,
     valueToClient: CONTENT.principles.values[3]!.valueToClient,
-    image: "/images/grads/FocusedProgramming.JPG",
+    image: "/images/grads/FocusedProgramming.webp",
     icon: WorkspacePremiumIcon,
   },
 ];

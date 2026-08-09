@@ -79,8 +79,8 @@ const WARM_ROUTES = [
     visit on every device, before anything had asked for it. */
 const CRITICAL_IMAGES = [
   { src: "/phitopolis_logo_hero.svg", label: "BRAND LOGO" },
-  { src: "/images/careers/quant-research-banner.jpg", label: "RESEARCH CORE" },
-  { src: "/images/careers/data-science-banner.jpg", label: "DATA STREAM" },
+  { src: "/images/careers/quant-research-banner.webp", label: "RESEARCH CORE" },
+  { src: "/images/careers/data-science-banner.webp", label: "DATA STREAM" },
 ] as const;
 
 function preloadImage(src: string): Promise<void> {
@@ -317,7 +317,11 @@ function AnimatedMenuButton({
         color: noBorder && (hovered || active) ? `${NOIR.gold} !important` : iconColor,
         boxShadow: noBorder ? "none !important" : shadowMd,
         cursor: "pointer",
-        outline: "none",
+        // No `outline: none` here. This is a real <button> with an onClick, and it
+        // renders in the app bar on every route. An `sx` rule is injected after
+        // MuiCssBaseline's `*:focus-visible`, so suppressing the outline locally beat
+        // the theme's designed focus ring and left the primary nav trigger with no
+        // keyboard indicator at all.
         transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
         "&:hover": {

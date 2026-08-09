@@ -29,6 +29,10 @@ import {
   panelPointerEvents,
   sideFaceOpacity,
   wordLiftPercent,
+  sunAltitude,
+  hazeDensity,
+  skyPresence,
+  cloudDrift,
 } from "@/features/hero/heroPhases";
 
 test("phase boundaries are the values the design was built around", () => {
@@ -205,4 +209,54 @@ test("logo side faces fade out before flattening completes", () => {
   expect(sideFaceOpacity(0.25)).toBeCloseTo(0.55, 6);
   expect(sideFaceOpacity(5 / 9)).toBeCloseTo(0, 6);
   expect(sideFaceOpacity(1)).toBe(0);
+});
+
+/* ── Stage 4: dawn sky choreography ────────────────────────────────────── */
+
+test("sunAltitude: 0->0.35 through flatten, 0.35->1.0 through move+reveal, then holds", () => {
+  expect(sunAltitude(0)).toBeCloseTo(0, 6);
+  expect(sunAltitude(PHASE_FLATTEN_END)).toBeCloseTo(0.35, 6);
+  expect(sunAltitude(WORD_REVEAL_END)).toBeCloseTo(1.0, 6);
+  expect(sunAltitude(0.75)).toBeCloseTo(1.0, 6);
+  expect(sunAltitude(1)).toBeCloseTo(1.0, 6);
+});
+
+test("hazeDensity: full through flatten, thins to 0.45 by reveal, holds through dwell, burns off by gunshot", () => {
+  expect(hazeDensity(0)).toBeCloseTo(1.0, 6);
+  expect(hazeDensity(PHASE_FLATTEN_END)).toBeCloseTo(1.0, 6);
+  expect(hazeDensity(WORD_REVEAL_END)).toBeCloseTo(0.45, 6);
+  expect(hazeDensity(DWELL_END)).toBeCloseTo(0.45, 6);
+  expect(hazeDensity(GUNSHOT_END)).toBeCloseTo(0.10, 6);
+  expect(hazeDensity(0.9)).toBeCloseTo(0.10, 6);
+  expect(hazeDensity(1)).toBeCloseTo(0.10, 6);
+});
+
+test("skyPresence: full through dwell, 1.0->0.15 through gunshot, 0.15->0 to CONTAINER_START, then exactly 0", () => {
+  expect(skyPresence(0)).toBeCloseTo(1.0, 6);
+  expect(skyPresence(DWELL_END)).toBeCloseTo(1.0, 6);
+  expect(skyPresence(GUNSHOT_END)).toBeCloseTo(0.15, 6);
+  expect(skyPresence(CONTAINER_START)).toBe(0);
+  for (let p = CONTAINER_START; p <= 1.0001; p += 0.01) {
+    expect(skyPresence(p)).toBe(0);
+  }
+});
+
+test("cloudDrift is monotonically non-decreasing across [0, 1]", () => {
+  let prev = -1;
+  for (let i = 0; i <= STEPS; i += 1) {
+    const v = cloudDrift(at(i));
+    expect(v).toBeGreaterThanOrEqual(prev);
+    prev = v;
+  }
+});
+
+test("all four dawn curves stay within [0, 1] and never NaN across the whole scrub", () => {
+  for (let i = 0; i <= STEPS; i += 1) {
+    for (const f of [sunAltitude, hazeDensity, skyPresence, cloudDrift]) {
+      const v = f(at(i));
+      expect(Number.isNaN(v)).toBe(false);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+    }
+  }
 });

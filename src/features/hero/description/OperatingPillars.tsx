@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { keyframes } from "@mui/system";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+import { motion } from "motion/react";
 
 import { CONTENT } from "@/shared/content";
 import { StageSection } from "@/shared/components/StageSection";
@@ -10,170 +11,404 @@ import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { useDepthLayer, usePointerSpace, useReducedMotion, type PointerSpace } from "@/shared/motion";
+import { DevelopmentSchematic, ResearchSchematic, SupportSchematic } from "./pillarSchematics";
 
-const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "deep"];
+const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "void"];
+const SCHEMATICS = [ResearchSchematic, DevelopmentSchematic, SupportSchematic];
 
-// 3D Tilt Card Component
-function PillarCard({ pillar, index }: { pillar: any; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const reduced = useReducedMotion();
+/**
+ * Three integrated operating pillars — built as a structure you are standing
+ * in front of, rather than as three cards in a row.
+ *
+ * ## Why this is not a grid
+ *
+ * The previous version was the genre default: three glass cards, one per
+ * pillar, each with a giant watermark numeral, laid out left to right. Adding
+ * perspective and depth to that arrangement improved it but did not change
+ * what it was — the bones were still a card grid, so it still read as one.
+ *
+ * The content is two words: *pillars*, and *integrated*. A row of equal
+ * rectangles communicates neither. So the section is now literally that: three
+ * slabs standing on a ground plane at different distances, tied to each other
+ * by beams. The pillars are pillars, the integration is a physical connection
+ * between them, and the reader is positioned in the space rather than looking
+ * at a list of features.
+ *
+ * ## The rules that keep it from being a gimmick
+ *
+ * - **Nothing is hidden behind the 3D.** Every name and detail is in the DOM
+ *   and legible in the resting state. Turning a slab to face you is a
+ *   refinement, never the only way to read it — the section must survive with
+ *   no pointer, no keyboard, and no motion.
+ * - **Below `md` there is no scene at all.** A perspective stage on a 375px
+ *   screen is unreadable and untouchable; narrow viewports get a clean stack.
+ * - **Reduced motion gets the scene, still.** The geometry is the design, not
+ *   the animation, so it stays; only the camera drift and the turn stop.
+ */
 
-  // Smooth out the raw mouse values
-  const mouseX = useSpring(x, { stiffness: 300, damping: 30 });
-  const mouseY = useSpring(y, { stiffness: 300, damping: 30 });
+/**
+ * Stage geometry. One place, because these numbers only make sense together.
+ *
+ * The three that matter and why:
+ *
+ * - `perspective` is short (900, not the 1500–2000 a card grid uses) because
+ *   convergence *is* the effect. At 1500 the floor grid stayed near-parallel
+ *   and read as a spreadsheet ruled across the page rather than as a plane
+ *   receding under the structure.
+ * - `horizon` sits low (0.62) so the slabs, which grow upward from their base,
+ *   have room above them inside the stage. At 0.42 their tops landed at a
+ *   negative offset and overlapped the section heading.
+ * - `perspectiveOrigin` matches `horizon`, putting the viewer's eye level at
+ *   the horizon line. Any other value and the floor and the slabs disagree
+ *   about where the camera is.
+ */
+const STAGE = {
+  perspective: 900,
+  height: 660,
+  /** Horizon as a fraction of stage height — where the floor recedes to. */
+  horizon: 0.62,
+  slabWidth: 276,
+  slabHeight: 300,
+  /** How far behind the stage plane the floor's far edge sits. Must clear the
+   *  furthest pillar (STANDS[2].z) or that pillar floats off the back of it. */
+  floorSetback: 620,
+  floorDepth: 1500,
+};
 
-  // Rotate based on mouse position relative to the center of the card
-  const rotateX = useTransform(mouseY, [-0.5, 0.5], reduced ? ["0deg", "0deg"] : ["5deg", "-5deg"]);
-  const rotateY = useTransform(mouseX, [-0.5, 0.5], reduced ? ["0deg", "0deg"] : ["-5deg", "5deg"]);
+/**
+ * Where each pillar stands, as a position on the floor.
+ *
+ * `x` is a percentage of the stage width, `z` is depth in px. They move
+ * together on purpose: the further right a pillar stands, the further back it
+ * is, so the three of them form one line receding into the page instead of a
+ * row facing the camera. `lift` is how far its base sits above the horizon,
+ * which is what actually sells "standing further away" — a distant object
+ * meets the ground higher up the picture.
+ */
+const STANDS = [
+  { x: 20, z: 130, lift: 0.0 },
+  { x: 50, z: -20, lift: 0.05 },
+  { x: 79, z: -170, lift: 0.1 },
+];
 
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    // Normalized position from -0.5 to 0.5
-    const mouseXPos = event.clientX - rect.left;
-    const mouseYPos = event.clientY - rect.top;
-    x.set(mouseXPos / width - 0.5);
-    y.set(mouseYPos / height - 0.5);
-  }
+interface Pillar {
+  id: string;
+  name: string;
+  detail: string;
+}
 
-  function handleMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
+/**
+ * The camera's resting angle on the structure. Every slab shares it, which is
+ * what makes them read as objects in one space rather than as three sprites.
+ *
+ * 24°, not the 15° this started at: below about 20° the turn is too slight to
+ * register as an object seen from an angle, and the slab just looks like a
+ * card that has been nudged. The angle has to be committed to or it reads as
+ * an accident.
+ */
+const RESTING_YAW = -24;
+
+/** How thick a pillar is. The visible side face is the difference between a
+ *  rectangle and a solid — without it, no amount of angle reads as depth. */
+const THICKNESS = 22;
+
+function Slab({
+  pillar,
+  index,
+  space,
+  reduced,
+  focused,
+  onFocusChange,
+}: {
+  pillar: Pillar;
+  index: number;
+  space: PointerSpace;
+  reduced: boolean;
+  focused: boolean;
+  onFocusChange: (index: number | null) => void;
+}) {
+  const stand = STANDS[index] ?? STANDS[1]!;
+  const Schematic = SCHEMATICS[index] ?? SCHEMATICS[0]!;
+  // Nearer slabs swing more with the camera than distant ones. That difference
+  // is the parallax; without it the structure reads as a flat painting of a
+  // structure.
+  const layer = useDepthLayer(space, 1 - index * 0.3);
+
+  const depthFade = [1, 0.9, 0.78][index] ?? 0.85;
 
   return (
     <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }}
+      onHoverStart={() => onFocusChange(index)}
+      onHoverEnd={() => onFocusChange(null)}
+      animate={{
+        // Turning to face the reader is the whole affordance: an object in a
+        // room acknowledging you, rather than a card growing a shadow.
+        rotateY: reduced ? RESTING_YAW : focused ? 0 : RESTING_YAW,
+        z: reduced ? stand.z : stand.z + (focused ? 90 : 0),
+      }}
+      transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
       style={{
-        rotateX: rotateX as any,
-        rotateY: rotateY as any,
+        position: "absolute",
+        left: `${stand.x}%`,
+        top: `${(STAGE.horizon - stand.lift) * 100}%`,
+        width: STAGE.slabWidth,
+        height: STAGE.slabHeight,
+        marginLeft: -STAGE.slabWidth / 2,
+        // The slab stands *on* the floor: its base is the anchor, so it grows
+        // upward from the horizon rather than being centred on it.
+        marginTop: -STAGE.slabHeight,
         transformStyle: "preserve-3d",
-        perspective: 1000,
-        height: "100%",
+        transformOrigin: "50% 100%",
+        ...(reduced ? {} : layer),
       }}
     >
+      {/* Footing and plinth, laid flat on the floor at the slab's base.
+          They are children of the slab rather than of the floor, deliberately:
+          that way they inherit its exact position in the scene and cannot
+          drift out of register with it when a stand moves. The plinth is far
+          wider than the slab, so the three of them overlap into one continuous
+          rail — which is where "integrated" stops being a word in the heading
+          and becomes something you can see. */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: "absolute",
+          // `top: 100%` puts this element's own top edge exactly on the slab's
+          // base, which is also the rotation origin — so it hinges down onto
+          // the floor. Anchoring with `bottom: 0` instead hinges it about a
+          // line partway up the slab and it lays out as a band across the
+          // middle of the card.
+          top: "100%",
+          left: "50%",
+          width: 760,
+          height: 150,
+          ml: "-380px",
+          transform: "rotateX(90deg)",
+          transformOrigin: "50% 0%",
+          background: `linear-gradient(to right, transparent, rgba(${NOIR.navyFieldRgb}, 0.1) 22%, rgba(${NOIR.navyFieldRgb}, 0.1) 78%, transparent)`,
+          pointerEvents: "none",
+        }}
+      />
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: "absolute",
+          // `top: 100%` puts this element's own top edge exactly on the slab's
+          // base, which is also the rotation origin — so it hinges down onto
+          // the floor. Anchoring with `bottom: 0` instead hinges it about a
+          // line partway up the slab and it lays out as a band across the
+          // middle of the card.
+          top: "100%",
+          left: "50%",
+          width: STAGE.slabWidth + 40,
+          height: 84,
+          ml: `${-(STAGE.slabWidth + 40) / 2}px`,
+          transform: "rotateX(90deg)",
+          transformOrigin: "50% 0%",
+          background: `radial-gradient(ellipse at 50% 0%, rgba(${NOIR.navyFieldRgb}, 0.22), transparent 70%)`,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* The pillar's schematic, floating behind its own slab. */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: "absolute",
+          top: "-24%",
+          left: "-18%",
+          width: "86%",
+          aspectRatio: "1",
+          opacity: 0.55,
+          transform: "translateZ(-90px)",
+          pointerEvents: "none",
+        }}
+      >
+        <Schematic />
+      </Box>
+
+      {/* The pillar's side face. Hinged off the left edge and turned into the
+          page, so at the camera's resting yaw you see the solid's flank. This
+          single element is what stops the slab reading as a card: a rectangle
+          at an angle is still a rectangle, but a rectangle with a visible
+          thickness is an object. */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: THICKNESS,
+          height: "100%",
+          transform: `rotateY(-90deg) translateZ(${THICKNESS / 2}px)`,
+          transformOrigin: "0% 50%",
+          bgcolor: `rgba(${NOIR.navyFieldRgb}, 0.1)`,
+          borderTop: `1px solid rgba(${NOIR.navyFieldRgb}, 0.12)`,
+          borderBottom: `2px solid rgba(${NOIR.goldRgb}, 0.45)`,
+        }}
+      />
+
       <Box
         sx={{
           position: "relative",
           height: "100%",
-          p: { xs: 4, md: 5 },
-          borderRadius: "32px",
-          bgcolor: GROUND.dark ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
-          backdropFilter: "blur(40px)",
-          border: `1px solid ${GROUND.rule}`,
-          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          transition: "border-color 0.3s ease",
-          "&:hover": {
-            borderColor: GROUND.dark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
-          },
+          p: 3,
+          // Near-square corners: a 28px radius is a card, a 2px radius is a
+          // building element.
+          borderRadius: "2px",
+          // Lighter than a card would be: the floor grid reading faintly
+          // through a pillar is what places it *in* the scene rather than on
+          // top of a picture of one.
+          bgcolor: `rgba(255, 255, 255, ${0.3 * depthFade + 0.16})`,
+          backdropFilter: "blur(14px)",
+          border: `1px solid rgba(${NOIR.navyFieldRgb}, ${0.16 * depthFade})`,
+          borderBottomColor: `rgba(${NOIR.goldRgb}, 0.6)`,
+          borderBottomWidth: "2px",
+          boxShadow: `0 ${40 * depthFade}px ${90 * depthFade}px rgba(${NOIR.navyFieldRgb}, ${0.14 * depthFade})`,
+          transition: "border-color 400ms ease",
         }}
       >
-        {/* Dynamic Glow Mesh */}
-        <motion.div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: `radial-gradient(circle at center, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0) 60%)`,
-            opacity: 0,
-            pointerEvents: "none",
-          }}
-          whileHover={{ opacity: 1, scale: 1.5 }}
-          transition={{ duration: 0.4 }}
-        />
-        
-        {/* Giant Watermark Number */}
         <Typography
+          component="span"
           sx={{
-            position: "absolute",
-            top: { xs: "-10px", md: "-20px" },
-            right: { xs: "-10px", md: "-20px" },
             fontFamily: MONO,
-            fontSize: { xs: "8rem", md: "12rem" },
-            lineHeight: 1,
-            fontWeight: 800,
-            color: GROUND.dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-            pointerEvents: "none",
-            userSelect: "none",
-            transform: "translateZ(-20px)",
+            fontVariantNumeric: "tabular-nums",
+            fontSize: "0.8125rem",
+            letterSpacing: "0.24em",
+            color: NOIR.goldDark,
           }}
         >
           {pillar.id}
         </Typography>
 
-        {/* Content */}
-        <Box sx={{ position: "relative", zIndex: 1, transform: "translateZ(30px)", flex: 1, display: "flex", flexDirection: "column" }}>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "1rem",
-              color: NOIR.gold,
-              mb: 3,
-            }}
-          >
-            {pillar.id}
-          </Typography>
+        <Box sx={{ height: "1px", bgcolor: GROUND.rule, my: 2.5 }} />
 
-          <Typography variant="h4" component="h3" sx={{ mb: 2, fontWeight: 600, color: GROUND.fg }}>
-            {pillar.name}
-          </Typography>
+        <Typography
+          variant="h4"
+          component="h3"
+          sx={{ fontWeight: 600, color: GROUND.fg, letterSpacing: "-0.01em", mb: 2 }}
+        >
+          {pillar.name}
+        </Typography>
 
-          <Typography sx={{ color: GROUND.muted, lineHeight: 1.7, fontSize: "1.05rem" }}>
-            {pillar.detail}
-          </Typography>
+        <Typography sx={{ color: GROUND.muted, lineHeight: 1.65, fontSize: "1rem" }}>
+          {pillar.detail}
+        </Typography>
+
+        {/* The slab's footing, where it meets the floor. */}
+        <Box
+          aria-hidden="true"
+          sx={{
+            mt: "auto",
+            pt: 3,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            fontFamily: MONO,
+            fontSize: "0.625rem",
+            letterSpacing: "0.28em",
+            color: `rgba(${NOIR.navyFieldRgb}, 0.45)`,
+          }}
+        >
+          PILLAR
         </Box>
       </Box>
     </motion.div>
   );
 }
 
+/** The floor the structure stands on, and the beams that tie it together. */
+function Stage({
+  space,
+  reduced,
+  children,
+}: {
+  space: PointerSpace;
+  reduced: boolean;
+  children: React.ReactNode;
+}) {
+  const floorLayer = useDepthLayer(space, 1.6);
+
+  return (
+    // The clip lives on a *wrapper*, never on the element that carries
+    // `perspective`. Per spec any `overflow` other than `visible` forces
+    // `transform-style: flat`, which silently collapses the entire scene —
+    // the floor rendered as a plain rectangular grid ruled across the page,
+    // with the rotateX applied and the perspective simply ignored.
+    <Box sx={{ position: "relative", overflow: "hidden", borderRadius: "12px" }}>
+      <Box
+        {...space.bind}
+        sx={{
+          position: "relative",
+          height: STAGE.height,
+          perspective: `${STAGE.perspective}px`,
+          perspectiveOrigin: `50% ${STAGE.horizon * 100}%`,
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {/* Ground plane: a grid laid flat under the structure, and the single
+            strongest cue that there is a floor at all. Pushed back so its far
+            edge is well beyond the furthest pillar, then rotated about that
+            far edge so it sweeps toward the viewer. Masked to an ellipse so it
+            dissolves into the page instead of ending on a hard line. */}
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            left: "-60%",
+            right: "-60%",
+            top: `${STAGE.horizon * 100}%`,
+            height: 0,
+            transformStyle: "preserve-3d",
+            transform: `translateZ(${-STAGE.floorSetback}px)`,
+            pointerEvents: "none",
+          }}
+        >
+          <motion.div
+            style={{
+              position: "absolute",
+              inset: "0 0 auto 0",
+              height: STAGE.floorDepth,
+              transform: "rotateX(78deg)",
+              transformOrigin: "50% 0%",
+              backgroundImage: `
+                repeating-linear-gradient(to right, rgba(${NOIR.navyFieldRgb}, 0.12) 0 1px, transparent 1px 112px),
+                repeating-linear-gradient(to bottom, rgba(${NOIR.navyFieldRgb}, 0.12) 0 1px, transparent 1px 112px)
+              `,
+              maskImage:
+                "radial-gradient(ellipse 46% 52% at 50% 34%, black 0%, black 40%, transparent 88%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 46% 52% at 50% 34%, black 0%, black 40%, transparent 88%)",
+              ...(reduced ? {} : floorLayer),
+            }}
+          />
+        </Box>
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
 export function OperatingPillars() {
-  const { pillars } = CONTENT.hero.salesPitch;
+  const { pillars } = CONTENT.hero.salesPitch as { pillars: readonly Pillar[] };
+  const space = usePointerSpace();
+  const reduced = useReducedMotion() === true;
+  const theme = useTheme();
+  const wide = useMediaQuery(theme.breakpoints.up("md"), { noSsr: true });
+  const [focused, setFocused] = useState<number | null>(null);
 
   return (
     <StageSection section={homeSection("hero-pillars")}>
-      {/* Immersive Full-Bleed Background Layer */}
-      <Box 
-        sx={{ 
-          position: "absolute", 
-          top: "50%", 
-          left: "50%", 
-          transform: "translate(-50%, -50%)", 
-          width: "100vw", 
-          height: "120vh", 
-          zIndex: 0, 
-          overflow: "hidden", 
-          pointerEvents: "none",
-          opacity: 0.35 // Base opacity so it bleeds under text
-        }}
-      >
-        <ImmersivePillarsBackground />
-      </Box>
-
-      {/* Foreground Content */}
-      <Box sx={{ width: "100%", position: "relative", zIndex: 2 }}>
-        
-        {/* Title Area */}
-        <Box sx={{ mb: { xs: 8, md: 12 }, textAlign: { xs: "left", md: "center" } }}>
+      <Box sx={{ width: "100%", position: "relative" }}>
+        <Box sx={{ mb: { xs: 6, md: 4 }, textAlign: { xs: "left", md: "center" } }}>
           <Typography
             component="p"
             variant="overline"
-            sx={{ fontFamily: MONO, color: NOIR.gold, display: "block", mb: 2 }}
+            sx={{ fontFamily: MONO, color: NOIR.goldDark, display: "block", mb: 2 }}
           >
             Organizational structure
           </Typography>
@@ -182,149 +417,62 @@ export function OperatingPillars() {
           </Typography>
         </Box>
 
-        {/* Staggered Glassmorphic Grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            gap: { xs: 4, md: 4 },
-            perspective: 2000,
-          }}
-        >
-          {pillars.map((pillar, i) => (
-            <Box 
-              key={pillar.id} 
-              sx={{ 
-                // Staggered vertical layout
-                mt: { md: i === 1 ? 6 : i === 2 ? 12 : 0 },
-                mb: { md: i === 0 ? 12 : i === 1 ? 6 : 0 } 
-              }}
-            >
-              <PillarCard pillar={pillar} index={i} />
-            </Box>
-          ))}
-        </Box>
+        {wide ? (
+          <Stage space={space} reduced={reduced}>
+            {pillars.map((pillar, i) => (
+              <Slab
+                key={pillar.id}
+                pillar={pillar}
+                index={i}
+                space={space}
+                reduced={reduced}
+                focused={focused === i}
+                onFocusChange={setFocused}
+              />
+            ))}
+          </Stage>
+        ) : (
+          // No scene below md. A perspective stage at 375px is unreadable and
+          // there is no cursor to drive it, so narrow viewports get the
+          // content plainly rather than a broken diorama.
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {pillars.map((pillar) => (
+              <Box
+                key={pillar.id}
+                sx={{
+                  p: 3,
+                  borderRadius: "6px",
+                  bgcolor: "rgba(255, 255, 255, 0.55)",
+                  border: `1px solid rgba(${NOIR.navyFieldRgb}, 0.12)`,
+                  borderBottom: `2px solid rgba(${NOIR.goldRgb}, 0.6)`,
+                }}
+              >
+                <Typography
+                  component="span"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.24em",
+                    color: NOIR.goldDark,
+                  }}
+                >
+                  {pillar.id}
+                </Typography>
+                <Typography
+                  variant="h4"
+                  component="h3"
+                  sx={{ fontWeight: 600, color: GROUND.fg, mt: 1.5, mb: 1 }}
+                >
+                  {pillar.name}
+                </Typography>
+                <Typography sx={{ color: GROUND.muted, lineHeight: 1.65 }}>
+                  {pillar.detail}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
       </Box>
     </StageSection>
-  );
-}
-
-const radarSweep = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`;
-
-const pulseNode = keyframes`
-  0%, 100% { opacity: 0.2; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.5); }
-`;
-
-const floatBlock = keyframes`
-  0% { transform: translateY(0px) rotateX(60deg) rotateZ(45deg); opacity: 0.3; }
-  50% { transform: translateY(-40px) rotateX(60deg) rotateZ(45deg); opacity: 0.8; }
-  100% { transform: translateY(0px) rotateX(60deg) rotateZ(45deg); opacity: 0.3; }
-`;
-
-const pingNode = keyframes`
-  0% { transform: scale(0.5); opacity: 0.8; }
-  100% { transform: scale(2.5); opacity: 0; }
-`;
-
-function ImmersivePillarsBackground() {
-  return (
-    <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* 1. Research Pillar Theme: Neural Network (Left/Center Spread) */}
-      <Box sx={{ position: "absolute", top: "10%", left: "10%", width: "50%", height: "80%", opacity: 0.7 }}>
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <g stroke={GROUND.muted} strokeWidth="1" opacity={0.4}>
-            <path d="M 100,100 L 250,150 L 300,300 L 150,400 Z" />
-            <path d="M 250,150 L 450,120 L 500,250 L 300,300" />
-            <path d="M 300,300 L 400,450 L 200,550 L 150,400" />
-            <path d="M 500,250 L 700,300 L 600,500 L 400,450" />
-          </g>
-          {/* Animated pulsing nodes */}
-          <g fill={NOIR.gold}>
-            <circle cx="100" cy="100" r="4" style={{ animation: `${pulseNode} 4s infinite` }} />
-            <circle cx="250" cy="150" r="6" style={{ animation: `${pulseNode} 5s infinite 1s` }} />
-            <circle cx="450" cy="120" r="3" style={{ animation: `${pulseNode} 3s infinite 2s` }} />
-            <circle cx="300" cy="300" r="7" fill="#4a90e2" style={{ animation: `${pulseNode} 6s infinite 0.5s` }} />
-            <circle cx="150" cy="400" r="5" style={{ animation: `${pulseNode} 4s infinite 1.5s` }} />
-            <circle cx="500" cy="250" r="8" fill="#4a90e2" style={{ animation: `${pulseNode} 5.5s infinite 2.5s` }} />
-            <circle cx="700" cy="300" r="4" style={{ animation: `${pulseNode} 3.5s infinite 0.2s` }} />
-            <circle cx="600" cy="500" r="5" style={{ animation: `${pulseNode} 4.5s infinite 1.2s` }} />
-            <circle cx="400" cy="450" r="6" fill="#4a90e2" style={{ animation: `${pulseNode} 5s infinite 0.8s` }} />
-            <circle cx="200" cy="550" r="4" style={{ animation: `${pulseNode} 3s infinite 1.8s` }} />
-          </g>
-        </svg>
-      </Box>
-
-      {/* 2. Development Pillar Theme: Isometric Cloud Blocks (Center/Right Spread) */}
-      <Box sx={{ position: "absolute", top: "20%", right: "15%", width: "40%", height: "70%" }}>
-        {[...Array(6)].map((_, i) => (
-          <Box
-            key={i}
-            sx={{
-              position: "absolute",
-              top: `${15 + i * 12}%`,
-              left: `${10 + (i % 3) * 20}%`,
-              width: 80,
-              height: 80,
-              border: `1px solid ${NOIR.gold}40`,
-              bgcolor: GROUND.dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
-              backdropFilter: "blur(4px)",
-              animation: `${floatBlock} ${8 + i}s ease-in-out infinite ${i * 0.5}s`,
-              transformStyle: "preserve-3d",
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                border: `1px solid ${GROUND.rule}`,
-                transform: "translateZ(-20px)",
-              },
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                border: "1px solid rgba(74,144,226,0.3)",
-                transform: "translateZ(20px)",
-              }
-            }}
-          />
-        ))}
-      </Box>
-
-      {/* 3. Support Pillar Theme: Global Telemetry / Radar Sweep (Bottom Right Area) */}
-      <Box sx={{ position: "absolute", bottom: "-10%", right: "-5%", width: "600px", height: "600px", opacity: 0.5 }}>
-        <Box sx={{ position: "relative", width: "100%", height: "100%", borderRadius: "50%", border: `1px solid ${GROUND.muted}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {/* Concentric rings */}
-          <Box sx={{ position: "absolute", width: "70%", height: "70%", borderRadius: "50%", border: `1px dashed ${GROUND.rule}` }} />
-          <Box sx={{ position: "absolute", width: "40%", height: "40%", borderRadius: "50%", border: `1px solid ${GROUND.rule}` }} />
-          
-          {/* Radar Sweep */}
-          <Box sx={{ 
-            position: "absolute", 
-            width: "50%", 
-            height: "50%", 
-            top: 0, 
-            right: "50%",
-            transformOrigin: "bottom right",
-            background: `linear-gradient(45deg, transparent 40%, rgba(74,144,226,0.2) 100%)`,
-            borderRight: "2px solid #4a90e2",
-            animation: `${radarSweep} 10s linear infinite`
-          }} />
-          
-          {/* Global Operation Nodes */}
-          <Box sx={{ position: "absolute", top: "30%", left: "40%", width: 8, height: 8, borderRadius: "50%", bgcolor: "#27c93f" }}>
-            <Box sx={{ position: "absolute", top: -4, left: -4, width: 16, height: 16, borderRadius: "50%", border: "2px solid #27c93f", animation: `${pingNode} 2s infinite` }} />
-          </Box>
-          <Box sx={{ position: "absolute", bottom: "35%", right: "25%", width: 6, height: 6, borderRadius: "50%", bgcolor: NOIR.gold }}>
-            <Box sx={{ position: "absolute", top: -3, left: -3, width: 12, height: 12, borderRadius: "50%", border: `2px solid ${NOIR.gold}`, animation: `${pingNode} 2.5s infinite 1s` }} />
-          </Box>
-          <Box sx={{ position: "absolute", top: "60%", left: "20%", width: 5, height: 5, borderRadius: "50%", bgcolor: "#4a90e2" }}>
-            <Box sx={{ position: "absolute", top: -2.5, left: -2.5, width: 10, height: 10, borderRadius: "50%", border: "2px solid #4a90e2", animation: `${pingNode} 3s infinite 0.5s` }} />
-          </Box>
-        </Box>
-      </Box>
-    </Box>
   );
 }

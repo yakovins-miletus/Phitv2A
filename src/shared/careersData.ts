@@ -24,12 +24,12 @@ export const CAREER_POSITIONS: JobPosition[] = [
     location: "BGC Office, Manila (Hybrid Schedule)",
     badge: "GRADUATE FELLOWSHIP",
     summary: "Our premier 12-month paid fellowship for outstanding computer science, engineering, and mathematics graduates. Build distributed financial systems, machine learning pipelines, and low-latency engines alongside senior staff.",
-    description: "The Phitopolis Technical Graduate Program is designed to transition exceptional university graduates into world-class software engineers and quantitative researchers. Through hands-on production engineering, 1-on-1 mentorship, and deep architectural exposure, fellows gain experience shipped directly into enterprise platforms globally.",
+    description: "The Phitopolis Technical Graduate Program is designed to transition exceptional university graduates into software engineers and quantitative researchers. Through hands-on production engineering, 1-on-1 mentorship, and deep architectural exposure, fellows gain experience shipped directly into enterprise platforms globally.",
     responsibilities: [
       "Design, implement, and maintain high-performance software modules and quantitative data pipelines.",
       "Collaborate directly with principal staff engineers on C++, Rust, Python, and TypeScript production stacks.",
       "Participate in daily code reviews, technical architecture spikes, and automated testing rigor.",
-      "Deploy scalable cloud infrastructure and event-driven microservices on AWS and GCP.",
+      "Deploy cloud infrastructure and event-driven microservices on AWS and GCP.",
     ],
     requirements: [
       "Recent graduate or final-year student in Computer Science, Computer Engineering, Mathematics, Physics, or related STEM fields.",
@@ -116,7 +116,7 @@ export const CAREER_POSITIONS: JobPosition[] = [
     location: "BGC Office, Manila (Hybrid Schedule)",
     badge: "LOW-LATENCY CORE",
     summary: "Build the ultra-low latency backbone of global trading systems, where microseconds decide trading outcomes across international exchanges.",
-    description: "You will engage in the development of infrastructure that makes modern data-driven applications in financial services possible. You will enable ingestion, processing, storage, and analytics of virtually unlimited amounts of financial data, harnessing cloud supercomputing for algorithmic trading.",
+    description: "You will engage in the development of infrastructure that makes modern data-driven applications in financial services possible. You will enable ingestion, processing, storage, and analytics of financial data at scale, using cloud supercomputing for algorithmic trading.",
     responsibilities: [
       "Implement core system functionality according to agreed high-performance software architecture.",
       "Write production quality code: correct, ultra-performant, maintainable, with high unit test coverage.",
@@ -148,10 +148,10 @@ export const CAREER_POSITIONS: JobPosition[] = [
     summary: "Architect our cloud-native SaaS platforms and responsive user interfaces that display billion-dollar investment portfolios in real time.",
     description: "The primary responsibility of this role is to build and maintain production-level software applications, including responsive user interfaces, reliable backend API services, and high-performance database architectures powering global financial portals.",
     responsibilities: [
-      "Understand business needs and translate them into robust technical specifications.",
-      "Exhibit front-end and back-end excellence in building and maintaining scalable web applications.",
+      "Understand business needs and translate them into technical specifications.",
+      "Build and maintain web applications across the front end and the back end.",
       "Make key architectural decisions on project tech stacks and design patterns.",
-      "Design user interfaces adhering to state-of-the-art UX principles.",
+      "Design user interfaces that hold to established UX principles.",
       "Configure CI/CD automation pipelines for continuous production delivery.",
     ],
     requirements: [
@@ -180,7 +180,7 @@ export const CAREER_POSITIONS: JobPosition[] = [
     summary: "Design the ETL pipelines, quality gates, and data lakes that become new trading products for researchers and quantitative traders.",
     description: "In this role, you will use problem-solving skills and software engineering practices to design, develop, and deploy data pipelines and data products for researchers and quantitative traders. You will gain exposure to global market data and automated exchange trading.",
     responsibilities: [
-      "Build and optimize scalable ETL environments in support of quantitative research and automated trading.",
+      "Build and optimize ETL environments supporting quantitative research and automated trading.",
       "Implement automated data quality and validation checks for data integrity.",
       "Collaborate with the research team to formulate and deliver valuable financial datasets.",
       "Handle application deployment, data extraction pipelines, and operational support.",
@@ -211,7 +211,7 @@ export const CAREER_POSITIONS: JobPosition[] = [
     description: "You will have opportunities in coding, building, testing, releasing, configuring, administering, and monitoring cloud and on-premise infrastructure. You will utilize automation, CI/CD pipelines, and Prometheus/Grafana monitoring to ensure global financial stability.",
     responsibilities: [
       "Operations and support for High-Frequency Trading systems and Financial Market Data Pipelines across AWS/GCP/Azure.",
-      "Work with Development, Data, and Research teams to continuously elevate IT operations.",
+      "Work with the Development, Data, and Research teams to improve IT operations.",
       "Maintain application services using automation tools and CI/CD pipelines.",
       "Maintain monitoring dashboards using Prometheus, Grafana, and cloud native tools.",
       "Handle incidents affecting application services up to problem management resolution.",

@@ -289,6 +289,46 @@ export function project(cam: Camera, x: number, y: number, z: number): { sx: num
   return { sx: cam.originX + sx * k, sy: cam.originY + sy * k, depth: sz };
 }
 
+/**
+ * Inverse of `project()`'s linear part at a fixed depth factor `k`.
+ *
+ * `project()` maps a plane-space point to screen space in three steps: rotate by
+ * `cam`'s Z and X angles, scale, then divide by a perspective factor `k` that
+ * itself depends on the point's own projected depth. That last dependency makes
+ * the full map non-linear in `(x, y)`, so there is no exact global inverse — but
+ * holding `k` fixed (the caller supplies the `k` at the point being inverted
+ * around) linearises it locally, which is exactly what small cursor-to-plane
+ * deltas need.
+ *
+ * Dropping the perspective divide's per-point dependency, the forward map from a
+ * plane-space delta `(dpx, dpy)` to a screen-space delta `(dsx, dsy)` is:
+ *
+ *   dsx = scale · k · ( cosZ·dpx − sinZ·dpy)
+ *   dsy = scale · k · ( sinZ·cosX·dpx + cosZ·cosX·dpy)
+ *
+ * i.e. `[dsx, dsy] = scale·k · J · [dpx, dpy]` with Jacobian
+ * `J = [[cosZ, -sinZ], [sinZ·cosX, cosZ·cosX]]` — matching the comment on the
+ * exported signature below. `det(J) = cosX`, so `J` is invertible everywhere this
+ * scene's camera operates (`cosX` only reaches 0 at a 90° tilt, far outside the
+ * ±55°/flatten range `makeCamera` produces). Inverting gives:
+ *
+ *   dpx = ( cosZ·dsx + (sinZ / cosX)·dsy) / (scale·k)
+ *   dpy = (−sinZ·dsx +  cosZ·dsy) / (scale·k)
+ *
+ * `k` is `PERSPECTIVE / max(1, PERSPECTIVE - depth)` at the reference point
+ * (`project()`'s returned `.depth`, i.e. `sz` before the perspective divide) —
+ * callers should pass exactly that. Nothing in stage 1 calls this yet; it lands
+ * here, additive, so stage 3 can turn a cursor position into plane coordinates
+ * without re-deriving the math under deadline.
+ */
+export function unproject2D(cam: Camera, k: number, dsx: number, dsy: number): Point2 {
+  const denom = cam.scale * k;
+  return {
+    x: (cam.cosZ * dsx + (cam.sinZ / cam.cosX) * dsy) / denom,
+    y: (-cam.sinZ * dsx + cam.cosZ * dsy) / denom,
+  };
+}
+
 /* ──────────────────────────── Per-frame state ──────────────────────────── */
 
 /**
@@ -343,3 +383,128 @@ export function heroFrameState(progress: number, reduced: boolean, _containerSta
     logoHidden: false,
   };
 }
+
+/* ────────────────────────────── Service artifacts (stage 6+) ──────────────────────────────
+ *
+ * The governing invariant, load-bearing for every stage from here on:
+ *
+ *   An artifact is a *decoration of a cube's envelope*, never a replacement.
+ *
+ * Every `ArtifactSpec` below carries the exact `CubeSpec` `CUBE_POSITIONS[i]` already
+ * pins — same `c`, `r`, `h`, `type`, same one-cell footprint, same contact-shadow
+ * radius, same painter's-algorithm depth key. `ArtifactPayload` only changes what the
+ * renderer paints *inside and on top of* that envelope; it never touches the envelope
+ * itself. This is what keeps `tests/motion/hero-scene.test.ts`'s `CUBE_POSITIONS`
+ * pinning green with zero edits.
+ */
+
+/** The nine artifact kinds the upgrade ends with. Declared in full now (stage 6) so a
+ *  missing kind is a compile error for `ARTIFACT_LABELS` below, not a runtime hole —
+ *  stage 7 only has to fill in payloads and painters for the remaining six. */
+export type ArtifactKind =
+  | "cube"
+  | "cloudRack"
+  | "terminal"
+  | "barChart"
+  | "braceSlab"
+  | "gitGraph"
+  | "candles"
+  | "orderbook"
+  | "pipeline";
+
+/** Per-kind payload data the renderer needs beyond the shared envelope. */
+export type ArtifactPayload =
+  | { readonly kind: "cube" }
+  | { readonly kind: "terminal"; readonly cols: number; readonly rows: number }
+  | { readonly kind: "cloudRack"; readonly units: number }
+  | { readonly kind: "barChart" }
+  | { readonly kind: "braceSlab" }
+  | { readonly kind: "gitGraph" }
+  | { readonly kind: "candles" }
+  | { readonly kind: "orderbook" }
+  | { readonly kind: "pipeline" };
+
+export interface ArtifactSpec {
+  /** Byte-identical to `CUBE_POSITIONS[i]` — the envelope. */
+  readonly cube: CubeSpec;
+  readonly payload: ArtifactPayload;
+  /** Slug into `src/routes/services.tsx`'s `FALLBACK_SERVICES`, or `null` for a
+   *  plain cube. Non-null exactly when `payload.kind !== "cube"`. */
+  readonly serviceSlug: string | null;
+}
+
+const CUBE_PAYLOAD: ArtifactPayload = { kind: "cube" };
+
+/**
+ * Index-aligned with `CUBE_POSITIONS`. The full 16-slot assignment (stage-6 handover
+ * table): outer perimeter (0-7) stays a plain cube forever; the mid-perimeter ring
+ * (8-15) becomes eight service artifacts across stages 6-7. This stage implements only
+ * index 11 (`terminal`, cell (20,16)) and index 15 (`cloudRack`, cell (16,20)) — every
+ * other mid-ring slot stays `CUBE_PAYLOAD` until stage 7 fills it in, which is exactly
+ * why `ARTIFACTS.length === 16` but only two entries are non-`"cube"` today.
+ */
+export const ARTIFACT_PAYLOADS: readonly ArtifactPayload[] = [
+  CUBE_PAYLOAD, // 0 — outer perimeter
+  CUBE_PAYLOAD, // 1 — outer perimeter
+  CUBE_PAYLOAD, // 2 — outer perimeter
+  CUBE_PAYLOAD, // 3 — outer perimeter
+  CUBE_PAYLOAD, // 4 — outer perimeter
+  CUBE_PAYLOAD, // 5 — outer perimeter
+  CUBE_PAYLOAD, // 6 — outer perimeter (tallest cube, stays plain — behind the P mark)
+  CUBE_PAYLOAD, // 7 — outer perimeter
+  CUBE_PAYLOAD, // 8  — (1,6)  candles, Quantitative Research — stage 7
+  CUBE_PAYLOAD, // 9  — (20,6) braceSlab, Full-Stack Development — stage 7
+  CUBE_PAYLOAD, // 10 — (1,16) barChart, Data Science — stage 7
+  { kind: "terminal", cols: 22, rows: 3 }, // 11 — (20,16) Ops Support ← this stage
+  CUBE_PAYLOAD, // 12 — (6,1)  orderbook, Quantitative Research — stage 7
+  CUBE_PAYLOAD, // 13 — (16,1) gitGraph, Full-Stack Development — stage 7
+  CUBE_PAYLOAD, // 14 — (6,20) pipeline, Data Science — stage 7
+  { kind: "cloudRack", units: 3 }, // 15 — (16,20) Ops Support ← this stage
+] as const;
+
+/** The service slug a given payload kind decorates, or `null` for a plain cube.
+ *  Matches `FALLBACK_SERVICES`' slugs in `src/routes/services.tsx`. */
+function serviceSlugForKind(kind: ArtifactKind): string | null {
+  switch (kind) {
+    case "terminal":
+    case "cloudRack":
+      return "ops-support";
+    case "candles":
+    case "orderbook":
+      return "quantitative-research";
+    case "braceSlab":
+    case "gitGraph":
+      return "full-stack-development";
+    case "barChart":
+    case "pipeline":
+      return "data-science";
+    default:
+      return null;
+  }
+}
+
+function buildArtifacts(): ArtifactSpec[] {
+  return CUBE_POSITIONS.map((cube, i) => {
+    const payload = ARTIFACT_PAYLOADS[i]!;
+    return { cube, payload, serviceSlug: serviceSlugForKind(payload.kind) };
+  });
+}
+
+/** One entry per `CUBE_POSITIONS[i]`, always. `ARTIFACTS[i].cube` is byte-identical to
+ *  `CUBE_POSITIONS[i]` by construction — see `buildArtifacts` — which is the invariant
+ *  `tests/motion/hero-artifacts.test.ts` guards. */
+export const ARTIFACTS: readonly ArtifactSpec[] = buildArtifacts();
+
+/** Display name per kind. Stage 8 renders these as tooltips. `satisfies` makes a
+ *  missing kind a compile error rather than a silent runtime hole. */
+export const ARTIFACT_LABELS = {
+  cube: "Cube",
+  terminal: "DevOps Terminal",
+  cloudRack: "AWS Server Rack",
+  barChart: "Bar Chart",
+  braceSlab: "Code Brace Slab",
+  gitGraph: "Git Graph",
+  candles: "Candlestick Chart",
+  orderbook: "Orderbook Ladder",
+  pipeline: "ETL Pipeline",
+} satisfies Record<ArtifactKind, string>;

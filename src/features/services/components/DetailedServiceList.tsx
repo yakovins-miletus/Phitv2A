@@ -15,8 +15,8 @@ import type { Service } from "../api";
 
 const BANNER_MAP: Record<string, string> = {
   "Data Science": "/images/data-science-banner.webp",
-  "Ops Support": "/images/ops-support-banner.jpg",
-  "Quantitative Research": "/images/quant-research-banner.jpg",
+  "Ops Support": "/images/ops-support-banner.webp",
+  "Quantitative Research": "/images/quant-research-banner.webp",
   "Software Development": "/images/software-engineer-banner.webp",
 };
 

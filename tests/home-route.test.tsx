@@ -36,7 +36,9 @@ test("home route loads via the router: hero, services, new visual sections", asy
     screen.getByRole("heading", { name: /three integrated operating pillars/i }),
   ).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Elite Technical Talent" })).toBeInTheDocument();
+  // Was "Elite Technical Talent". "Elite" was stripped in the 2026-08-09 copy pass:
+  // it is undisclaimable filler, and the sentence beneath it carries the real claim.
+  expect(screen.getByRole("heading", { name: "Technical Talent" })).toBeInTheDocument();
 
   // Beat 4 was cut: no leadership bio and no in-hero CTA.
   expect(screen.queryByText(/Founded by Filipina corporate leader/i)).not.toBeInTheDocument();

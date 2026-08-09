@@ -34,16 +34,16 @@ import { MONO } from "@/shared/theme/theme";
  *   sips -s format jpeg -s formatOptions 68 -Z 1200 <src> --out public/images/careers/<name>.jpg
  */
 const CAREER_BG_IMAGES: Record<string, string> = {
-  "Quantitative Researcher": "/images/careers/quant-research-banner.jpg",
-  "Software Engineer": "/images/careers/software-engineer-banner.jpg",
-  "Full Stack Developer": "/images/careers/AboutPageHero.jpg",
-  "Data Scientist": "/images/careers/data-science-banner.jpg",
-  "DevOps Engineer": "/images/careers/ops-support-banner.jpg",
-  "R&D Internship Program": "/images/careers/FocusedProgramming.jpg",
+  "Quantitative Researcher": "/images/careers/quant-research-banner.webp",
+  "Software Engineer": "/images/careers/software-engineer-banner.webp",
+  "Full Stack Developer": "/images/careers/AboutPageHero.webp",
+  "Data Scientist": "/images/careers/data-science-banner.webp",
+  "DevOps Engineer": "/images/careers/ops-support-banner.webp",
+  "R&D Internship Program": "/images/careers/FocusedProgramming.webp",
 };
 
 /** Fallback when a role has no mapped image. */
-const CAREER_BG_FALLBACK = "/images/careers/AboutPageHero.jpg";
+const CAREER_BG_FALLBACK = "/images/careers/AboutPageHero.webp";
 
 const CAREER_BADGES: Record<string, string> = {
   "Quantitative Researcher": "QUANT & AI",

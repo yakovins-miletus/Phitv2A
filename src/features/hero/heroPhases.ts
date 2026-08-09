@@ -205,3 +205,52 @@ export function panelPointerEvents(p: number): "none" | "auto" {
 export function sideFaceOpacity(flatten: number): number {
   return Math.max(0, 1 - flatten * SIDE_FACE_FADE_RATE);
 }
+
+/* ── Stage 4: dawn sky choreography ──────────────────────────────────────
+   Four more pure functions of the same 0..1 pin progress, expressed against
+   the boundaries already exported above so they can never desync from the
+   phases they ride alongside. */
+
+/** How high the sun sits: 0 at rest, 1 once the wordmark has fully revealed.
+ *  Rises slowly through the flatten phase, then climbs the rest of the way
+ *  during move+reveal, then holds. */
+export function sunAltitude(p: number): number {
+  if (p <= PHASE_FLATTEN_END) return (Math.max(0, p) / PHASE_FLATTEN_END) * 0.35;
+  if (p >= WORD_REVEAL_END) return 1.0;
+  return 0.35 + ((p - PHASE_FLATTEN_END) / (WORD_REVEAL_END - PHASE_FLATTEN_END)) * 0.65;
+}
+
+/** How thick the low haze is: full through the flatten phase, thins across
+ *  move+reveal, holds through the dwell, then burns off during gunshot. */
+export function hazeDensity(p: number): number {
+  if (p <= PHASE_FLATTEN_END) return 1.0;
+  if (p <= WORD_REVEAL_END) {
+    return 1.0 - ((p - PHASE_FLATTEN_END) / (WORD_REVEAL_END - PHASE_FLATTEN_END)) * 0.55;
+  }
+  if (p <= DWELL_END) return 0.45;
+  if (p <= GUNSHOT_END) {
+    return 0.45 - ((p - DWELL_END) / (GUNSHOT_END - DWELL_END)) * 0.35;
+  }
+  return 0.10;
+}
+
+/** Overall opacity of the whole sky composition: full through the dwell,
+ *  fades hard across gunshot, tails off across smoking/buffers, and is
+ *  exactly 0 by CONTAINER_START — the handoff `window.__ground` covers. */
+export function skyPresence(p: number): number {
+  if (p <= DWELL_END) return 1.0;
+  if (p <= GUNSHOT_END) {
+    return 1.0 - ((p - DWELL_END) / (GUNSHOT_END - DWELL_END)) * 0.85;
+  }
+  if (p <= CONTAINER_START) {
+    return 0.15 * (1 - (p - GUNSHOT_END) / (CONTAINER_START - GUNSHOT_END));
+  }
+  return 0;
+}
+
+/** Monotonic drift value for stage 5's cloud bands to consume — plumbed
+ *  through now so the vars contract is stable before there is anything to
+ *  drive with it. Identity, clamped: strictly non-decreasing across [0, 1]. */
+export function cloudDrift(p: number): number {
+  return Math.max(0, Math.min(1, p));
+}

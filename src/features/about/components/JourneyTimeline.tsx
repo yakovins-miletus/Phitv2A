@@ -55,7 +55,7 @@ const CHAPTERS: Chapter[] = [
       "https://phitopolis.com/blog/wp-content/uploads/2020/06/Mgmt-1024x683.jpg",
       "https://phitopolis.com/blog/wp-content/uploads/2020/06/karaoke-1024x683.jpg",
     ],
-    body: "Phitopolis was founded, establishing a top-tier tech R&D firm in Manila with backing from global investors. A small but focused team set out to prove that world-class engineering could be built right here",
+    body: "Phitopolis was founded, establishing a top-tier tech R&D firm in Manila with backing from global investors. A small but focused team set out to prove that engineering at this level could be built right here",
   },
   {
     num: "2020",

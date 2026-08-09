@@ -25,9 +25,9 @@ const FALLBACK_SERVICES: Service[] = [
     highlights: ["TypeScript", "React", "GraphQL", "Docker", "AWS", "CI/CD"],
     display_order: 1,
     sub_teams: [
-      { name: "Platform Team", description: "Architects core scalable microservices and APIs powering web platforms" },
+      { name: "Platform Team", description: "Architects the core microservices and APIs powering web platforms" },
       { name: "Web Apps", description: "Builds responsive, high-performance user interfaces for real-time data management" },
-      { name: "Infra", description: "Designs and maintains robust, containerized cloud environments ensuring high availability" },
+      { name: "Infra", description: "Designs and maintains containerized cloud environments for high availability" },
       { name: "HPC", description: "Engineers high-performance computing clusters for fast data processing and execution" }
     ]
   },
@@ -59,7 +59,7 @@ const FALLBACK_SERVICES: Service[] = [
     highlights: ["Python", "AWS", "ETL", "Postgres", "NoSQL", "Docker"],
     display_order: 3,
     sub_teams: [
-      { name: "Data Engineering", description: "Constructs scalable pipelines and architectures to ingest and process vast datasets" },
+      { name: "Data Engineering", description: "Constructs the pipelines and architectures that ingest and process large datasets" },
       { name: "ML Ops", description: "Deploys, monitors, and maintains machine learning models in production environments" },
       { name: "Analytics", description: "Transforms complex datasets into intuitive dashboards and actionable business intelligence" },
       { name: "Core Data", description: "Manages central data warehouses and ensures strict governance and data quality" }

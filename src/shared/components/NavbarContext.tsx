@@ -43,6 +43,8 @@ export const NAV_ANCHORS = {
   BLOG_HERO: 'blog-hero',
   /** The Home page's blog section. */
   HOME_BLOG_SECTION: 'home-blog-section',
+  /** The Home page's closing shelf — navy ground, so the navbar must go light. */
+  HOME_CLOSING: 'home-closing',
   /** AppShell's footer, on every route. */
   SITE_FOOTER: 'site-footer',
   /** The Innovation Lab coming soon page. */

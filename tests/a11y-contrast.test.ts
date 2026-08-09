@@ -29,7 +29,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { NOIR, CHAPTER_ACCENTS, TECH_CAT_ACCENTS } from "@/shared/theme/palette";
+import { NOIR, DAWN, CHAPTER_ACCENTS, TECH_CAT_ACCENTS } from "@/shared/theme/palette";
 
 /** WCAG relative luminance. */
 function luminance(hex: string): number {
@@ -152,6 +152,35 @@ describe("accent on glass", () => {
     for (const alpha of GLASS_FILLS) {
       const surface = whiteOver(GROUNDS.field!, alpha);
       expect(contrast(NOIR.live, surface)).toBeLessThan(AA_BODY);
+    }
+  });
+});
+
+describe("hero motto over the dawn sky (stage 4)", () => {
+  // The hero motto (SuperHeroSequence.tsx) is NOIR.navyField at 2.0-2.6rem /
+  // 800 weight — large text, so the WCAG floor is 3:1, not the 4.5:1 body
+  // floor. Computed against every DAWN stop the sky gradient walks through
+  // (zenith 5.56 / upper 7.78 / mid 10.34 / haze 11.15 / warm 10.42 / ember
+  // 8.88), the two pinned here are the worst case (zenith, the coolest and
+  // lowest-contrast stop) and the reference point the token set's own TSDoc
+  // cites alongside it (warm).
+  test("navy motto on the coolest sky stop (zenith) clears even the body-text floor", () => {
+    const ratio = contrast(NOIR.navyField, DAWN.zenith);
+    expect(ratio, `navyField on zenith — ${ratio.toFixed(2)}:1`).toBeCloseTo(5.56, 1);
+    expect(ratio).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  test("navy motto on the warm band clears with wide margin", () => {
+    const ratio = contrast(NOIR.navyField, DAWN.warm);
+    expect(ratio, `navyField on warm — ${ratio.toFixed(2)}:1`).toBeCloseTo(10.42, 1);
+    expect(ratio).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  test("every sky stop clears the large-text floor for the motto", () => {
+    for (const [name, hex] of Object.entries(DAWN)) {
+      if (name.endsWith("Rgb")) continue;
+      const ratio = contrast(NOIR.navyField, hex);
+      expect(ratio, `navyField on ${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_LARGE);
     }
   });
 });
