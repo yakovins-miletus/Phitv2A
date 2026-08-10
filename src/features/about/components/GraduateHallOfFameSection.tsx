@@ -103,11 +103,11 @@ export function GraduateHallOfFameSection() {
           <Stack spacing={2} sx={{ maxWidth: 840 }}>
             <Reveal>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <EmojiEventsIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+                <EmojiEventsIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: "#FFC72C",
+                    color: "var(--accent-fg)",
                     fontWeight: 800,
                     letterSpacing: "0.2em",
                     fontSize: "0.85rem",
@@ -181,8 +181,8 @@ export function GraduateHallOfFameSection() {
                           width: isActive ? 10 : 6,
                           height: isActive ? 10 : 6,
                           borderRadius: "50%",
-                          bgcolor: isActive ? "#FFC72C" : "#0A2A66",
-                          boxShadow: isActive ? "0 0 0 4px rgba(255, 199, 44, 0.3)" : "none",
+                          bgcolor: isActive ? "var(--accent)" : NOIR.navyField,
+                          boxShadow: isActive ? "0 0 0 4px rgba(var(--accent-rgb), 0.3)" : "none",
                           transition: "all 0.3s ease",
                         }}
                       />
@@ -221,7 +221,9 @@ export function GraduateHallOfFameSection() {
                   style={{
                     width: "100%",
                     height: lineHeight,
-                    backgroundColor: "#FFC72C",
+                    // motion.div style — `var()` resolves fine here, but the
+                    // token import keeps this greppable alongside the rest.
+                    backgroundColor: NOIR.gold,
                     originY: 0,
                   }}
                 />
@@ -250,7 +252,8 @@ export function GraduateHallOfFameSection() {
                         borderRadius: "50%",
                         bgcolor: "white",
                         border: "3px solid #0A2A66",
-                        boxShadow: activeBatchIndex === index ? "0 0 0 6px rgba(255, 199, 44, 0.4)" : "none",
+                        boxShadow:
+                          activeBatchIndex === index ? "0 0 0 6px rgba(var(--accent-rgb), 0.4)" : "none",
                         zIndex: 2,
                         transition: "box-shadow 0.3s ease",
                       }}
@@ -335,11 +338,11 @@ export function GraduateHallOfFameSection() {
             >
               <Stack spacing={1.5} sx={{ maxWidth: 680 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <EmojiEventsIcon sx={{ color: NOIR.goldDark, fontSize: "1.3rem" }} />
+                  <EmojiEventsIcon sx={{ color: "var(--accent-fg)", fontSize: "1.3rem" }} />
                   <Typography
                     variant="overline"
                     sx={{
-                      color: NOIR.goldDark,
+                      color: "var(--accent-fg)",
                       fontWeight: 800,
                       letterSpacing: "0.15em",
                       fontFamily: MONO,
@@ -361,8 +364,10 @@ export function GraduateHallOfFameSection() {
                 to="/careers"
                 variant="contained"
                 sx={{
-                  bgcolor: "#FFC72C",
-                  color: "#0A2A66",
+                  // The gold-fill / navy-label pairing IS `secondary` — pinned at
+                  // 8.44:1 by tests/a11y-contrast.test.ts "navy reads on a gold fill".
+                  bgcolor: "secondary.main",
+                  color: "secondary.contrastText",
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.85rem",
@@ -372,7 +377,7 @@ export function GraduateHallOfFameSection() {
                   borderRadius: 3,
                   whiteSpace: "nowrap",
                   "&:hover": {
-                    bgcolor: "#ffd452",
+                    bgcolor: "secondary.light",
                   },
                 }}
               >

@@ -81,9 +81,9 @@ export function BrochureDrawer({
                   fontFamily: MONO,
                   fontSize: "0.7rem",
                   fontWeight: 800,
-                  bgcolor: "rgba(255, 199, 44, 0.18)",
+                  bgcolor: "rgba(var(--accent-rgb), 0.18)",
                   color: NOIR.gold,
-                  border: "1px solid rgba(255, 199, 44, 0.3)",
+                  border: "1px solid rgba(var(--accent-rgb), 0.3)",
                   height: 22,
                 }}
               />
@@ -136,10 +136,10 @@ export function BrochureDrawer({
               fontSize: "0.75rem",
               bgcolor: NOIR.gold,
               color: NOIR.navyInk,
-              boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
+              boxShadow: "0 4px 14px rgba(var(--accent-rgb), 0.25)",
               "&:hover": {
                 bgcolor: NOIR.goldLight,
-                boxShadow: "0 6px 18px rgba(255, 199, 44, 0.4)",
+                boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
               },
             }}
           >

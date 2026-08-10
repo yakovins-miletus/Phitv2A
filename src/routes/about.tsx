@@ -269,19 +269,20 @@ function AboutPage() {
         <BackgroundReveal />
         <Grid
           container
-          spacing={{ xs: 6, md: 8 }}
+          spacing={{ xs: 6, md: 4 }}
           alignItems="center"
+          justifyContent="center"
           sx={{ position: "relative", zIndex: 2, width: "100%", mx: "auto" }}
         >
           {/* Left Column: Centralized Left-Aligned Text Block */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Reveal>
               <Stack spacing={3} sx={{ textAlign: "left", maxWidth: 620 }}>
                 <Box sx={{ display: "inline-flex" }}>
                   <Typography
                     variant="overline"
                     sx={{
-                      color: "#FFC72C",
+                      color: "var(--accent-fg)",
                       fontWeight: 800,
                       letterSpacing: "0.2em",
                       fontSize: "0.85rem",
@@ -300,6 +301,7 @@ function AboutPage() {
                     fontSize: { xs: "2.2rem", sm: "2.8rem", md: "3.4rem" },
                     lineHeight: 1.15,
                     letterSpacing: "-0.02em",
+                    mixBlendMode: "difference",
                   }}
                 >
                   {CONTENT.about.heading}

@@ -91,10 +91,28 @@ test("Act I resolves to the light footprint ground", () => {
   expect(GROUND_STOPS.find((s) => s.id === "reach")?.color).toBe(GROUNDS.white.bg);
 });
 
-test("home page stops use lightmode grounds", () => {
+test("home page stops are light except the sections declared dark", () => {
+  // This asserted `lum > 200` for EVERY stop, which stopped being true the moment
+  // `blog` was given `ground: "field"` — the navy Intelligence Feed, which also
+  // registers `useNavbarAnchor(..., { dark: true })` so the navbar inverts over it.
+  // A blanket "everything is light" is not the design: the page is light *and*
+  // punctuated by declared navy sections, and the thing worth gating is that those
+  // two registries agree.
+  //
+  // So: every stop's lightness must match the `dark` flag on the ground it names,
+  // and the light ones must still dominate — a retune that quietly turns the page
+  // navy again shows up as a count, not as a colour nobody looked at.
   for (const stop of GROUND_STOPS) {
-    expect(lum(stop.id), `${stop.id} (${stop.color})`).toBeGreaterThan(200);
+    const isDark = GROUNDS[stop.ground].dark;
+    if (isDark) {
+      expect(lum(stop.id), `${stop.id} (${stop.color}) is declared dark`).toBeLessThan(80);
+    } else {
+      expect(lum(stop.id), `${stop.id} (${stop.color}) is declared light`).toBeGreaterThan(200);
+    }
   }
+
+  const dark = GROUND_STOPS.filter((s) => GROUNDS[s.ground].dark);
+  expect(dark.map((s) => s.id), "the home page's declared dark grounds").toEqual(["blog"]);
 });
 
 test("GROUNDS contains both light and dark grounds", () => {

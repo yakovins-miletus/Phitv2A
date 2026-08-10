@@ -69,8 +69,17 @@ export function usePointerPlane(
   // Mirrors the `active` prop into a ref so the setup effect (below) can honour
   // whatever the current value is at the moment it (re)runs, without needing
   // `active` in its own dependency array — see the note on that effect.
+  //
+  // Written in an effect, not during render. Assigning `activeRef.current` inline
+  // in the component body is a render-phase side effect: React may render this
+  // component and discard the result, which would leave the ref holding a value
+  // that never reached the screen. `react-hooks/refs` flags it, and under the React
+  // Compiler that is a correctness bug, not a style note. The mirror lands before
+  // any paint the setup effect could observe, because effects run in order.
   const activeRef = useRef(active);
-  activeRef.current = active;
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -87,6 +96,10 @@ export function usePointerPlane(
     const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -GROUND_Y);
     const raycaster = new THREE.Raycaster();
     const hit = new THREE.Vector3();
+
+    /** Scratch for `setFromCamera`, which wants a real `Vector2`. Allocated once,
+     *  written in place — `groundAt` runs once per frame. */
+    const ndcScratch = new THREE.Vector2();
 
     const ndcTarget = { x: 0, y: 0 };
     const ndcCurrent = { x: 0, y: 0 };
@@ -107,7 +120,7 @@ export function usePointerPlane(
     };
 
     const groundAt = (ndcX: number, ndcY: number): THREE.Vector3 | null => {
-      raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+      raycaster.setFromCamera(ndcScratch.set(ndcX, ndcY), camera);
       return raycaster.ray.intersectPlane(groundPlane, hit);
     };
 
@@ -199,8 +212,9 @@ export function usePointerPlane(
     };
     // `active` is intentionally omitted: it is handled by the effect below via
     // `loopControlRef`, so that toggling visibility starts/stops the existing rAF
-    // loop instead of tearing down and rebuilding the camera and listeners.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // loop instead of tearing down and rebuilding the camera and listeners. (No
+    // disable directive needed — `active` is read through `activeRef`, so the rule
+    // never asked for it in the first place.)
   }, [hostRef, reduced, pointerFine]);
 
   useEffect(() => {

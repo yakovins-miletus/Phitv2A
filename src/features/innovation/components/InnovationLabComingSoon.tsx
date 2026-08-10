@@ -62,8 +62,8 @@ function PillarCard({ pillar }: { pillar: typeof UPCOMING_PILLARS[0] }) {
         "&:hover": {
           transform: "scale(1.05)",
           bgcolor: "rgba(10, 20, 40, 0.65)",
-          borderColor: "rgba(255, 199, 44, 0.4)",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.6), 0 0 40px rgba(255, 199, 44, 0.15)",
+          borderColor: "var(--accent-40)",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.6), 0 0 40px var(--accent-15)",
         },
       }}
     >
@@ -322,8 +322,8 @@ export function InnovationLabComingSoon() {
         <Box sx={{ display: { xs: "none", lg: "block" }, height: "100%" }}>
           {UPCOMING_PILLARS.map((pillar, index) => {
             const cornerStyles = [
-              { top: 32, left: 32 },
-              { top: 32, right: 32 },
+              { top: 112, left: 32 },
+              { top: 112, right: 32 },
               { bottom: 32, left: 32 },
               { bottom: 32, right: 32 },
             ];

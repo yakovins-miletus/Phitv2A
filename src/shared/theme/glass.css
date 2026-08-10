@@ -1,6 +1,6 @@
 /**
  * The glass token layer — the single source of truth for every surface value in
- * the macOS-inspired dark system.
+ * the macOS-inspired glass system.
  *
  * WHY A STYLESHEET and not MUI `cssVariables` or `MuiCssBaseline.styleOverrides`:
  *
@@ -13,7 +13,7 @@
  *    src/features/hero/heroVars.ts was written to avoid.
  *  - MUI `cssVariables` only vends the *palette*. It gives nothing for blur,
  *    saturate, rim, radii or duration, which is most of this set.
- *  - The three gate blocks at the bottom (@media reduce, [data-glass=off],
+ *  - The gate blocks at the bottom (@media reduce, [data-glass=off],
  *    @supports not) are cascade constructs. They belong in the cascade.
  *
  * Two consequences, both deliberate:
@@ -29,20 +29,68 @@
  *     tests/a11y-contrast.test.ts already works.
  *
  * THE TINT / UNDERSTUDY SPLIT is the load-bearing idea. Every glass surface
- * paints `--glass-under` (an opaque-ish navy) *behind* `--glass-fill-N` (a white
- * tint). When the gate fires, `--glass-under-a` rises 0.55 -> 0.94 in the same
+ * paints `--glass-under` (an opaque-ish ground colour) *behind* `--glass-fill-N`
+ * (a tint). When the gate fires, `--glass-under-a` rises 0.55 -> 0.94 in the same
  * declaration block that drops `--glass-blur` to 0, so the surface becomes a
- * solid navy panel atomically. There is no per-component branching and no window
- * in which a 6%-white surface sits over unblurred content with text on it.
+ * solid panel atomically. There is no per-component branching and no window in
+ * which a 6%-tint surface sits over unblurred content with text on it.
  *
- * It also means every contrast figure in tests/a11y-contrast.test.ts is a lower
- * bound: the understudy only ever darkens a surface toward navyInk, so the tests
- * model `--glass-under-a: 0` as the worst case.
+ * ── WHY THIS FILE IS SCOPED, AND NOT ONE FLAT SET ────────────────────────────
+ *
+ * It used to be one flat `:root` block holding the DARK values only, written when
+ * the plan was for the whole site to be navy. The site is not: `palette.ts` ships
+ * `mode: "light"` with `background.default` at `NOIR.void`, and `grounds.ts` still
+ * vends three light grounds. So every one of those dark values — `--text-1` at
+ * near-white, white-alpha borders, black shadows — was being inherited by page
+ * bodies that are off-white. The visible result was white headings and white input
+ * labels on an off-white page: `<h1>Direct Inquiries</h1>` on /contact measured
+ * **1.00:1**. Not "low contrast" — literally the same colour as the paper.
+ *
+ * So the set is scoped by ground rather than assumed:
+ *
+ *     :root                    the LIGHT ground — the page default, what most
+ *                              routes and every MUI component sits on
+ *     [data-ground="dark"]     the navy grounds — hero, footer, closing shelf,
+ *                              drawers, command palette, the Preloader
+ *     [data-ground="light"]    a light island *inside* a navy section, which the
+ *                              design really does have: InternshipProgramSection
+ *                              is a navyField band with an off-white Fast-Track
+ *                              banner at the bottom of it. Without this the
+ *                              banner inherits the dark set and paints brand gold
+ *                              on off-white at 1.45:1. Scoping only one direction
+ *                              would mean "dark" is a trapdoor you cannot climb
+ *                              back out of.
+ *
+ * Custom properties inherit, so a section marks itself once and every MUI
+ * component inside it — Card, TextField, Chip, Button — flips with it. No
+ * component branches on ground, which is the same reason the tint/understudy
+ * split exists: a half-applied theme is worse than either theme.
+ *
+ * The attribute is written by `useNavbarAnchor(id, { dark: true })`, which the
+ * dark sections already called for the navbar's sake, plus the explicit
+ * `data-ground="dark"` on surfaces that have no anchor (portals, Preloader).
+ *
+ * WHAT MAY *NOT* MOVE INTO THE DARK BLOCK: the five gated tokens
+ * (`--glass-blur`, `--glass-saturate`, `--glass-under-a`, `--nav-blur`,
+ * `--scrim-blur`). They are identical on both grounds, and the three gate blocks
+ * at the bottom select `:root`/`html`. A redeclaration inside `[data-ground]`
+ * would out-specify the gate and leave dark sections blurring on a machine that
+ * asked for no blur. tests/glass-tokens.test.ts asserts they stay out.
+ *
+ * WHAT MUST BE REDECLARED IN BOTH: any token whose value contains `var()` of a
+ * token that differs by ground — `--glass-under`, `--glass-filter`, `--nav-fill`.
+ * A custom property's `var()`s are substituted at computed-value time on the
+ * element the declaration lands on, and the *substituted* value is what
+ * descendants inherit. `--glass-under` declared only at `:root` would therefore
+ * inherit into a dark section still carrying white.
  */
 
-:root {
-  /* UA rendering for scrollbars and form controls */
-  color-scheme: light dark;
+:root,
+[data-ground="light"],
+.ground-light {
+  /* UA rendering for scrollbars and form controls. `light` here, `dark` on the
+     dark ground below — the page default is the off-white one. */
+  color-scheme: light;
 
   /* ── Grounds — mirrored from NOIR (guarded by tests/glass-tokens.test.ts) ── */
   --g-void: #f4f7fc;  /* NOIR.void     — light ground default */
@@ -53,91 +101,119 @@
   --g-deep: #06183b;  /* NOIR.navyDeep  — dark ground deep */
   --g-field: #0a2a66; /* NOIR.navyField — dark ground field */
 
-  /* The layered base. Never a flat fill — a flat near-black reads as a dead
-     surface and bands badly on wide viewports. Home's ground is owned by
-     GroundLayer, which interpolates these same four values; this gradient is
-     what every other route sits on. */
+  /* The layered base. Never a flat fill — a flat ground reads as a dead surface
+     and bands badly on wide viewports. Home's ground is owned by GroundLayer,
+     which interpolates these same values; this gradient is what every other
+     route sits on. `--g-base` itself stays the NAVY ramp: its only consumer is
+     Preloader, which is a full-viewport dark overlay by design. The light page
+     ground is `--g-page`. */
   --g-base: radial-gradient(120% 80% at 50% 0%, var(--g-deep) 0%, var(--g-ink) 62%, var(--g-floor) 100%);
-  --g-grid-line: rgba(255, 255, 255, 0.03);
+  --g-page: radial-gradient(120% 80% at 50% 0%, var(--g-white) 0%, var(--g-void) 62%, var(--g-panel) 100%);
+  --g-grid-line: rgba(10, 42, 102, 0.05);
   --g-grid-size: 64px;
-  --g-noise-opacity: 0.035;
+  --g-noise-opacity: 0.02;
 
-  /* ── Glass: the translucent white tint ──────────────────────────────────── */
-  --glass-fill-1: rgba(255, 255, 255, 0.06); /* chrome, chips, inline controls */
-  --glass-fill-2: rgba(255, 255, 255, 0.09); /* cards, panels                 */
-  --glass-fill-3: rgba(255, 255, 255, 0.12); /* overlays, drawers, sheets     */
+  /* ── Glass: the translucent tint ────────────────────────────────────────────
+     Navy at low alpha on the light ground, not white: a white tint over a white
+     understudy over an off-white page is arithmetically invisible, which is what
+     made every bare <Card> read as a borderless rectangle. */
+  --glass-fill-1: rgba(10, 42, 102, 0.03); /* chrome, chips, inline controls */
+  --glass-fill-2: rgba(10, 42, 102, 0.05); /* cards, panels                 */
+  --glass-fill-3: rgba(10, 42, 102, 0.07); /* overlays, drawers, sheets     */
 
   /* ── Glass: the solid understudy painted UNDERNEATH the tint ────────────── */
-  --glass-under-rgb: 6, 18, 38; /* = NOIR.navyInkRgb */
-  --glass-under-a: 0.55; /* GATED -> 0.94 */
+  --glass-under-rgb: 255, 255, 255; /* = NOIR.white */
+  --glass-under-a: 0.55; /* GATED -> 0.94 · shared by both grounds */
   --glass-under: rgba(var(--glass-under-rgb), var(--glass-under-a));
 
-  /* ── Blur — the gated numbers ───────────────────────────────────────────── */
+  /* ── Blur — the gated numbers. Shared by both grounds. ──────────────────── */
   --glass-blur: 20px; /* GATED -> 0px  */
   --glass-saturate: 160%; /* GATED -> 100% */
   --glass-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 
   /* ── Edges ──────────────────────────────────────────────────────────────── */
-  --glass-border-color: rgba(255, 255, 255, 0.15);
-  --glass-border-1: rgba(255, 255, 255, 0.15);
-  --glass-border-2: rgba(255, 255, 255, 0.3); /* hover: opacity doubles */
+  --glass-border-color: rgba(10, 42, 102, 0.14);
+  --glass-border-1: rgba(10, 42, 102, 0.14);
+  --glass-border-2: rgba(10, 42, 102, 0.28); /* hover: opacity doubles */
   --glass-border: 1px solid var(--glass-border-1);
-  --glass-rim: rgba(255, 255, 255, 0.25); /* the top-edge light catch */
-  --glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --glass-inset: inset 0 1px 2px rgba(0, 0, 0, 0.35); /* input wells, pressed */
-  --glass-divider: rgba(255, 255, 255, 0.08); /* hairline inside a panel */
-  --hairline: rgba(255, 255, 255, 0.07);
+  --glass-rim: rgba(255, 255, 255, 0.85); /* the top-edge light catch */
+  --glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-inset: inset 0 1px 2px rgba(10, 42, 102, 0.1); /* input wells, pressed */
+  --glass-divider: rgba(10, 42, 102, 0.1); /* hairline inside a panel */
+  --hairline: rgba(10, 42, 102, 0.08);
 
   /* ── Shadows: one outer drop + one inner glow, per elevation ─────────────── */
-  --glass-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --glass-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --glass-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --glass-shadow-1: 0 4px 16px rgba(10, 42, 102, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  --glass-shadow-2: 0 8px 32px rgba(10, 42, 102, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-shadow-3: 0 16px 48px rgba(10, 42, 102, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 
-  /* ── Radii ──────────────────────────────────────────────────────────────── */
+  /* ── Radii. Ground-independent. ─────────────────────────────────────────── */
   --r-control: 12px;
   --r-card: 16px;
   --r-panel: 20px;
   --r-pill: 999px;
 
-  /* ── Accent — brand gold, and nothing else ──────────────────────────────── */
+  /* ── Accent — brand gold, and nothing else ──────────────────────────────────
+     Every `--accent*` token, fill and border and TEXT alike, is brand gold on
+     both grounds. `--accent-fg` used to be a per-ground token — walked down the
+     44deg hue to a bronze (#8c5f09) on light so gold overlines cleared the 4.5:1
+     body floor — and that split is what this file reversed: the site rendered
+     four different colours for one brand role, because half the call sites wrote
+     the gold literally and never saw the bronze.
+
+     One value, one brand. The cost is explicit and accepted: gold as text on the
+     light grounds measures 1.45:1 on `void` and 1.49:1 on `panel`, under both
+     the AA body floor (4.5:1) and the large-text floor (3:1). That ratio is
+     pinned, not hidden — see `tests/a11y-contrast.test.ts`, "gold as text on a
+     light surface is pinned as a known sub-AA pairing". Change it here, in one
+     place, if the call is ever revisited. */
   --accent-rgb: 255, 199, 44; /* = NOIR.goldRgb */
   --accent: rgb(var(--accent-rgb));
   --accent-15: rgba(var(--accent-rgb), 0.15);
   --accent-20: rgba(var(--accent-rgb), 0.2);
   --accent-25: rgba(var(--accent-rgb), 0.25);
   --accent-40: rgba(var(--accent-rgb), 0.4); /* focused input border */
-  --accent-border: rgba(var(--accent-rgb), 0.38);
-  --accent-fg: #ffc72c; /* = NOIR.gold — accent as text/icon */
+  --accent-border: rgba(var(--accent-rgb), 0.55);
+  --accent-fg: #ffc72c; /* = NOIR.gold — accent as text/icon, both grounds */
   --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
 
   /* ── Destructive ────────────────────────────────────────────────────────── */
   --danger-rgb: 224, 92, 92;
   --danger-15: rgba(var(--danger-rgb), 0.15);
   --danger-border: rgba(var(--danger-rgb), 0.4);
-  --danger-fg: #f2a3a3;
+  --danger-fg: #a52121;
 
-  /* ── Text. Every value verified against every glass elevation on every
-         ground in tests/a11y-contrast.test.ts. --text-3 is 0.60 rather than the
-         0.50 a generic glass spec would use because 0.50 measures 3.71:1 on
-         elevation 3 over --g-field and fails AA. ─────────────────────────── */
-  --text-1: #f4f7fc; /* = NOIR.frost — 8.95:1 worst case */
-  --text-2: rgba(255, 255, 255, 0.7); /* 5.12:1 worst case */
-  --text-3: rgba(255, 255, 255, 0.6); /* 4.61:1 worst case */
-  --text-disabled: rgba(255, 255, 255, 0.38); /* deliberately sub-AA */
-  --divider: rgba(255, 255, 255, 0.12);
+  /* ── Text. Navy at alpha on the light ground, verified against every surface
+         it can land on — the binding one is elevation-3 glass over `--g-void`,
+         the DARKEST light surface, which is the mirror of the dark set's binding
+         case. --text-3 is 0.68 rather than the round 0.60 the dark set uses
+         because 0.60 measures 4.19:1 on bare void and fails AA — the same shape
+         of reason the dark set's is 0.60 rather than 0.50. ────────────────── */
+  --text-1: #0a2a66; /* = NOIR.navyField — 11.22:1 worst case */
+  --text-2: rgba(10, 42, 102, 0.78); /* 6.19:1 worst case */
+  --text-3: rgba(10, 42, 102, 0.68); /* 4.66:1 worst case */
+  --text-disabled: rgba(10, 42, 102, 0.38); /* deliberately sub-AA */
+  --divider: rgba(10, 42, 102, 0.12);
 
   /* ── Chrome ─────────────────────────────────────────────────────────────── */
-  --nav-fill: rgba(var(--glass-under-rgb), 0.6);
-  --nav-blur: 30px; /* GATED -> 0px */
+  --nav-fill: rgba(var(--glass-under-rgb), 0.66);
+  --nav-blur: 30px; /* GATED -> 0px · shared by both grounds */
   --nav-filter: blur(var(--nav-blur)) saturate(var(--glass-saturate));
-  --scrim: rgba(0, 0, 0, 0.55);
-  --scrim-blur: 8px; /* GATED -> 0px */
+  /* The modal veil stays a DARK scrim on both grounds. A scrim's job is to push
+     the page back behind a sheet; a light scrim over a light page does nothing. */
+  --scrim: rgba(6, 18, 38, 0.5);
+  --scrim-blur: 8px; /* GATED -> 0px · shared by both grounds */
   --scrim-filter: blur(var(--scrim-blur));
+
+  /* The halo behind the gold focus ring, so the ring survives on the surface it
+     lands on. Navy on light, black on dark — a black halo on an off-white page
+     reads as a bruise around every focused control. */
+  --focus-halo: rgba(10, 42, 102, 0.22);
 
   /* ── Motion. --dur-max is the micro-interaction ceiling (hover, focus,
          press, toggle) — NOT a ceiling on scroll-entrance reveals, which are
          the site's narrative cadence at 0.5-0.6s and live in
-         shared/components/Reveal.tsx. ───────────────────────────────────── */
+         shared/components/Reveal.tsx. Ground-independent. ────────────────── */
   --dur-fast: 0.15s;
   --dur: 0.2s;
   --dur-slow: 0.3s;
@@ -156,14 +232,97 @@
 }
 
 /**
+ * THE DARK GROUND.
+ *
+ * Every value here is the one this file shipped as its flat `:root` set, so the
+ * navy sections are byte-for-byte what they were and every figure in
+ * tests/a11y-contrast.test.ts still describes them.
+ *
+ * `.ground-dark` is the class form, for the handful of surfaces that cannot take
+ * an attribute (SVG `<g>`, third-party portal roots). They are the same rule.
+ *
+ * The four MUI portal classes are in this selector list rather than in a block of
+ * their own. A drawer, a menu, a tooltip and the command palette are lifted
+ * *above* the page rather than part of it, and the design has always drawn them
+ * as dark glass — that is what the `--scrim` behind them is for. They also render
+ * into a portal at <body>, outside whatever section opened them, so they can
+ * never inherit a `data-ground` from their call site. Sharing the selector list
+ * rather than duplicating the block is the point: a second copy of 25 values is a
+ * second copy to forget.
+ *
+ * Deliberately NOT redeclared: the five gated tokens. See the file docblock.
+ */
+[data-ground="dark"],
+.ground-dark,
+.MuiDrawer-paper,
+.MuiMenu-paper,
+.MuiPopover-paper,
+.MuiTooltip-tooltip {
+  color-scheme: dark;
+
+  --g-grid-line: rgba(255, 255, 255, 0.03);
+  --g-noise-opacity: 0.035;
+  --g-page: var(--g-base);
+
+  --glass-fill-1: rgba(255, 255, 255, 0.06);
+  --glass-fill-2: rgba(255, 255, 255, 0.09);
+  --glass-fill-3: rgba(255, 255, 255, 0.12);
+
+  --glass-under-rgb: 6, 18, 38; /* = NOIR.navyInkRgb */
+  /* Redeclared, not inherited: the `var()`s above are substituted on the element
+     the declaration lands on. See the file docblock. `--glass-under-a` is *not*
+     redeclared, so this picks up whatever the gate left on :root. */
+  --glass-under: rgba(var(--glass-under-rgb), var(--glass-under-a));
+  --glass-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+
+  --glass-border-color: rgba(255, 255, 255, 0.15);
+  --glass-border-1: rgba(255, 255, 255, 0.15);
+  --glass-border-2: rgba(255, 255, 255, 0.3);
+  --glass-border: 1px solid var(--glass-border-1);
+  --glass-rim: rgba(255, 255, 255, 0.25);
+  --glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-inset: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  --glass-divider: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.07);
+
+  --glass-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  --accent-border: rgba(var(--accent-rgb), 0.38);
+  --accent-fg: #ffc72c; /* = NOIR.gold — 6.16:1 worst case on glass over field */
+  --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
+
+  --danger-fg: #f2a3a3;
+
+  /* Every value verified against every glass elevation on every dark ground in
+     tests/a11y-contrast.test.ts. --text-3 is 0.60 rather than the 0.50 a generic
+     glass spec would use because 0.50 measures 3.71:1 on elevation 3 over
+     --g-field and fails AA. */
+  --text-1: #f4f7fc; /* = NOIR.frost — 8.95:1 worst case */
+  --text-2: rgba(255, 255, 255, 0.7); /* 5.12:1 worst case */
+  --text-3: rgba(255, 255, 255, 0.6); /* 4.61:1 worst case */
+  --text-disabled: rgba(255, 255, 255, 0.38); /* deliberately sub-AA */
+  --divider: rgba(255, 255, 255, 0.12);
+
+  --nav-fill: rgba(var(--glass-under-rgb), 0.6);
+  --nav-filter: blur(var(--nav-blur)) saturate(var(--glass-saturate));
+
+  --focus-halo: rgba(0, 0, 0, 0.6);
+}
+
+/**
  * THE GATE. One attribute, one coordinated set of values.
  *
  * Set by src/shared/theme/useGlassGate.ts from useIsLowPowerDevice(). An
  * attribute rather than three setProperty calls because the values must move
- * together — a half-applied gate is a 6%-white surface over unblurred content.
+ * together — a half-applied gate is a 6%-tint surface over unblurred content.
  *
  * useDeviceTier's docblock already names "a header backdrop-blur" as a measured
  * cause of jank on 4-core machines. This is where that gets honoured.
+ *
+ * Selecting `html` (not `[data-ground]`) is what makes it reach both grounds:
+ * the dark block never redeclares these five, so it inherits the gated values.
  */
 html[data-glass="off"] {
   --glass-blur: 0px;

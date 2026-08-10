@@ -390,10 +390,10 @@ function PaperBox({ label, sub, highlight }: { label: string; sub: string; highl
       sx={{
         p: 2,
         borderRadius: 2.5,
-        bgcolor: highlight ? "rgba(255, 199, 44, 0.15)" : "rgba(255, 255, 255, 0.04)",
+        bgcolor: highlight ? "var(--accent-15)" : "rgba(255, 255, 255, 0.04)",
         color: "white",
         border: "1px solid",
-        borderColor: highlight ? "rgba(255, 199, 44, 0.4)" : "rgba(255, 255, 255, 0.08)",
+        borderColor: highlight ? "var(--accent-40)" : "rgba(255, 255, 255, 0.08)",
       }}
     >
       <Typography variant="body2" sx={{ fontWeight: 700, fontSize: "0.85rem", color: highlight ? NOIR.gold : "rgba(244, 247, 252, 0.95)" }}>
@@ -499,10 +499,10 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     fontSize: "0.78rem",
                     bgcolor: NOIR.gold,
                     color: NOIR.navyInk,
-                    boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
+                    boxShadow: "0 4px 14px rgba(var(--accent-rgb), 0.25)",
                     "&:hover": {
                       bgcolor: NOIR.goldLight,
-                      boxShadow: "0 6px 20px rgba(255, 199, 44, 0.4)",
+                      boxShadow: "0 6px 20px rgba(var(--accent-rgb), 0.4)",
                     },
                   }}
                 >
@@ -547,9 +547,9 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                       label={detail.location}
                       size="small"
                       sx={{
-                        bgcolor: "rgba(255, 199, 44, 0.12)",
+                        bgcolor: "rgba(var(--accent-rgb), 0.12)",
                         color: NOIR.gold,
-                        border: "1px solid rgba(255, 199, 44, 0.3)",
+                        border: "1px solid rgba(var(--accent-rgb), 0.3)",
                         fontWeight: 700,
                         fontFamily: MONO,
                         fontSize: "0.72rem",
@@ -668,7 +668,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     p: { xs: 4, md: 5 },
                     borderRadius: 4,
                     bgcolor: "rgba(6, 24, 59, 0.8)",
-                    border: "1px solid rgba(255, 199, 44, 0.25)",
+                    border: "1px solid rgba(var(--accent-rgb), 0.25)",
                     boxShadow: "0 12px 32px rgba(0, 0, 0, 0.4)",
                     color: "white",
                     textAlign: "center",
@@ -697,8 +697,8 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                       px: 5,
                       py: 1.5,
                       borderRadius: "100px",
-                      boxShadow: "0 6px 20px rgba(255, 199, 44, 0.3)",
-                      "&:hover": { bgcolor: NOIR.goldLight, boxShadow: "0 8px 25px rgba(255, 199, 44, 0.45)" },
+                      boxShadow: "0 6px 20px rgba(var(--accent-rgb), 0.3)",
+                      "&:hover": { bgcolor: NOIR.goldLight, boxShadow: "0 8px 25px rgba(var(--accent-rgb), 0.45)" },
                     }}
                   >
                     APPLY NOW FOR {detail.title.toUpperCase()}

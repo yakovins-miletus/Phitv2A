@@ -72,11 +72,11 @@ export function CareersIndexPage() {
               <Stack spacing={2.5}>
                 <Reveal>
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                    <WorkIcon sx={{ color: NOIR.goldDark, fontSize: "1.2rem" }} />
+                    <WorkIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
                     <Typography
                       variant="overline"
                       sx={{
-                        color: NOIR.goldDark,
+                        color: "var(--accent-fg)",
                         fontWeight: 800,
                         letterSpacing: "0.2em",
                         fontSize: "0.85rem",
@@ -124,7 +124,7 @@ export function CareersIndexPage() {
                 >
                   <Stack spacing={2.5}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <AutoAwesomeIcon sx={{ color: NOIR.goldDark, fontSize: "1.1rem" }} />
+                      <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.1rem" }} />
                       <Typography variant="overline" sx={{ fontFamily: MONO, fontWeight: 800, color: NOIR.navyField, letterSpacing: "0.12em", fontSize: "0.75rem" }}>
                         RECRUITMENT HIGHLIGHTS
                       </Typography>
@@ -138,7 +138,7 @@ export function CareersIndexPage() {
                         </Typography>
                       </Box>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Chip label="Mentorship" size="small" sx={{ fontFamily: MONO, fontWeight: 700, bgcolor: "rgba(255, 199, 44, 0.25)", color: NOIR.navyField }} />
+                        <Chip label="Mentorship" size="small" sx={{ fontFamily: MONO, fontWeight: 700, bgcolor: "rgba(var(--accent-rgb), 0.25)", color: NOIR.navyField }} />
                         <Typography variant="body2" sx={{ color: NOIR.navyField, fontWeight: 600 }}>
                           1-on-1 Senior Staff Engineering Mentorship
                         </Typography>
@@ -164,10 +164,10 @@ export function CareersIndexPage() {
                         fontSize: "0.78rem",
                         bgcolor: NOIR.gold,
                         color: NOIR.navyInk,
-                        boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
+                        boxShadow: "0 4px 14px rgba(var(--accent-rgb), 0.25)",
                         "&:hover": {
                           bgcolor: NOIR.goldLight,
-                          boxShadow: "0 6px 18px rgba(255, 199, 44, 0.4)",
+                          boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
                           transform: "translateY(-1px)",
                         },
                         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -278,7 +278,7 @@ export function CareersIndexPage() {
                                   fontFamily: MONO,
                                   fontWeight: 800,
                                   fontSize: "0.72rem",
-                                  color: NOIR.goldDark,
+                                  color: "var(--accent-fg)",
                                   letterSpacing: "0.1em",
                                 }}
                               >
@@ -291,7 +291,7 @@ export function CareersIndexPage() {
                                   fontFamily: MONO,
                                   fontSize: "0.68rem",
                                   fontWeight: 800,
-                                  bgcolor: position.category === "Graduate Program" ? "rgba(255, 199, 44, 0.25)" : "rgba(10, 42, 102, 0.08)",
+                                  bgcolor: position.category === "Graduate Program" ? "rgba(var(--accent-rgb), 0.25)" : "rgba(10, 42, 102, 0.08)",
                                   color: NOIR.navyField,
                                   border: "1px solid rgba(10, 42, 102, 0.15)",
                                   "& .MuiChip-label": { color: "inherit" },

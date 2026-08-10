@@ -242,7 +242,7 @@ export function DailyLifeSection() {
                     height: 8,
                     backgroundColor: NOIR.gold,
                     "&:hover, &.Mui-focusVisible": {
-                      boxShadow: "0px 0px 0px 6px rgba(255, 199, 44, 0.12)",
+                      boxShadow: "0px 0px 0px 6px rgba(var(--accent-rgb), 0.12)",
                     },
                   },
                   "& .MuiSlider-rail": {

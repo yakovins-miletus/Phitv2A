@@ -13,7 +13,7 @@
  * every animation frame lives in a ref, read inside `useFrame`, never in state.
  */
 
-import type { RefObject } from "react";
+import type { ReactElement, RefObject } from "react";
 
 /**
  * The pointer, projected onto the shared ground plane and smoothed.
@@ -56,9 +56,10 @@ export interface SceneProps {
 
 /**
  * The shape every `scenes/*.tsx` default-exports, and what `variants.ts`'s `load()`
- * resolves to. Written as `JSX.Element` rather than `ReactElement` to match the
- * handover verbatim — the automatic JSX runtime (`tsconfig.app.json`'s
- * `"jsx": "react-jsx"`) already merges the global `JSX` namespace from `@types/react`,
- * so this resolves the same way `ReactElement` would without a second import.
+ * resolves to.
+ *
+ * `ReactElement`, not `JSX.Element`: React 19's types no longer publish a global
+ * `JSX` namespace (it moved under `React.JSX`), so the bare name does not resolve
+ * here. Same type, one import.
  */
-export type SceneComponent = (props: SceneProps) => JSX.Element;
+export type SceneComponent = (props: SceneProps) => ReactElement;

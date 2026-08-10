@@ -49,7 +49,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
             boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
             transition: "border-color 0.3s, box-shadow 0.3s, transform 0.3s",
             "&:hover": {
-              borderColor: "#FFC72C",
+              borderColor: "var(--accent)",
               boxShadow: "0 12px 32px rgba(10, 42, 102, 0.15)",
               transform: "translateY(-4px)"
             }
@@ -114,8 +114,8 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                     onCategoryChange(post.category === activeCategory ? null : post.category);
                   }}
                   sx={post.category === activeCategory ? {
-                    bgcolor: "#FFC72C",
-                    color: "#0A2A66",
+                    bgcolor: "secondary.main",
+                    color: "secondary.contrastText",
                     border: "none",
                     "& .MuiChip-label": { color: "inherit", fontWeight: 700 },
                     "&:hover": { bgcolor: "#E5B327" },
@@ -136,9 +136,9 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                     label="Featured"
                     size="small"
                     sx={{
-                      bgcolor: "rgba(255, 199, 44, 0.2)",
-                      color: "#FFC72C",
-                      border: "1px solid rgba(255, 199, 44, 0.5)",
+                      bgcolor: "var(--accent-20)",
+                      color: "var(--accent-fg)",
+                      border: "1px solid rgba(var(--accent-rgb), 0.5)",
                       "& .MuiChip-label": { color: "inherit", fontWeight: 600 },
                     }}
                   />
@@ -179,7 +179,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
             </Stack>
             
             <Box sx={{ mt: 3, display: "flex", alignItems: "center" }}>
-              <Typography variant="button" sx={{ fontWeight: 700, color: "#FFC72C", letterSpacing: "0.05em" }}>
+              <Typography variant="button" sx={{ fontWeight: 700, color: "var(--accent-fg)", letterSpacing: "0.05em" }}>
                 READ ARTICLE →
               </Typography>
             </Box>

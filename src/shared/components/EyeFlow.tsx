@@ -15,6 +15,7 @@ import {
 } from "@/shared/sections";
 import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
 import { getLenis } from "./SmoothScroll";
+import { useNavbar } from "./NavbarContext";
 
 const RAIL_HEIGHT = 300;
 
@@ -23,6 +24,17 @@ const ACT_GROUPS: readonly { act: Act; chapters: readonly (typeof CHAPTERS)[numb
 ).map((act) => ({ act, chapters: CHAPTERS.filter((c) => c.act === act) }));
 
 export function EyeFlow() {
+  /**
+   * The rail is `position: fixed` at document level, so it is never *inside* a
+   * `data-ground` section and `var(--text-*)` would always resolve to the light
+   * set — navy labels on the navy Intelligence Feed, which is where they went
+   * missing. It rides the same `isOverDarkSection` flag the navbar already
+   * maintains for exactly this reason.
+   */
+  const { isOverDarkSection } = useNavbar();
+  const railFg = isOverDarkSection ? "rgba(255, 255, 255, 0.82)" : "text.secondary";
+  // The accent does not follow the ground — brand gold is the accent on both.
+  const railAccent = NOIR.gold;
   const normalizedProgress = useMotionValue(0);
   const [activeChapter, setActiveChapter] = useState<ChapterIndex>(0);
   const activeAct = actOfChapter(activeChapter);
@@ -176,7 +188,7 @@ export function EyeFlow() {
                   fontFamily: MONO,
                   fontSize: "0.7rem",
                   letterSpacing: "0.24em",
-                  color: isActiveAct ? NOIR.gold : "text.secondary",
+                  color: isActiveAct ? railAccent : railFg,
                   // Inactive state is carried by WEIGHT, not by fading the text
                   // out. `text.secondary` is rgba(10,42,102,0.82); at the old 0.4
                   // opacity its effective alpha was 0.33, which measures ~2.3:1 on
@@ -211,7 +223,7 @@ export function EyeFlow() {
                             fontFamily: MONO,
                             fontSize: "0.6rem",
                             letterSpacing: "0.18em",
-                            color: isActiveChapter ? NOIR.gold : "text.secondary",
+                            color: isActiveChapter ? railAccent : railFg,
                             // Same fix as the act label above: weight carries the
                             // state, opacity stays above the AA floor. The old
                             // 0.45/0.2 tiers measured 2.5:1 and 1.4:1.
@@ -223,7 +235,7 @@ export function EyeFlow() {
                             transformOrigin: "right center",
                             transition: "color 0.4s ease, opacity 0.4s ease, transform 0.3s ease",
                             "&:hover": {
-                              color: NOIR.gold,
+                              color: railAccent,
                               opacity: 1,
                               transform: "translateX(-4px)",
                             },

@@ -31,6 +31,8 @@ export interface SectionLedeProps {
   align?: "left" | "center";
   /** Set false where StageKicker already draws a rule for this section. */
   rule?: boolean;
+  /** Optional overrides for the main heading (gunshot). */
+  titleSx?: any;
 }
 
 export function SectionLede({
@@ -41,6 +43,7 @@ export function SectionLede({
   tone = "light",
   align = "left",
   rule = true,
+  titleSx,
 }: SectionLedeProps) {
   const dark = tone === "dark";
 
@@ -73,6 +76,7 @@ export function SectionLede({
           textWrap: "balance",
           maxWidth: "24ch",
           ...(align === "center" ? { mx: "auto" } : {}),
+          ...titleSx,
         }}
       >
         {gunshot}

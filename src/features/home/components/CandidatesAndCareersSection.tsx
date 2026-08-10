@@ -93,7 +93,7 @@ export function CandidatesAndCareersSection() {
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.78rem",
-                  color: NOIR.goldDark,
+                  color: "var(--accent-fg)",
                   letterSpacing: "0.2em",
                   fontWeight: 700,
                 }}
@@ -167,10 +167,10 @@ export function CandidatesAndCareersSection() {
               fontSize: "0.78rem",
               bgcolor: NOIR.gold,
               color: NOIR.navyInk,
-              boxShadow: "0 4px 14px rgba(255, 199, 44, 0.25)",
+              boxShadow: "0 4px 14px rgba(var(--accent-rgb), 0.25)",
               "&:hover": {
                 bgcolor: NOIR.goldLight,
-                boxShadow: "0 6px 18px rgba(255, 199, 44, 0.4)",
+                boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
                 transform: "translateY(-1px)",
               },
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",

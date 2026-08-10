@@ -38,7 +38,7 @@ const TESTIMONIALS: Testimonial[] = [
     name: "TYRONE",
     role: "GRADUATE TRAINEE",
     text: "What helped me the most were the teammates around me who mentored me and supported my growth. The sense of community... really stands out as it made it easier for me to ask questions and provided the perfect opportunity... to develop my skills.",
-    bgColor: "rgba(0, 163, 224, 0.95)",
+    bgColor: "rgba(0, 101, 138, 0.95)",
     textColor: "#FFFFFF",
     subColor: "rgba(255, 255, 255, 0.8)",
     colSpan: { xs: 12, md: 6 },
@@ -235,7 +235,7 @@ export function TestimonialsSection() {
                 sx={{
                   fontFamily: MONO,
                   fontSize: "0.85rem",
-                  color: NOIR.goldDark,
+                  color: "var(--accent-fg)",
                   letterSpacing: "0.2em",
                   fontWeight: 700,
                 }}

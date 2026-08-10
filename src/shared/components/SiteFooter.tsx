@@ -112,7 +112,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
         sx={{
           position: "absolute",
           inset: 0,
-          background: "radial-gradient(circle at 50% 30%, rgba(255, 199, 44, 0.08) 0%, transparent 65%), linear-gradient(180deg, rgba(6, 24, 59, 0.95) 0%, #04122E 100%)",
+          background: "radial-gradient(circle at 50% 30%, rgba(var(--accent-rgb), 0.08) 0%, transparent 65%), linear-gradient(180deg, rgba(6, 24, 59, 0.95) 0%, #04122E 100%)",
           pointerEvents: "none",
         }}
       />
@@ -470,7 +470,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                               width: 50,
                               height: 50,
                               borderRadius: "16px",
-                              bgcolor: "rgba(255, 199, 44, 0.08)",
+                              bgcolor: "rgba(var(--accent-rgb), 0.08)",
                               border: `1px solid ${alpha(NOIR.gold, 0.3)}`,
                               boxShadow: `0 0 20px ${alpha(NOIR.gold, 0.15)}`,
                               flexShrink: 0,

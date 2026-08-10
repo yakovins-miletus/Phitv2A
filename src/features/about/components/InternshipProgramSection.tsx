@@ -52,18 +52,22 @@ export function InternshipProgramSection() {
   const pillar2 = INTERNSHIP_PILLARS[2]!;
 
   return (
-    <Box component="section" sx={{ bgcolor: NOIR.navyField, color: 'common.white', py: { xs: 8, md: 12 } }}>
+    // `data-ground="dark"` switches this subtree's token set (glass.css):
+    // --text-* and --glass-* flip to their navy-ground values. --accent-fg does
+    // not — brand gold is the accent on both grounds — so the overline below is
+    // the same colour as its counterparts in this file's light sections.
+    <Box component="section" data-ground="dark" sx={{ bgcolor: NOIR.navyField, color: 'common.white', py: { xs: 8, md: 12 } }}>
       <Container maxWidth="2xl">
       <Stack spacing={{ xs: 6, md: 8 }} sx={{ width: "100%" }}>
         {/* Section Header */}
         <Stack spacing={2} sx={{ maxWidth: 740 }}>
           <Reveal>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-              <SchoolIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+              <SchoolIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
               <Typography
                 variant="overline"
                 sx={{
-                  color: "#FFC72C",
+                  color: "var(--accent-fg)",
                   fontWeight: 800,
                   letterSpacing: "0.2em",
                   fontSize: "0.82rem",
@@ -222,6 +226,7 @@ export function InternshipProgramSection() {
         {/* Fast-Track Career Banner */}
         <Reveal delay={0.2}>
           <Box
+            data-ground="light"
             sx={{
               p: { xs: 4, md: 6 },
               borderRadius: { xs: 5, md: 7 },
@@ -238,11 +243,11 @@ export function InternshipProgramSection() {
           >
             <Stack spacing={1.5} sx={{ maxWidth: 680 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <FastForwardIcon sx={{ color: NOIR.goldDark, fontSize: "1.3rem" }} />
+                <FastForwardIcon sx={{ color: "var(--accent-fg)", fontSize: "1.3rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: NOIR.goldDark,
+                    color: "var(--accent-fg)",
                     fontWeight: 800,
                     letterSpacing: "0.15em",
                     fontFamily: MONO,

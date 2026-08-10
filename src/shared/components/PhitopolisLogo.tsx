@@ -1,11 +1,13 @@
 import React from 'react';
 
+import { NOIR } from '@/shared/theme/palette';
+
 interface PhitopolisLogoProps {
   className?: string;
   style?: React.CSSProperties;
   /** Color for the outer "P" shape paths (originally white). */
   color?: string;
-  /** Color for the inner phi accent path (originally gold). */
+  /** Color for the inner phi accent path. Defaults to brand gold. */
   accentColor?: string;
   title?: string;
 }
@@ -19,7 +21,7 @@ const PhitopolisLogo: React.FC<PhitopolisLogoProps> = ({
   className,
   style,
   color = '#FFFFFF',
-  accentColor = '#DDB214',
+  accentColor = NOIR.gold,
   title = 'Phitopolis Logo',
 }) => {
   return (

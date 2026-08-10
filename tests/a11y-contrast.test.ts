@@ -127,15 +127,114 @@ describe("text on glass", () => {
   });
 });
 
+/**
+ * ── THE LIGHT GROUND ─────────────────────────────────────────────────────────
+ *
+ * `palette.ts` ships `mode: "light"` and `grounds.ts` still vends `void`, `panel`
+ * and `white`, so the page default is off-white and only *sections* are navy.
+ * glass.css used to describe the dark ground only, and the light page inherited
+ * it: `<h1>` on /contact rendered `#F4F7FC` on `#F4F7FC` — 1.00:1, the same
+ * colour as the paper.
+ *
+ * These are the `:root` values, modelled the same way as the dark block: the tint
+ * is composited at full strength straight onto the ground, which is the worst
+ * case here too — the light understudy is white, so it only ever lightens a
+ * surface back toward `--g-white`, and every foreground below is dark.
+ */
+const LIGHT_GROUNDS: Record<string, string> = {
+  void: NOIR.void,
+  panel: NOIR.panel,
+  white: NOIR.white,
+};
+
+/** `--glass-fill-1/2/3` on the light ground: navy, not white. */
+const LIGHT_GLASS_FILLS = [0.03, 0.05, 0.07] as const;
+
+/** Navy at `alpha` composited over an opaque background. */
+function navyOver(bg: string, alpha: number): string {
+  const h = bg.replace("#", "");
+  const n = NOIR.navyField.replace("#", "");
+  const mix = (i: number) => {
+    const c = parseInt(h.slice(i, i + 2), 16);
+    const f = parseInt(n.slice(i, i + 2), 16);
+    return Math.round(f * alpha + c * (1 - alpha));
+  };
+  return `#${[mix(0), mix(2), mix(4)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+const LIGHT_SURFACES: [string, string][] = Object.entries(LIGHT_GROUNDS).flatMap(([name, bg]) => [
+  [name, bg] as [string, string],
+  ...LIGHT_GLASS_FILLS.map((a) => [`glass ${a} over ${name}`, navyOver(bg, a)] as [string, string]),
+]);
+
+describe("text on the light ground", () => {
+  test("primary text clears AA on every light surface", () => {
+    // --text-1 on :root is NOIR.navyField. Worst case is `white`, 12.62:1 — the
+    // light ground has far more headroom than the dark one, which is exactly why
+    // nothing noticed the tokens were inverted until the text went missing.
+    for (const [name, surface] of LIGHT_SURFACES) {
+      const ratio = contrast(NOIR.navyField, surface);
+      expect(ratio, `navyField on ${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_BODY);
+    }
+  });
+
+  test("the two muted navy alphas clear AA on every light surface", () => {
+    // --text-2 (0.78) and --text-3 (0.68). 0.60 — the round number, and what the
+    // dark ground uses — measures 4.19:1 on `void` and fails, which is why the
+    // light token is 0.68. Pinned so nobody "aligns" the two grounds.
+    for (const [name, surface] of LIGHT_SURFACES) {
+      for (const alpha of [0.78, 0.68]) {
+        const ratio = contrast(navyOver(surface, alpha), surface);
+        expect(ratio, `navy@${alpha} on ${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_BODY);
+      }
+      const failing = contrast(navyOver(surface, 0.6), surface);
+      if (surface === NOIR.void) {
+        expect(failing, "navy@0.60 must remain recognised as failing on void").toBeLessThan(AA_BODY);
+      }
+    }
+  });
+
+  test("the disabled alpha stays recognisably sub-AA", () => {
+    for (const [name, surface] of LIGHT_SURFACES) {
+      const ratio = contrast(navyOver(surface, 0.38), surface);
+      expect(ratio, `navy@0.38 on ${name} — ${ratio.toFixed(2)}:1`).toBeLessThan(AA_BODY);
+    }
+  });
+});
+
 describe("accent on glass", () => {
-  test("gold carries text on every surface", () => {
+  test("gold carries text on every dark surface", () => {
     // Replaces "gold is <3:1 on void". That test guarded against reaching for gold
-    // to fix a label on a *light* ground; there are no light grounds now, so the
-    // useful guarantee is the positive one. Worst case 6.16:1.
+    // to fix a label on a light ground — the right instinct, wrongly retired when
+    // the palette was assumed to be all-dark. Worst case 6.16:1 on dark.
     for (const [name, surface] of SURFACES) {
       const ratio = contrast(NOIR.gold, surface);
       expect(ratio, `gold on ${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_BODY);
     }
+  });
+
+  test("gold as text on a light surface is pinned as a known sub-AA pairing", () => {
+    // NOT a guard — a record. `--accent-fg` is brand gold on BOTH grounds, so
+    // every gold overline, mailto link and contained-button label on a light
+    // page renders at these ratios: 1.45:1 on `void`, 1.49:1 on `panel`, under
+    // both the body floor and the large-text floor. That is a deliberate
+    // brand-consistency call taken over the contrast floor, made after the
+    // per-ground bronze (`goldInk`) failed to hold — half the call sites wrote
+    // the gold literally and never picked the bronze up, so one brand role
+    // shipped in four colours.
+    //
+    // Pinned the same way NOIR.live and the two broken white alphas are: if
+    // these numbers ever move, someone changed the accent and should say so.
+    for (const [name, surface] of LIGHT_SURFACES) {
+      const ratio = contrast(NOIR.gold, surface);
+      expect(ratio, `gold on ${name} — ${ratio.toFixed(2)}:1`).toBeLessThan(AA_LARGE);
+    }
+  });
+
+  test("goldDark is still not a text colour on light", () => {
+    // The obvious wrong fix: reach for the existing darker gold. It was cut to
+    // darken a fill and measures 1.75:1 as text on `void`.
+    expect(contrast(NOIR.goldDark, NOIR.void)).toBeLessThan(AA_LARGE);
   });
 
   test("navy reads on a gold fill", () => {

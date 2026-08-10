@@ -85,11 +85,11 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
             <Stack spacing={4}>
               <Reveal>
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
-                  <AutoAwesomeIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+                  <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
                   <Typography
                     variant="overline"
                     sx={{
-                      color: "#FFC72C",
+                      color: "var(--accent-fg)",
                       fontWeight: 800,
                       letterSpacing: "0.2em",
                       fontSize: "0.85rem",
@@ -186,7 +186,7 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
                       
                       <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 5, transform: "translateZ(30px)" }}>
                         <Stack spacing={2}>
-                          <Typography variant="overline" sx={{ color: "#FFC72C", fontWeight: 700, letterSpacing: "0.1em" }}>
+                          <Typography variant="overline" sx={{ color: "var(--accent-fg)", fontWeight: 700, letterSpacing: "0.1em" }}>
                             FEATURED ARTICLE
                           </Typography>
                           <Typography variant="h3" sx={{ color: "white", fontWeight: 800, lineHeight: 1.1 }}>
@@ -223,12 +223,12 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
               width: 40,
               height: 40,
               borderRadius: "50%",
-              border: "1px solid rgba(255, 199, 44, 0.4)",
+              border: "1px solid var(--accent-40)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#FFC72C",
-              bgcolor: "rgba(255, 199, 44, 0.1)",
+              color: "var(--accent-fg)",
+              bgcolor: "rgba(var(--accent-rgb), 0.1)",
             }}
           >
             <ArrowDownwardIcon fontSize="small" />

@@ -195,11 +195,11 @@ export function FloatingIdOverlay() {
     const getColors = (type: SnapshotItem["type"]) => {
       switch (type) {
         case "dialog":
-          return { bg: "rgba(255, 199, 44, 0.95)", border: "#FFC72C", text: "#06183B" };
+          return { bg: `rgba(${NOIR.goldRgb}, 0.95)`, border: NOIR.gold, text: NOIR.navyDeep };
         case "section":
           return { bg: "rgba(6, 18, 38, 0.95)", border: NOIR.gold, text: NOIR.gold };
         case "heading":
-          return { bg: "rgba(10, 42, 102, 0.95)", border: "#FFD966", text: "#FFD966" };
+          return { bg: `rgba(${NOIR.navyFieldRgb}, 0.95)`, border: NOIR.goldLight, text: NOIR.goldLight };
         case "interactive":
           return { bg: "rgba(4, 30, 24, 0.95)", border: "#3AA189", text: "#4BB89B" };
         case "text":

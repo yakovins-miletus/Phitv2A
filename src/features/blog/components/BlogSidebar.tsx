@@ -97,12 +97,16 @@ export function BlogSidebar(_props: BlogSidebarProps) {
                         sx={{ 
                           color: "text.secondary",
                           cursor: "pointer", 
-                          "&:hover": { color: "#FFC72C" } 
+                          // Brand gold is 1.45:1 on this ground — a hover state that
+                          // makes the label *less* readable than its rest state.
+                          "&:hover": { color: "var(--accent-fg)" } 
                         }}
                       >
                         {month}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600 }}>
+                      {/* The archive count is information, not a disabled control: `text.disabled`
+                          is deliberately sub-AA (2.21:1 here) and must not carry content. */}
+                      <Typography variant="caption" sx={{ color: "var(--text-3)", fontWeight: 600 }}>
                         {count}
                       </Typography>
                     </Box>

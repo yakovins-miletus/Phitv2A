@@ -31,9 +31,8 @@ import { useEffect, useImperativeHandle, useRef, type RefObject } from "react";
 import { useReducedMotion, useIsLowPowerDevice, usePointerFine } from "@/shared/motion";
 import { CONTAINER_START } from "./heroPhases";
 import { heroFrameState, PERSPECTIVE, PLANE_SIZE, makeCamera, project, unproject2D } from "./heroScene";
-import { HORIZON, VIEW_FIT } from "./heroCity";
 import { loadLogoMask } from "./heroLogoMask";
-import { drawPlaneFrame, type PlaneInteraction } from "./heroPlaneRenderer";
+import { HORIZON, VIEW_FIT, drawPlaneFrame, type PlaneInteraction } from "./heroPlaneRenderer";
 import {
   HIT_TEST_END,
   INTERACT_END,

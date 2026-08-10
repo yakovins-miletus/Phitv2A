@@ -30,11 +30,11 @@ export function CertificationsSection() {
         <Stack spacing={2} sx={{ maxWidth: 840 }}>
           <Reveal>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-              <VerifiedUserIcon sx={{ color: NOIR.gold, fontSize: "1.2rem" }} />
+              <VerifiedUserIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
               <Typography
                 variant="overline"
                 sx={{
-                  color: NOIR.gold,
+                  color: "var(--accent-fg)",
                   fontWeight: 800,
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",
@@ -115,7 +115,7 @@ export function CertificationsSection() {
             </Stack>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <WorkspacePremiumIcon sx={{ color: NOIR.gold, fontSize: "1.1rem" }} />
+              <WorkspacePremiumIcon sx={{ color: "var(--accent-fg)", fontSize: "1.1rem" }} />
               <Typography variant="caption" sx={{ fontFamily: MONO, fontWeight: 700, color: "text.secondary", letterSpacing: "0.05em" }}>
                 {totalCerts} ACTIVE ENTERPRISE CERTIFICATIONS
               </Typography>
@@ -161,10 +161,10 @@ export function CertificationsSection() {
                               transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
                               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
                               "&:hover": {
-                                borderColor: "#FFC72C",
+                                borderColor: "var(--accent)",
                                 boxShadow: "0 12px 30px rgba(10, 42, 102, 0.08)",
                                 "& .cert-badge-glow": {
-                                  borderColor: "#FFC72C",
+                                  borderColor: "var(--accent)",
                                   transform: "scale(1.05)",
                                 },
                               },

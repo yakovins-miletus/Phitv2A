@@ -160,8 +160,8 @@ export function ContactFAQ() {
                 fontFamily: MONO,
                 fontSize: "0.82rem",
                 border: "1px solid rgba(10, 42, 102, 0.12)",
-                "&:hover": { borderColor: "#FFC72C" },
-                "&.Mui-focused": { borderColor: "#FFC72C", boxShadow: "0 0 0 2px rgba(255, 199, 44, 0.2)" },
+                "&:hover": { borderColor: "var(--accent)" },
+                "&.Mui-focused": { borderColor: "var(--accent-40)", boxShadow: "0 0 0 2px var(--accent-20)" },
               },
             }}
           />
@@ -186,7 +186,7 @@ export function ContactFAQ() {
                   borderRadius: "8px",
                   cursor: "pointer",
                   bgcolor: isActive ? "#0A2A66" : "rgba(10, 42, 102, 0.04)",
-                  color: isActive ? "#FFC72C" : "text.secondary",
+                  color: isActive ? "var(--accent-fg)" : "text.secondary",
                   border: "1px solid",
                   borderColor: isActive ? "#0A2A66" : "rgba(10, 42, 102, 0.1)",
                   transition: "all 0.2s ease",
@@ -217,7 +217,7 @@ export function ContactFAQ() {
                   bgcolor: "transparent",
                   borderRadius: "0px !important",
                   borderBottom: "1px solid rgba(10, 42, 102, 0.08)",
-                  borderLeft: isOpen ? "3px solid #FFC72C" : "3px solid transparent",
+                  borderLeft: isOpen ? "3px solid var(--accent)" : "3px solid transparent",
                   transition: "all 0.25s ease",
                   pl: { xs: 1, md: 2 },
                   "&:before": { display: "none" },
@@ -229,7 +229,7 @@ export function ContactFAQ() {
                 <AccordionSummary
                   expandIcon={
                     isOpen ? (
-                      <Box component={Minus} sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+                      <Box component={Minus} sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
                     ) : (
                       <Box component={Plus} sx={{ color: "text.secondary", fontSize: "1.2rem" }} />
                     )
@@ -245,7 +245,7 @@ export function ContactFAQ() {
                       sx={{
                         fontFamily: MONO,
                         fontSize: "0.82rem",
-                        color: isOpen ? "#FFC72C" : "text.secondary",
+                        color: isOpen ? "var(--accent-fg)" : "text.secondary",
                         fontWeight: 800,
                         flexShrink: 0,
                       }}

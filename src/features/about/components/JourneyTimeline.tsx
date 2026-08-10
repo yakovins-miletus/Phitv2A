@@ -461,7 +461,7 @@ function Badge({ n, label }: { n: string; label: string }) {
         {n}
       </span>
       <div style={{ width: 36, height: 1, background: NOIR.gold }} />
-      <span style={{ color: NOIR.mist, fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: FONT }}>
+      <span style={{ color: "var(--text-2)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: FONT }}>
         {label}
       </span>
     </div>
@@ -526,12 +526,13 @@ function StaticJourney() {
   return (
     <section
       id="sec-timeline"
+      data-ground="dark"
       style={{ background: NOIR.navyField, padding: "96px clamp(24px, 6vw, 96px)", color: "#fff" }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 64 }}>
         {CHAPTERS.map((ch) => (
           <div key={ch.id} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "clamp(2.5rem, 6vw, 4rem)", color: `${ch.color}80`, lineHeight: 1 }}>
+            <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "clamp(2.5rem, 6vw, 4rem)", color: `${ch.color}cc`, lineHeight: 1 }}>
               {ch.num}
             </div>
             <Badge n={ch.num} label={ch.tag} />
@@ -648,7 +649,7 @@ export function JourneyTimeline() {
   }
 
   return (
-    <section id="sec-timeline" ref={containerRef} style={{ height: "480vh", position: "relative", background: NOIR.navyField }}>
+    <section id="sec-timeline" ref={containerRef} data-ground="dark" style={{ height: "480vh", position: "relative", background: NOIR.navyField }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
         <FloatingString years={CHAPTERS.map((c) => c.num)} scrollProgressRef={scrollProgressRef} />
 
@@ -730,7 +731,7 @@ export function JourneyTimeline() {
                       fontFamily: FONT,
                       fontWeight: 900,
                       fontSize: "clamp(3.5rem, 9vw, 7rem)",
-                      color: `${ch.color}80`,
+                      color: `${ch.color}cc`,
                       lineHeight: 1,
                       letterSpacing: "-0.05em",
                       marginBottom: -4,

@@ -29,7 +29,7 @@ function get2DIconForCategory(category: string, title: string) {
   const titleLower = title.toLowerCase();
 
   if (catLower.includes("quant") || titleLower.includes("llm") || titleLower.includes("ai")) {
-    return <AutoAwesomeIcon sx={{ fontSize: "2.6rem", color: "#FFC72C" }} />;
+    return <AutoAwesomeIcon sx={{ fontSize: "2.6rem", color: "var(--accent-fg)" }} />;
   }
   if (catLower.includes("systems") || titleLower.includes("rust") || titleLower.includes("c++")) {
     return <TerminalIcon sx={{ fontSize: "2.6rem", color: NOIR.live }} />;
@@ -43,7 +43,7 @@ function get2DIconForCategory(category: string, title: string) {
   if (catLower.includes("data")) {
     return <BarChartIcon sx={{ fontSize: "2.6rem", color: "#FF7043" }} />;
   }
-  return <ScienceIcon sx={{ fontSize: "2.6rem", color: "#FFC72C" }} />;
+  return <ScienceIcon sx={{ fontSize: "2.6rem", color: "var(--accent-fg)" }} />;
 }
 
 interface InnovationPostCardProps {
@@ -72,7 +72,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
         boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
         "&:hover": {
           transform: "translateY(-4px)",
-          borderColor: "#FFC72C",
+          borderColor: "var(--accent)",
           boxShadow: "0 12px 32px rgba(10, 42, 102, 0.1)",
         }
       }}
@@ -84,7 +84,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
           aspectRatio: isHero ? "21/9" : "16/9",
           position: "relative",
           overflow: "hidden",
-          borderBottom: "1px solid rgba(255, 199, 44, 0.15)",
+          borderBottom: "1px solid var(--accent-15)",
           bgcolor: "#06183B",
         }}
       >
@@ -183,7 +183,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
               <Chip label={`Built by ${post.author}`} size="small" sx={{ bgcolor: "rgba(10, 42, 102, 0.06)", color: "#0A2A66", fontWeight: 700, fontSize: "0.68rem" }} />
             ) : null}
             {post.featured ? (
-              <Chip label="Featured Experiment" size="small" sx={{ bgcolor: "#FFC72C", color: "#0A2A66", fontWeight: 800, fontSize: "0.68rem" }} />
+              <Chip label="Featured Experiment" size="small" sx={{ bgcolor: "secondary.main", color: "secondary.contrastText", fontWeight: 800, fontSize: "0.68rem" }} />
             ) : null}
           </Stack>
           <Typography 

@@ -16,6 +16,20 @@ export const NOIR = {
   void: "#F4F7FC", // Soft cool off-white with subtle primary blue hue
   /** @deprecated See `void` above. */
   panel: "#F8FAFC", // Surface (cool off-white, matches brand reference)
+  /**
+   * Phitopolis brand gold — the sitewide secondary/accent, and the only one.
+   *
+   * Fill, border and TEXT, on light grounds and dark alike: this is
+   * `--accent-fg` in both scopes of `glass.css` and `palette.secondary.main`
+   * below. A per-ground bronze (`goldInk`, #8C5F09) used to carry the text role
+   * on light grounds for contrast; it was retired because half the call sites
+   * wrote the gold literally and never picked it up, so one brand role rendered
+   * in four different colours across the site.
+   *
+   * The trade-off is deliberate: as text on a light ground this measures 1.45:1
+   * on `void`, below the AA floor. `tests/a11y-contrast.test.ts` pins that ratio
+   * rather than hiding it.
+   */
   gold: "#FFC72C",
   goldLight: "#FFD966",
   goldDark: "#E5B228",
@@ -65,6 +79,8 @@ export const NOIR = {
 
   /** rgb triplets for rgba() composition */
   goldRgb: "255, 199, 44",
+  /** The light ground's glass understudy — `--glass-under-rgb` inside `:root`. */
+  whiteRgb: "255, 255, 255",
   voidRgb: "244, 247, 252",
   frostRgb: "244, 247, 252",
   navyInkRgb: "6, 18, 38",

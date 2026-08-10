@@ -44,7 +44,8 @@ export function BackgroundReveal() {
           width: "60vw",
           height: "60vw",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255, 199, 44, 0.08) 0%, rgba(255, 199, 44, 0) 70%)",
+          background:
+            "radial-gradient(circle, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-rgb), 0) 70%)",
           filter: "blur(60px)",
           zIndex: 1.2,
         }}

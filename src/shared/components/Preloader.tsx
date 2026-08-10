@@ -277,7 +277,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
                 sx={{
                   width: "100%",
                   height: "auto",
-                  filter: `drop-shadow(0 0 20px rgba(255, 199, 44, 0.4))`,
+                  filter: `drop-shadow(0 0 20px rgba(var(--accent-rgb), 0.4))`,
                 }}
               />
             </motion.div>

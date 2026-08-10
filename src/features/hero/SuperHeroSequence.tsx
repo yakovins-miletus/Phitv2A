@@ -1,4 +1,4 @@
-import { Suspense, lazy, useRef, useState, useEffect } from "react";
+import { Suspense, lazy, useCallback, useRef, useState, useEffect, useTransition } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
@@ -10,14 +10,25 @@ import { useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
+import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
+import { PlaygroundTabs } from "./playground/PlaygroundTabs";
+import {
+  DEFAULT_VARIANT_ID,
+  VARIANTS,
+  type PlaygroundVariantId,
+} from "./playground/variants";
 /**
- * The 3D playground stays (docs/hero-upgrade/README.md standing rule 1), and its
- * internals are untouched — but it no longer taxes every visitor for a switch that
- * is off by default. `React.lazy` moves `three` + `@react-three/fiber` + `drei`
- * out of the route chunk and behind a dynamic import that only runs when someone
- * actually flips the toggle. Lazy-loading a component is not a change to that
- * component, so rule 1 holds: `R3FHeroCanvas.tsx` and `PlaygroundScene.tsx` still
- * show no diff.
+ * The 3D PoC gallery.
+ *
+ * `React.lazy` keeps `three` + `@react-three/fiber` + `drei` out of the route chunk
+ * and behind a dynamic import that only runs when someone flips the toggle, so a
+ * visitor who never opens it pays nothing. Each of the four *scenes* is then lazy
+ * again inside `playground/variants.ts`, so switching a tab fetches only that scene.
+ *
+ * `docs/hero-upgrade/README.md` standing rule 1 ("the 3D playground variant is out
+ * of scope; `PlaygroundScene.tsx` and `R3FHeroCanvas.tsx` internals must show no
+ * diff") is **retired as of this change** — the gallery IS the work now, and
+ * `PlaygroundScene.tsx` is deleted. That file records the retirement.
  */
 const R3FHeroCanvas = lazy(() =>
   import("./R3FHeroCanvas").then((m) => ({ default: m.R3FHeroCanvas })),
@@ -45,6 +56,58 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  * travel each fraction costs the reader changes. Eight is still generous.
  */
 const HERO_PIN_DISTANCE = "+=800%";
+
+/** Session key remembering which gallery design was last open. */
+const VARIANT_STORAGE_KEY = "phit:hero:poc-variant";
+
+/**
+ * The dark-room flip.
+ *
+ * The gallery scenes are staged in a near-black room (`PALETTE.navyInk`), and the
+ * hero's own chrome is designed for a near-white card — navy headline, navy motto,
+ * white pills. Left alone, turning the PoC on rendered navy text on black, which is
+ * how the toggle shipped. These selectors invert the chrome for exactly as long as
+ * the PoC is on.
+ *
+ * Static, and attached once to the container's `sx`: Emotion serialises this object
+ * a single time at mount and the flip is then a lone attribute write, not a
+ * restyle. Nothing here runs per frame, and no extra React state exists for it —
+ * `use3D` is the only source of truth.
+ *
+ * Contrast, both directions, measured against the tokens in `palette.ts`:
+ * `frost` on `navyInk` is 17.43:1; the pills invert to `navyField` text on `frost`,
+ * which is the same pair the site already ships at 12.73:1.
+ */
+const PLAYGROUND_FLIP_SX = {
+  '&[data-playground="on"]': {
+    "& .hero-card": { backgroundColor: NOIR.navyInk },
+    // The dawn sky is the thing that actually paints the card's interior — a
+    // near-white horizontal gradient at `zIndex: 0`, sitting ON TOP of the card's
+    // own `bgcolor`. Flipping the card without retiring this leaves the white
+    // exactly where it was and the flip looks like it did nothing.
+    "& .hero-sky": { opacity: 0 },
+    "& .hero-motto, & .hero-wordmark": { color: NOIR.frost },
+    "& .hero-eyebrow": { color: `rgba(${NOIR.frostRgb}, 0.72)` },
+    "& .hero-chip": {
+      backgroundColor: NOIR.navyInk,
+      borderColor: `rgba(${NOIR.frostRgb}, 0.18)`,
+    },
+    "& .hero-chip-label": { color: NOIR.gold },
+    "& .hero-pill": {
+      backgroundColor: `rgba(${NOIR.frostRgb}, 0.08)`,
+      boxShadow: "none",
+      "& .btn-text": { color: NOIR.frost },
+    },
+  },
+  "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-chip, & .hero-pill": {
+    transition: "background-color 0.32s ease, color 0.32s ease, border-color 0.32s ease",
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-chip, & .hero-pill": {
+      transition: "none",
+    },
+  },
+} as const;
 const ANIM_LIMIT = 700 / 800;
 
 /**
@@ -97,6 +160,15 @@ const LINK_PILL_SX = {
 //
 // Before this change one scroll pass injected 1,335 stylesheet rules and dropped 32% of
 // frames; see docs/perf-baseline.md.
+/**
+ * Whether the "3D PoC" chip is offered in the hero.
+ *
+ * Off for now — the gallery is a developer affordance and is not something the
+ * live hero should advertise. Flip to `true` to bring the chip back; the
+ * gallery itself is untouched and still renders whenever `use3D` is on.
+ */
+const SHOW_3D_TOGGLE = false;
+
 export function HeroSignalCore() {
   const pinRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
@@ -109,6 +181,61 @@ export function HeroSignalCore() {
   const ready = usePreloaderReady();
 
   const [use3D, setUse3D] = useState(false);
+
+  /**
+   * Which gallery design is showing.
+   *
+   * Seeded from `sessionStorage` so flipping the toggle off and on, or navigating
+   * away and back, returns you to the design you were looking at — the whole point
+   * of the gallery is comparison, and losing your place on every toggle makes that
+   * harder than it needs to be. Session, not local: this is a review affordance, not
+   * a preference worth remembering next week.
+   *
+   * Every read is guarded. `sessionStorage` throws outright in a Safari private
+   * window rather than returning null, and an unrecognised stored id (a variant
+   * renamed since the tab was opened) has to fall back rather than render nothing.
+   */
+  const [variantId, setVariantId] = useState<PlaygroundVariantId>(() => {
+    try {
+      const stored = sessionStorage.getItem(VARIANT_STORAGE_KEY);
+      if (stored && VARIANTS.some((v) => v.id === stored)) {
+        return stored as PlaygroundVariantId;
+      }
+    } catch {
+      /* private mode, or storage disabled. The default is a fine answer. */
+    }
+    return DEFAULT_VARIANT_ID;
+  });
+
+  /**
+   * Tab switching runs inside a transition, so React keeps the *current* scene on
+   * screen while the next one's chunk downloads instead of tearing the canvas down
+   * to a Suspense fallback. `pendingId` is set synchronously alongside it because
+   * `variantId` deliberately lags until the transition commits, and the strip needs
+   * to show its loading state on the tab you actually clicked.
+   */
+  const [isPending, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<PlaygroundVariantId | null>(null);
+
+  // Derived, not stored-and-cleared. An effect that reset `pendingId` when
+  // `isPending` went false would be a setState inside an effect — a second render
+  // pass for a value that is a pure function of two things we already have. Gating
+  // on `isPending` makes a stale `pendingId` unobservable, so there is nothing to
+  // clean up.
+  const loadingId = isPending ? pendingId : null;
+
+  const selectVariant = useCallback(
+    (id: PlaygroundVariantId) => {
+      setPendingId(id);
+      startTransition(() => setVariantId(id));
+      try {
+        sessionStorage.setItem(VARIANT_STORAGE_KEY, id);
+      } catch {
+        /* Losing the memory is not worth losing the interaction over. */
+      }
+    },
+    [],
+  );
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -214,10 +341,17 @@ export function HeroSignalCore() {
         ref={containerRef}
         id="hero"
         {...{ [STAGE_ATTR]: "" }}
+        data-playground={use3D ? "on" : "off"}
         sx={{
+          ...PLAYGROUND_FLIP_SX,
           position: "relative",
           height: "100vh",
-          width: "100vw",
+          // `100%`, not `100vw`. `100vw` includes the scrollbar gutter, so this box
+          // was ~10px wider than the header's container and everything positioned
+          // against its right edge sat that far off the header's right edge. (It is
+          // also the classic source of a phantom horizontal scrollbar; `overflowX:
+          // clip` on `#home-main` was hiding that rather than preventing it.)
+          width: "100%",
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
@@ -348,6 +482,7 @@ export function HeroSignalCore() {
                 zIndex: 4,
                 overflow: "hidden",
                 px: { xs: 2, md: 4 },
+                mixBlendMode: "difference",
               }}
             >
               <Typography
@@ -405,6 +540,7 @@ export function HeroSignalCore() {
                 zIndex: 4,
                 overflow: "hidden",
                 px: { xs: 2, md: 4 },
+                mixBlendMode: "difference",
               }}
             >
               <Typography
@@ -448,6 +584,7 @@ export function HeroSignalCore() {
         {/* Scaled Hero Container (Houses P Logo, AT Text & Wordmark) */}
         <Box
           ref={cardRef}
+          className="hero-card"
           sx={{
             position: "relative",
             width: "100%",
@@ -514,6 +651,7 @@ export function HeroSignalCore() {
           */}
           <Box
             aria-hidden
+            className="hero-sky"
             sx={{
               position: "absolute",
               inset: 0,
@@ -544,7 +682,11 @@ export function HeroSignalCore() {
           >
             {use3D ? (
               <Suspense fallback={null}>
-                <R3FHeroCanvas handleRef={canvasHandleRef} varsHostRef={cardRef} />
+                <R3FHeroCanvas
+                  handleRef={canvasHandleRef}
+                  varsHostRef={cardRef}
+                  variantId={variantId}
+                />
               </Suspense>
             ) : (
               <LegacyHeroCanvas handleRef={canvasHandleRef} varsHostRef={cardRef} />
@@ -574,10 +716,14 @@ export function HeroSignalCore() {
             sx={{
               position: "absolute",
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
+              // These two insets are half of a lockup: the canvas solves the P's
+              // travel against them so the mark lands a fixed gap to their left
+              // (see `LOCKUP_GAP` in heroPlaneRenderer.ts). Import them rather than
+              // restating the numbers — a silent drift here collides the two.
               left: {
                 xs: "50%",
-                sm: "calc(50% - 65px)",
-                md: "calc(50% - 95px)",
+                sm: `calc(50% - ${WORDMARK_INSET_SM}px)`,
+                md: `calc(50% - ${WORDMARK_INSET_MD}px)`,
               },
               width: "auto",
               textAlign: { xs: "center", sm: "left" },
@@ -604,6 +750,7 @@ export function HeroSignalCore() {
                 variant="h1"
                 component="h1"
                 aria-label="Phitopolis"
+                className="hero-wordmark"
                 sx={{
                   fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
                   fontWeight: 900,
@@ -636,7 +783,9 @@ export function HeroSignalCore() {
         />
 
         {/* Toggle Switch */}
+        {SHOW_3D_TOGGLE && (
         <Box
+          className="hero-chip"
           sx={{
             position: "absolute",
             // Desktop only. At 375px it sat on top of the three-line headline —
@@ -645,7 +794,12 @@ export function HeroSignalCore() {
             // A WebGL playground is also the last thing a phone wants offered.
             display: { xs: "none", md: "flex" },
             top: 84,
-            right: 72,
+            // Shares the header toolbar's own gutter so the chip's right edge lines
+            // up with the menu button's, rather than floating on an unrelated inset.
+            // Measured before this change: menu right edge 1246, chip right edge
+            // 1208 at a 1280 viewport — 38px adrift, and visibly so once the header
+            // compacts into its white button.
+            right: { md: 24, lg: 24 },
             zIndex: 10,
             opacity: ready ? "var(--hp-panel, 1)" : 0,
             transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
@@ -667,6 +821,7 @@ export function HeroSignalCore() {
           }}
         >
           <Typography
+            className="hero-chip-label"
             sx={{
               fontFamily: MONO,
               fontSize: "0.7rem",
@@ -677,7 +832,7 @@ export function HeroSignalCore() {
               lineHeight: 1,
             }}
           >
-            3D PLAYGROUND
+            3D PoC
           </Typography>
           <Switch
             checked={use3D}
@@ -689,9 +844,16 @@ export function HeroSignalCore() {
               width: 32,
               height: 18,
               display: "flex",
+              alignItems: "center",
+              flexShrink: 0,
+              // The thumb is centred by padding on the (absolutely positioned)
+              // switchBase, not by a margin. A margin here left the 14px thumb
+              // hanging off the track's baseline — the switchBase is pinned to
+              // the root's top-left, so only its own padding box actually moves
+              // the thumb, and 2px of padding is the exact (18 - 14) / 2 inset.
               "& .MuiSwitch-switchBase": {
-                padding: 0,
-                margin: "2px",
+                padding: "2px",
+                margin: 0,
                 transitionDuration: "250ms",
                 color: "rgba(10, 42, 102, 0.6)",
                 "&.Mui-checked": {
@@ -719,6 +881,18 @@ export function HeroSignalCore() {
             }}
           />
         </Box>
+        )}
+
+        {/* The gallery's tab strip. Mounted only while the PoC is on — there is
+            nothing to switch between otherwise, and an empty tablist is worse than
+            no tablist. */}
+        {use3D && (
+          <PlaygroundTabs
+            activeId={variantId}
+            onSelect={selectVariant}
+            loadingId={loadingId}
+          />
+        )}
 
         {/* Top Left Motto Section */}
         <Box
@@ -737,6 +911,7 @@ export function HeroSignalCore() {
         >
           <Typography
             variant="h4"
+            className="hero-motto"
             sx={{
               fontFamily: DISPLAY_FONT,
               fontWeight: 800,
@@ -769,6 +944,7 @@ export function HeroSignalCore() {
           }}
         >
           <Typography
+            className="hero-eyebrow"
             sx={{
               fontFamily: MONO,
               fontSize: "0.65rem",
@@ -793,6 +969,7 @@ export function HeroSignalCore() {
             {/* Link 1: ABOUT */}
             <Box
               component={RouterLink}
+              className="hero-pill"
               to="/about"
               sx={{
                 display: "flex",
@@ -822,6 +999,7 @@ export function HeroSignalCore() {
             {/* Link 2: SERVICES */}
             <Box
               component={RouterLink}
+              className="hero-pill"
               to="/services"
               sx={{
                 display: "flex",
@@ -851,6 +1029,7 @@ export function HeroSignalCore() {
             {/* Link 3: BLOG */}
             <Box
               component={RouterLink}
+              className="hero-pill"
               to="/blog"
               sx={{
                 display: "flex",

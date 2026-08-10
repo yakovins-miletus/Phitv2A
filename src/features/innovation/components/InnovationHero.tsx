@@ -84,11 +84,11 @@ export function InnovationHero() {
         <Stack spacing={3.5} sx={{ maxWidth: 880 }}>
           <Reveal>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
-              <ScienceIcon sx={{ color: "#FFC72C", fontSize: "1.3rem" }} />
+              <ScienceIcon sx={{ color: "var(--accent-fg)", fontSize: "1.3rem" }} />
               <Typography
                 variant="overline"
                 sx={{
-                  color: "#FFC72C",
+                  color: "var(--accent-fg)",
                   fontWeight: 800,
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",
@@ -205,12 +205,12 @@ export function InnovationHero() {
                 width: 40,
                 height: 40,
                 borderRadius: "50%",
-                border: "1px solid rgba(255, 199, 44, 0.4)",
+                border: "1px solid var(--accent-40)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#FFC72C",
-                bgcolor: "rgba(255, 199, 44, 0.1)",
+                color: "var(--accent-fg)",
+                bgcolor: "rgba(var(--accent-rgb), 0.1)",
               }}
             >
               <ArrowDownwardIcon fontSize="small" />
@@ -221,7 +221,7 @@ export function InnovationHero() {
               fontFamily: MONO,
               fontSize: "0.72rem",
               letterSpacing: "0.18em",
-              color: "#FFC72C",
+              color: "var(--accent-fg)",
               fontWeight: 800,
             }}
           >

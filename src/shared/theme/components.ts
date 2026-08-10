@@ -52,16 +52,18 @@ const focusRing = (theme: Theme) => ({
   outline: `2px solid ${theme.palette.secondary.main}`,
   outlineOffset: "2px",
   /**
-   * A dark halo behind the gold ring, so the ring survives on the *lightest*
-   * surface the design produces (elevation-3 glass over `field`, where gold
-   * measures 6.16:1 on its own).
+   * A halo behind the gold ring, so the ring survives on whatever surface it
+   * lands on — the lightest the design produces is elevation-3 glass over
+   * `field`, where gold measures 6.16:1 on its own.
    *
-   * This was `primary.main + "33"` — navy at 20%. On a light page that darkened
-   * the surround and helped. On a navy page it is navy on navy: invisible, and a
-   * WCAG 2.4.11 exposure, since the ring's own contrast was never the thing being
-   * relied on.
+   * This was `primary.main + "33"` — navy at 20% — then a hard
+   * `rgba(0, 0, 0, 0.6)` when the palette was assumed to be all-dark. Neither is
+   * right on both grounds, and the site has both: navy-on-navy is invisible, and
+   * a black halo on the off-white page draws a bruise around every focused
+   * control. `--focus-halo` is navy at 22% on light and black at 60% on dark, so
+   * the ring's surround always darkens *away* from the ring.
    */
-  boxShadow: "0 0 0 4px rgba(0, 0, 0, 0.6)",
+  boxShadow: "0 0 0 4px var(--focus-halo)",
   borderRadius: "var(--r-control)",
 });
 
@@ -120,8 +122,9 @@ export const components: Components<Theme> = {
       "@media (prefers-reduced-motion: no-preference)": {
         ".skip-to-content": { transition: "transform 0.2s ease-out" },
       },
-      // Scrollbars are UA-painted. `color-scheme: dark` (glass.css) already darkens
-      // them; this only narrows the gutter so it reads as chrome rather than a rail.
+      // Scrollbars are UA-painted. `color-scheme` (glass.css, per ground) already
+      // tunes them; this only narrows the gutter so it reads as chrome rather than
+      // a rail.
       "*::-webkit-scrollbar": { width: 10, height: 10 },
       "*::-webkit-scrollbar-thumb": {
         backgroundColor: "var(--glass-border-1)",

@@ -5,7 +5,6 @@ import { Reveal } from "@/shared/components/Reveal";
 import { ReachMap } from "@/shared/components/ReachMap";
 import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection } from "@/shared/components/StageSection";
-import { StatStrip } from "@/shared/components/StatStrip";
 import { homeSection } from "@/shared/sections";
 
 /**
@@ -30,18 +29,14 @@ import { homeSection } from "@/shared/sections";
  *    consumer anywhere in the app.
  */
 export function ReachSection() {
-  // The lede says "two offices, two client regions"; these are those two figures.
-  // Slicing the shared list rather than hardcoding keeps copy and numbers on one
-  // source, so they cannot drift apart.
-  const footprint = CONTENT.stats.slice(0, 2);
-
   return (
     <StageSection section={homeSection("reach")}>
-      <Box sx={{ mb: { xs: 5, md: 7 }, maxWidth: "34ch" }}>
+      <Box sx={{ mb: { xs: 5, md: 7 } }}>
         <SectionLede
           gunshot={CONTENT.ledes.reach.gunshot}
           tracer={CONTENT.ledes.reach.tracer}
           eyebrow="Global Footprint"
+          titleSx={{ maxWidth: "none", textWrap: { xs: "balance", md: "wrap" } }}
         />
       </Box>
 
@@ -57,10 +52,6 @@ export function ReachSection() {
           <ReachMap />
         </Box>
       </Reveal>
-
-      <Box sx={{ mt: { xs: 5, md: 7 } }}>
-        <StatStrip stats={footprint} />
-      </Box>
     </StageSection>
   );
 }

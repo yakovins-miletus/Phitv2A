@@ -38,8 +38,19 @@ const glassCss = read("src/shared/theme/glass.css");
 const glassTs = read("src/shared/theme/glass.ts");
 const indexHtml = read("index.html");
 
-/** The `:root` block only — gate blocks redeclare several of these names. */
-const ROOT_BLOCK = /:root\s*\{([\s\S]*?)\n\}/.exec(glassCss)?.[1] ?? "";
+/**
+ * The `:root` block only — the LIGHT ground, which is the page default. Gate
+ * blocks and the dark block redeclare several of these names.
+ *
+ * Both selectors are anchored to the start of a line (`/m`): glass.css names them
+ * in prose in its own docblock, and an unanchored match starts inside that
+ * comment and then runs on to the *next* `{` it finds — which silently made the
+ * dark block resolve to `:root`'s contents.
+ */
+const ROOT_BLOCK = /^:root[\s\S]*?\{([\s\S]*?)\n\}/m.exec(glassCss)?.[1] ?? "";
+
+/** The `[data-ground="dark"]` block — the navy ground, plus the portal chrome. */
+const DARK_BLOCK = /^\[data-ground="dark"\][\s\S]*?\{([\s\S]*?)\n\}/m.exec(glassCss)?.[1] ?? "";
 
 /** Read a custom property's value out of a given block of CSS text. */
 function tokenIn(block: string, name: string): string | undefined {
@@ -48,6 +59,15 @@ function tokenIn(block: string, name: string): string | undefined {
 }
 
 const rootToken = (name: string) => tokenIn(ROOT_BLOCK, name);
+const darkToken = (name: string) => tokenIn(DARK_BLOCK, name);
+
+/**
+ * The five tokens the gate owns. They are identical on both grounds and the gate
+ * blocks select `:root` / `html`, so a redeclaration inside the dark block would
+ * out-specify the gate and leave navy sections blurring on a machine that asked
+ * for no blur. glass.css states this contract; this is what enforces it.
+ */
+const GATED_TOKENS = ["glass-blur", "glass-saturate", "glass-under-a", "nav-blur", "scrim-blur"];
 
 /** The three blocks that must gate glass cost, keyed by how they are selected. */
 const GATE_BLOCKS: Record<string, string> = {
@@ -63,6 +83,7 @@ describe("glass.css mirrors its TypeScript sources", () => {
     // Guards the guard: a refactor that renames a selector must fail loudly here
     // rather than making every assertion below vacuously pass on an empty string.
     expect(ROOT_BLOCK.length).toBeGreaterThan(500);
+    expect(DARK_BLOCK.length).toBeGreaterThan(500);
     for (const [selector, block] of Object.entries(GATE_BLOCKS)) {
       expect(block.length, `${selector} — block not found`).toBeGreaterThan(40);
     }
@@ -70,21 +91,68 @@ describe("glass.css mirrors its TypeScript sources", () => {
 
   test("ground tokens equal their NOIR counterparts", () => {
     const pairs: [string, string][] = [
+      ["g-void", NOIR.void],
+      ["g-panel", NOIR.panel],
+      ["g-white", NOIR.white],
       ["g-floor", NOIR.navyFloor],
       ["g-ink", NOIR.navyInk],
       ["g-deep", NOIR.navyDeep],
       ["g-field", NOIR.navyField],
-      ["text-1", NOIR.frost],
-      ["accent-fg", NOIR.gold],
     ];
     for (const [name, expected] of pairs) {
       expect(rootToken(name)?.toLowerCase(), `--${name}`).toBe(expected.toLowerCase());
     }
   });
 
+  test("each ground's foreground tokens equal their NOIR counterparts", () => {
+    // The bug this pair of assertions exists for: `:root` carried the DARK values
+    // while palette.ts shipped `mode: "light"`, so --text-1 was near-white on an
+    // off-white page — <h1> on /contact measured 1.00:1. Pinning both grounds
+    // means neither set can be "simplified" back into the other.
+    expect(rootToken("text-1")?.toLowerCase(), "--text-1 on light").toBe(
+      NOIR.navyField.toLowerCase(),
+    );
+    expect(darkToken("text-1")?.toLowerCase(), "--text-1 on dark").toBe(NOIR.frost.toLowerCase());
+
+    // --accent-fg is deliberately NOT per-ground: brand gold is the accent as
+    // text on both. The light ground used to carry a bronze (`goldInk`) for the
+    // 4.5:1 floor; that split is retired, and the sub-AA reading it existed to
+    // avoid is pinned in a11y-contrast.test.ts rather than hidden. Both grounds
+    // stay asserted so neither can drift back apart unnoticed.
+    expect(rootToken("accent-fg")?.toLowerCase(), "--accent-fg on light").toBe(
+      NOIR.gold.toLowerCase(),
+    );
+    expect(darkToken("accent-fg")?.toLowerCase(), "--accent-fg on dark").toBe(
+      NOIR.gold.toLowerCase(),
+    );
+  });
+
+  test("the dark ground does not redeclare a gated token", () => {
+    for (const name of GATED_TOKENS) {
+      expect(
+        darkToken(name),
+        `--${name} is gated on :root; redeclaring it in the dark block out-specifies the gate`,
+      ).toBeUndefined();
+    }
+  });
+
+  test("tokens whose value contains var() are declared on both grounds", () => {
+    // A custom property's var()s are substituted at computed-value time on the
+    // element the declaration lands on, and descendants inherit the SUBSTITUTED
+    // value. So --glass-under declared only on :root would carry white into a
+    // navy section no matter what --glass-under-rgb says there.
+    for (const name of ["glass-under", "glass-filter", "nav-fill", "glass-border"]) {
+      expect(rootToken(name), `--${name} on light`).toBeDefined();
+      expect(darkToken(name), `--${name} must be redeclared on the dark ground`).toBeDefined();
+    }
+  });
+
   test("rgb triplet tokens equal their NOIR counterparts", () => {
+    // The accent is one colour on both grounds; the understudy is the ground's
+    // own darkest/lightest neutral, so it is one per ground.
     expect(rootToken("accent-rgb")).toBe(NOIR.goldRgb);
-    expect(rootToken("glass-under-rgb")).toBe(NOIR.navyInkRgb);
+    expect(rootToken("glass-under-rgb")).toBe(NOIR.whiteRgb);
+    expect(darkToken("glass-under-rgb")).toBe(NOIR.navyInkRgb);
   });
 
   test("easing tokens equal the shared curves", () => {

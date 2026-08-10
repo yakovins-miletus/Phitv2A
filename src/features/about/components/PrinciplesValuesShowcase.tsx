@@ -133,7 +133,7 @@ export function PrinciplesValuesShowcase() {
           sx={{
             position: "absolute",
             inset: 0,
-            background: "radial-gradient(circle at 80% 20%, rgba(255, 199, 44, 0.08) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(10, 42, 102, 0.04) 0%, transparent 60%)",
+            background: "radial-gradient(circle at 80% 20%, rgba(var(--accent-rgb), 0.08) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(10, 42, 102, 0.04) 0%, transparent 60%)",
             pointerEvents: "none",
           }}
         />
@@ -143,11 +143,11 @@ export function PrinciplesValuesShowcase() {
             {/* Section Overhead Title Bar */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2, borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <AutoAwesomeIcon sx={{ color: NOIR.goldDark, fontSize: "1.2rem" }} />
+                <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: NOIR.goldDark,
+                    color: "var(--accent-fg)",
                     fontWeight: 800,
                     letterSpacing: "0.2em",
                     fontSize: "0.85rem",
@@ -199,7 +199,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: NOIR.goldDark,
+                            color: "var(--accent-fg)",
                             fontSize: "1.5rem",
                             letterSpacing: "0.1em",
                           }}
@@ -230,7 +230,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: NOIR.goldDark,
+                            color: "var(--accent-fg)",
                             fontSize: "0.72rem",
                             letterSpacing: "0.12em",
                             display: "block",
@@ -295,7 +295,7 @@ export function PrinciplesValuesShowcase() {
                         aspectRatio: { xs: "16/10", md: "16/11" },
                         borderRadius: { xs: 5, md: 8 },
                         overflow: "hidden",
-                        border: "1px solid rgba(255, 199, 44, 0.3)",
+                        border: "1px solid rgba(var(--accent-rgb), 0.3)",
                         boxShadow: "0 12px 40px rgba(10, 42, 102, 0.15)",
                         transform: "translateZ(0)",
                         WebkitTransform: "translateZ(0)",

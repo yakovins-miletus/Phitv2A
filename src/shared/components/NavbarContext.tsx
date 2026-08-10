@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 
 export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch' | 'standard' | 'glassmorphism';
 
@@ -149,14 +149,39 @@ export function useNavbar() {
   return context;
 }
 
+/**
+ * `options.dark` answers one question — "is this section drawn on a navy
+ * ground?" — and two things need that answer, so the hook gives it to both:
+ *
+ *   1. The navbar, which must invert its chrome over a dark section. That is
+ *      what the flag was written for, and it goes through `registerAnchor`.
+ *   2. The token layer. `data-ground="dark"` on the section element switches
+ *      `--text-*`, `--glass-*` and `--accent-fg` for the whole subtree, so every
+ *      MUI component inside a navy section paints its dark variant without the
+ *      component knowing which ground it is on. See glass.css.
+ *
+ * Setting the attribute here rather than at each call site means the two can't
+ * disagree — a section cannot tell the navbar it is dark and then hand its cards
+ * light-ground tokens. The `dark` prop is applied as an attribute rather than
+ * through `sx` so it lands before first paint and costs no Emotion class.
+ */
 export function useNavbarAnchor(id: NavAnchorId, options?: { dark?: boolean; rootMargin?: string; threshold?: number | number[] }) {
   const { registerAnchor } = useNavbar();
   const ref = useRef<HTMLDivElement>(null);
-  const darkRef = useRef(options?.dark ?? false);
-  darkRef.current = options?.dark ?? false;
+  const dark = options?.dark ?? false;
+  const darkRef = useRef(dark);
+  darkRef.current = dark;
 
   const customMargin = options?.rootMargin;
   const customThreshold = options?.threshold;
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (!dark) return;
+    el.setAttribute("data-ground", "dark");
+    return () => el.removeAttribute("data-ground");
+  }, [dark]);
 
   useEffect(() => {
     const el = ref.current;

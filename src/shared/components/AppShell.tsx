@@ -148,7 +148,9 @@ function AnimatedContactButton({
       sx={{
         borderRadius: "10px",
         border: "none !important",
-        color: (hovered || clicked || isActive) ? `${NOIR.gold} !important` : (onDark ? "rgba(255,255,255,0.9)" : "text.secondary"),
+        color: (hovered || clicked || isActive)
+          ? `${NOIR.gold} !important`
+          : (onDark ? "rgba(255,255,255,0.9)" : "text.secondary"),
         bgcolor: "transparent !important",
         background: "none !important",
         backgroundImage: "none !important",
@@ -799,7 +801,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   transition: "all 0.2s ease",
                   "&:hover": { color: "primary.main", bgcolor: "action.hover", paddingLeft: 2 }
                 }}
-                activeProps={{ sx: { color: NOIR.gold } }}
+                activeProps={{ sx: { color: "var(--accent-fg)" } }}
               >
                 {item.label}
               </RouterLink>

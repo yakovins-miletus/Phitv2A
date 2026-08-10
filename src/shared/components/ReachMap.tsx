@@ -62,7 +62,7 @@ export function ReachMap() {
   const hq = projectPoint(HQ.lon, HQ.lat);
 
   return (
-    <Box ref={rootRef} sx={{ position: "relative", width: 1, overflow: "hidden" }}>
+    <Box ref={rootRef} sx={{ position: "relative", width: 1, overflow: "hidden", borderRadius: { xs: 0, md: 4 } }}>
       <svg
         viewBox={`0 0 ${String(WORLD_MAP.width)} ${String(WORLD_MAP.height)}`}
         width="100%"
@@ -70,6 +70,11 @@ export function ReachMap() {
         aria-labelledby="reach-title reach-desc"
         style={{ display: "block" }}
       >
+        <defs>
+          <pattern id="sea-pattern" x="7" y="7" width="13" height="13" patternUnits="userSpaceOnUse">
+            <circle cx="0" cy="0" r="2" fill={theme.palette.primary.main} opacity={0.15} />
+          </pattern>
+        </defs>
         <title id="reach-title">Global reach from one Manila headquarters</title>
         <desc id="reach-desc">
           A dotted world map: the single Phitopolis headquarters in Manila
@@ -79,6 +84,8 @@ export function ReachMap() {
         </desc>
         {/* Flat plain-white ground — no gradients, no tints. */}
         <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill={NOIR.panel} />
+        {/* Sea dots backdrop */}
+        <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill="url(#sea-pattern)" />
 
         {/* Land mass — one path of round-capped zero-length segments. */}
         <path
@@ -169,7 +176,7 @@ export function ReachMap() {
               width: "max-content",
               bgcolor: "white",
               border: `1px solid ${theme.palette.primary.main}`,
-              color: NOIR.gold,
+              color: "var(--accent-fg)",
               px: 1,
               py: 0.25,
               borderRadius: 1,
@@ -201,7 +208,7 @@ export function ReachMap() {
           width: "max-content",
           bgcolor: "white",
           border: `1px solid ${theme.palette.primary.main}`,
-          color: NOIR.gold,
+          color: "var(--accent-fg)",
           px: 1,
           py: 0.25,
           borderRadius: 1,

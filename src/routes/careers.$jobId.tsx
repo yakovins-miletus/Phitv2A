@@ -119,8 +119,8 @@ function JobDetailPage() {
                     fontFamily: MONO,
                     fontWeight: 800,
                     fontSize: "0.72rem",
-                    bgcolor: "#FFC72C",
-                    color: "#0A2A66",
+                    bgcolor: "secondary.main",
+                    color: "secondary.contrastText",
                   }}
                 />
                 <Chip
@@ -184,7 +184,7 @@ function JobDetailPage() {
                   <Stack spacing={1.5}>
                     {job.responsibilities.map((item, idx) => (
                       <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                        <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#FFC72C", mt: 1, flexShrink: 0 }} />
+                        <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "var(--accent)", mt: 1, flexShrink: 0 }} />
                         <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                           {item}
                         </Typography>
@@ -218,7 +218,7 @@ function JobDetailPage() {
                   <Stack spacing={1.5}>
                     {job.benefits.map((item, idx) => (
                       <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                        <CheckCircleOutlineIcon sx={{ color: "#FFC72C", fontSize: "1.2rem", mt: 0.2, flexShrink: 0 }} />
+                        <CheckCircleOutlineIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem", mt: 0.2, flexShrink: 0 }} />
                         <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6, fontWeight: 500 }}>
                           {item}
                         </Typography>
@@ -245,7 +245,7 @@ function JobDetailPage() {
               >
                 {formSubmitted ? (
                   <Stack spacing={3} alignItems="center" textAlign="center" sx={{ py: 4 }}>
-                    <CheckCircleOutlineIcon sx={{ fontSize: "4rem", color: "#FFC72C" }} />
+                    <CheckCircleOutlineIcon sx={{ fontSize: "4rem", color: "var(--accent-fg)" }} />
                     <Typography variant="h3" component="h2" sx={{ fontWeight: 800 }}>
                       Application Received!
                     </Typography>

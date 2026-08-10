@@ -70,8 +70,13 @@ rects, polylines, and sprite blits. Scroll progress arrives through an imperativ
 
 ## Standing rules for every stage
 
-1. **The 3D playground variant is out of scope.** `PlaygroundScene.tsx` and
-   `R3FHeroCanvas.tsx` internals must show no diff. The `use3D` switch stays.
+1. ~~**The 3D playground variant is out of scope.** `PlaygroundScene.tsx` and
+   `R3FHeroCanvas.tsx` internals must show no diff. The `use3D` switch stays.~~
+   **RETIRED 2026-08-10.** The playground is now the work, not a fenced-off corner
+   of it: the toggle (relabelled `3D PoC`) opens a four-design gallery under
+   `src/features/hero/playground/`, `R3FHeroCanvas.tsx` was rewritten as its entry
+   point, and `PlaygroundScene.tsx` is deleted. The switch does stay. See
+   `checkpoint-1.md` and the plan this rule was written under.
 2. **`CUBE_POSITIONS` is frozen.** `tests/motion/hero-scene.test.ts` pins it to 16 entries
    with an exact height array. Derive from it; never reorder or retype it.
 3. **`SIGNAL_LOOPS` waypoints are frozen.** `segLens`/`totalL` are precomputed and pinned.

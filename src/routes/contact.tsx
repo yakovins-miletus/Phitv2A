@@ -29,7 +29,7 @@ function NextStepsTimeline() {
             direction="row"
             spacing={2.5}
             sx={{
-              "&:hover .timeline-node": { transform: "scale(1.4)", bgcolor: "#FFC72C", borderColor: "#FFC72C" }
+              "&:hover .timeline-node": { transform: "scale(1.4)", bgcolor: "var(--accent)", borderColor: "var(--accent)" }
             }}
           >
             <Stack alignItems="center" sx={{ flexShrink: 0 }}>
@@ -40,7 +40,7 @@ function NextStepsTimeline() {
                   height: 14,
                   borderRadius: "50%",
                   bgcolor: "#0A2A66",
-                  border: "2px solid #FFC72C",
+                  border: "2px solid var(--accent)",
                   mt: 0.5,
                   transition: "all 0.25s ease",
                 }}
@@ -107,7 +107,7 @@ function ContactPage() {
                     fontSize: "0.72rem",
                     letterSpacing: "0.2em",
                     textTransform: "uppercase",
-                    color: "#FFC72C",
+                    color: "var(--accent-fg)",
                     fontWeight: 800,
                     mb: 0.5,
                   }}
