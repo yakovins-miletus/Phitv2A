@@ -19,10 +19,12 @@ interface Pillar {
   detail: string;
 }
 
+// `goldDark`, not `gold`: these sit on a near-white ground, where the lighter
+// gold all but disappears.
 const PILLAR_ICONS = [
-  <MagnifyingGlass weight="light" size={40} color={NOIR.gold} />,
-  <TerminalWindow weight="light" size={40} color={NOIR.gold} />,
-  <GlobeHemisphereWest weight="light" size={40} color={NOIR.gold} />,
+  <MagnifyingGlass weight="light" size={32} color={NOIR.goldDark} />,
+  <TerminalWindow weight="light" size={32} color={NOIR.goldDark} />,
+  <GlobeHemisphereWest weight="light" size={32} color={NOIR.goldDark} />,
 ];
 
 export function OperatingPillars() {
@@ -31,7 +33,9 @@ export function OperatingPillars() {
   return (
     <StageSection section={homeSection("hero-pillars")}>
       <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
-        <Box sx={{ mb: { xs: 8, md: 10 }, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+        {/* Left-aligned with the columns below it. Centred heading over a
+         *  left-aligned grid reads as two designs sharing a section. */}
+        <Box sx={{ mb: { xs: 6, md: 8 } }}>
           <Typography
             component="p"
             variant="overline"
@@ -54,110 +58,61 @@ export function OperatingPillars() {
           </Typography>
         </Box>
 
-        {/* The Monolith: A single, unified block divided into three segments */}
+        {/* Three plain columns under a hairline rule.
+         *
+         * This was a glass "monolith" — a translucent rounded card with a blur,
+         * a gold underline, a drop shadow, a decorative beam pinned at a magic
+         * `top: 100px`, and each icon in its own tinted chip. On a light ground
+         * none of that carried information: it read as a grey box of yellow
+         * tiles, and the beam fell wherever the copy happened to push it. The
+         * content is three labelled paragraphs, so it is set as three labelled
+         * paragraphs — the rule and the column gap do all the dividing. */}
         <Box
           component={motion.div}
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           sx={{
-            position: "relative",
-            width: "100%",
-            bgcolor: "rgba(255, 255, 255, 0.02)",
-            border: `1px solid rgba(255, 255, 255, 0.08)`,
-            borderBottom: `2px solid ${NOIR.gold}60`,
-            backdropFilter: "blur(16px)",
-            borderRadius: "24px",
-            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.08)",
-            overflow: "hidden",
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+            columnGap: { md: 8 },
+            rowGap: { xs: 6, md: 0 },
           }}
         >
-          {/* Integrated Connection Beam running across the entire monolith */}
-          <Box 
-            sx={{
-              display: { xs: "none", md: "block" },
-              position: "absolute",
-              top: "100px",
-              left: 0,
-              right: 0,
-              height: "1px",
-              background: `linear-gradient(90deg, transparent 5%, ${NOIR.gold}40 20%, ${NOIR.gold}40 80%, transparent 95%)`,
-              zIndex: 1,
-            }}
-          />
-
           {pillars.map((pillar, i) => {
             const Icon = PILLAR_ICONS[i] ?? PILLAR_ICONS[0]!;
-            
+
             return (
               <Box
                 key={pillar.id}
-                sx={{
-                  position: "relative",
-                  p: { xs: 4, md: 6 },
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  textAlign: "center",
-                  borderRight: { 
-                    xs: "none", 
-                    md: i < pillars.length - 1 ? `1px solid rgba(255, 255, 255, 0.06)` : "none" 
-                  },
-                  borderBottom: {
-                    xs: i < pillars.length - 1 ? `1px solid rgba(255, 255, 255, 0.06)` : "none",
-                    md: "none"
-                  },
-                  "&:hover": {
-                    bgcolor: "rgba(255, 255, 255, 0.02)",
-                    "& .pillar-icon-box": {
-                      bgcolor: "rgba(212, 175, 55, 0.12)",
-                    }
-                  }
-                }}
+                sx={{ pt: { xs: 4, md: 5 }, borderTop: `1px solid ${GROUND.rule}` }}
               >
-                {/* Number / Label */}
                 <Typography
                   component="span"
                   sx={{
+                    display: "block",
                     fontFamily: MONO,
                     fontSize: "0.75rem",
                     letterSpacing: "0.3em",
                     color: NOIR.goldDark,
-                    mb: 4,
+                    mb: 3,
                   }}
                 >
                   {pillar.id}
                 </Typography>
 
-                {/* Icon Hub */}
-                <Box 
-                  className="pillar-icon-box"
-                  sx={{ 
-                    p: 2.5, 
-                    borderRadius: "20px", 
-                    bgcolor: "rgba(212, 175, 55, 0.05)", 
-                    border: `1px solid ${NOIR.gold}30`,
-                    transition: "background-color 0.4s ease",
-                    mb: 6,
-                    position: "relative",
-                    zIndex: 2, // Sits above the connection beam
-                  }}
-                >
-                  {Icon}
-                </Box>
+                <Box sx={{ mb: 3, lineHeight: 0 }}>{Icon}</Box>
 
                 <Typography
                   variant="h3"
                   component="h3"
-                  sx={{ fontWeight: 600, color: GROUND.fg, letterSpacing: "-0.01em", mb: 3, fontSize: "1.75rem" }}
+                  sx={{ fontWeight: 600, color: GROUND.fg, letterSpacing: "-0.01em", mb: 2, fontSize: "1.5rem" }}
                 >
                   {pillar.name}
                 </Typography>
 
-                <Typography sx={{ color: GROUND.muted, lineHeight: 1.6, fontSize: "1.05rem", maxWidth: "40ch", mx: "auto" }}>
+                <Typography sx={{ color: GROUND.muted, lineHeight: 1.6, fontSize: "1.05rem", maxWidth: "34ch" }}>
                   {pillar.detail}
                 </Typography>
               </Box>

@@ -36,7 +36,6 @@ export function BlogSection() {
           flexDirection: "column",
           justifyContent: "center",
           py: { xs: 8, md: 10 },
-          bgcolor: NOIR.navyField, // Explicitly use primary brand navy
         }}
       >
         <Reveal>
@@ -124,7 +123,7 @@ export function BlogSection() {
                         justifyContent: "flex-end",
                         p: { xs: 4, md: 5 },
                         borderRadius: "28px",
-                        bgcolor: "rgba(255,255,255,0.02)",
+                        bgcolor: NOIR.navyDeep,
                         border: "1px solid",
                         borderColor: "rgba(255,255,255,0.06)",
                         cursor: "pointer",
@@ -132,7 +131,10 @@ export function BlogSection() {
                         position: "relative",
                         overflow: "hidden",
                         "&:hover": {
-                          bgcolor: "rgba(255,255,255,0.05)",
+                          // Lift to the ground navy rather than a translucent
+                          // white wash — the card is opaque now, so a wash would
+                          // read as a different material on hover.
+                          bgcolor: NOIR.navyField,
                           borderColor: "rgba(255,255,255,0.15)",
                           transform: "translateY(-4px)",
                           boxShadow: "0 10px 30px rgba(0,0,0,0.15)",

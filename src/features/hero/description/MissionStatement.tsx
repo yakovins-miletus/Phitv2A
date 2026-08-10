@@ -1,13 +1,16 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { keyframes } from "@mui/system";
-import { Cpu, Code, Cloud, ChartBar } from "@phosphor-icons/react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "@phosphor-icons/react";
 
 import { CONTENT } from "@/shared/content";
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
+import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { ServiceGlobe } from "./ServiceGlobe";
 
 // Follows the section registry rather than naming a ground twice — see the same
 // note in MarketPosition.tsx.
@@ -22,35 +25,52 @@ const GROUND = GROUNDS[homeSection("hero-mission").ground ?? "deep"];
  * reason it read as interchangeable regardless of the copy.
  *
  * This beat's identity is **typographic scale on a hard left edge**: no card, no
- * centring, no container chrome, and the right ~40% left deliberately empty.
- * Whitespace is the only device. The eye lands on the first word of the title and
- * has nowhere else to go.
+ * centring, no container chrome. The eye lands on the first word of the title and
+ * runs down to the one action the section offers.
+ *
+ * ## What fills the right side
+ *
+ * `ImmersiveTechBackground` — a full-bleed field of floating Phosphor glyphs (a
+ * cloud, a CPU, a `</>`, a bar chart) in blurred glass pills, on three infinite
+ * `keyframes` float loops. Three reasons it is gone rather than tuned:
+ *
+ *  - It was built for a dark ground. Its fills were `rgba(255,255,255,0.02)` and
+ *    its borders white at 6–8%, rendered at `opacity: 0.35` on `panel`
+ *    (#F8FAFC). On a near-white surface that is not atmosphere, it is four grey
+ *    smudges.
+ *  - It ran unconditionally. No `prefers-reduced-motion` branch, on a section
+ *    that is otherwise static — the one animation on the beat was the one nobody
+ *    could turn off.
+ *  - Those four glyphs say "technology company" and nothing more. A cloud icon
+ *    is not a claim.
+ *
+ * `<ServiceGlobe />` takes the space instead: a rotating wireframe sphere,
+ * oversized and pushed past the right gutter so the viewport cuts it, with the
+ * four service disciplines orbiting it and gold nodes at the four cities the copy
+ * already names. Same three facts the section is arguing — global, quantitative,
+ * four disciplines — as one object rather than as decoration. It is decorative in
+ * the a11y sense (the wireframe is `aria-hidden`, the labels are a real list) and
+ * it stops turning under `prefers-reduced-motion`.
  */
 export function MissionStatement() {
-  const { heroLine, execSummary } = CONTENT.hero.salesPitch;
+  const { heroLine, execSummary, cta } = CONTENT.hero.salesPitch;
 
   return (
     <StageSection section={homeSection("hero-mission")}>
-      {/* Immersive Full-Bleed Background Layer */}
-      <Box 
-        sx={{ 
-          position: "absolute", 
-          top: "50%", 
-          left: "50%", 
-          transform: "translate(-50%, -50%)", 
-          width: "100vw", 
-          height: "120vh", 
-          zIndex: 0, 
-          overflow: "hidden", 
-          pointerEvents: "none",
-          opacity: 0.35 // Base opacity so it bleeds under text
+      <ServiceGlobe />
+
+      {/* Foreground Content.
+       *
+       * Narrower than the old 62% at desktop: the orbit ring's left extreme
+       * reaches ~59% of the container, so a 62% column would have chips passing
+       * through the last words of every line. */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: { xs: "100%", md: "54%", lg: "50%" },
         }}
       >
-        <ImmersiveTechBackground />
-      </Box>
-
-      {/* Foreground Content */}
-      <Box sx={{ position: "relative", zIndex: 2, maxWidth: { xs: "100%", md: "62%" } }}>
         <Typography variant="h1" component="h2" sx={{ mb: 4 }}>
           {titleWithKeyedTail(heroLine.title)}
         </Typography>
@@ -70,85 +90,83 @@ export function MissionStatement() {
         <Typography sx={{ lineHeight: 1.65, color: GROUND.muted, maxWidth: "68ch" }}>
           {execSummary}
         </Typography>
+
+        <Box sx={{ mt: { xs: 5, md: 6 } }}>
+          <PrimaryAction label={cta.label} to={cta.to} />
+        </Box>
       </Box>
     </StageSection>
   );
 }
 
-const floatY1 = keyframes`
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-30px) rotate(2deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-`;
-
-const floatY2 = keyframes`
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(20px) rotate(-2deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-`;
-
-const pulseAlpha = keyframes`
-  0%, 100% { opacity: 0.1; }
-  50% { opacity: 0.4; }
-`;
-
-function ImmersiveTechBackground() {
+/**
+ * The section's one primary action.
+ *
+ * Hand-rolled rather than a themed `Button` so every state in the taste bar is
+ * visible in one place and none of them arrive from a global override. Filled
+ * navy at rest (frost on navy, 12.73:1) and filled gold on hover/focus (navy on
+ * gold, 9.48:1) — the hover is a fill swap, not an opacity change, so it survives
+ * forced-colours and reads at a glance.
+ *
+ * `focus-visible` is a double ring: a navy outline for contrast against the gold
+ * fill it sits on, and a gold halo outside it so the ring is visible on the near
+ * white ground too.
+ */
+function PrimaryAction({ label, to }: { label: string; to: string }) {
   return (
-    <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Abstract Grid Mesh - replacing the hand-rolled SVG data pipelines */}
-      <Box 
-        sx={{ 
-          position: "absolute", 
-          inset: 0, 
-          opacity: 0.15,
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
-          maskImage: "radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%)",
-        }} 
-      />
-
-      {/* 
-        Abstract geometric clusters representing computation and architecture, 
-        replacing fake UI chrome (terminals / dashboards).
-      */}
-      <Box sx={{ position: "absolute", top: "15%", right: "10%", animation: `${floatY1} 14s ease-in-out infinite` }}>
-        <Box sx={{ 
-          width: 320, 
-          height: 320, 
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${NOIR.gold}10 0%, transparent 70%)`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          animation: `${pulseAlpha} 8s ease-in-out infinite`
-        }} />
-      </Box>
-
-      {/* Phosphor Icons - Floating abstract technical symbols */}
-      <Box sx={{ position: "absolute", top: "25%", right: "45%", animation: `${floatY2} 12s ease-in-out infinite reverse` }}>
-        <Box sx={{ p: 2.5, borderRadius: "24px", bgcolor: "rgba(212, 175, 55, 0.05)", border: `1px solid ${NOIR.gold}30`, backdropFilter: "blur(12px)" }}>
-          <Code weight="light" size={48} color={NOIR.gold} />
-        </Box>
-      </Box>
-
-      <Box sx={{ position: "absolute", bottom: "30%", right: "15%", animation: `${floatY1} 15s ease-in-out infinite` }}>
-        <Box sx={{ p: 2, borderRadius: "20px", bgcolor: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}>
-          <Cloud weight="light" size={40} color={GROUND.muted} />
-        </Box>
-      </Box>
-
-      <Box sx={{ position: "absolute", top: "60%", right: "50%", animation: `${floatY1} 18s ease-in-out infinite reverse` }}>
-        <Box sx={{ p: 1.5, borderRadius: "16px", bgcolor: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(6px)" }}>
-          <Cpu weight="light" size={32} color={GROUND.muted} />
-        </Box>
-      </Box>
-
-      <Box sx={{ position: "absolute", top: "12%", right: "25%", animation: `${floatY2} 14s ease-in-out infinite` }}>
-        <Box sx={{ p: 1.5, borderRadius: "16px", bgcolor: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(6px)" }}>
-          <ChartBar weight="light" size={36} color={GROUND.muted} />
-        </Box>
-      </Box>
+    <Box
+      component={Link}
+      to={to}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 1.5,
+        // Asymmetric: the arrow adds visual mass on the right, so the right
+        // padding is pulled in to keep the control optically centred.
+        pl: 3.5,
+        pr: 3,
+        py: 1.75,
+        bgcolor: NOIR.navyField,
+        color: NOIR.frost,
+        textDecoration: "none",
+        borderRadius: 0,
+        fontFamily: MONO,
+        fontSize: "0.8125rem",
+        fontWeight: 500,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        transition: "background-color 160ms ease, color 160ms ease, transform 160ms ease",
+        "& .cta-arrow": {
+          transition: `transform 200ms ${EASE_OUT_EXPO_CSS}`,
+        },
+        // One block, not two: duplicate keys in an `sx` object silently drop the
+        // earlier one, which is how a reduced-motion guard gets written and never
+        // applied.
+        "@media (prefers-reduced-motion: reduce)": {
+          transition: "none",
+          "& .cta-arrow": { transition: "none" },
+        },
+        "&:hover": {
+          bgcolor: NOIR.gold,
+          color: NOIR.navyField,
+          "& .cta-arrow": { transform: "translateX(4px)" },
+        },
+        "&:focus-visible": {
+          bgcolor: NOIR.gold,
+          color: NOIR.navyField,
+          outline: `2px solid ${NOIR.navyField}`,
+          outlineOffset: "2px",
+          boxShadow: `0 0 0 6px rgba(${NOIR.goldRgb}, 0.45)`,
+        },
+        "&:active": {
+          bgcolor: NOIR.goldDark,
+          color: NOIR.navyField,
+          transform: "translateY(1px)",
+        },
+      }}
+    >
+      {label}
+      <ArrowRight className="cta-arrow" weight="bold" size={16} aria-hidden />
     </Box>
   );
 }

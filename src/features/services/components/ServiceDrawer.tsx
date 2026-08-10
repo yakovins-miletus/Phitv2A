@@ -20,9 +20,26 @@ import { NOIR } from "@/shared/theme/palette";
 export function ServiceVector({ id }: { id: string }) {
   if (id === "development" || id === "service-dev") {
     return (
-      <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Abstract Software Development Cycle */}
-        
+      <svg width="100%" height="100%" viewBox="-70 0 540 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Abstract Software Development Lifecycle: 4 phases connected in a clockwise loop.
+            viewBox is widened left/right (vs. the 400x400 node geometry) so the CODE and
+            MONITOR labels have room to sit beside their icons instead of clipping. */}
+
+        <defs>
+          <marker id="sdlc-arrow-gold" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill={NOIR.gold} />
+          </marker>
+          <marker id="sdlc-arrow-goldLight" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill={NOIR.goldLight} />
+          </marker>
+          <marker id="sdlc-arrow-goldDark" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill={NOIR.goldDark} />
+          </marker>
+          <marker id="sdlc-arrow-mist" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill={NOIR.mist} />
+          </marker>
+        </defs>
+
         {/* Central Core */}
         <motion.circle
           initial={{ scale: 1, opacity: 0.8 }}
@@ -60,100 +77,78 @@ export function ServiceVector({ id }: { id: string }) {
           style={{ transformOrigin: "200px 200px" }}
         />
 
-        {/* Directional Curved Arrows Connecting the 4 Phases */}
+        {/* Directional Curved Arrows Connecting the 4 Phases (marker-end keeps each
+            arrowhead locked to its arc's endpoint, tangent to the curve) */}
         {/* Top-Right Arc Arrow (Plan -> Code) */}
         <motion.path
-          d="M 230 84 A 120 120 0 0 1 316 170"
+          d="M 230 84 A 120 120 0 0 1 313 166"
           stroke={NOIR.gold}
           strokeWidth="3.5"
           strokeLinecap="round"
           fill="none"
-        />
-        <motion.path
-          d="M 310 152 L 318 174 L 296 170"
-          stroke={NOIR.gold}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
+          markerEnd="url(#sdlc-arrow-gold)"
         />
 
         {/* Bottom-Right Arc Arrow (Code -> Deploy) */}
         <motion.path
-          d="M 316 230 A 120 120 0 0 1 230 316"
+          d="M 316 230 A 120 120 0 0 1 233 313"
           stroke={NOIR.goldLight}
           strokeWidth="3.5"
           strokeLinecap="round"
           fill="none"
-        />
-        <motion.path
-          d="M 248 310 L 226 318 L 230 296"
-          stroke={NOIR.goldLight}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
+          markerEnd="url(#sdlc-arrow-goldLight)"
         />
 
         {/* Bottom-Left Arc Arrow (Deploy -> Monitor) */}
         <motion.path
-          d="M 170 316 A 120 120 0 0 1 84 230"
+          d="M 170 316 A 120 120 0 0 1 87 233"
           stroke={NOIR.goldDark}
           strokeWidth="3.5"
           strokeLinecap="round"
           fill="none"
-        />
-        <motion.path
-          d="M 90 248 L 82 226 L 104 230"
-          stroke={NOIR.goldDark}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
+          markerEnd="url(#sdlc-arrow-goldDark)"
         />
 
         {/* Top-Left Arc Arrow (Monitor -> Plan) */}
         <motion.path
-          d="M 84 170 A 120 120 0 0 1 170 84"
+          d="M 84 170 A 120 120 0 0 1 167 87"
           stroke={NOIR.mist}
           strokeWidth="3.5"
           strokeLinecap="round"
           fill="none"
-        />
-        <motion.path
-          d="M 152 90 L 174 82 L 170 104"
-          stroke={NOIR.mist}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
+          markerEnd="url(#sdlc-arrow-mist)"
         />
 
-        {/* 4 Abstract SDLC Phase Nodes */}
-        {/* Phase 1: Architecture / Design */}
+        {/* 4 Abstract SDLC Phase Nodes, each labeled so the loop reads as
+            Plan -> Code -> Deploy -> Monitor -> Plan without guessing at the icons */}
+        {/* Phase 1: Plan / Design */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
           <rect x="165" y="55" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.gold} strokeWidth="2" />
           <rect x="177" y="70" width="22" height="4" rx="2" fill={NOIR.goldLight} />
           <rect x="177" y="80" width="46" height="4" rx="2" fill={NOIR.mist} />
           <circle cx="218" cy="72" r="6" fill={NOIR.gold} />
+          <text x="200" y="40" textAnchor="middle" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>PLAN</text>
         </motion.g>
 
         {/* Phase 2: Code / Build */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
           <rect x="295" y="175" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.goldLight} strokeWidth="2" />
           <path d="M 315 192 L 308 200 L 315 208 M 345 192 L 352 200 L 345 208 M 332 190 L 328 210" stroke={NOIR.goldLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="372" y="204" textAnchor="start" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>CODE</text>
         </motion.g>
 
         {/* Phase 3: Test / Deploy */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}>
           <rect x="165" y="295" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.goldDark} strokeWidth="2" />
           <path d="M 185 320 L 195 328 L 215 312" stroke={NOIR.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="200" y="363" textAnchor="middle" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>DEPLOY</text>
         </motion.g>
 
         {/* Phase 4: Operate / Monitor */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 3 }}>
           <rect x="35" y="175" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.mist} strokeWidth="2" />
           <path d="M 48 200 L 58 200 L 63 190 L 70 210 L 77 195 L 82 200 L 92 200" stroke={NOIR.mist} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="28" y="204" textAnchor="end" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>MONITOR</text>
         </motion.g>
       </svg>
     );
@@ -211,21 +206,20 @@ export function ServiceVector({ id }: { id: string }) {
         />
         <motion.rect
           initial={{ height: 270, y: 80 }}
-          animate={{ height: [270, 290, 270], y: [80, 60, 80] }}
+          animate={{ height: [270, 282, 270], y: [80, 68, 80] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           x="290" y="80" width="60" height="270" rx="8" fill={NOIR.goldLight}
         />
 
-        {/* Upward Trend Graph Line */}
-        <motion.path
+        {/* Upward Trend Graph Line — static, so it doesn't read as moving in sync
+            with the bouncing arrowhead below */}
+        <path
           d="M 50 242.5 L 200 130 L 350 18"
           stroke={NOIR.gold}
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          animate={{ strokeDashoffset: [400, 0] }}
-          strokeDasharray="400"
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          fill="none"
         />
 
         {/* Upward Direction Arrowhead */}

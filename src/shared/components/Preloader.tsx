@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { MONO } from "@/shared/theme/theme";
 
@@ -98,9 +98,11 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
   const [resolved, setResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("ASSETS");
   const [forced, setForced] = useState(false);
-  const [phase, setPhase] = useState<"entry" | "loading" | "dismissing" | "done">("entry");
+  const [phase, setPhase] = useState<"entry" | "loading" | "complete" | "dismissing" | "done">("entry");
 
   const total = Math.max(signals.length, 1);
+
+  const capRef = useRef<number>();
 
   // Monitor loading signals
   useEffect(() => {
@@ -113,14 +115,21 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
         }
       });
     }
-    const cap = window.setTimeout(() => {
+    capRef.current = window.setTimeout(() => {
       if (!cancelled) setForced(true);
     }, HARD_CAP_MS);
     return () => {
       cancelled = true;
-      window.clearTimeout(cap);
+      window.clearTimeout(capRef.current);
     };
   }, [signals]);
+
+  // Prevent the hard cap from forcing dismissal if we've successfully reached 100%
+  useEffect(() => {
+    if (phase === "complete") {
+      window.clearTimeout(capRef.current);
+    }
+  }, [phase]);
 
   // Monitor Escape key for skipping
   useEffect(() => {
@@ -157,7 +166,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     }
   }, [phase]);
 
-  // 2. Loading → dismissing, the moment the real signals resolve.
+  // 2. Loading → complete, the moment the real signals resolve.
   //
   // There used to be a distinct "complete" phase in between, whose only job was to hold
   // for 1000ms. With that buffer gone the phase had nothing left to do but immediately
@@ -165,9 +174,20 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
   // exists for one render. The iris wipe is the outro.
   useEffect(() => {
     if (phase === "loading" && resolved >= total) {
-      setPhase("dismissing");
+      setPhase("complete");
     }
   }, [phase, resolved, total]);
+
+  // 3. Complete → dismissing (buffer sequence)
+  // Holds the 100% state briefly before triggering the exit wipe.
+  useEffect(() => {
+    if (phase === "complete") {
+      const timer = setTimeout(() => {
+        setPhase("dismissing");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
 
   // 4. Done Phase: Notify shell once dismissal completes
   useEffect(() => {
@@ -177,7 +197,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     }
   }, [phase, onDone]);
 
-  const isCompleteOrLater = phase === "dismissing" || phase === "done" || forced || resolved >= total;
+  const isCompleteOrLater = phase === "complete" || phase === "dismissing" || phase === "done" || forced || resolved >= total;
   const percent = isCompleteOrLater ? 100 : Math.round((Math.min(resolved, total) / total) * 100);
 
   const showProgress = phase !== "entry" && phase !== "dismissing" && phase !== "done";
@@ -194,7 +214,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
       <motion.div
         initial={{ clipPath: "circle(150% at 50% 50%)" }}
         animate={(phase === "dismissing" || phase === "done") ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
-        transition={{ duration: 0.55, ease: EASE_IN_OUT_QUART }}
+        transition={{ duration: 0.65, ease: EASE_IN_OUT_QUART }}
         onAnimationComplete={() => {
           if (phase === "dismissing" || forced) {
             setPhase("done");
@@ -207,8 +227,8 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
           // handoff from the static <style> to this overlay is invisible. Not glass:
           // this covers the whole viewport with nothing behind it to blur, and it is
           // the first thing painted — a backdrop-filter here would be pure cost.
-          background: "var(--g-base)",
-          backgroundColor: "var(--g-ink)",
+          background: "#F4F7FC",
+          backgroundColor: "#F4F7FC",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -232,7 +252,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
             <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
               {/* Background guide lines */}
               {PULSE_ARCS.map((arc) => (
-                <path key={`guide-${arc.delay}`} d={arc.d} fill="none" stroke="var(--glass-divider)" strokeWidth="1.5" />
+                <path key={`guide-${arc.delay}`} d={arc.d} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="1.5" />
               ))}
 
               {/* Animated gold pulses */}
@@ -241,7 +261,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
               ))}
 
               {/* Progress Circle Ring */}
-              <circle cx="140" cy="140" r="76" fill="none" stroke="var(--glass-border-1)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
+              <circle cx="140" cy="140" r="76" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
               <motion.circle
                 cx="140"
                 cy="140"
@@ -251,14 +271,22 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeDasharray="477.52" // 2 * Math.PI * 76
-                initial={{ strokeDashoffset: 477.52 }}
-                animate={{ strokeDashoffset: 477.52 - (percent / 100) * 477.52 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
+                initial={{ strokeDashoffset: 477.52, rotate: -90, scale: 1, opacity: 1 }}
+                animate={{ 
+                  strokeDashoffset: 477.52 - (percent / 100) * 477.52,
+                  rotate: -90,
+                  scale: phase === "complete" ? 1.4 : 1,
+                  opacity: phase === "complete" ? 0 : progressOpacity,
+                  strokeWidth: phase === "complete" ? 10 : 3.5,
+                }}
+                transition={{ 
+                  strokeDashoffset: { duration: 0.35, ease: "easeOut" },
+                  scale: { duration: 0.6, ease: "easeOut" },
+                  opacity: { duration: 0.6, ease: "easeOut" },
+                  strokeWidth: { duration: 0.6, ease: "easeOut" },
+                }}
                 style={{
-                  transform: "rotate(-90deg)",
                   transformOrigin: "140px 140px",
-                  opacity: progressOpacity,
-                  transition: "opacity 0.6s ease"
                 }}
               />
             </svg>
@@ -301,8 +329,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
                 fontFamily: MONO,
                 fontWeight: 700,
                 letterSpacing: "0.28em",
-                // Was `primary.main` — navy, which on the navy overlay is invisible.
-                color: "var(--text-1)",
+                color: "primary.main",
                 fontSize: "1.1rem",
               }}
             >
@@ -314,10 +341,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
             <Typography
               sx={{
                 fontFamily: MONO,
-                // --text-3, not text.secondary at opacity 0.7: that compounded to an
-                // effective 0.49 alpha, which measures under the 4.5:1 body floor.
-                // The muted token is 0.60 and verified against every surface.
-                color: "var(--text-3)",
+                color: "text.secondary",
                 fontSize: "0.65rem",
                 letterSpacing: "0.2em",
               }}

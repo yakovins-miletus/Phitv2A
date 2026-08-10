@@ -63,6 +63,11 @@ void main() {
     base = mix(base, uTo, edge);
   }
 
+  // Back to sRGB: uFrom/uTo arrive linearised so the blend happens in linear light,
+  // but the drawing buffer is plain RGBA8 and is read as sRGB. Without this every
+  // ground paints far darker than authored (navyField #0A2A66 -> ~#010624).
+  base = mix(base * 12.92, 1.055 * pow(base, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, base));
+
   // Ordered dither below the 8-bit step, then grain. Without this the navies band
   // in wide viewports; with it the gradient is smooth at any width.
   float n = hash(gl_FragCoord.xy) - 0.5;

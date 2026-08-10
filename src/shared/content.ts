@@ -73,11 +73,20 @@ export const CONTENT = {
           body: "Led by executives with senior tenure at Morgan Stanley, Merrill Lynch, JPMorgan, Deutsche Bank, and Macquarie Bank.",
         }
       ],
-      // `leadershipNote` and `cta` lived here for the deck's fourth beat
-      // ("Leadership credibility & consultative executive CTA"), which has been cut.
-      // Conversion is carried by the navbar Contact button and the footer CTA; the
-      // hero narrative now ends on market position. The Wall St. pedigree survives
-      // as `differentiators[2]`, framed as a market advantage rather than a bio.
+      /**
+       * The mission beat's single primary action.
+       *
+       * `leadershipNote` and the deck's original `cta` lived here for the deck's
+       * fourth beat ("Leadership credibility & consultative executive CTA"),
+       * which was cut — at which point conversion on this beat was carried only
+       * by the navbar Contact button and the footer, i.e. by chrome at the very
+       * top and the very bottom of a page whose sales pitch is in the middle.
+       * The beat states the claim, so the beat carries the ask.
+       *
+       * The Wall St. pedigree still lives in `differentiators[2]`, framed as a
+       * market advantage rather than a bio.
+       */
+      cta: { label: "Start a conversation", to: "/contact" },
     },
   },
   /** Home-page section ledes (L0/L1). Chapters 0-2 address the institutional
@@ -251,7 +260,7 @@ export const CONTENT = {
   services: [
     {
       id: "development",
-      title: "Full-Stack Development",
+      title: "Software Engineering",
       gunshot: "High-performance web applications and cloud portals.",
       tracer:
         "We build secure web platforms and real-time dashboards that process large-scale data smoothly and reliably.",
@@ -409,14 +418,14 @@ export const CONTENT = {
     { number: "05", label: "Products", caption: "Materialized ideas shaping the market" }
   ],
   stats: [
-    { value: 2, label: "R&D offices" },
+    { value: 1, label: "R&D offices" },
     { value: 2, label: "Client regions" },
     { value: 4, label: "Core disciplines" },
     { value: 6, label: "Open roles" }
   ],
   contact: {
     address: "27/F Ecotower Building, 32nd St. cor. 9th Avenue, Bonifacio Global City, Taguig, Philippines, 1634",
-    offices: ["Bonifacio Global City, PH", "Clark, PH"],
+    offices: ["Bonifacio Global City, PH"],
     clients: ["United States", "United Kingdom"],
     careersEmail: "jobs@phitopolis.com",
     generalInquiries: "info@phitopolis.com"
@@ -512,7 +521,7 @@ export const CONTENT = {
    * four in the line; "four time zones" is checkable and wrong.
    */
   closing: {
-    statement: "Built in Manila. Running in three time zones. Available today.",
+    statement: "A Competitive R&D Firm Always Striving for Excellence",
     farewell: "Join Our Team",
     /** Frames on the shelf, largest first. Order is the render order. */
     shelf: [

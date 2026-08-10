@@ -167,6 +167,32 @@ export function ClosingShelf() {
                     },
                   }}
                 >
+                  {/* Red pushpin */}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: "12px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "50%",
+                      bgcolor: "#d32f2f",
+                      boxShadow: "inset -2px -2px 4px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.4)",
+                      zIndex: 10,
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        top: "3px",
+                        left: "4px",
+                        width: "4px",
+                        height: "4px",
+                        borderRadius: "50%",
+                        bgcolor: "rgba(255,255,255,0.7)",
+                      }
+                    }}
+                  />
+
                   <Box
                     sx={{
                       width: "100%",
@@ -270,30 +296,58 @@ export function ClosingShelf() {
               {CONTENT.closing.statement}
             </Typography>
 
-            <Box
-              component={Link}
-              to="/careers"
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 1.5,
-                px: 4,
-                py: 2,
-                bgcolor: NOIR.white,
-                color: NOIR.navyField,
-                fontFamily: MONO,
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                borderRadius: "100px",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-                transition: "transform 0.2s ease, background-color 0.2s ease",
-                "&:hover": { bgcolor: NOIR.gold, transform: "scale(1.02)" },
-              }}
-            >
-              {CONTENT.closing.farewell} →
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              <Box
+                component={Link}
+                to="/contact"
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 4,
+                  py: 2,
+                  bgcolor: "transparent",
+                  color: NOIR.white,
+                  border: `1px solid rgba(255,255,255,0.3)`,
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  borderRadius: "100px",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.2s ease",
+                  "&:hover": { borderColor: NOIR.white, transform: "scale(1.02)", bgcolor: "rgba(255,255,255,0.05)" },
+                }}
+              >
+                Contact
+              </Box>
+              <Box
+                component={Link}
+                to="/careers"
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 4,
+                  py: 2,
+                  bgcolor: NOIR.white,
+                  color: NOIR.navyField,
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  borderRadius: "100px",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  transition: "transform 0.2s ease, background-color 0.2s ease",
+                  "&:hover": { bgcolor: NOIR.gold, transform: "scale(1.02)" },
+                }}
+              >
+                {CONTENT.closing.farewell} →
+              </Box>
             </Box>
           </Box>
         </Box>

@@ -73,8 +73,8 @@ export const MEGA_NAV_ITEMS: NavSectionItem[] = [
   {
     to: "/contact",
     label: "Contact",
-    sub: "BGC Manila & Clark R&D Offices",
-    preview: "/images/ecotower-bgc.webp",
+    sub: "BGC Manila R&D Office",
+    preview: "/images/bgc-2.jpg",
     tag: "07",
   },
 ];
@@ -676,7 +676,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
               }}
             >
               <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.62)", fontSize: "0.72rem" }}>
-                PHITOPOLIS R&D FIRM • BGC MANILA & CLARK
+                PHITOPOLIS R&D FIRM • BGC MANILA
               </Typography>
               <Box sx={{ display: "flex", gap: 3 }}>
                 {isCommandMode && (
