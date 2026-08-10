@@ -85,7 +85,7 @@ export function MarketPosition() {
             <Typography
               sx={{ mt: 3, color: GROUND.muted, fontSize: "1.0625rem", maxWidth: "28ch" }}
             >
-              Decades of Wall St. &amp; Tier-1 Banking tenure
+              Decades of Wall St. Experience and a Competitive Edge of Development
             </Typography>
           </Box>
 

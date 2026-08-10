@@ -102,7 +102,7 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
 
   const total = Math.max(signals.length, 1);
 
-  const capRef = useRef<number>();
+  const capRef = useRef<number | undefined>(undefined);
 
   // Monitor loading signals
   useEffect(() => {

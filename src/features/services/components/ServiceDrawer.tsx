@@ -223,9 +223,7 @@ export function ServiceVector({ id }: { id: string }) {
         />
 
         {/* Upward Direction Arrowhead */}
-        <motion.path
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        <path
           d="M 326 18 H 350 V 42"
           stroke={NOIR.gold}
           strokeWidth="3.5"
