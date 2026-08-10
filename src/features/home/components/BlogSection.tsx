@@ -35,7 +35,8 @@ export function BlogSection() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          py: { xs: 8, md: 10 }
+          py: { xs: 8, md: 10 },
+          bgcolor: NOIR.navyField, // Explicitly use primary brand navy
         }}
       >
         <Reveal>

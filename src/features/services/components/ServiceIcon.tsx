@@ -1,18 +1,25 @@
-import type { SvgIconComponent } from "@mui/icons-material";
-import HubIcon from "@mui/icons-material/Hub";
-import InsightsIcon from "@mui/icons-material/Insights";
-import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
-import ScienceIcon from "@mui/icons-material/Science";
+import {
+  ChartLineUp,
+  Cpu,
+  Flask,
+  Graph,
+  ShareNetwork,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
+import Box from "@mui/material/Box";
 
-const ICONS: Record<string, SvgIconComponent> = {
-  query_stats: QueryStatsIcon,
-  model_training: ModelTrainingIcon,
-  hub: HubIcon,
-  science: ScienceIcon,
+const ICONS: Record<string, PhosphorIcon> = {
+  query_stats: ChartLineUp,
+  model_training: Cpu,
+  hub: ShareNetwork,
+  science: Flask,
 };
 
 export function ServiceIcon({ icon }: { icon: string }) {
-  const Icon = ICONS[icon] ?? InsightsIcon;
-  return <Icon color="primary" fontSize="large" />;
+  const Icon = ICONS[icon] ?? Graph;
+  return (
+    <Box sx={{ display: "inline-flex", color: "primary.main" }}>
+      <Icon weight="duotone" size={32} />
+    </Box>
+  );
 }

@@ -5,23 +5,31 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import Grid from "@mui/material/Grid";
+import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 
 import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
+import type { BlogPostSummary } from "../api";
 
-export function BlogVideoHero() {
+interface BlogVideoHeroProps {
+  featuredPost?: BlogPostSummary | null | undefined;
+}
+
+export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.BLOG_HERO, { dark: true });
   const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
+  const navigate = useNavigate();
 
   return (
     <Box
       ref={heroAnchorRef}
       sx={{
         position: "relative",
-        height: { xs: "75vh", md: "85vh" },
+        minHeight: { xs: "85vh", md: "90vh" },
         width: "100%",
         bgcolor: NOIR.navyDeep,
         color: "common.white",
@@ -30,15 +38,10 @@ export function BlogVideoHero() {
         alignItems: "center",
       }}
     >
-      {/* Background loop.
-          This used to be `<video autoPlay src="/videos/daily-life.mp4">` with no gate —
-          a 62.8 MB, 251-second file behind a brightness filter. It is now a 787 KB
-          12-second loop that only loads when the hero is near the viewport, and never
-          loads at all under reduced motion or on a low-power device (poster instead). */}
       <Box
         ref={containerRef}
         aria-hidden
-        sx={{ position: "absolute", inset: 0, filter: "brightness(0.88) contrast(1.05)" }}
+        sx={{ position: "absolute", inset: 0, filter: "brightness(0.7) contrast(1.1)" }}
       >
         <Box
           component="video"
@@ -66,79 +69,145 @@ export function BlogVideoHero() {
         </Box>
       </Box>
 
-      {/* Reduced Opacity Blue Gradient Overlay — Video is now vibrant and visible */}
+      {/* Gradient Overlay for better readability on left side */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(circle at 50% 30%, rgba(6, 24, 59, 0.15) 0%, rgba(6, 24, 59, 0.5) 75%), linear-gradient(180deg, rgba(6, 24, 59, 0.2) 0%, rgba(6, 24, 59, 0.7) 100%)",
+          background: "linear-gradient(90deg, rgba(6, 24, 59, 0.95) 0%, rgba(6, 24, 59, 0.4) 60%, rgba(6, 24, 59, 0.1) 100%)",
         }}
       />
 
       {/* Hero Content */}
-      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1, px: { xs: 3, md: 8 } }}>
-        <Stack spacing={3} sx={{ maxWidth: 840 }}>
-          <Reveal>
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
-              <AutoAwesomeIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
-              <Typography
-                variant="overline"
-                sx={{
-                  color: "#FFC72C",
-                  fontWeight: 800,
-                  letterSpacing: "0.2em",
-                  fontSize: "0.85rem",
-                  fontFamily: MONO,
-                  textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
-                }}
-              >
-                INSIGHTS & ENGINEERING LOGS
-              </Typography>
-            </Box>
-          </Reveal>
+      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1, px: { xs: 3, md: 8 }, pt: { xs: 12, md: 24 }, pb: { xs: 12, md: 12 } }}>
+        <Grid container spacing={8} alignItems="center">
+          <Grid size={{ xs: 12, md: 6, lg: 5 }}>
+            <Stack spacing={4}>
+              <Reveal>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
+                  <AutoAwesomeIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "#FFC72C",
+                      fontWeight: 800,
+                      letterSpacing: "0.2em",
+                      fontSize: "0.85rem",
+                      fontFamily: MONO,
+                      textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
+                    }}
+                  >
+                    INSIGHTS & ENGINEERING
+                  </Typography>
+                </Box>
+              </Reveal>
 
-          <Reveal delay={0.1}>
-            <Typography
-              variant="h1"
-              component="h1"
-              sx={{
-                fontWeight: 900,
-                fontSize: { xs: "2.4rem", sm: "3.5rem", md: "4.5rem" },
-                lineHeight: 1.08,
-                letterSpacing: "-0.02em",
-                color: "common.white",
-                textShadow: "0 4px 20px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.9)",
-              }}
-            >
-              Direct Logs from the Phitopolis R&D Team.
-            </Typography>
-          </Reveal>
+              <Reveal delay={0.1}>
+                <Typography
+                  variant="h1"
+                  component="h1"
+                  sx={{
+                    fontWeight: 900,
+                    fontSize: { xs: "2.8rem", sm: "4rem", md: "5rem" },
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.02em",
+                    color: "common.white",
+                    textShadow: "0 4px 20px rgba(0, 0, 0, 0.85)",
+                  }}
+                >
+                  Direct Logs from R&D.
+                </Typography>
+              </Reveal>
 
-          <Reveal delay={0.2}>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                color: "rgba(255, 255, 255, 0.92)",
-                fontSize: { xs: "1.1rem", md: "1.3rem" },
-                lineHeight: 1.6,
-                fontWeight: 400,
-                maxWidth: 720,
-                textShadow: "0 2px 12px rgba(0, 0, 0, 0.85)",
-              }}
-            >
-              What we shipped, benchmarked, and broke across microsecond C++ engines, machine learning signal pipelines, and cloud data architecture.
-            </Typography>
-          </Reveal>
-        </Stack>
+              <Reveal delay={0.2}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    color: "rgba(255, 255, 255, 0.85)",
+                    fontSize: { xs: "1.1rem", md: "1.3rem" },
+                    lineHeight: 1.6,
+                    fontWeight: 400,
+                    maxWidth: 500,
+                  }}
+                >
+                  Architectural decisions, benchmarks, and postmortems from the team building Phitopolis platforms.
+                </Typography>
+              </Reveal>
+            </Stack>
+          </Grid>
 
+          {/* Right Side Spatial Card (if featured post exists) */}
+          <Grid size={{ xs: 12, md: 6, lg: 7 }} sx={{ display: { xs: "none", md: "block" } }}>
+            <Reveal delay={0.3}>
+              {featuredPost && (
+                <Box
+                  sx={{ width: "100%", maxWidth: 640, ml: "auto" }}
+                  onClick={() => navigate({ to: "/blog/$slug", params: { slug: featuredPost.slug } })}
+                >
+                  <Box
+                    sx={{
+                      position: "relative",
+                      borderRadius: 24,
+                      cursor: "pointer",
+                      transition: "transform 0.3s ease",
+                      "&:hover": { transform: "translateY(-4px)" }
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: "relative",
+                        borderRadius: "24px",
+                        overflow: "hidden",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+                        bgcolor: "rgba(6, 24, 59, 0.6)",
+                        backdropFilter: "blur(12px)",
+                        aspectRatio: "16/9",
+                      }}
+                    >
+                      {featuredPost.image_url && (
+                        <Box
+                          component="img"
+                          src={featuredPost.image_url}
+                          alt={featuredPost.title}
+                          sx={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            opacity: 0.6,
+                            transition: "opacity 0.4s",
+                            ".MuiBox-root:hover &": { opacity: 0.8 }
+                          }}
+                        />
+                      )}
+                      <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 0%, rgba(6,24,59,0.9) 100%)" }} />
+                      
+                      <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 5, transform: "translateZ(30px)" }}>
+                        <Stack spacing={2}>
+                          <Typography variant="overline" sx={{ color: "#FFC72C", fontWeight: 700, letterSpacing: "0.1em" }}>
+                            FEATURED ARTICLE
+                          </Typography>
+                          <Typography variant="h3" sx={{ color: "white", fontWeight: 800, lineHeight: 1.1 }}>
+                            {featuredPost.title}
+                          </Typography>
+                        </Stack>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </Reveal>
+          </Grid>
+        </Grid>
       </Container>
 
-      {/* Floating Scroll Down Cue (positioned relative to parent Box to center between text and white section) */}
+      {/* Floating Scroll Down Cue */}
       <Box
         sx={{
           position: "absolute",
-          bottom: { xs: "4%", md: "7%" },
+          bottom: { xs: "4%", md: "5%" },
           left: "50%",
           transform: "translateX(-50%)",
           display: "flex",
@@ -148,10 +217,7 @@ export function BlogVideoHero() {
           zIndex: 2,
         }}
       >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
           <Box
             sx={{
               width: 40,
@@ -168,17 +234,6 @@ export function BlogVideoHero() {
             <ArrowDownwardIcon fontSize="small" />
           </Box>
         </motion.div>
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.72rem",
-            letterSpacing: "0.18em",
-            color: "#FFC72C",
-            fontWeight: 800,
-          }}
-        >
-          EXPLORE ARTICLES
-        </Typography>
       </Box>
     </Box>
   );

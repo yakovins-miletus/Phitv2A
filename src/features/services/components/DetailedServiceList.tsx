@@ -1,12 +1,17 @@
 import { useState } from "react";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { motion } from "motion/react";
+import {
+  Stack as StackIcon, Browsers, HardDrives, Lightning,
+  TrendUp, Scales, ShieldWarning, GlobeHemisphereWest,
+  TreeStructure, Robot, ChartBar, Database,
+  Heartbeat, ArrowsLeftRight, ShieldCheck, Headset,
+  type Icon as PhosphorIcon
+} from "@phosphor-icons/react";
 
 import { ServiceIcon } from "./ServiceIcon";
 import { MONO } from "@/shared/theme/theme";
@@ -20,29 +25,108 @@ const BANNER_MAP: Record<string, string> = {
   "Software Development": "/images/software-engineer-banner.webp",
 };
 
-function SubTeamCard({ team }: { team: { name: string; description: string } }) {
+const TEAM_ICONS: Record<string, PhosphorIcon> = {
+  "Platform Team": StackIcon,
+  "Web Apps": Browsers,
+  "Infra": HardDrives,
+  "HPC": Lightning,
+  "Alpha Research": TrendUp,
+  "Portfolio Optimization": Scales,
+  "Risk Modeling": ShieldWarning,
+  "Alternative Data": GlobeHemisphereWest,
+  "Data Engineering": TreeStructure,
+  "ML Ops": Robot,
+  "Analytics": ChartBar,
+  "Core Data": Database,
+  "Site Reliability (SRE)": Heartbeat,
+  "Trade Ops": ArrowsLeftRight,
+  "Security": ShieldCheck,
+  "Global Support": Headset,
+};
+
+function SubTeamVisualTile({ team }: { team: { name: string; description: string } }) {
+  const Icon = TEAM_ICONS[team.name] || StackIcon;
+
   return (
-    <Card
-      variant="outlined"
+    <Box
       sx={{
+        position: "relative",
         height: 1,
+        minHeight: 180,
         bgcolor: "background.default",
+        border: "1px solid",
         borderColor: "divider",
-        transition: "all 0.3s ease",
+        borderRadius: 2,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 3,
+        transition: "border-color 0.4s ease",
         "&:hover": {
           borderColor: "primary.main",
+        },
+        "&:hover .team-description": {
+          opacity: 1,
+          transform: "translateY(0)",
+        },
+        "&:hover .team-icon": {
+          opacity: 0,
+          transform: "translateY(-20px)",
+        },
+        "&:hover .team-name": {
+          opacity: 0,
+          transform: "translateY(-10px)",
         }
       }}
     >
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="subtitle1" color="primary.main" sx={{ fontWeight: 600, mb: 1 }}>
-          {team.name}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+      <Box
+        className="team-icon"
+        sx={{
+          color: "primary.main",
+          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: "translateY(0)",
+          opacity: 1,
+          mb: 2,
+        }}
+      >
+        <Icon weight="duotone" size={56} />
+      </Box>
+      <Typography 
+        className="team-name"
+        variant="subtitle2" 
+        sx={{ 
+          fontWeight: 600, 
+          textAlign: "center",
+          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: "translateY(0)",
+          opacity: 1,
+        }}
+      >
+        {team.name}
+      </Typography>
+      
+      <Box
+        className="team-description"
+        sx={{
+          position: "absolute",
+          inset: 0,
+          p: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: 0,
+          transform: "translateY(20px)",
+          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          bgcolor: "background.default",
+        }}
+      >
+        <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ lineHeight: 1.6 }}>
           {team.description}
         </Typography>
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 }
 
@@ -137,11 +221,26 @@ function DetailedServiceSection({ service }: { service: Service }) {
   const bannerSrc = BANNER_MAP[service.name];
 
   return (
-    <Box sx={{ py: 6, borderBottom: 1, borderColor: "divider", "&:last-child": { borderBottom: 0 } }}>
+    <Box sx={{ py: 6, borderBottom: 1, borderColor: "divider", position: "relative", "&:last-child": { borderBottom: 0 } }}>
       {bannerSrc && <SpatialBannerCard src={bannerSrc} alt={`${service.name} banner`} />}
-      <Grid container spacing={{ xs: 6, lg: 8 }}>
+      
+      <Grid container spacing={{ xs: 6, lg: 8 }} sx={{ position: "relative" }}>
+        {/* Visual Connector Line (Desktop) */}
+        <Box 
+          sx={{
+            display: { xs: "none", md: "block" },
+            position: "absolute",
+            top: "50%",
+            left: "40%", 
+            width: "10%",
+            height: "1px",
+            background: "linear-gradient(90deg, var(--mui-palette-divider) 0%, transparent 100%)",
+            zIndex: 0,
+          }}
+        />
+
         {/* Left Column: Summary */}
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 5 }} sx={{ zIndex: 1 }}>
           <Stack spacing={3}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <ServiceIcon icon={service.icon} />
@@ -187,8 +286,8 @@ function DetailedServiceSection({ service }: { service: Service }) {
             {service.sub_teams && service.sub_teams.length > 0 ? (
               <Grid container spacing={3}>
                 {service.sub_teams.map((team, idx) => (
-                  <Grid size={{ xs: 12, sm: 6 }} key={idx}>
-                    <SubTeamCard team={team} />
+                  <Grid size={{ xs: 6, sm: 6 }} key={idx}>
+                    <SubTeamVisualTile team={team} />
                   </Grid>
                 ))}
               </Grid>

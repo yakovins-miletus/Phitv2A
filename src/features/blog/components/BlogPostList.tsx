@@ -5,8 +5,6 @@ import Chip from "@mui/material/Chip";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import Masonry from "@mui/lab/Masonry";
-import { alpha } from "@mui/material/styles";
 import { useNavigate } from "@tanstack/react-router";
 
 import type { BlogPostPage, BlogPostSummary } from "../api";
@@ -28,153 +26,172 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
   const navigate = useNavigate();
 
   return (
-    <Card
+    <Box
       onClick={() => {
         void navigate({ to: "/blog/$slug", params: { slug: post.slug } });
       }}
       sx={{
         cursor: "pointer",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        backgroundColor: "background.paper",
-        borderRadius: "16px",
-        overflow: "hidden",
-        border: "1px solid",
-        borderColor: "rgba(10, 42, 102, 0.12)",
-        boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          borderColor: "#FFC72C",
-          boxShadow: "0 12px 32px rgba(10, 42, 102, 0.1)",
-        }
+        display: "block",
       }}
     >
-      {post.image_url ? (
-        <Box
+      <Box sx={{ position: "relative" }}>
+        <Card
           sx={{
-            width: "100%",
-            aspectRatio: isHero ? "21/9" : "16/9",
             position: "relative",
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            borderRadius: "48px",
             overflow: "hidden",
-            borderBottom: "1px solid rgba(10, 42, 102, 0.1)",
-            bgcolor: "#06183B",
+            minHeight: { xs: 320, md: 280 },
+            border: "1px solid",
+            borderColor: "rgba(10, 42, 102, 0.12)",
+            boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
+            transition: "border-color 0.3s, box-shadow 0.3s, transform 0.3s",
+            "&:hover": {
+              borderColor: "#FFC72C",
+              boxShadow: "0 12px 32px rgba(10, 42, 102, 0.15)",
+              transform: "translateY(-4px)"
+            }
           }}
         >
-          <Box
-            component="img"
-            decoding="async"
-            src={post.image_url}
-            alt={post.title}
-            loading="lazy"
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-              transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-              ".MuiCard-root:hover &": {
-                transform: "scale(1.06)",
-              },
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(180deg, rgba(6, 24, 59, 0.15) 0%, rgba(6, 24, 59, 0.55) 100%)",
-            }}
-          />
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            width: "100%",
-            aspectRatio: isHero ? "21/9" : "16/9",
-            background: (theme) => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.2)} 100%)`,
-            display: "block",
-            borderBottom: 1,
-            borderColor: "divider",
-          }}
-        />
-      )}
-      <CardContent sx={{ p: 3, pb: 0 }}>
-        <Stack spacing={1.5}>
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="body2" color="text.secondary">
-              {DATE_FORMAT.format(new Date(post.published_on))}
-            </Typography>
-            {post.featured ? (
-              <Chip
-                label="Featured"
-                size="small"
+          {post.image_url ? (
+            <Box sx={{ position: "absolute", inset: 0, zIndex: 0 }}>
+              <Box
+                component="img"
+                decoding="async"
+                src={post.image_url}
+                alt={post.title}
+                loading="lazy"
                 sx={{
-                  bgcolor: "rgba(10, 42, 102, 0.08)",
-                  color: "#0A2A66",
-                  border: "1px solid rgba(10, 42, 102, 0.15)",
-                  "& .MuiChip-label": { color: "inherit" },
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
                 }}
               />
-            ) : null}
-          </Stack>
-          <Typography 
-            variant={isHero ? "h3" : "h4"} 
-            component="h3"
-            sx={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              lineHeight: 1.2,
-              minHeight: "2.4em",
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background: {
+                    xs: "linear-gradient(180deg, rgba(6, 24, 59, 0.8) 0%, rgba(6, 24, 59, 0.95) 100%)",
+                    md: "linear-gradient(90deg, rgba(6, 24, 59, 0.95) 0%, rgba(6, 24, 59, 0.7) 50%, rgba(6, 24, 59, 0.2) 100%)"
+                  }
+                }}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 0,
+                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, #06183B 100%)`,
+              }}
+            />
+          )}
+          
+          <CardContent 
+            sx={{ 
+              position: "relative",
+              zIndex: 1,
+              p: { xs: 4, md: 5 }, 
+              flexGrow: 1, 
+              display: "flex", 
+              flexDirection: "column",
+              justifyContent: "center",
+              width: { xs: "100%", md: "70%", lg: "60%" }
             }}
           >
-            {post.title}
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {post.excerpt}
-          </Typography>
-        </Stack>
-      </CardContent>
-      <Box sx={{ px: 3, pb: 3, pt: 2 }}>
-        <Chip
-          label={post.category}
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCategoryChange(post.category === activeCategory ? null : post.category);
-          }}
-          sx={post.category === activeCategory ? {
-            bgcolor: "#0A2A66",
-            color: "#FFFFFF",
-            border: "1px solid #0A2A66",
-            "& .MuiChip-label": { color: "inherit" },
-            "&:hover": { bgcolor: "#081F4D" },
-          } : {
-            bgcolor: "rgba(10, 42, 102, 0.08)",
-            color: "#0A2A66",
-            border: "1px solid rgba(10, 42, 102, 0.15)",
-            "& .MuiChip-label": { color: "inherit" },
-            "&:hover": { bgcolor: "rgba(10, 42, 102, 0.12)" },
-          }}
-        />
+            <Stack spacing={2} sx={{ mb: "auto" }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Chip
+                  label={post.category}
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCategoryChange(post.category === activeCategory ? null : post.category);
+                  }}
+                  sx={post.category === activeCategory ? {
+                    bgcolor: "#FFC72C",
+                    color: "#0A2A66",
+                    border: "none",
+                    "& .MuiChip-label": { color: "inherit", fontWeight: 700 },
+                    "&:hover": { bgcolor: "#E5B327" },
+                  } : {
+                    bgcolor: "rgba(255, 255, 255, 0.15)",
+                    color: "#FFFFFF",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    backdropFilter: "blur(8px)",
+                    "& .MuiChip-label": { color: "inherit", fontWeight: 600 },
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.25)" },
+                  }}
+                />
+                <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+                  {DATE_FORMAT.format(new Date(post.published_on))}
+                </Typography>
+                {post.featured ? (
+                  <Chip
+                    label="Featured"
+                    size="small"
+                    sx={{
+                      bgcolor: "rgba(255, 199, 44, 0.2)",
+                      color: "#FFC72C",
+                      border: "1px solid rgba(255, 199, 44, 0.5)",
+                      "& .MuiChip-label": { color: "inherit", fontWeight: 600 },
+                    }}
+                  />
+                ) : null}
+              </Stack>
+              
+              <Typography 
+                variant={isHero ? "h3" : "h4"} 
+                component="h3"
+                sx={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: isHero ? 3 : 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  lineHeight: 1.2,
+                  fontWeight: 700,
+                  color: "#FFFFFF"
+                }}
+              >
+                {post.title}
+              </Typography>
+              
+              <Typography
+                variant="body1"
+                sx={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: isHero ? 4 : 3,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  lineHeight: 1.6,
+                  color: "rgba(255, 255, 255, 0.85)"
+                }}
+              >
+                {post.excerpt}
+              </Typography>
+            </Stack>
+            
+            <Box sx={{ mt: 3, display: "flex", alignItems: "center" }}>
+              <Typography variant="button" sx={{ fontWeight: 700, color: "#FFC72C", letterSpacing: "0.05em" }}>
+                READ ARTICLE →
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
-    </Card>
+    </Box>
   );
 }
 
 interface BlogPostListProps {
   page: BlogPostPage;
-  /** True while a previous page is shown as placeholder during a refetch. */
   isRefreshing?: boolean;
   activeCategory: string | null;
   onCategoryChange: (category: string | null) => void;
@@ -194,13 +211,13 @@ export function BlogPostList({
   const isPageOne = currentPage === 1;
   const heroPostIndex = isPageOne ? page.items.findIndex(p => p.featured) : -1;
   const heroPost = heroPostIndex !== -1 ? page.items[heroPostIndex] : null;
-  const masonryPosts = page.items.filter((_, index) => index !== heroPostIndex);
+  const remainingPosts = page.items.filter((_, index) => index !== heroPostIndex);
 
   return (
-    <Stack spacing={4} sx={{ opacity: isRefreshing ? 0.6 : 1, transition: "opacity .2s" }}>
+    <Stack spacing={6} sx={{ opacity: isRefreshing ? 0.6 : 1, transition: "opacity .2s" }}>
       {activeCategory === null ? null : (
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
             Filtered by
           </Typography>
           <Chip
@@ -213,6 +230,7 @@ export function BlogPostList({
               bgcolor: "#0A2A66",
               color: "#FFFFFF",
               border: "1px solid #0A2A66",
+              fontWeight: 500,
               "& .MuiChip-label": { color: "inherit" },
               "& .MuiChip-deleteIcon": { color: "rgba(255, 255, 255, 0.7)", "&:hover": { color: "#FFFFFF" } }
             }}
@@ -225,41 +243,38 @@ export function BlogPostList({
           No posts match this search or filter.
         </Typography>
       ) : (
-        <>
+        <Stack spacing={4}>
           {heroPost && (
-            <Box mb={1}>
-              <BlogPostCard
-                post={heroPost}
-                activeCategory={activeCategory}
-                onCategoryChange={onCategoryChange}
-                isHero
-              />
-            </Box>
+            <BlogPostCard
+              post={heroPost}
+              activeCategory={activeCategory}
+              onCategoryChange={onCategoryChange}
+              isHero
+            />
           )}
           
-          {masonryPosts.length > 0 && (
-            <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={3}>
-              {masonryPosts.map((post) => (
-                <BlogPostCard
-                  key={post.id}
-                  post={post}
-                  activeCategory={activeCategory}
-                  onCategoryChange={onCategoryChange}
-                />
-              ))}
-            </Masonry>
-          )}
-        </>
+          {remainingPosts.map((post) => (
+            <BlogPostCard
+              key={post.id}
+              post={post}
+              activeCategory={activeCategory}
+              onCategoryChange={onCategoryChange}
+            />
+          ))}
+        </Stack>
       )}
       
       {pageCount > 1 ? (
-        <Pagination
-          count={pageCount}
-          page={currentPage}
-          onChange={(_event, value) => {
-            onPageChange(value);
-          }}
-        />
+        <Box sx={{ display: "flex", justifyContent: "center", pt: 4 }}>
+          <Pagination
+            count={pageCount}
+            page={currentPage}
+            onChange={(_event, value) => {
+              onPageChange(value);
+            }}
+            size="large"
+          />
+        </Box>
       ) : null}
     </Stack>
   );

@@ -3,11 +3,7 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import PsychologyIcon from "@mui/icons-material/Psychology";
-import LightbulbIcon from "@mui/icons-material/Lightbulb";
-import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
-import CodeIcon from "@mui/icons-material/Code";
-import GroupWorkIcon from "@mui/icons-material/GroupWork";
+import { Lightbulb, Target, UsersThree, Lightning, ShieldCheck } from "@phosphor-icons/react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CONTENT } from "@/shared/content";
@@ -40,78 +36,92 @@ export const Route = createFileRoute("/about")({
 });
 
 
-// Section 2: Core Culture — moved here from the Home page, underneath Values.
-const CULTURE_ICONS = [
-  PsychologyIcon,
-  LightbulbIcon,
-  RecordVoiceOverIcon,
-  CodeIcon,
-  GroupWorkIcon,
+// Section 2: Core Competencies — Rooted in our values, delivering business impact.
+const COMPETENCY_ICONS = [
+  Lightbulb,
+  Target,
+  UsersThree,
+  Lightning,
+  ShieldCheck,
 ];
-function CultureSection() {
+function CoreCompetenciesSection() {
   const [isFilled, setIsFilled] = useState(false);
+  const { headline, bridge, items } = CONTENT.coreCompetencies;
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", py: { xs: 8, md: 12 } }}>
       <Section>
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
-          <FillText text="Core Competencies" onComplete={setIsFilled} />
+        <Box sx={{ mb: { xs: 6, md: 10 }, maxWidth: 720 }}>
+          <FillText text={headline} onComplete={setIsFilled} />
+          <Typography variant="subtitle1" sx={{ mt: 3, color: "text.secondary", fontSize: "1.15rem", lineHeight: 1.6 }}>
+            {bridge}
+          </Typography>
         </Box>
         <StaggerGroup>
-          <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
-            {CONTENT.culture.map((val, i) => {
-              const Icon = CULTURE_ICONS[i % CULTURE_ICONS.length] || PsychologyIcon;
+          <Stack spacing={{ xs: 3, md: 4 }}>
+            {items.map((item, i) => {
+              const Icon = COMPETENCY_ICONS[i % COMPETENCY_ICONS.length] || Target;
               return (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={val}>
-                  <StaggerItem>
-                    <Box sx={{
-                      p: 3,
+                <StaggerItem key={item.label}>
+                  <Box sx={{
+                    p: { xs: 3, md: 5 },
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                    bgcolor: isFilled ? `rgba(${NOIR.navyFieldRgb}, 0.03)` : 'transparent',
+                    transform: isFilled ? 'translateY(-4px)' : 'none',
+                    boxShadow: isFilled ? `0 8px 24px rgba(${NOIR.navyFieldRgb}, 0.12)` : 'none',
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },
+                    gap: { xs: 3, md: 6 },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: "-1px",
                       border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                      bgcolor: isFilled ? `rgba(${NOIR.navyFieldRgb}, 0.03)` : 'transparent',
-                      transform: isFilled ? 'translateY(-4px)' : 'none',
-                      boxShadow: isFilled ? `0 8px 24px rgba(${NOIR.navyFieldRgb}, 0.12)` : 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: "-1px",
-                        border: 1,
-                        borderColor: 'primary.main',
-                        borderRadius: 'inherit',
-                        pointerEvents: 'none',
-                        clipPath: isFilled ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' : 'polygon(0 0, 0 0, 0 100%, 0 100%)',
-                        transition: 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                        transitionDelay: `${i * 0.1}s`,
-                      }
-                    }}>
+                      borderColor: 'primary.main',
+                      borderRadius: 'inherit',
+                      pointerEvents: 'none',
+                      clipPath: isFilled ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' : 'polygon(0 0, 0 0, 0 100%, 0 100%)',
+                      transition: 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transitionDelay: `${i * 0.1}s`,
+                    }
+                  }}>
+                    {/* Left Column: Icon and Label */}
+                    <Box sx={{ flex: '0 0 auto', width: { md: '35%' }, display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{
                         opacity: isFilled ? 1 : 0,
                         transform: isFilled ? 'scale(1) rotate(0deg)' : 'scale(0.5) rotate(-45deg)',
                         transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
                         transitionDelay: `${i * 0.1}s`,
                         color: 'primary.main',
-                        display: 'flex'
                       }}>
-                         <Icon fontSize="large" />
+                         <Icon size={40} weight="light" />
                       </Box>
-                      <Typography variant="h4" color={isFilled ? 'primary.main' : 'text.primary'} sx={{
-                         transition: 'color 0.5s ease',
-                         transitionDelay: `${i * 0.1}s`,
-                      }}>
-                         {val}
+                      <Box>
+                        <Typography variant="h4" color={isFilled ? 'primary.main' : 'text.primary'} sx={{
+                           transition: 'color 0.5s ease',
+                           transitionDelay: `${i * 0.1}s`,
+                        }}>
+                           {item.label}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    
+                    {/* Right Column: Business Value */}
+                    <Box sx={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', borderLeft: { md: 1 }, borderColor: { md: 'divider' }, pl: { md: 6 } }}>
+                      <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem', lineHeight: 1.7 }}>
+                        {item.businessValue}
                       </Typography>
                     </Box>
-                  </StaggerItem>
-                </Grid>
+                  </Box>
+                </StaggerItem>
               );
             })}
-          </Grid>
+          </Stack>
         </StaggerGroup>
       </Section>
     </Box>
@@ -341,7 +351,7 @@ function AboutPage() {
         <PrinciplesValuesShowcase />
         
         <SmoothSection>
-          <CultureSection />
+          <CoreCompetenciesSection />
         </SmoothSection>
         
         <SmoothSection>

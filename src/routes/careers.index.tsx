@@ -29,7 +29,7 @@ export const Route = createFileRoute("/careers/")({
   head: () =>
     pageHead(
       "Careers & Graduate Programs | Phitopolis R&D",
-      "Join Phitopolis R&D in Manila — explore paid engineering internships, full-time technical graduate fellowships, and senior engineering roles."
+      "Join Phitopolis R&D in Manila to explore paid engineering internships, full-time technical graduate fellowships, and senior engineering roles."
     ),
   component: CareersIndexPage,
 });
@@ -181,216 +181,220 @@ export function CareersIndexPage() {
             </Grid>
           </Grid>
 
-          {/* ── Search & Department Filter Rail ── */}
-          <Reveal delay={0.3}>
-            <Stack spacing={3} sx={{ pb: 1, borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
-              <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-                {/* Search Bar */}
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <TextField
-                    placeholder="Search by role, stack (e.g. C++, Python, React)..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon sx={{ color: NOIR.navyField }} />
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "100px",
-                        bgcolor: "rgba(244, 247, 252, 0.95)",
-                        fontFamily: MONO,
-                        fontSize: "0.82rem",
-                        "& fieldset": { borderColor: "rgba(10, 42, 102, 0.22)" },
-                        "&:hover fieldset": { borderColor: NOIR.navyField },
-                        "&.Mui-focused fieldset": { borderColor: NOIR.navyField },
-                      },
-                    }}
-                  />
-                </Grid>
-
-                {/* Filter Pills */}
-                <Grid size={{ xs: 12, md: 7 }}>
-                  <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap justifyContent={{ xs: "flex-start", md: "flex-end" }}>
-                    {categories.map((cat) => (
-                      <Chip
-                        key={cat.label}
-                        label={`${cat.label.toUpperCase()} (${cat.count})`}
-                        onClick={() => setSelectedCategory(cat.label)}
-                        sx={{
-                          fontFamily: MONO,
-                          fontWeight: 800,
-                          fontSize: "0.72rem",
-                          bgcolor: selectedCategory === cat.label ? NOIR.navyField : "rgba(244, 247, 252, 0.95)",
-                          color: selectedCategory === cat.label ? "common.white" : NOIR.navyField,
-                          border: "1px solid",
-                          borderColor: selectedCategory === cat.label ? NOIR.navyField : "rgba(10, 42, 102, 0.18)",
-                          "& .MuiChip-label": { color: "inherit" },
-                          cursor: "pointer",
-                          py: 2,
-                          px: 1,
-                          transition: "all 0.2s ease",
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Stack>
-          </Reveal>
-
-          {/* ── Positions Grid (Clean Card Styling: No Hover Float/Glow & Solid Primary Navy Buttons) ── */}
-          <StaggerGroup key={selectedCategory + searchQuery}>
-            <Grid container spacing={{ xs: 3, md: 4 }}>
-              {filteredPositions.map((position) => (
-                <Grid size={{ xs: 12, md: 6 }} key={position.id}>
-                  <StaggerItem>
-                    <Box
-                      sx={{
-                        p: { xs: 4, md: 4.5 },
-                        borderRadius: 5,
-                        bgcolor: "rgba(244, 247, 252, 0.96)",
-                        border: "1px solid rgba(10, 42, 102, 0.18)",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        height: "100%",
-                        position: "relative",
-                        // Strictly NO hover float/translate or glow shadow on hover per user rule:
-                        boxShadow: "0 2px 12px rgba(10, 42, 102, 0.04)",
-                        transition: "border-color 0.25s ease",
-                        "&:hover": {
-                          borderColor: NOIR.navyField,
+          <Box>
+            {/* ── Search & Department Filter Rail ── */}
+            <Reveal delay={0.3}>
+              <Stack spacing={3} sx={{ pb: 3, borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
+                <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+                  {/* Search Bar */}
+                  <Grid size={{ xs: 12, md: 5 }}>
+                    <TextField
+                      placeholder="Search by role, stack (e.g. C++, Python, React)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchIcon sx={{ color: NOIR.navyField }} />
+                            </InputAdornment>
+                          ),
                         },
                       }}
-                    >
-                      <Stack spacing={2.5}>
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <Typography
-                            variant="overline"
-                            sx={{
-                              fontFamily: MONO,
-                              fontWeight: 800,
-                              fontSize: "0.72rem",
-                              color: NOIR.goldDark,
-                              letterSpacing: "0.1em",
-                            }}
-                          >
-                            {position.badge}
-                          </Typography>
-                          <Chip
-                            label={position.type}
-                            size="small"
-                            sx={{
-                              fontFamily: MONO,
-                              fontSize: "0.68rem",
-                              fontWeight: 800,
-                              bgcolor: position.category === "Graduate Program" ? "rgba(255, 199, 44, 0.25)" : "rgba(10, 42, 102, 0.08)",
-                              color: NOIR.navyField,
-                              border: "1px solid rgba(10, 42, 102, 0.15)",
-                              "& .MuiChip-label": { color: "inherit" },
-                            }}
-                          />
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "100px",
+                          bgcolor: "rgba(244, 247, 252, 0.95)",
+                          fontFamily: MONO,
+                          fontSize: "0.82rem",
+                          "& fieldset": { borderColor: "rgba(10, 42, 102, 0.22)" },
+                          "&:hover fieldset": { borderColor: NOIR.navyField },
+                          "&.Mui-focused fieldset": { borderColor: NOIR.navyField },
+                        },
+                      }}
+                    />
+                  </Grid>
+
+                  {/* Filter Pills */}
+                  <Grid size={{ xs: 12, md: 7 }}>
+                    <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                      {categories.map((cat) => (
+                        <Chip
+                          key={cat.label}
+                          label={`${cat.label.toUpperCase()} (${cat.count})`}
+                          onClick={() => setSelectedCategory(cat.label)}
+                          sx={{
+                            fontFamily: MONO,
+                            fontWeight: 800,
+                            fontSize: "0.72rem",
+                            bgcolor: selectedCategory === cat.label ? NOIR.navyField : "rgba(244, 247, 252, 0.95)",
+                            color: selectedCategory === cat.label ? "common.white" : NOIR.navyField,
+                            border: "1px solid",
+                            borderColor: selectedCategory === cat.label ? NOIR.navyField : "rgba(10, 42, 102, 0.18)",
+                            "& .MuiChip-label": { color: "inherit" },
+                            cursor: "pointer",
+                            py: 2,
+                            px: 1,
+                            transition: "all 0.2s ease",
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </Stack>
+            </Reveal>
+
+            {/* ── Positions List (Brochure Styling: Full width rows, clean typography) ── */}
+            <StaggerGroup key={selectedCategory + searchQuery}>
+              <Stack spacing={0}>
+                {filteredPositions.map((position) => (
+                  <Box key={position.id} sx={{ borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
+                    <StaggerItem>
+                      <Box
+                        sx={{
+                          py: { xs: 4, md: 5 },
+                          px: { xs: 2, md: 4 },
+                          display: "flex",
+                          flexDirection: { xs: "column", md: "row" },
+                          gap: { xs: 4, md: 6 },
+                          alignItems: { xs: "flex-start", md: "center" },
+                          transition: "background-color 0.25s ease",
+                          "&:hover": {
+                            bgcolor: "rgba(10, 42, 102, 0.02)",
+                          },
+                        }}
+                      >
+                        {/* Left: Badge and Title */}
+                        <Box sx={{ flex: "1 1 35%", minWidth: 0 }}>
+                          <Stack spacing={1.5}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                              <Typography
+                                variant="overline"
+                                sx={{
+                                  fontFamily: MONO,
+                                  fontWeight: 800,
+                                  fontSize: "0.72rem",
+                                  color: NOIR.goldDark,
+                                  letterSpacing: "0.1em",
+                                }}
+                              >
+                                {position.badge}
+                              </Typography>
+                              <Chip
+                                label={position.type}
+                                size="small"
+                                sx={{
+                                  fontFamily: MONO,
+                                  fontSize: "0.68rem",
+                                  fontWeight: 800,
+                                  bgcolor: position.category === "Graduate Program" ? "rgba(255, 199, 44, 0.25)" : "rgba(10, 42, 102, 0.08)",
+                                  color: NOIR.navyField,
+                                  border: "1px solid rgba(10, 42, 102, 0.15)",
+                                  "& .MuiChip-label": { color: "inherit" },
+                                }}
+                              />
+                            </Box>
+                            <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.4rem", md: "1.65rem" } }}>
+                              {position.title}
+                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <LocationOnIcon sx={{ fontSize: "1rem", color: NOIR.navyField }} />
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: NOIR.navyField }}>
+                                {position.location} • {position.department}
+                              </Typography>
+                            </Box>
+                          </Stack>
                         </Box>
 
-                        <Stack spacing={1}>
-                          <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.4rem", md: "1.65rem" } }}>
-                            {position.title}
-                          </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <LocationOnIcon sx={{ fontSize: "1rem", color: NOIR.navyField }} />
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: NOIR.navyField }}>
-                              {position.location} • {position.department}
+                        {/* Middle: Summary & Stack */}
+                        <Box sx={{ flex: "1 1 45%", minWidth: 0 }}>
+                          <Stack spacing={2}>
+                            <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.82)", lineHeight: 1.65, fontSize: "0.98rem" }}>
+                              {position.summary}
                             </Typography>
-                          </Box>
-                        </Stack>
+                            <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
+                              {position.stack.map((tag) => (
+                                <Chip
+                                  key={tag}
+                                  label={tag}
+                                  size="small"
+                                  sx={{
+                                    fontFamily: MONO,
+                                    fontSize: "0.68rem",
+                                    fontWeight: 800,
+                                    bgcolor: "transparent",
+                                    color: "rgba(10, 42, 102, 0.7)",
+                                    border: "1px solid rgba(10, 42, 102, 0.15)",
+                                    "& .MuiChip-label": { color: "inherit", px: 1 },
+                                  }}
+                                />
+                              ))}
+                            </Stack>
+                          </Stack>
+                        </Box>
 
-                        <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.82)", lineHeight: 1.65, fontSize: "0.98rem" }}>
-                          {position.summary}
-                        </Typography>
-
-                        <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap sx={{ pt: 0.5 }}>
-                          {position.stack.map((tag) => (
-                            <Chip
-                              key={tag}
-                              label={tag}
-                              size="small"
+                        {/* Right: Actions */}
+                        <Box sx={{ flex: "1 1 20%", minWidth: 0, width: { xs: "100%", md: "auto" } }}>
+                          <Stack spacing={1.5} direction={{ xs: "row", md: "column" }}>
+                            <Button
+                              variant="contained"
+                              onClick={() => setActiveJobTitle(position.title)}
                               sx={{
+                                flex: { xs: 1, md: "none" },
+                                py: 1.4,
+                                bgcolor: NOIR.navyField,
+                                color: "common.white",
                                 fontFamily: MONO,
-                                fontSize: "0.68rem",
                                 fontWeight: 800,
-                                bgcolor: "rgba(10, 42, 102, 0.08)",
-                                color: NOIR.navyField,
-                                border: "1px solid rgba(10, 42, 102, 0.15)",
-                                "& .MuiChip-label": { color: "inherit" },
+                                fontSize: "0.78rem",
+                                borderRadius: 3,
+                                boxShadow: "none",
+                                "&:hover": {
+                                  bgcolor: "#081F4D",
+                                  boxShadow: "none",
+                                },
                               }}
-                            />
-                          ))}
-                        </Stack>
-                      </Stack>
+                            >
+                              QUICK PREVIEW
+                            </Button>
 
-                      {/* Action Buttons: Solid High-Contrast Primary Navy Background */}
-                      <Box sx={{ pt: 3.5, mt: "auto", display: "flex", gap: 1.5 }}>
-                        <Button
-                          variant="contained"
-                          onClick={() => setActiveJobTitle(position.title)}
-                          sx={{
-                            flexGrow: 1,
-                            py: 1.4,
-                            bgcolor: NOIR.navyField,
-                            color: "common.white",
-                            fontFamily: MONO,
-                            fontWeight: 800,
-                            fontSize: "0.78rem",
-                            borderRadius: 3,
-                            boxShadow: "none",
-                            "&:hover": {
-                              bgcolor: "#081F4D",
-                              boxShadow: "none",
-                            },
-                          }}
-                        >
-                          QUICK PREVIEW
-                        </Button>
-
-                        <RouterButton
-                          to="/careers/$jobId"
-                          params={{ jobId: position.id }}
-                          variant="outlined"
-                          endIcon={<ArrowForwardIcon />}
-                          sx={{
-                            py: 1.4,
-                            px: 2.5,
-                            fontFamily: MONO,
-                            fontWeight: 800,
-                            fontSize: "0.78rem",
-                            borderRadius: 3,
-                            borderColor: NOIR.navyField,
-                            color: NOIR.navyField,
-                            bgcolor: "rgba(10, 42, 102, 0.04)",
-                            "&:hover": {
-                              borderColor: NOIR.navyField,
-                              bgcolor: "rgba(10, 42, 102, 0.1)",
-                            },
-                          }}
-                        >
-                          APPLY NOW
-                        </RouterButton>
+                            <RouterButton
+                              to="/careers/$jobId"
+                              params={{ jobId: position.id }}
+                              variant="outlined"
+                              endIcon={<ArrowForwardIcon />}
+                              sx={{
+                                flex: { xs: 1, md: "none" },
+                                py: 1.4,
+                                px: 2.5,
+                                fontFamily: MONO,
+                                fontWeight: 800,
+                                fontSize: "0.78rem",
+                                borderRadius: 3,
+                                borderColor: NOIR.navyField,
+                                color: NOIR.navyField,
+                                bgcolor: "transparent",
+                                "&:hover": {
+                                  borderColor: NOIR.navyField,
+                                  bgcolor: "rgba(10, 42, 102, 0.05)",
+                                },
+                              }}
+                            >
+                              APPLY NOW
+                            </RouterButton>
+                          </Stack>
+                        </Box>
                       </Box>
-                    </Box>
-                  </StaggerItem>
-                </Grid>
-              ))}
-            </Grid>
-          </StaggerGroup>
+                    </StaggerItem>
+                  </Box>
+                ))}
+              </Stack>
+            </StaggerGroup>
+          </Box>
         </Stack>
       </Section>
 

@@ -11,12 +11,11 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 import { MONO } from "@/shared/theme/theme";
-import { NOIR } from "@/shared/theme/palette";
 
 const NEXT_STEPS = [
-  { number: "01", line: "Your message lands directly with our engineering & partnerships leadership team." },
-  { number: "02", line: "It is logged into our active inquiry dashboard for immediate review." },
-  { number: "03", line: "You get a direct human response within 24 to 48 business hours." },
+  { line: "Your message lands directly with our engineering & partnerships leadership team." },
+  { line: "It is logged into our active inquiry dashboard for immediate review." },
+  { line: "You get a direct human response within 24 to 48 business hours." },
 ] as const;
 
 function NextStepsTimeline() {
@@ -26,7 +25,7 @@ function NextStepsTimeline() {
         const isLast = index === NEXT_STEPS.length - 1;
         return (
           <Stack
-            key={step.number}
+            key={index}
             direction="row"
             spacing={2.5}
             sx={{
@@ -48,13 +47,8 @@ function NextStepsTimeline() {
               />
               {isLast ? null : <Box sx={{ width: "2px", flexGrow: 1, bgcolor: "rgba(10, 42, 102, 0.12)", my: 0.8 }} />}
             </Stack>
-            <Box sx={{ pb: isLast ? 0 : 3.5 }}>
-              <Typography
-                sx={{ fontFamily: MONO, fontSize: "0.72rem", letterSpacing: "0.2em", color: "#FFC72C", fontWeight: 800 }}
-              >
-                STEP {step.number}
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500, color: "text.primary", lineHeight: 1.5 }}>
+            <Box sx={{ pb: isLast ? 0 : 3.5, pt: 0.2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary", lineHeight: 1.5 }}>
                 {step.line}
               </Typography>
             </Box>
@@ -69,7 +63,7 @@ export const Route = createFileRoute("/contact")({
   head: () =>
     pageHead(
       "Contact · Phitopolis",
-      "Bring us a hard problem. Start a conversation with the Phitopolis partnerships team — Bonifacio Global City, Metro Manila.",
+      "Start a conversation with the Phitopolis partnerships team in Bonifacio Global City, Metro Manila.",
     ),
   component: ContactPage,
 });
@@ -79,8 +73,8 @@ function ContactPage() {
     <Section>
       <PageHeader
         overline="Contact & Partnerships"
-        title="Bring us a hard problem"
-        lead="Partnership inquiries, data questions, or a research paper you want to discuss — our engineering leadership team in Bonifacio Global City reads every single message."
+        title="Direct Inquiries"
+        lead="Whether for partnership inquiries, data questions, or research paper discussions, our engineering leadership team in Bonifacio Global City reads every message."
       />
 
       <Grid container spacing={6} alignItems="stretch" sx={{ mb: 10 }}>
@@ -172,19 +166,6 @@ function ContactPage() {
 
       {/* Interactive BGC Ecotower Map Section */}
       <Box sx={{ mt: 8, mb: 10 }}>
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.78rem",
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            color: NOIR.navyField,
-            fontWeight: 800,
-            mb: 2.5,
-          }}
-        >
-          HEADQUARTERS LOCATION // BONIFACIO GLOBAL CITY
-        </Typography>
         <EcotowerMap />
       </Box>
 

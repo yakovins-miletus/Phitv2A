@@ -1,5 +1,6 @@
 import { NOIR } from "@/shared/theme/palette";
 import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -8,6 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { blogPostsQuery } from "@/features/blog/api";
 import type { BlogListParams, BlogSort } from "@/features/blog/api";
 import { BlogPostList } from "@/features/blog/components/BlogPostList";
+import { BlogSidebar } from "@/features/blog/components/BlogSidebar";
 import { BlogToolbar } from "@/features/blog/components/BlogToolbar";
 import { BlogVideoHero } from "@/features/blog/components/BlogVideoHero";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
@@ -88,6 +90,11 @@ function BlogPage() {
   const page = useQuery(blogPostsQuery(paramsFromSearch(search)));
   const data = page.data ?? FALLBACK_BLOG_PAGE;
 
+  const currentPage = Math.floor(data.offset / data.limit) + 1;
+  const isPageOne = currentPage === 1;
+  const heroPostIndex = isPageOne ? data.items.findIndex((p: any) => p.featured) : -1;
+  const heroPost = heroPostIndex !== -1 ? data.items[heroPostIndex] : null;
+
   // Every filter/sort change drops the offset — page 3 of the old result set
   // is meaningless against a new one. Only explicit paging sets it.
   const buildSearch = (overrides: Partial<BlogSearch>): BlogSearch => {
@@ -103,7 +110,7 @@ function BlogPage() {
   return (
     <Box sx={{ width: "100%", bgcolor: NOIR.navyDeep, minHeight: "100vh" }}>
       {/* ── High-Impact Video Hero Stage ── */}
-      <BlogVideoHero />
+      <BlogVideoHero featuredPost={heroPost} />
 
       {/* ── Parallax Overlapping Article Sheet ── */}
       <Box
@@ -119,32 +126,42 @@ function BlogPage() {
         }}
       >
         <Section>
-          <BlogToolbar
-            q={search.q ?? ""}
-            sort={search.sort ?? "newest"}
-            onQChange={(q: string | null) => {
-              // replace: keystrokes shouldn't stack up in browser history.
-              void navigate({
-                search: buildSearch({ q: q ?? undefined }),
-                replace: true,
-              });
-            }}
-            onSortChange={(sort: BlogSort) => {
-              void navigate({ search: buildSearch({ sort }), replace: true });
-            }}
-          />
-          <BlogPostList
-            page={data}
-            isRefreshing={page.isPlaceholderData}
-            activeCategory={search.category ?? null}
-            onCategoryChange={(category: string | null) => {
-              void navigate({ search: buildSearch({ category: category ?? undefined }) });
-            }}
-            onPageChange={(pageNumber: number) => {
-              const offset = (pageNumber - 1) * PAGE_SIZE;
-              void navigate({ search: buildSearch({ offset }) });
-            }}
-          />
+          <Grid container spacing={6}>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <BlogSidebar items={data.items} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 9 }}>
+              <BlogToolbar
+                q={search.q ?? ""}
+                sort={search.sort ?? "newest"}
+                onQChange={(q: string | null) => {
+                  // replace: keystrokes shouldn't stack up in browser history.
+                  void navigate({
+                    search: buildSearch({ q: q ?? undefined }),
+                    replace: true,
+                  });
+                }}
+                onSortChange={(sort: BlogSort) => {
+                  void navigate({ search: buildSearch({ sort }), replace: true });
+                }}
+              />
+              <Box sx={{ mt: 4 }}>
+                <BlogPostList
+                  page={data}
+                  isRefreshing={page.isPlaceholderData}
+                  activeCategory={search.category ?? null}
+                  onCategoryChange={(category: string | null) => {
+                    void navigate({ search: buildSearch({ category: category ?? undefined }) });
+                  }}
+                  onPageChange={(pageNumber: number) => {
+                    const offset = (pageNumber - 1) * PAGE_SIZE;
+                    void navigate({ search: buildSearch({ offset }) });
+                  }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
         </Section>
       </Box>
     </Box>

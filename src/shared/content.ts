@@ -92,7 +92,7 @@ export const CONTENT = {
     services: {
       gunshot: "Four disciplines. One delivery contract.",
       tracer:
-        "Research, platforms, pipelines, and operational support — click any discipline to explore capabilities.",
+        "Research, platforms, pipelines, and operational support: click any discipline to explore capabilities.",
     },
     reach: {
       gunshot: "Established International Presence",
@@ -106,12 +106,12 @@ export const CONTENT = {
     careers: {
       gunshot: "Six open roles. One intake a year.",
       tracer:
-        "The Technical Graduate Program takes engineers straight into production systems — not a rotation, not a shadowing track.",
+        "The Technical Graduate Program takes engineers straight into production systems: not a rotation, not a shadowing track.",
     },
     blog: {
       gunshot: "What the team actually did last quarter.",
       tracer:
-        "Community work, onboarding weeks, and the occasional office tournament — written by the people who were there.",
+        "Community work, onboarding weeks, and the occasional office tournament, written by the people who were there.",
     },
   },
   /** Above-the-fold trust signals — investor backing and named partners. */
@@ -137,7 +137,7 @@ export const CONTENT = {
       {
         label: "Integrity",
         definition:
-          "We operate with unwavering honesty and transparency in every interaction — our word is our bond",
+          "We operate with unwavering honesty and transparency in every interaction. Our word is our bond",
         valueToClient:
           "A foundation of trust and predictability: truthful reporting and ethical decisions that reduce risk and keep partnerships stable for the long run",
       },
@@ -160,7 +160,7 @@ export const CONTENT = {
         definition:
           "We set the highest standard for performance and continuously refine our process to deliver superior quality",
         valueToClient:
-          "Fewer errors, higher efficiency, and a final product that exceeds expectations — maximizing return on every engagement",
+          "Fewer errors, higher efficiency, and a final product that exceeds expectations, maximizing return on every engagement",
       },
     ],
   },
@@ -204,25 +204,25 @@ export const CONTENT = {
   /** Professional certifications, grouped by provider — insight, not a badge wall. */
   certifications: {
     headline: "Certified across the stack",
-    note: "Our engineers hold professional certifications spanning every cloud and the standards that govern them — and the upskilling never stops",
+    note: "Our engineers hold professional certifications spanning every cloud and the standards that govern them. The upskilling never stops",
     groups: [
       {
         provider: "Amazon Web Services",
         count: 14,
         items: [
-          { name: "Solutions Architect — Professional", logo: "/logos/certs/aws-certs/solutions-architect-pro.webp" },
-          { name: "Machine Learning — Specialty", logo: "/logos/certs/aws-certs/machine-learning.webp" },
-          { name: "Security — Specialty", logo: "/logos/certs/aws-certs/security.webp" },
-          { name: "Data Engineer — Associate", logo: "/logos/certs/aws-certs/data-engineer.webp" },
-          { name: "DevOps Engineer — Professional", logo: "/logos/certs/aws-certs/dev-ops-engineer-pro.webp" },
+          { name: "Solutions Architect - Professional", logo: "/logos/certs/aws-certs/solutions-architect-pro.webp" },
+          { name: "Machine Learning - Specialty", logo: "/logos/certs/aws-certs/machine-learning.webp" },
+          { name: "Security - Specialty", logo: "/logos/certs/aws-certs/security.webp" },
+          { name: "Data Engineer - Associate", logo: "/logos/certs/aws-certs/data-engineer.webp" },
+          { name: "DevOps Engineer - Professional", logo: "/logos/certs/aws-certs/dev-ops-engineer-pro.webp" },
         ],
       },
       {
         provider: "Google Cloud",
         count: 3,
         items: [
-          { name: "Cloud Architect — Professional", logo: "/logos/certs/more-certs/google-cloud-architect.webp" },
-          { name: "Cloud Engineer — Associate", logo: "/logos/certs/more-certs/google-cloud-engineer.webp" },
+          { name: "Cloud Architect - Professional", logo: "/logos/certs/more-certs/google-cloud-architect.webp" },
+          { name: "Cloud Engineer - Associate", logo: "/logos/certs/more-certs/google-cloud-engineer.webp" },
           { name: "Generative AI Leader", logo: "/logos/certs/more-certs/google-generative-ai-leader.webp" }
         ],
       },
@@ -230,9 +230,9 @@ export const CONTENT = {
         provider: "Microsoft Azure",
         count: 4,
         items: [
-          { name: "Solutions Architect — Expert", logo: "/logos/certs/more-certs/ms-azure-solutions-architect.webp" },
-          { name: "Cybersecurity Architect — Expert", logo: "/logos/certs/more-certs/ms-cybersecurity-architect.webp" },
-          { name: "Network Engineer — Associate", logo: "/logos/certs/more-certs/ms-azure-network-engineer.webp" },
+          { name: "Solutions Architect - Expert", logo: "/logos/certs/more-certs/ms-azure-solutions-architect.webp" },
+          { name: "Cybersecurity Architect - Expert", logo: "/logos/certs/more-certs/ms-cybersecurity-architect.webp" },
+          { name: "Network Engineer - Associate", logo: "/logos/certs/more-certs/ms-azure-network-engineer.webp" },
         ],
       },
       {
@@ -240,8 +240,8 @@ export const CONTENT = {
         count: 5,
         items: [
           { name: "ISO 27001 Lead Implementer & Auditor", logo: "/logos/certs/iso27001.webp" },
-          { name: "PMP — Project Management", logo: "/logos/certs/pmp.webp" },
-          { name: "ITIL — Foundation & Practitioner", logo: "/logos/certs/itil.webp" },
+          { name: "PMP - Project Management", logo: "/logos/certs/pmp.webp" },
+          { name: "ITIL - Foundation & Practitioner", logo: "/logos/certs/itil.webp" },
           { name: "Red Hat RHCSA", logo: "/logos/certs/redhat.webp" },
           { name: "CFA / CPA", logo: "/logos/certs/cpa.webp" },
         ],
@@ -331,13 +331,37 @@ export const CONTENT = {
    * the reach line ":457") — which is the honest replacement for "Teamwork". The
    * others need a fact I do not have, so I have not invented one.
    */
-  culture: [
-    "Critical Thinking",
-    "Innovation",
-    "Communication",
-    "Technical Excellence",
-    "Teamwork"
-  ],
+  coreCompetencies: {
+    headline: "Core Competencies",
+    bridge: "Our principles dictate our behavior. Our competencies define our output. Here is how our values translate into measurable business impact.",
+    items: [
+      {
+        label: "Architectural Foresight",
+        rootedIn: "Forward Thinking",
+        businessValue: "We engineer cloud infrastructure designed for future scale, ensuring platforms handle massive data loads without breaking."
+      },
+      {
+        label: "Algorithmic Precision",
+        rootedIn: "Excellence",
+        businessValue: "We convert noisy, high-dimensional datasets into structured models, providing research teams with reliable signals."
+      },
+      {
+        label: "Direct Integration",
+        rootedIn: "Integrity",
+        businessValue: "Our engineers embed directly with your internal teams, maintaining tight context and velocity on complex deployments."
+      },
+      {
+        label: "High-Performance Engineering",
+        rootedIn: "Excellence",
+        businessValue: "We ship highly optimized code that satisfies extreme latency requirements, delivering faster execution for critical systems."
+      },
+      {
+        label: "Operational Continuity",
+        rootedIn: "Accountability",
+        businessValue: "A distributed operational matrix monitors and supports infrastructure around the clock, guaranteeing constant availability."
+      }
+    ]
+  },
   targetCandidates: {
     line: "For talents that outgrow large institutions",
     sub: "Academic rigor. Global stakes",
@@ -437,7 +461,7 @@ export const CONTENT = {
     {
       category: "People",
       title: "2026 Wellness Week",
-      blurb: "After office hours, a few colleagues managed to run together around BGC — something we had been planning since our company's Wellness Week"
+      blurb: "After office hours, a few colleagues managed to run together around BGC, something we had been planning since our company's Wellness Week"
     },
     {
       category: "People",
@@ -494,15 +518,13 @@ export const CONTENT = {
     shelf: [
       {
         id: "capabilities",
-        kicker: "01",
         label: "What we build",
-        line: "Four disciplines, one delivery contract — research, engineering, data, and 24/7 operations.",
+        line: "Four disciplines, one delivery contract: research, engineering, data, and 24/7 operations.",
         href: "/services",
         cta: "See the capabilities",
       },
       {
         id: "journey",
-        kicker: "02",
         label: "How we got here",
         line: "Founded in Manila in 2019. Eight chapters from a first small team to the partner clients came back to.",
         href: "/about",
@@ -510,7 +532,6 @@ export const CONTENT = {
       },
       {
         id: "people",
-        kicker: "03",
         label: "Who does the work",
         line: "Engineers and researchers in Manila, working alongside client teams across global markets.",
         href: "/careers",
@@ -518,9 +539,8 @@ export const CONTENT = {
       },
       {
         id: "writing",
-        kicker: "04",
         label: "What we published",
-        line: "Logs from the team — engineering, platforms, operations, written by the people doing the work.",
+        line: "Logs from the team: engineering, platforms, operations, written by the people doing the work.",
         href: "/blog",
         cta: "Read the feed",
       },

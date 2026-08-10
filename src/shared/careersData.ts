@@ -54,7 +54,7 @@ export const CAREER_POSITIONS: JobPosition[] = [
     location: "BGC Office, Manila (Hybrid Schedule)",
     badge: "PAID INTERNSHIP",
     summary: "Immersive 3 to 6-month paid engineering internship for top undergraduate students. Work directly on production code, receive senior staff mentorship, and earn a direct fast-track offer to our Graduate Program.",
-    description: "Our R&D Internship Program gives high-achieving undergraduate students early exposure to enterprise software development. Interns do not work on mock exercises — every intern is integrated into live engineering squads building real financial tools, web applications, and data pipelines.",
+    description: "Our R&D Internship Program gives high-achieving undergraduate students early exposure to enterprise software development. Interns do not work on mock exercises; every intern is integrated into live engineering squads building real financial tools, web applications, and data pipelines.",
     responsibilities: [
       "Build production features for web portals, analytics dashboards, and automated test suites.",
       "Write clean, well-tested code in React, Node.js, Python, or Go under senior guidance.",
@@ -93,7 +93,7 @@ export const CAREER_POSITIONS: JobPosition[] = [
       "Work independently and autonomously to drive high-level investment research.",
     ],
     requirements: [
-      "Strong quantitative abilities — degree in a quantitative field (Math, Physics, CS, Engineering, Stats).",
+      "Strong quantitative abilities (degree in a quantitative field such as Math, Physics, CS, Engineering, Stats).",
       "Ability to complete high-level, investment-related research.",
       "Understanding of and ability to implement Machine Learning algorithms (supervised & unsupervised).",
       "Proficiency in developing data-related software in Python.",

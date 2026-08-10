@@ -350,7 +350,7 @@ function FloatingString({
       ctx.fill();
 
       const scrollProg = scrollProgressRef.current;
-      ctx.font = `11px ${FONT}`;
+      ctx.font = `bold 13px ${FONT}`;
       ctx.textBaseline = "bottom";
 
       for (let i = 0; i < N; i++) {
@@ -531,7 +531,7 @@ function StaticJourney() {
       <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 64 }}>
         {CHAPTERS.map((ch) => (
           <div key={ch.id} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "clamp(2.5rem, 6vw, 4rem)", color: `${ch.color}22`, lineHeight: 1 }}>
+            <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "clamp(2.5rem, 6vw, 4rem)", color: `${ch.color}80`, lineHeight: 1 }}>
               {ch.num}
             </div>
             <Badge n={ch.num} label={ch.tag} />
@@ -730,7 +730,7 @@ export function JourneyTimeline() {
                       fontFamily: FONT,
                       fontWeight: 900,
                       fontSize: "clamp(3.5rem, 9vw, 7rem)",
-                      color: `${ch.color}10`,
+                      color: `${ch.color}80`,
                       lineHeight: 1,
                       letterSpacing: "-0.05em",
                       marginBottom: -4,

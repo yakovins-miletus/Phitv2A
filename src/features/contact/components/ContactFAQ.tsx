@@ -8,10 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import SearchIcon from "@mui/icons-material/Search";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import { Plus, Minus, MagnifyingGlass } from "@phosphor-icons/react";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from "@tanstack/react-router";
 
@@ -135,21 +132,6 @@ export function ContactFAQ() {
         {/* Header Block */}
         <Stack direction={{ xs: "column", md: "row" }} spacing={3} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "flex-end" }}>
           <Box>
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 1 }}>
-              <HelpOutlineIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.75rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "#FFC72C",
-                  fontWeight: 800,
-                }}
-              >
-                KNOWLEDGE BASE // FAQ
-              </Typography>
-            </Box>
             <Typography variant="h2" sx={{ fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.4rem" }, color: "text.primary", letterSpacing: "-0.02em" }}>
               Frequently Asked Questions
             </Typography>
@@ -165,7 +147,7 @@ export function ContactFAQ() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "text.secondary", fontSize: "1.1rem" }} />
+                    <Box component={MagnifyingGlass} sx={{ color: "text.secondary", fontSize: "1.1rem" }} />
                   </InputAdornment>
                 ),
               },
@@ -247,9 +229,9 @@ export function ContactFAQ() {
                 <AccordionSummary
                   expandIcon={
                     isOpen ? (
-                      <RemoveIcon sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
+                      <Box component={Minus} sx={{ color: "#FFC72C", fontSize: "1.2rem" }} />
                     ) : (
-                      <AddIcon sx={{ color: "text.secondary", fontSize: "1.2rem" }} />
+                      <Box component={Plus} sx={{ color: "text.secondary", fontSize: "1.2rem" }} />
                     )
                   }
                   sx={{

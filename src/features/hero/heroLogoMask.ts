@@ -89,6 +89,36 @@ export const MAX_BEACONS = 4096;
 /** Cached raster alpha, `LOGO_RASTER x LOGO_RASTER`, row-major. Empty until decoded. */
 let raster: Uint8Array | null = null;
 
+/**
+ * The decoded image itself, cached alongside the alpha raster.
+ *
+ * `heroPlaneRenderer.ts` needs the actual bitmap — its flat 3D P blits it directly
+ * onto the scene plane — not the alpha mask this file was built to serve. Decoding
+ * happens exactly once, here, in `loadLogoMask`, which every caller already awaits
+ * (`HeroCanvas.tsx`'s effect). Caching the `Image` rather than decoding a second
+ * time avoids a second network round trip and a second async decode for the same
+ * 26 KB file.
+ */
+let image: CanvasImageSource | null = null;
+/** `naturalHeight / naturalWidth` of the decoded image, or 1 if it never loaded (or
+ *  loaded something the runtime can't measure, e.g. a bare `HTMLCanvasElement` stub
+ *  in a test). A square fallback is a safe default: it never divides by zero. */
+let imageAspect = 1;
+
+export function getLogoImage(): CanvasImageSource | null {
+  return image;
+}
+
+export function getLogoAspect(): number {
+  return imageAspect;
+}
+
+/** Cached raster alpha. Sampled directly by a GPU particle scene elsewhere in the
+ *  hero — this file owns the one decode, every consumer reads from here. */
+export function getLogoRaster(): Uint8Array | null {
+  return raster;
+}
+
 /** Plane-space positions of the mark's beacons. Live entries: `beaconCount`. */
 export const beaconX = new Float32Array(MAX_BEACONS);
 export const beaconY = new Float32Array(MAX_BEACONS);
@@ -110,6 +140,8 @@ export function resetLogoMask(): void {
   beaconCount = 0;
   raster = null;
   lastKey = "";
+  image = null;
+  imageAspect = 1;
 }
 
 /**
@@ -203,6 +235,8 @@ export function loadLogoMask(src: string): Promise<void> {
     const img = new Image();
     img.decoding = "async";
     img.onload = () => {
+      image = img;
+      imageAspect = img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 1;
       rasteriseLogo(img);
       resolve();
     };

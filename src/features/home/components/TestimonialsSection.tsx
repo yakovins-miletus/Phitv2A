@@ -47,7 +47,7 @@ const TESTIMONIALS: Testimonial[] = [
   {
     name: "PATRICIA",
     role: "DATA SCIENTIST / GRADUATE TRAINEE",
-    text: "Phitopolis is the kind of place that keeps you on your toes — every day brings something new to learn and discover. What makes it truly special are the people who genuinely support you... You're encouraged to grow... in an environment that values teamwork, curiosity, and continuous learning.",
+    text: "Phitopolis is the kind of place that keeps you on your toes, as every day brings something new to learn and discover. What makes it truly special are the people who genuinely support you... You're encouraged to grow... in an environment that values teamwork, curiosity, and continuous learning.",
     bgColor: "rgba(5, 26, 59, 0.98)",
     textColor: "#FFFFFF",
     subColor: "rgba(255, 255, 255, 0.7)",

@@ -33,7 +33,7 @@ import { CONTAINER_START } from "./heroPhases";
 import { heroFrameState, PERSPECTIVE, PLANE_SIZE, makeCamera, project, unproject2D } from "./heroScene";
 import { HORIZON, VIEW_FIT } from "./heroCity";
 import { loadLogoMask } from "./heroLogoMask";
-import { drawCityFrame, type CityInteraction } from "./heroCityRenderer";
+import { drawPlaneFrame, type PlaneInteraction } from "./heroPlaneRenderer";
 import {
   HIT_TEST_END,
   INTERACT_END,
@@ -128,7 +128,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
 
     // The single interaction object, mutated in place every frame rather than
     // reallocated. Held by reference across the whole effect's lifetime.
-    const interaction: CityInteraction = {
+    const interaction: PlaneInteraction = {
       tiltX: 0,
       tiltY: 0,
       pointerActive: false,
@@ -153,7 +153,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
     };
 
     /**
-     * Build the same camera `drawCityFrame` will, so screen-to-plane unprojection
+     * Build the same camera `drawPlaneFrame` will, so screen-to-plane unprojection
      * agrees with what is on screen. Kept in one place precisely because a
      * disagreement here is invisible until the cursor lights the wrong buildings.
      */
@@ -192,7 +192,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
     const paintStill = () => {
       if (width === 0 || height === 0) return;
       const progress = isStatic ? 0 : progressRef.current;
-      drawCityFrame(ctx, heroFrameState(progress, false, CONTAINER_START), width, height, 0, undefined);
+      drawPlaneFrame(ctx, heroFrameState(progress, false, CONTAINER_START), width, height, 0, undefined);
     };
 
     const frame = (now: number) => {
@@ -250,7 +250,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
         varsHostRef.current.style.setProperty("--hp-my", tiltCurrent.y.toFixed(4));
       }
 
-      drawCityFrame(ctx, state, width, height, elapsed, interaction);
+      drawPlaneFrame(ctx, state, width, height, elapsed, interaction);
       raf = requestAnimationFrame(frame);
     };
 
