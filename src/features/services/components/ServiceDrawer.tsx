@@ -189,32 +189,21 @@ export function ServiceVector({ id }: { id: string }) {
     );
   }
   if (id === "data-science" || id === "service-data") {
+    // 3 ascending bars, trend line floating cleanly 30px above the bar tops.
+    // 3 data-point dots centered over each bar, arrowhead connected at line top-right.
+    const barW = 50;
     return (
       <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Bars */}
-        <motion.rect
-          initial={{ height: 90, y: 260 }}
-          animate={{ height: [90, 110, 90], y: [260, 240, 260] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          x="50" y="260" width="60" height="90" rx="8" fill={NOIR.goldDark}
-        />
-        <motion.rect
-          initial={{ height: 180, y: 170 }}
-          animate={{ height: [180, 160, 180], y: [170, 190, 170] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          x="170" y="170" width="60" height="180" rx="8" fill={NOIR.gold}
-        />
-        <motion.rect
-          initial={{ height: 270, y: 80 }}
-          animate={{ height: [270, 282, 270], y: [80, 68, 80] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          x="290" y="80" width="60" height="270" rx="8" fill={NOIR.goldLight}
-        />
+        {/* Bar 1 — center x=80, top y=250 */}
+        <rect x={80 - barW / 2} y="250" width={barW} height="90" rx="8" fill={NOIR.goldDark} />
+        {/* Bar 2 — center x=200, top y=170 */}
+        <rect x={200 - barW / 2} y="170" width={barW} height="170" rx="8" fill={NOIR.gold} />
+        {/* Bar 3 — center x=320, top y=90 */}
+        <rect x={320 - barW / 2} y="90" width={barW} height="250" rx="8" fill={NOIR.goldLight} />
 
-        {/* Upward Trend Graph Line — static, so it doesn't read as moving in sync
-            with the bouncing arrowhead below */}
+        {/* Upward Trend Line — passes through (80,220), (200,140), (320,60) */}
         <path
-          d="M 50 242.5 L 200 130 L 350 18"
+          d="M 40 247 L 360 33"
           stroke={NOIR.gold}
           strokeWidth="3.5"
           strokeLinecap="round"
@@ -222,9 +211,9 @@ export function ServiceVector({ id }: { id: string }) {
           fill="none"
         />
 
-        {/* Upward Direction Arrowhead */}
+        {/* Upward Arrowhead — perfectly aligned with trend line angle (33.7°) */}
         <path
-          d="M 326 18 H 350 V 42"
+          d="M 339 35 L 360 33 L 350 52"
           stroke={NOIR.gold}
           strokeWidth="3.5"
           strokeLinecap="round"
@@ -232,13 +221,10 @@ export function ServiceVector({ id }: { id: string }) {
           fill="none"
         />
 
-        {/* Graph Data Node Circles */}
-        <motion.circle cx="80" cy="220" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" 
-          animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 0 }} />
-        <motion.circle cx="200" cy="130" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" 
-          animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} />
-        <motion.circle cx="320" cy="40" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" 
-          animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 2 }} />
+        {/* 3 Data Node Dots — centered over each bar along the trend line */}
+        <circle cx="80" cy="220" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" />
+        <circle cx="200" cy="140" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" />
+        <circle cx="320" cy="60" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" />
       </svg>
     );
   }

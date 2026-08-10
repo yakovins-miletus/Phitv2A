@@ -35,7 +35,7 @@ export function CapabilityRack() {
             >
               <Reveal>
                 <Grid container spacing={{ xs: 6, md: 8 }} alignItems="center">
-                  <Grid size={{ xs: 12, md: 7 }}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Stack spacing={4}>
                       <Typography
                         variant="overline"
@@ -89,33 +89,21 @@ export function CapabilityRack() {
                     </Stack>
                   </Grid>
 
-                  <Grid size={{ xs: 12, md: 5 }}>
-                    <Stack spacing={4} alignItems={{ xs: "flex-start", md: "flex-end" }} textAlign={{ xs: "left", md: "right" }}>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontSize: "1.1rem",
-                          lineHeight: 1.7,
-                          color: "text.secondary",
-                          maxWidth: 400,
-                        }}
-                      >
-                        {service.summary}
-                      </Typography>
-
-                      <Box
-                        sx={{
-                          width: "100%",
-                          maxWidth: { xs: 260, md: 320 },
-                          aspectRatio: "1/1",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <ServiceVector id={service.id} />
-                      </Box>
-                    </Stack>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Box
+                      sx={{
+                        width: "100%",
+                        maxWidth: { xs: 520, md: 640 },
+                        aspectRatio: "1/1",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mx: { xs: "auto", md: 0 },
+                        ml: { md: "auto" },
+                      }}
+                    >
+                      <ServiceVector id={service.id} />
+                    </Box>
                   </Grid>
                 </Grid>
               </Reveal>

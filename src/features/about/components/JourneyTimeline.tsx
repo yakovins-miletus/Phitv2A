@@ -830,7 +830,7 @@ export function JourneyTimeline() {
                     the AA floor, at a size below the practical legibility limit.
                     Now 11px at 0.7 alpha (7.4:1). */}
                 {!isMobile && (
-                  <span style={{ fontFamily: FONT, fontSize: 11, color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
+                  <span style={{ fontFamily: FONT, fontSize: 11, color: "rgba(255,255,255,0.6)", letterSpacing: "0.08em" }}>
                     {ch.num}
                   </span>
                 )}

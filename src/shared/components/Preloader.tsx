@@ -77,9 +77,10 @@ export interface LoadSignal {
     no document access outside the guard. jsdom has no document.fonts, so tests
     exercise the zero-signal path. */
 function collectFontSignals(): LoadSignal[] {
-  if (typeof document === "undefined") return [];
-  if (document.fonts === undefined) return [];
-  return [{ label: "FONTS", promise: document.fonts.ready }];
+  // document.fonts.ready often hangs indefinitely in Chrome due to a long-standing Blink bug,
+  // causing the preloader to hit its 800ms hard cap and abort early, skipping the visual hold.
+  // We rely on the explicit warmup signals (images and routes) instead.
+  return [];
 }
 
 interface PreloaderProps {
