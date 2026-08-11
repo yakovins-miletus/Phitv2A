@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Collapse from "@mui/material/Collapse";
-import IconButton from "@mui/material/IconButton";
+import { SpecularIconButton as IconButton } from "@/shared/components/ui/specular";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import type { BlogPostSummary } from "../api";

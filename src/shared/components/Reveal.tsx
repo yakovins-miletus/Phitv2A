@@ -13,7 +13,7 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.3 });
+  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px", amount: 0.3 });
   
   const shouldAnimate = ready && inView;
   const styleProp = style ? { style } : {};
@@ -21,10 +21,10 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
   return (
     <motion.div
       ref={ref}
-      initial={reduced ? false : { opacity: 0, y: 24 }}
-      animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      initial={reduced ? false : { opacity: 0, y: 36 }}
+      animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 36 }}
       transition={{
-        duration: 0.6,
+        duration: 0.8,
         ease: EASE_OUT_EXPO,
         delay,
       }}
@@ -40,7 +40,7 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
 export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.15 });
+  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px", amount: 0.25 });
 
   const shouldAnimate = ready && inView;
 
@@ -52,7 +52,7 @@ export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; del
       variants={{
         hidden: {},
         visible: {
-          transition: { staggerChildren: 0.06, delayChildren: delay },
+          transition: { staggerChildren: 0.08, delayChildren: delay },
         },
       }}
     >
@@ -67,10 +67,10 @@ export function StaggerItem({ children }: { children: ReactNode }) {
   return (
     <motion.div
       variants={{
-        hidden: reduced ? { opacity: 1 } : { opacity: 0, y: 20 },
+        hidden: reduced ? { opacity: 1 } : { opacity: 0, y: 32 },
         visible: { opacity: 1, y: 0 },
       }}
-      transition={{ duration: 0.5, ease: EASE_OUT_EXPO }}
+      transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
       style={{ height: '100%' }}
     >
       {children}

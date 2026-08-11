@@ -106,7 +106,7 @@ export function StageSection({ section, muted = false, children }: StageSectionP
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: ref.current,
-          start: "top bottom",
+          start: "top 85%",
           end: "bottom top",
           scrub: SCROLL_SPEED,
           invalidateOnRefresh: true,

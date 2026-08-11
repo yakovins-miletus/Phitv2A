@@ -4,7 +4,7 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import Chip from "@mui/material/Chip";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";

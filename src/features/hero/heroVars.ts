@@ -176,8 +176,18 @@ export interface HeroStage {
   gunshot: boolean;
   /** The scaled container takes on its card chrome (white bg, radius, shadow). */
   chrome: boolean;
-  /** The 20s idle pan on the split images is running. */
-  autoPan: boolean;
+  /**
+   * The drift wall is on screen and should be animating.
+   *
+   * Was `autoPan`, describing the 20s idle pan on the split-pane images that
+   * `HeroImageWall` replaced — a flag no JSX ever read. The predicate was already
+   * answering the useful question ("the gunshot has landed and we have not left
+   * yet"), so it drives the wall's `paused` prop now rather than being deleted.
+   * The upper bound matters: the wall stays mounted past the pin's end (see the
+   * `wallMounted` latch in SuperHeroSequence.tsx), and an invisible wall must not
+   * keep a rAF loop alive.
+   */
+  wallDrift: boolean;
   /** Flanking texts are mounted. */
   flank: boolean;
   /** The grouped P→AT crossfade has taken over the logo. */
@@ -204,7 +214,7 @@ export function heroStage(progress: number, reduced: boolean): HeroStage {
     return {
       gunshot: false,
       chrome: false,
-      autoPan: false,
+      wallDrift: false,
       // flankOpacity is 1 under reduced motion, so the texts mount — but heroVars parks
       // them at ±240vh, exactly as the original did.
       flank: true,
@@ -220,7 +230,7 @@ export function heroStage(progress: number, reduced: boolean): HeroStage {
   return {
     gunshot: g > 0.01,
     chrome: g > 0.05,
-    autoPan: g > 0.99 && progress < 0.98,
+    wallDrift: g > 0.01 && progress < 0.98,
     flank: flankOpacity(progress) > 0.01,
     container: progress >= CONTAINER_START,
     borderDone: borderAnimProgress(progress) >= 0.99,
@@ -235,7 +245,7 @@ export function sameStage(a: HeroStage, b: HeroStage): boolean {
   return (
     a.gunshot === b.gunshot &&
     a.chrome === b.chrome &&
-    a.autoPan === b.autoPan &&
+    a.wallDrift === b.wallDrift &&
     a.flank === b.flank &&
     a.container === b.container &&
     a.borderDone === b.borderDone &&

@@ -1,0 +1,33 @@
+/**
+ * The specular rim's layout layer.
+ *
+ * Scope note: upstream's SpecularButton.css also owns the button's padding,
+ * font size, colour and glass fill. None of that is shipped here. This site
+ * already has a token-driven button surface (src/shared/theme/components.ts on
+ * the glass tokens in glass.css), and letting a component stylesheet restate
+ * padding and colour would fork the design system — the exact failure the token
+ * layer exists to prevent. So this file positions the canvas and nothing else;
+ * the buttons keep their variants, and the rim is drawn on top.
+ */
+
+/* The canvas overhangs the button so the rim glow can bleed past the edge.
+   -20px matches PAD in SpecularFx.tsx; the two must stay in step. */
+.specular-fx {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  /* Behind the label but above the button's own background. */
+  z-index: 0;
+}
+
+.specular-fx canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The rim is decoration on a control that already reads as disabled through
+   colour and cursor; drawing a bright moving highlight on it invites a click. */
+.Mui-disabled > .specular-fx {
+  display: none;
+}

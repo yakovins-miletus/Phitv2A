@@ -1,0 +1,148 @@
+/**
+ * The drift wall's structure layer.
+ *
+ * Scope note: this file positions, masks and contains. It carries no colour, no
+ * size and no timing. Every one of those arrives as a `--dw-*` custom property
+ * set on the root by DriftWall.tsx, which reads them from the palette and from
+ * props. That split is not stylistic — ESLint's `no-restricted-syntax` hex rule
+ * (eslint.config.js) only lints `.ts`/`.tsx`, so a hex literal in here would be
+ * invisible to the rule that exists to keep colour in `palette.ts`. Standing rule
+ * 4 in docs/hero-upgrade/README.md says the same thing. Nothing to lint if there
+ * is nothing to find.
+ *
+ * The single exception is `#000` inside the two mask gradients. In a mask only the
+ * alpha channel is read, so that black is "fully opaque here", not a colour — there
+ * is no palette token for it and substituting one would change nothing.
+ *
+ * Why a stylesheet at all, in a codebase that styles everything with MUI `sx`:
+ * `mask-composite`. The standard spelling is `mask-composite: intersect`; WebKit's
+ * is `-webkit-mask-composite: source-in` — a different *keyword*, not just a
+ * prefixed property name. Emotion's prefixer rewrites property names, not values,
+ * so the `sx` version of the two-layer mask below silently loses its edge dissolve
+ * on Safari. Both spellings have to be written by hand, and once they are, the
+ * rest of the 3D scaffolding (perspective, preserve-3d, contain) belongs with them.
+ *
+ * Precedent: src/shared/components/ui/specular/specular.css, imported the same way
+ * from its own component. `package.json` declares `"sideEffects": ["*.css"]`, so
+ * the import survives tree-shaking.
+ */
+
+.dw-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  perspective: var(--dw-perspective);
+  perspective-origin: 50% 50%;
+
+  /* The edge dissolve. Two masks intersected: a radial ellipse that fades the
+     corners, and a linear ramp that fades the top. `--dw-edge` is where the
+     opaque core ends — high `fade` pulls it inward, 0 pushes it to the frame.
+
+     The -webkit- pair must stay byte-for-byte in step with the standard pair
+     below it, keyword difference included (see the header). */
+  -webkit-mask-image:
+    radial-gradient(ellipse 78% 82% at 50% 46%, #000 var(--dw-edge), transparent 100%),
+    linear-gradient(to top, #000 var(--dw-edge), transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(ellipse 78% 82% at 50% 46%, #000 var(--dw-edge), transparent 100%),
+    linear-gradient(to top, #000 var(--dw-edge), transparent 100%);
+  mask-composite: intersect;
+}
+
+/* The wall itself: one transformed plane holding every column.
+   `--dw-zoom` overfills the frame so the yaw, pitch and roll below never swing a
+   bare edge into view — the roll in particular sweeps the near corners inward, so
+   too little zoom leaves a wedge of backplate down one side. The rotate order is
+   fixed — X (pitch), Y (yaw), Z (roll) — and `translateZ` pushes the whole thing
+   away last, after the rotations, so `depth` reads as distance rather than as a
+   diagonal slide. */
+.dw-plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: row;
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  transform:
+    translate(-50%, -50%) scale(var(--dw-zoom)) rotateX(var(--dw-tilt))
+    rotateY(var(--dw-turn)) rotateZ(var(--dw-roll))
+    translateZ(calc(-1 * var(--dw-depth)));
+}
+
+/* `contain: layout paint style` and not `content-visibility: auto`. Every column
+   is inside the viewport under a live transform, so content-visibility buys no
+   skipped work and forces a containment recalculation against the rAF writes on
+   .dw-track. Plain containment gives the isolation without the churn. */
+.dw-col {
+  position: relative;
+  width: calc(var(--dw-tile-w) + var(--dw-gap));
+  contain: layout paint style;
+  transform-style: preserve-3d;
+}
+
+/* The only element that actually animates, and so the only one that gets
+   `will-change`. Putting it on the tiles instead would promote one compositor
+   layer per tile — ~48 of them at 1080p — which is how a cheap effect turns into
+   a memory problem. */
+.dw-track {
+  display: flex;
+  flex-direction: column;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.dw-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(var(--dw-tile-h) + var(--dw-gap));
+  flex: 0 0 auto;
+}
+
+/* The gap lives as inset on an inner box rather than as `gap` on the track,
+   because the track's height has to be an exact multiple of the tile pitch for
+   the wrap in DriftWall.tsx to be seamless. A flex `gap` would add one extra
+   space per copy boundary and the seam would creep. */
+.dw-inner {
+  position: absolute;
+  inset: calc(var(--dw-gap) / 2);
+  display: block;
+  overflow: hidden;
+  border-radius: var(--dw-radius);
+  /* Also the placeholder while a tile's image is still decoding, which is why it
+     repeats the scrim colour rather than being transparent. */
+  background-color: var(--dw-overlay);
+}
+
+/* The tint, and it has to be a real element painted OVER the image.
+   Setting `--dw-overlay` as `.dw-inner`'s background alone tints nothing: the image
+   is opaque and covers it completely, so the prop silently did nothing and the tiles
+   composited far brighter than intended. `brightness()` alone cannot do this job —
+   it scales toward black, which flattens the bright tiles without pulling the whole
+   wall onto one hue, and hue variance across 24 photographs is exactly what makes
+   the flanking text's difference blend unpredictable. */
+.dw-scrim {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-color: var(--dw-overlay);
+  opacity: var(--dw-tint);
+  pointer-events: none;
+}
+
+/* `brightness`, not `opacity`, for the resting dim. Opacity would let the navy
+   backplate show through and shift hue per tile; brightness darkens the pixels in
+   place, which keeps the composite predictable — and the flanking text above this
+   layer blends with `mix-blend-mode: difference`, where an unpredictable backdrop
+   is not a contrast problem but an invisibility one. See HeroImageWall.tsx. */
+.dw-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(var(--dw-gray)) brightness(calc(1 - var(--dw-dim)));
+  user-select: none;
+  -webkit-user-drag: none;
+}

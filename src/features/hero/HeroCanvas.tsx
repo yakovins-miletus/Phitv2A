@@ -32,7 +32,13 @@ import { useReducedMotion, useIsLowPowerDevice, usePointerFine } from "@/shared/
 import { CONTAINER_START } from "./heroPhases";
 import { heroFrameState, PERSPECTIVE, PLANE_SIZE, makeCamera, project, unproject2D } from "./heroScene";
 import { loadLogoMask } from "./heroLogoMask";
-import { HORIZON, VIEW_FIT, drawPlaneFrame, type PlaneInteraction } from "./heroPlaneRenderer";
+import {
+  HORIZON,
+  VIEW_FIT,
+  drawPlaneFrame,
+  getLogoScreenBox,
+  type PlaneInteraction,
+} from "./heroPlaneRenderer";
 import {
   HIT_TEST_END,
   INTERACT_END,
@@ -63,11 +69,16 @@ interface HeroCanvasProps {
   /** Initial progress, used for the first paint and for the static fallback frame. */
   initialProgress?: number;
   /**
-   * The scaled card's own element. The frame loop publishes its lerped pointer
-   * here as `--hp-mx` / `--hp-my` every frame, so the dawn ground can read cursor
-   * parallax without a second lerp or a value lifted into React. Never written
-   * under `isStatic`: the loop that would write it never starts, so the ground's
-   * `var(--hp-mx, 0)` reads fall back to 0 for free.
+   * The `#hero` container. The frame loop publishes its lerped pointer here as
+   * `--hp-mx` / `--hp-my` every frame, so the dawn ground can read cursor
+   * parallax without a second lerp or a value lifted into React — and, since
+   * this change, the P mark's screen box as `--hp-px` / `--hp-py` / `--hp-pw`,
+   * which is how the motto (a DOM sibling of the canvas, not a descendant of
+   * it) knows where to sit. `--hp-mx`/`--hp-my` are never written under
+   * `isStatic`: the loop that would write them never starts, so the ground's
+   * `var(--hp-mx, 0)` reads fall back to 0 for free. The P box IS written once
+   * under `isStatic` — from `paintStill()` — because the motto needs a real
+   * position in the reduced-motion resting frame too.
    */
   varsHostRef?: RefObject<HTMLElement | null>;
 }
@@ -124,6 +135,36 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
     let rawSpeed = 0;
 
     let rippleAt = -Infinity;
+
+    // Last-published P screen box, so `publishLogoBox` can skip the
+    // `setProperty` calls once the mark has settled — it barely moves at rest,
+    // and a per-frame write that changes nothing still costs style
+    // invalidation. Mutated in place; never reallocated.
+    const lastLogoBox = { x: -1, y: -1, w: -1 };
+
+    /** Push the P's current screen box onto `varsHostRef` as `--hp-px` /
+     *  `--hp-py` / `--hp-pw`, if it moved enough to matter. Called after every
+     *  `drawPlaneFrame`, including the static one. */
+    const publishLogoBox = () => {
+      const host = varsHostRef?.current;
+      if (!host) return;
+      const box = getLogoScreenBox();
+      if (!box) return;
+      if (
+        Math.abs(box.x - lastLogoBox.x) < 0.0005 &&
+        Math.abs(box.y - lastLogoBox.y) < 0.0005 &&
+        Math.abs(box.w - lastLogoBox.w) < 0.0005
+      ) {
+        return;
+      }
+      lastLogoBox.x = box.x;
+      lastLogoBox.y = box.y;
+      lastLogoBox.w = box.w;
+      const s = host.style;
+      s.setProperty("--hp-px", box.x.toFixed(4));
+      s.setProperty("--hp-py", box.y.toFixed(4));
+      s.setProperty("--hp-pw", box.w.toFixed(4));
+    };
 
     // The single interaction object, mutated in place every frame rather than
     // reallocated. Held by reference across the whole effect's lifetime.
@@ -192,6 +233,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
       if (width === 0 || height === 0) return;
       const progress = isStatic ? 0 : progressRef.current;
       drawPlaneFrame(ctx, heroFrameState(progress, false, CONTAINER_START), width, height, 0, undefined);
+      publishLogoBox();
     };
 
     const frame = (now: number) => {
@@ -250,6 +292,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
       }
 
       drawPlaneFrame(ctx, state, width, height, elapsed, interaction);
+      publishLogoBox();
       raf = requestAnimationFrame(frame);
     };
 

@@ -1,5 +1,5 @@
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import Stack from "@mui/material/Stack";
 
 import { messageFromError } from "@/shared/api/errors";

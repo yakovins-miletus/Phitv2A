@@ -2,11 +2,11 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
+import { SpecularIconButton as IconButton, SpecularFx } from "@/shared/components/ui/specular";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import CloseIcon from "@mui/icons-material/Close";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
 import { MONO } from "@/shared/theme/theme";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 import { CommandPalette } from "./CommandPalette";
 import { FloatingIdOverlay } from "./FloatingIdOverlay";
@@ -125,30 +125,24 @@ function AnimatedContactButton({
   variant?: "default" | "onDark";
 }) {
   const [hovered, setHovered] = useState(false);
-  const [clicked, setClicked] = useState(false);
   const router = useRouter();
   const onDark = variant === "onDark";
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (clicked) return;
-    setClicked(true);
-    setTimeout(() => {
-      router.navigate({ to: "/contact" });
-      setClicked(false);
-    }, 400);
+    router.navigate({ to: "/contact" });
   };
 
   return (
     <Button
       variant="outlined"
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setClicked(false); }}
+      onMouseLeave={() => { setHovered(false); }}
       onClick={handleClick}
       sx={{
         borderRadius: "10px",
         border: "none !important",
-        color: (hovered || clicked || isActive)
+        color: (hovered || isActive)
           ? `${NOIR.gold} !important`
           : (onDark ? "rgba(255,255,255,0.9)" : "text.secondary"),
         bgcolor: "transparent !important",
@@ -158,7 +152,6 @@ function AnimatedContactButton({
         backdropFilter: "none !important",
         WebkitBackdropFilter: "none !important",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: clicked ? "scale(0.95)" : "scale(1)",
         "&:hover": {
           border: "none !important",
           bgcolor: "transparent !important",
@@ -172,51 +165,8 @@ function AnimatedContactButton({
         ...sx,
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-        <AnimatePresence mode="wait">
-          {!hovered ? (
-            <motion.div
-              key="default"
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.15 }}
-              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
-            >
-              {label}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="hover"
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.15 }}
-              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
-            >
-              {label}
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: 8 }}>
-                <rect x="0.5" y="0.5" width="15" height="15" rx="1.5" stroke="currentColor" fill="none" />
-                {clicked && (
-                  <motion.path
-                    d="M4 8L7 11L12 4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                  />
-                )}
-              </svg>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <Box sx={{ visibility: "hidden", display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>
-          {label}
-          <svg width="16" height="16" style={{ marginLeft: 8 }} />
-        </Box>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}>
+        {label}
       </Box>
     </Button>
   );
@@ -269,7 +219,8 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
   );
 }
 
-/** 3-Bar Menu Icon Button matching Contact Button hover behavior. */
+/** 3-Bar Menu Icon Button — same chrome-less treatment as the Contact button:
+    no background, no border, no shadow; it just goes gold on hover/active. */
 function AnimatedMenuButton({
   active,
   onClick,
@@ -277,7 +228,7 @@ function AnimatedMenuButton({
   isImmersiveDark,
   ariaLabel,
   sx,
-  noBorder,
+  noBorder: _noBorder,
 }: {
   active: boolean;
   onClick: () => void;
@@ -289,16 +240,10 @@ function AnimatedMenuButton({
 }) {
   const [hovered, setHovered] = useState(false);
   const isPrimary = hovered || active;
-  
-  const bgColor = isImmersiveDark 
-    ? (isPrimary ? NOIR.gold : "rgba(255, 255, 255, 0.15)") 
-    : (isPrimary ? NOIR.navyField : "#FFFFFF");
-    
-  const iconColor = isImmersiveDark 
-    ? "#FFFFFF" 
-    : (isPrimary ? "#FFFFFF" : NOIR.navyField);
 
-  const shadowMd = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
+  const iconColor = isPrimary
+    ? NOIR.gold
+    : (isImmersiveDark ? "rgba(255, 255, 255, 0.9)" : NOIR.navyField);
 
   return (
     <Box
@@ -315,26 +260,38 @@ function AnimatedMenuButton({
         height: 42,
         borderRadius: "10px",
         border: "none !important",
-        bgcolor: noBorder ? "transparent !important" : bgColor,
-        color: noBorder && (hovered || active) ? `${NOIR.gold} !important` : iconColor,
-        boxShadow: noBorder ? "none !important" : shadowMd,
+        bgcolor: "transparent !important",
+        background: "none !important",
+        backgroundImage: "none !important",
+        color: `${iconColor} !important`,
+        boxShadow: "none !important",
+        backdropFilter: "none !important",
+        WebkitBackdropFilter: "none !important",
         cursor: "pointer",
+        // The specular rim is absolutely positioned against this box, same as it
+        // is inside SpecularButton.
+        position: "relative",
         // No `outline: none` here. This is a real <button> with an onClick, and it
         // renders in the app bar on every route. An `sx` rule is injected after
         // MuiCssBaseline's `*:focus-visible`, so suppressing the outline locally beat
         // the theme's designed focus ring and left the primary nav trigger with no
         // keyboard indicator at all.
-        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         ...sx,
         "&:hover": {
           border: "none !important",
-          bgcolor: noBorder ? "transparent !important" : (isImmersiveDark ? NOIR.gold : NOIR.navyField),
-          color: noBorder ? `${NOIR.gold} !important` : "#FFFFFF",
-          boxShadow: noBorder ? "none !important" : shadowMd,
+          bgcolor: "transparent !important",
+          background: "none !important",
+          backgroundImage: "none !important",
+          color: `${NOIR.gold} !important`,
+          boxShadow: "none !important",
+          backdropFilter: "none !important",
+          WebkitBackdropFilter: "none !important",
         },
       }}
     >
-      <ThreeBarMenuIcon isHovered={hovered || active} color={noBorder && (hovered || active) ? NOIR.gold : iconColor} />
+      <SpecularFx lineColor={NOIR.gold} baseOpacity={0} />
+      <ThreeBarMenuIcon isHovered={isPrimary} color={iconColor} />
     </Box>
   );
 }
@@ -735,7 +692,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     fontFamily: (isStandardOrGlass || isIsland) ? MONO : undefined,
                     letterSpacing: (isStandardOrGlass || isIsland) ? "0.08em" : undefined,
                     textTransform: (isStandardOrGlass || isIsland) ? "none" : undefined,
-                    padding: (isStandardOrGlass || isIsland) ? "2px 0px" : undefined,
+                    padding: isGlass ? "2px" : ((isStandardOrGlass || isIsland) ? "2px 0px" : undefined),
                     minWidth: (isStandardOrGlass || isIsland) ? "auto" : undefined,
                   }}
                 />
@@ -748,7 +705,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
                   noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px" }}
+                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px", padding: isGlass ? "2px" : undefined }}
                 />
 
                 {/* Mobile 3-Bar Menu Button */}
@@ -759,7 +716,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
                   noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px" }}
+                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px", padding: isGlass ? "2px" : undefined }}
                 />
               </Box>
               </Box>

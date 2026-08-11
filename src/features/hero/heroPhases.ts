@@ -116,6 +116,12 @@ export function containerScale(p: number): number {
 /**
  * Top panel X translation: -100% → 0% during gunshot only.
  * Stays at 0% during smoking and container transform (no drift).
+ *
+ * HISTORY: these two describe an entrance nothing renders any more. The split panes
+ * they were written for stopped reading `--hp-topx`/`--hp-botx` some time before the
+ * drift wall replaced them, and the wall enters on `--hp-g` instead. They survive
+ * because this file is PARITY-LOCKED (see the header) and hero-phases.test.ts pins
+ * their outputs; they are pure, unimported by any `src/` module, and cost nothing.
  */
 export function topPanelX(p: number): number {
   if (p <= DWELL_END) return -100;

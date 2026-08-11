@@ -178,6 +178,128 @@ export const DAWN = {
 } as const;
 
 /**
+ * The 3D playground's atmosphere — a sky with a hue arc in it, and a cloud deck.
+ *
+ * A third sibling to `NOIR` and `DAWN` rather than more `DAWN` stops, for two
+ * reasons that both have to hold or these belong upstairs:
+ *
+ * **1. Different job.** `DAWN` is the 2D hero's CSS sky: eight stops of a
+ * vertical linear-gradient behind a static card. This set feeds a *lit* room —
+ * `SkyDome`'s five-stop dome ramp, its scattering lobe and sun core, and
+ * `CloudSea`'s three-value deck. Half of these tokens are never a background at
+ * all; they are cloud shading, and a cloud is only convincing when its lit face,
+ * its shoulder and its underside are three different **hues** rather than three
+ * brightnesses of one.
+ *
+ * **2. Different contrast contract.** `DAWN`'s docblock pins per-stop WCAG
+ * figures against the hero motto, which sits at top-left in both states. What
+ * differs here is the *foreground*: over this sky the motto flips to frost
+ * whenever `isPhaseDark` says the room is dark, so the lit stops are measured
+ * against navy and the night stops against frost, each only against the
+ * foreground it can actually appear behind. Folding them into `DAWN` would have
+ * meant either failing its all-tokens-vs-navy loop or keeping the clouds too
+ * pale to shade — which was the bug this set exists to fix.
+ *
+ * **The violet is deliberate, and it is the point.** `DAWN`'s docblock rules
+ * out "teal, violet, anything not already in this file's ramp family". That rule
+ * was written for a gradient that walks navy (220°) straight to gold (44°) — and
+ * a straight walk between those two in linear sRGB is exactly what produced the
+ * washed-out middle this set replaces. A real sunset does not interpolate from
+ * blue to gold; it goes **around**, through periwinkle, violet, mauve and rose,
+ * and every one of those hues is on the cool-to-warm arc our own steel and gold
+ * already bracket. The arc below is that walk made explicit in eight stops, so
+ * the middle of the sky is a colour someone chose instead of a colour a `mix()`
+ * landed on. It is scoped to the 3D room and nothing else consumes it.
+ *
+ * WCAG, computed against `NOIR.navyField` (the motto's navy on the three lit
+ * phases) and against `NOIR.frost` (the motto at night, after `isPhaseDark`
+ * flips the chrome). Both foregrounds are 2.0–2.6rem/800 — large text, 3:1
+ * floor — and every stop below clears it with margin on the foreground it can
+ * actually appear behind:
+ *
+ *     lit arc vs navyField:  deepBlue 4.81 · periwinkle 6.34 · violet 6.69
+ *                            mauve 7.32 · rose 8.50 · blush 9.61
+ *                            peach 10.15 · cream 11.81 · sunCore 12.78
+ *     deck vs navyField:     cloudLit 11.34 · cloudMauve 7.03 · cloudDeep 4.33
+ *     night vs frost:        zenith 15.57 · upper 12.91 · mid 10.00
+ *                            lower 7.09 · horizon 4.59 · cloudLit 3.59
+ *                            cloudMauve 6.49 · cloudDeep 10.13
+ *
+ * `cloudDeep` (4.33) and `nightCloudLit` (3.59) are the two worst cases and both
+ * are pinned in `tests/a11y-contrast.test.ts`. Every figure improved with the
+ * softening pass, which is not a coincidence: desaturating toward a stop's own
+ * lightness moves it away from mid-grey in luminance terms, and the two
+ * foregrounds here sit at the extremes.
+ */
+export const SKY = {
+  /* ── The lit hue arc, top of frame → horizon ────────────────────────────
+   * Eight stops walking 232° → 45° the long way round: blue, periwinkle,
+   * violet, mauve, rose, blush, peach, cream. A phase picks five of them; the
+   * ones it skips are usually doing the glow instead.
+   *
+   * **Every stop here was desaturated by ~40% from its first cut**, with the
+   * lightness lifted proportionally into whatever headroom it had left. The
+   * first version put the arc's hues in the right places at full chroma, and
+   * full chroma is not what a sunset looks like from inside one — the air is
+   * hazy, and haze is the thing that mutes a sky toward its own average as it
+   * goes. Saturated pastels read as a gradient someone chose; muted ones read
+   * as distance.
+   *
+   * The desaturation is uniform *by ratio*, not by amount, which is the part
+   * that matters: scaling every stop's saturation by the same factor keeps the
+   * hue walk intact and only lowers its amplitude. A flat subtraction would
+   * have collapsed the low-chroma stops (`cream`, `sunCore`) to grey while
+   * barely touching `rose`, turning an arc into a smear. Pushed further — half
+   * chroma was tried — `violet` and `mauve` converge on the same lilac-grey and
+   * the middle this set exists to provide disappears again. */
+  /** Zenith on the warm phases, and the darkest value in any lit sky. */
+  deepBlue: "#8C97C9",
+  /** Upper band. Still blue, already turning. */
+  periwinkle: "#A7AFD5",
+  /** **The first missing middle.** Blue's warm neighbour, and the stop that
+   *  stops a blue→cream mix passing through grey. */
+  violet: "#BBB0D4",
+  /** Violet → rose pivot. */
+  mauve: "#CFB6CF",
+  /** **The second missing middle** — the pink band a real sunset carries, and
+   *  still the most chromatic stop in the set even after the softening. */
+  rose: "#E8C2D0",
+  /** Rose → peach. Where the sky stops being pink and starts being warm. */
+  blush: "#EED3C5",
+  /** The warm band above the sun. */
+  peach: "#EDDCBF",
+  /** Horizon wash on the cool phases. */
+  cream: "#F5EEDB",
+  /** The centre of the scattering lobe. Off-white rather than white: a clipped
+   *  core is a hole in the sky, and this set is meant to be soft everywhere.
+   *  Never drawn as a disc — see `SkyDome`'s core term, which is a power lobe
+   *  and therefore has no edge. */
+  sunCore: "#FBF7ED",
+
+  /* ── The deck, lit ──────────────────────────────────────────────────────
+   * Three values, not two. `cloudDeep` is a *mid mauve* rather than a dark
+   * grey on purpose: an underside is lit by the sky, so it goes blue-violet
+   * rather than black, and a deck with a near-black valley in it reads as
+   * rock. */
+  cloudLit: "#F4E8DB",
+  cloudMauve: "#C0B6CC",
+  cloudDeep: "#968CAC",
+
+  /* ── Night ──────────────────────────────────────────────────────────────
+   * The same architecture an octave and a half down, and softened on the same
+   * ratio. Measured against frost, not navy: at night `isPhaseDark` has
+   * already flipped the motto. */
+  nightZenith: "#181C35",
+  nightUpper: "#252B47",
+  nightMid: "#353C5D",
+  nightLower: "#4A5276",
+  nightHorizon: "#696F8E",
+  nightCloudLit: "#7C8198",
+  nightCloudMauve: "#535873",
+  nightCloudDeep: "#373C52",
+} as const;
+
+/**
  * The About timeline's per-chapter accents.
  *
  * These were the Tailwind default palette — violet-400, sky-400, blue-400,
@@ -259,3 +381,50 @@ export const palette: PaletteOptions = {
     disabledBackground: "rgba(10, 42, 102, 0.06)",
   },
 };
+
+/**
+ * The Monolith room's one authored look — a dawn/twilight sky, cut to a fixed
+ * colour budget rather than to a mood.
+ *
+ * The budget IS the brief, and it is what the previous cut missed: that one ran
+ * a violet at 0.4–1.0 weight through the whole ramp and every surface under it,
+ * so the room read as a purple photograph with a mark in it. The ratios below
+ * are the corrective, measured by rough share of the rendered frame:
+ *
+ *   ~60%  `white` / `paper` — the dominant. Most of the sky and most of the
+ *         cloud deck sit at or within a hair of these.
+ *   ~20%  `warm` / `ember` — the soft secondary. Brand gold (`NOIR.gold`,
+ *         #FFC72C) walked most of the way to white: the band above the
+ *         horizon, the scattering core, and the deck's lit crests.
+ *   ~10%  `cool` — soft blue-violet, the primary navy (#0A2A66) desaturated
+ *         and lifted. The zenith and the deck's valleys, nothing else.
+ *   ~10%  `blendCool` / `blendWarm` — the two bridges. They exist for the
+ *         reason `SKY`'s arc does: a straight lerp from a blue to a cream
+ *         passes through grey, and the grey is what a viewer reads as "muddy".
+ *
+ * Every stop is deliberately low-chroma. "Soft" in the brief is not a hedge —
+ * a saturated sky out-shouts the mark, and the mark is the subject.
+ */
+export const TWILIGHT = {
+  /** The dominant. Near-pure white, the faintest cool cast so it reads as
+   *  light rather than as paper stock. */
+  white: "#FDFEFF",
+  /** The off-white body the bulk of the frame actually sits at — `NOIR.void`'s
+   *  cool tint, a shade lighter. */
+  paper: "#F2F5FB",
+  /** The soft secondary: a pale warm cream. Kept light enough that the horizon
+   *  band still reads as the brightest part of the sky, which is what a real
+   *  dawn does. */
+  warm: "#FBEBD2",
+  /** The deepest warm note, and the only stop with real chroma. The scattering
+   *  core and the deck's most-lit crests — never a band. */
+  ember: "#F7D9A8",
+  /** The soft blue-violet. Navy at ~18% saturation and high lightness: enough
+   *  to be identifiably the brand's own blue, nowhere near enough to tint the
+   *  frame. */
+  cool: "#BEC7E0",
+  /** cool → white. */
+  blendCool: "#DEE4F2",
+  /** white → warm. */
+  blendWarm: "#F7F4EE",
+} as const;

@@ -1135,6 +1135,31 @@ const P_LAYER_STEP = 1.8;
 const P_MAX_LAYERS = 16;
 
 /**
+ * The P's last-drawn screen box, as fractions of the canvas — `SuperHeroSequence.tsx`'s
+ * DOM chrome (the mode badge, the motto) has no other way to know where the mark is.
+ *
+ * A module-scope mutable record rather than a returned object, matching this file's
+ * zero-allocation-in-the-frame-path rule: `getLogoScreenBox()` hands back the same
+ * object every call, and `drawLogo` only ever mutates its fields.
+ *
+ * `null` until the first frame with a loaded logo image draws — `HeroCanvas.tsx` treats
+ * that as "hold the CSS default", not as an error.
+ */
+const logoScreenBox: { x: number; y: number; w: number; visible: boolean } = {
+  x: 0.5,
+  y: 0.6,
+  w: 0.22,
+  visible: false,
+};
+
+/** Read-only view of the P's current screen box, as fractions of the canvas
+ *  (`x`/`y` the mark's centre-x and ground-contact-y, `w` its width). `null` if
+ *  nothing has drawn a logo frame yet. */
+export function getLogoScreenBox(): { x: number; y: number; w: number } | null {
+  return logoScreenBox.visible ? logoScreenBox : null;
+}
+
+/**
  * The brand mark: a volumetric flat-3D P, recovered from the pre-lattice renderer.
  *
  * A real extruded raster lying *in* the scene plane (`drawImageOnPlane`), built from
@@ -1149,9 +1174,12 @@ const P_MAX_LAYERS = 16;
  * hard-centred the mark at `width / 2` and dropped `moveLeft` on the floor. This
  * mark was never the one that forgot it.
  */
-function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameState, w: number): void {
+function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameState, w: number, h: number): void {
   const image = getLogoImage();
-  if (!image || state.logoHidden) return;
+  if (!image || state.logoHidden) {
+    logoScreenBox.visible = false;
+    return;
+  }
 
   const mobile = w < 600;
   const baseW = mobile ? 200 : w < 900 ? 280 : 380;
@@ -1176,6 +1204,55 @@ function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameSt
 
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
+
+  // P exit animation's opacity, needed here too: once the mark has dropped out
+  // (progress 0.86 → 0.89, see `pExitProgress` in heroVars.ts) there is nothing
+  // on screen for DOM chrome to anchor against, so the screen box below stops
+  // publishing rather than reporting a stale position under an invisible mark.
+  const pOpacity = Math.max(0, 1 - state.pexit);
+
+  // Publish the mark's screen box for `SuperHeroSequence.tsx`'s DOM chrome
+  // (`getLogoScreenBox`, above).
+  //
+  // `(cx, cy)` is the sprite's own CENTRE — `drawImageOnPlane` spans it
+  // `±w/2`/`±h/2`, exactly as its own `bl = project(cam, cx - w/2, cy + h/2,
+  // z)` corner does — so the first cut of this anchor, `project(cam, cx, cy,
+  // 0)`, put the anchor at the P's vertical *middle*, not its bottom: the
+  // motto rendered on top of the glyph instead of under it. `cy + lh / 2`
+  // is the same bottom-edge offset `drawImageOnPlane`'s own `bl` corner
+  // uses, at `z = 0` (the base of the extrusion, which projects to the
+  // lowest screen point among the stacked layers — see the module comment
+  // on `+z lifts -y on screen`).
+  //
+  // `x` and `y` are projected from two DIFFERENT plane points, not one:
+  // `rotateZ` mixes the plane's x and y axes together before anything else
+  // happens (`rx1 = px*cosZ - py*sinZ`), so projecting the bottom-edge point
+  // `(cx, cy + lh/2)` for both coordinates pulled `sx` sideways by the same
+  // rotation that makes the scene read as isometric — correct 3D, wrong
+  // answer for "what x is this glyph centred on". `centre.sx` (the untilted
+  // centre point) is what a viewer's eye calls the mark's own centreline;
+  // `bottom.sy` is the lowest point of the base layer. Split the two.
+  //
+  // `lw * cam.scale` converts the plane-space width to screen pixels the
+  // same way `shift` above converts the wordmark's screen-space inset the
+  // other direction. An approximation, not a rasterised bounding box:
+  // sufficient for "roughly under the mark," which is all a DOM element
+  // positioned in fractions of the canvas needs.
+  if (pOpacity > 0.001) {
+    const centre = project(cam, cx, cy, 0);
+    // `0.62`, not `0.5`: the P's own hook curls below a naive symmetric
+    // bounding box (it is a swash, not a rectangle), so half the sprite
+    // height undershoots the glyph's actual lowest pixel. Measured against
+    // the screenshot at rest, not derived — a margin, same spirit as the
+    // logo mask's own asymmetric bounds.
+    const bottom = project(cam, cx, cy + lh * 0.62, 0);
+    logoScreenBox.x = centre.sx / w;
+    logoScreenBox.y = bottom.sy / h;
+    logoScreenBox.w = (lw * cam.scale) / w;
+    logoScreenBox.visible = true;
+  } else {
+    logoScreenBox.visible = false;
+  }
 
   // Ground contact shadow beneath the 3D mark while the scene still has depth: a
   // soft radial pool plus a tighter, darker shadow thrown along `SHADOW_DIR` — the
@@ -1216,7 +1293,7 @@ function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameSt
   const layerSprites = ensureLogoLayers(image);
 
   // P exit animation: drop down & fade out (pexit: 0 -> 1). Ported unchanged.
-  const pOpacity = Math.max(0, 1 - state.pexit);
+  // `pOpacity` itself is computed above, alongside the screen-box publish.
   if (pOpacity > 0.001) {
     const pDropY = state.pexit * 60;
     const pScale = 1 - state.pexit * 0.15;
@@ -1322,5 +1399,5 @@ export function drawPlaneFrame(
   drawDotField(ctx, cam);
   drawSignals(ctx, cam, state, elapsed);
   drawSceneObjects(ctx, cam, state);
-  drawLogo(ctx, cam, state, w);
+  drawLogo(ctx, cam, state, w, h);
 }

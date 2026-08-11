@@ -24,7 +24,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { usePointerFine } from "@/shared/motion";
 import { easeToward, smoothVelocity } from "../heroPointer";
-import { CAMERA, GROUND_Y, WORLD_EXTENT } from "./constants";
+import { CAMERA, GROUND_Y, WORLD_EXTENT, type CameraRig } from "./constants";
 import type { PointerPlane } from "./types";
 
 /** Lerp factor both the ground-plane position and the normalised screen position
@@ -57,11 +57,23 @@ function makePointerPlane(): PointerPlane {
  *   listeners or rebuilding the camera.
  * @param reduced Reduced motion: no listeners are attached at all, and the returned
  *   ref stays at its resting zero state for the whole mount.
+ * @param rig Which camera the unprojection is done through. Defaults to the shared
+ *   `CAMERA`, and the second rig exists for the one design that floats above a deck
+ *   rather than standing on a floor (`CAMERA_ALTITUDE`). This has to match whatever
+ *   is actually rendering pixels or the cursor and the thing it moves disagree by a
+ *   perspective divide — which reads as the effect lagging behind the mouse in one
+ *   half of the frame and running ahead of it in the other.
+ * @param planeY The height of the surface pointer rays are solved against.
+ *   `GROUND_Y` for the three floor scenes, `DECK_Y` for the cloud deck. The same
+ *   argument as `rig`: a ray solved against a plane the visitor cannot see lands
+ *   somewhere plausible and wrong.
  */
 export function usePointerPlane(
   hostRef: RefObject<HTMLElement | null>,
   active: boolean,
   reduced: boolean,
+  rig: CameraRig = CAMERA,
+  planeY: number = GROUND_Y,
 ): RefObject<PointerPlane> {
   const pointerRef = useRef<PointerPlane>(makePointerPlane());
   const pointerFine = usePointerFine();
@@ -90,10 +102,34 @@ export function usePointerPlane(
     let height = 0;
     const start = performance.now();
 
-    const camera = new THREE.PerspectiveCamera(CAMERA.fov, 1, CAMERA.near, CAMERA.far);
-    camera.position.set(...CAMERA.position);
-    camera.lookAt(...CAMERA.target);
-    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -GROUND_Y);
+    const camera = new THREE.PerspectiveCamera(rig.fov, 1, rig.near, rig.far);
+    camera.position.set(...rig.position);
+    camera.lookAt(...rig.target);
+    /**
+     * Bake the transform into `matrixWorld` — without this the whole hook returns
+     * the origin, forever.
+     *
+     * `position.set` and `lookAt` only write `position` and `quaternion`.
+     * `matrixWorld` is composed from them by `updateMatrixWorld()`, which the
+     * renderer calls once per frame for everything **in the scene graph** — and
+     * this camera is deliberately not in it (see the module comment: it exists so
+     * pointer math never reaches into the Canvas). Nothing else was ever going to
+     * call it.
+     *
+     * The failure was silent and total rather than merely inaccurate.
+     * `Raycaster.setFromCamera` takes the ray origin from `matrixWorld`, so an
+     * identity matrix put the origin at (0, 0, 0) — which is a point *on* the
+     * ground plane, since `GROUND_Y` is 0. `Ray.intersectPlane` solves
+     * `t = -(origin · normal + constant) / denominator`, that numerator is zero
+     * for a coplanar origin, so every ray "hit" the plane at t = 0 and every
+     * pointer sample resolved to the world origin. `pointerRef.x` and `.z` read
+     * 0 no matter where the cursor was, which silently disabled every
+     * pointer-driven effect in all four scenes: Monolith's key light sat inside
+     * the mark, its click shockwave always originated at the centre, Lattice's
+     * columns never rose, Depth's trough never carved.
+     */
+    camera.updateMatrixWorld();
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
     const raycaster = new THREE.Raycaster();
     const hit = new THREE.Vector3();
 
@@ -215,7 +251,12 @@ export function usePointerPlane(
     // loop instead of tearing down and rebuilding the camera and listeners. (No
     // disable directive needed — `active` is read through `activeRef`, so the rule
     // never asked for it in the first place.)
-  }, [hostRef, reduced, pointerFine]);
+    //
+    // `rig` and `planeY` ARE here: both are baked into the camera and the plane
+    // built above, so a tab switch that changes either has to rebuild them. They
+    // change once per variant switch, which is the right cost for tearing the
+    // loop down and standing it back up.
+  }, [hostRef, reduced, pointerFine, rig, planeY]);
 
   useEffect(() => {
     if (active) loopControlRef.current?.start();

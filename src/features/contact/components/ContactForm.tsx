@@ -2,7 +2,7 @@ import { NOIR } from "@/shared/theme/palette";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";

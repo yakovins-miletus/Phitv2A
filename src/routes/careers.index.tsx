@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import WorkIcon from "@mui/icons-material/Work";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";

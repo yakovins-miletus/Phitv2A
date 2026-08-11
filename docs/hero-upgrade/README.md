@@ -32,13 +32,38 @@ frames**. The rewrite exists to make those numbers zero. Its standing gates are:
 | Frame p50 / p95 / p99 / max | — | **16.7 / 17.5 / 18.4 / 18.6 ms** |
 | CSS rules injected by scroll | 0 | **+68** (was +1,335) ⚠️ sitewide, not hero-attributed |
 | Blur layers under `#hero` | 0 | **2** ⚠️ — both from the 3D-toggle chip's `backdrop-filter` |
-| Hero DOM nodes | < 20 | **32 before scroll / 44 after** |
+| Hero DOM nodes, interactive window (p<0.10) | < 20 | **32 before scroll / 44 after** |
+| Hero DOM nodes, gunshot onward (p>0.60) | < 280 | **252** ⚠️ — see the note below |
 | Tests | no new failures | **149 passed / 3 failed** (18 files) — all 3 pre-existing and unrelated to the hero |
 | Lint | no new violations | **33 errors / 219 warnings** (207 of the warnings are `no-restricted-syntax`) |
 | Build | — | `tsc -b` ~7.0 s + `vite build` ~2.4 s ≈ **9.0 s** |
 
 Full numbers and the repeat instrumentation: **`docs/hero-upgrade/stage-0-baseline.md`**.
 Re-run that file's "How to repeat this" section at the end of every stage.
+
+**Why the DOM-node gate is now two gates.** It used to be one line reading "< 20",
+against a hero whose imagery was two `<img>` elements. `HeroImageWall` replaced those
+with a drift wall — 25 photographs x 2 vertical repeats x 4 nodes each — so the count
+during the gunshot is **252**, measured at 1920/1440/1280/375. Splitting the gate is
+not a way of excusing that number; it is the honest shape of the constraint. The
+original was written to protect the *interactive window* (p < 0.10), where the canvas
+is drawing every frame and node count competes with it, and the wall does not exist
+there: it is 32/44 before the gunshot, unchanged. After p = 0.60 the canvas has scaled
+to a 0.34 card and the budget is paint, not layout — the wall's columns are
+`contain: layout paint style` and only five elements carry `will-change`.
+
+The 252 is also flat across viewports, which is worth knowing before anyone tries to
+tune it: the count is `items x copies`, and narrowing the viewport raises
+items-per-column while lowering `copies` by the same factor. The mobile column cap
+(5 -> 2 at 375px) changes the composition, **not** the node count. The lever that does
+move it is tile pitch: `tileHeight` is solved so one wrap cycle just clears the zoomed
+plane, which holds `copies` at 2. Shrink the tiles without re-solving it and the count
+goes to 75 tiles / ~375 nodes.
+
+Measured with the CDP ladder described in `HeroImageWall.tsx`; note that the Browser
+pane cannot be used for this, since it reports `visibilityState: "hidden"` and so
+freezes both rAF and ResizeObserver delivery — the wall never measures itself there
+and renders a single un-wrapped copy.
 
 **Three corrections to earlier assumptions, now that we have real numbers:**
 

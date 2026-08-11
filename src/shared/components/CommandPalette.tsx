@@ -5,37 +5,17 @@ import { useNavigate } from "@tanstack/react-router";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
-import { useNavbar } from "./NavbarContext";
+import { useHeroModeState } from "@/features/hero/heroModeStore";
+import {
+  GROUP_ORDER,
+  SIGNAL_TEXT,
+  commandHint,
+  filterCommands,
+  useCommandExecutor,
+  type Cmd,
+  type Group,
+} from "./commandActions";
 
-export const GROUP_ORDER = ["NAVIGATE", "ACTION", "SYSTEM"] as const;
-export type Group = (typeof GROUP_ORDER)[number];
-
-export const COMMANDS = [
-  { id: "nav-home", group: "NAVIGATE", label: "Home", keywords: "index landing start root", run: { kind: "nav", to: "/" } },
-  { id: "nav-about", group: "NAVIGATE", label: "About", keywords: "firm team story who we are", run: { kind: "nav", to: "/about" } },
-  { id: "nav-services", group: "NAVIGATE", label: "Services", keywords: "offering consulting engineering what we do", run: { kind: "nav", to: "/services" } },
-  { id: "nav-blog", group: "NAVIGATE", label: "Blog", keywords: "posts articles writing news", run: { kind: "nav", to: "/blog" } },
-  { id: "nav-innovation-hub", group: "NAVIGATE", label: "Innovation Lab", keywords: "labs experiment innovation data science", run: { kind: "nav", to: "/innovation-hub" } },
-  { id: "nav-contact", group: "NAVIGATE", label: "Contact", keywords: "reach email talk address", run: { kind: "nav", to: "/contact" } },
-  { id: "act-conversation", group: "ACTION", label: "Start a conversation", keywords: "contact talk hire enquiry inquiry", run: { kind: "nav", to: "/contact" } },
-  { id: "act-careers", group: "ACTION", label: "Copy careers email", keywords: "jobs hiring recruiting jobs@phitopolis.com", run: { kind: "copy", address: "jobs@phitopolis.com" } },
-  { id: "act-inquiries", group: "ACTION", label: "Copy general inquiries email", keywords: "info hello support info@phitopolis.com", run: { kind: "copy", address: "info@phitopolis.com" } },
-  { id: "sys-signal", group: "SYSTEM", label: "Signal check", keywords: "ping latency status desk easter", run: { kind: "signal" } },
-  { id: "sys-nav-minimal", group: "SYSTEM", label: "Navbar: Minimal Mode", keywords: "navbar minimal left logo padding margin 2xl default", run: { kind: "navbar-mode", mode: "minimal" } },
-  { id: "sys-nav-dynamic", group: "SYSTEM", label: "Navbar: Dynamic Mode", keywords: "navbar auto dynamic", run: { kind: "navbar-mode", mode: "dynamic" } },
-  { id: "sys-nav-island", group: "SYSTEM", label: "Navbar: Island Mode", keywords: "navbar island forced compact", run: { kind: "navbar-mode", mode: "island" } },
-  { id: "sys-nav-immersive", group: "SYSTEM", label: "Navbar: Immersive Mode", keywords: "navbar immersive full", run: { kind: "navbar-mode", mode: "immersive" } },
-  { id: "sys-nav-notch", group: "SYSTEM", label: "Navbar: Notch Mode", keywords: "navbar notch macbook camera capsule dark island", run: { kind: "navbar-mode", mode: "notch" } },
-  { id: "sys-nav-standard", group: "SYSTEM", label: "Navbar: Standard Mode", keywords: "navbar standard wide stretch full top normal center nav items", run: { kind: "navbar-mode", mode: "standard" } },
-  { id: "sys-nav-glassmorphism", group: "SYSTEM", label: "Navbar: Glassmorphism Mode", keywords: "navbar glass blur modern apple translucent mode gradient", run: { kind: "navbar-mode", mode: "glassmorphism" } },
-  { id: "sys-nav-autohide", group: "SYSTEM", label: "Toggle Navigation Autohide", keywords: "navigation autohide navbar scroll hide show toggle", run: { kind: "toggle-autohide" } },
-  { id: "sys-toggle-motto", group: "SYSTEM", label: "Toggle Logo Motto", keywords: "motto slogan tagline company header show hide toggle brand text", run: { kind: "toggle-motto" } },
-  { id: "sys-toggle-id-overlay", group: "SYSTEM", label: "Toggle ID Overlay", keywords: "id overlay developer outline tag inspect elements box layout toggle", run: { kind: "toggle-id-overlay" } },
-] as const;
-
-export type Cmd = (typeof COMMANDS)[number];
-
-const SIGNAL_TEXT = ["> pinging desk… ", "> latency: 87µs", "> signal acquired ▲"].join("\n");
 const LISTBOX_ID = "cmdk-listbox";
 const optId = (id: string) => `cmdk-opt-${id}`;
 
@@ -47,41 +27,31 @@ const isEditableTarget = (t: EventTarget | null): boolean => {
 export function CommandPalette() {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
-  const { setOverrideMode, toggleAutohide, toggleMotto } = useNavbar();
+  const { mode: heroMode } = useHeroModeState();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  // null = signal check not run; otherwise chars of SIGNAL_TEXT revealed
-  const [signalChars, setSignalChars] = useState<number | null>(null);
 
   const openRef = useRef(open);
   useEffect(() => {
     openRef.current = open;
   }, [open]);
-  const copyTimer = useRef<number | null>(null);
-  const twTimer = useRef<number | null>(null);
 
   const [isMac] = useState(
     () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform),
   );
 
-  const stopTypewriter = useCallback(() => {
-    if (twTimer.current !== null) {
-      window.clearInterval(twTimer.current);
-      twTimer.current = null;
-    }
-  }, []);
+  const { execute, copiedId, signalChars, resetRuntime } = useCommandExecutor(
+    (opts) => void navigate(opts),
+  );
 
   const handleClose = useCallback(() => {
     setOpen(false);
     setQuery("");
     setActiveIndex(0);
-    setSignalChars(null);
-    setCopiedId(null);
-    stopTypewriter();
-  }, [stopTypewriter]);
+    resetRuntime();
+  }, [resetRuntime]);
 
   // Global hotkeys — ⌘K/Ctrl+K toggles, Esc closes. Opening is suppressed
   // while an editable element has focus; closing always works.
@@ -100,19 +70,7 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleClose]);
 
-  useEffect(
-    () => () => {
-      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
-      stopTypewriter();
-    },
-    [stopTypewriter],
-  );
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [...COMMANDS];
-    return COMMANDS.filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q));
-  }, [query]);
+  const filtered = useMemo(() => filterCommands(query), [query]);
 
   const active: Cmd | undefined = filtered[activeIndex];
   const activeId = active ? optId(active.id) : undefined;
@@ -121,67 +79,6 @@ export function CommandPalette() {
     if (!open || !activeId) return;
     document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
   }, [open, activeId]);
-
-  const runSignal = useCallback(() => {
-    stopTypewriter();
-    if (reducedMotion) {
-      setSignalChars(SIGNAL_TEXT.length);
-      return;
-    }
-    setSignalChars(0);
-    twTimer.current = window.setInterval(() => {
-      setSignalChars((c) => {
-        const next = Math.min((c ?? 0) + 1, SIGNAL_TEXT.length);
-        if (next >= SIGNAL_TEXT.length) stopTypewriter();
-        return next;
-      });
-    }, 28);
-  }, [reducedMotion, stopTypewriter]);
-
-  const copyAddress = useCallback((id: string, address: string) => {
-    navigator.clipboard
-      .writeText(address)
-      .then(() => {
-        setCopiedId(id);
-        if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
-        copyTimer.current = window.setTimeout(() => setCopiedId(null), 1600);
-      })
-      .catch(() => {});
-  }, []);
-
-  const execute = useCallback(
-    (cmd: Cmd) => {
-      switch (cmd.run.kind) {
-        case "nav":
-          handleClose();
-          void navigate({ to: cmd.run.to });
-          break;
-        case "copy":
-          copyAddress(cmd.id, cmd.run.address);
-          break;
-        case "signal":
-          runSignal();
-          break;
-        case "navbar-mode":
-          handleClose();
-          setOverrideMode(cmd.run.mode);
-          break;
-        case "toggle-autohide":
-          handleClose();
-          toggleAutohide();
-          break;
-        case "toggle-motto":
-          handleClose();
-          toggleMotto();
-          break;
-        case "toggle-id-overlay":
-          handleClose();
-          window.dispatchEvent(new CustomEvent("phitopolis-toggle-id-overlay"));
-          break;
-      }
-    },
-    [handleClose, navigate, copyAddress, runSignal, setOverrideMode, toggleAutohide, toggleMotto],
-  );
 
   const onInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
@@ -199,7 +96,7 @@ export function CommandPalette() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       const cmd = filtered[activeIndex];
-      if (cmd) execute(cmd);
+      if (cmd) execute(cmd, handleClose);
     }
   };
 
@@ -328,7 +225,11 @@ export function CommandPalette() {
                     {rows.map((cmd) => {
                       const index = filtered.indexOf(cmd);
                       const selected = index === activeIndex;
-                      const copied = copiedId === cmd.id;
+                      const hint = commandHint(cmd, {
+                        copied: copiedId === cmd.id,
+                        heroMode,
+
+                      });
                       return (
                         <Box
                           component="li"
@@ -336,8 +237,9 @@ export function CommandPalette() {
                           id={optId(cmd.id)}
                           role="option"
                           aria-selected={selected}
+                          {...(hint.active ? { "aria-current": "true" as const } : {})}
                           onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => execute(cmd)}
+                          onClick={() => execute(cmd, handleClose)}
                           onMouseMove={() => {
                             if (!selected) setActiveIndex(index);
                           }}
@@ -365,16 +267,11 @@ export function CommandPalette() {
                             sx={{
                               ...monoLabelSx,
                               flexShrink: 0,
-                              ...(copied ? { color: NOIR.goldDark } : {}),
+                              ...(hint.active ? { color: NOIR.gold } : {}),
+                              ...(copiedId === cmd.id ? { color: NOIR.goldDark } : {}),
                             }}
                           >
-                            {copied
-                              ? "copied ✓"
-                              : cmd.run.kind === "nav"
-                                ? cmd.run.to
-                                : cmd.run.kind === "copy"
-                                  ? cmd.run.address
-                                  : "run"}
+                            {hint.text}
                           </Typography>
                         </Box>
                       );

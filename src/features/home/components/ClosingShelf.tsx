@@ -93,7 +93,7 @@ export function ClosingShelf() {
       }}
     >
       <Container 
-        maxWidth="lg" 
+        maxWidth="xl" 
         sx={{ 
           py: { xs: 8, md: 10 }, 
           position: "relative", 

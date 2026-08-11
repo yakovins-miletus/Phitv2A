@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
+import { SpecularIconButton as IconButton } from "@/shared/components/ui/specular";
 import Modal from "@mui/material/Modal";
 import Slide from "@mui/material/Slide";
 import InputBase from "@mui/material/InputBase";
@@ -14,10 +14,16 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useRouter, useLocation } from "@tanstack/react-router";
 
 import { MONO } from "@/shared/theme/theme";
-import { COMMANDS, GROUP_ORDER } from "./CommandPalette";
-import type { Group, Cmd } from "./CommandPalette";
-import { useNavbar } from "./NavbarContext";
-import { useReducedMotion } from "@/shared/motion";
+import {
+  GROUP_ORDER,
+  SIGNAL_TEXT,
+  commandHint,
+  filterCommands,
+  useCommandExecutor,
+  type Cmd,
+  type Group,
+} from "./commandActions";
+import { useHeroModeState } from "@/features/hero/heroModeStore";
 
 export interface NavSectionItem {
   to: string;
@@ -84,7 +90,6 @@ interface TopNavMegaDrawerProps {
   onClose: () => void;
 }
 
-const SIGNAL_TEXT = ["> pinging desk… ", "> latency: 87µs", "> signal acquired ▲"].join("\n");
 const LISTBOX_ID = "drawer-cmdk-listbox";
 const optId = (id: string) => `drawer-cmdk-opt-${id}`;
 
@@ -92,47 +97,32 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
   const [activeItem, setActiveItem] = useState<NavSectionItem>(MEGA_NAV_ITEMS[0]!);
   const router = useRouter();
   const location = useLocation();
+  const { mode: heroMode } = useHeroModeState();
 
   // Command Palette State
   const [query, setQuery] = useState("");
   const [isCommandMode, setIsCommandMode] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [signalChars, setSignalChars] = useState<number | null>(null);
-  
-  const reducedMotion = useReducedMotion();
-  const { setOverrideMode, toggleAutohide, toggleMotto } = useNavbar();
-  const copyTimer = useRef<number | null>(null);
-  const twTimer = useRef<number | null>(null);
+
+  const { execute, copiedId, signalChars, resetRuntime } = useCommandExecutor(
+    (opts) => void router.navigate(opts),
+  );
 
   const handleNavigate = (to: string) => {
     onClose();
     router.navigate({ to });
   };
 
-  const stopTypewriter = useCallback(() => {
-    if (twTimer.current !== null) {
-      window.clearInterval(twTimer.current);
-      twTimer.current = null;
-    }
-  }, []);
-
   useEffect(() => {
     if (!open) {
       setQuery("");
       setIsCommandMode(false);
       setActiveIndex(0);
-      setSignalChars(null);
-      setCopiedId(null);
-      stopTypewriter();
+      resetRuntime();
     }
-  }, [open, stopTypewriter]);
+  }, [open, resetRuntime]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [...COMMANDS];
-    return COMMANDS.filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q));
-  }, [query]);
+  const filtered = useMemo(() => filterCommands(query), [query]);
 
   const activeCmd: Cmd | undefined = filtered[activeIndex];
   const activeId = activeCmd ? optId(activeCmd.id) : undefined;
@@ -141,67 +131,6 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
     if (!open || !isCommandMode || !activeId) return;
     document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
   }, [open, isCommandMode, activeId]);
-
-  const runSignal = useCallback(() => {
-    stopTypewriter();
-    if (reducedMotion) {
-      setSignalChars(SIGNAL_TEXT.length);
-      return;
-    }
-    setSignalChars(0);
-    twTimer.current = window.setInterval(() => {
-      setSignalChars((c) => {
-        const next = Math.min((c ?? 0) + 1, SIGNAL_TEXT.length);
-        if (next >= SIGNAL_TEXT.length) stopTypewriter();
-        return next;
-      });
-    }, 28);
-  }, [reducedMotion, stopTypewriter]);
-
-  const copyAddress = useCallback((id: string, address: string) => {
-    navigator.clipboard
-      .writeText(address)
-      .then(() => {
-        setCopiedId(id);
-        if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
-        copyTimer.current = window.setTimeout(() => setCopiedId(null), 1600);
-      })
-      .catch(() => {});
-  }, []);
-
-  const execute = useCallback(
-    (cmd: Cmd) => {
-      switch (cmd.run.kind) {
-        case "nav":
-          onClose();
-          void router.navigate({ to: cmd.run.to });
-          break;
-        case "copy":
-          copyAddress(cmd.id, cmd.run.address);
-          break;
-        case "signal":
-          runSignal();
-          break;
-        case "navbar-mode":
-          onClose();
-          setOverrideMode(cmd.run.mode);
-          break;
-        case "toggle-autohide":
-          onClose();
-          toggleAutohide();
-          break;
-        case "toggle-motto":
-          onClose();
-          toggleMotto();
-          break;
-        case "toggle-id-overlay":
-          onClose();
-          window.dispatchEvent(new CustomEvent("phitopolis-toggle-id-overlay"));
-          break;
-      }
-    },
-    [onClose, router, copyAddress, runSignal, setOverrideMode, toggleAutohide, toggleMotto],
-  );
 
   const onInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
@@ -219,7 +148,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
     } else if (e.key === "Enter") {
       e.preventDefault();
       const cmd = filtered[activeIndex];
-      if (cmd) execute(cmd);
+      if (cmd) execute(cmd, onClose);
     }
   };
 
@@ -236,7 +165,10 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
       open={open}
       onClose={onClose}
       closeAfterTransition
-      slotProps={{ backdrop: { sx: { bgcolor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(16px)" } } }}
+      // The sheet itself is full-viewport glass, so the backdrop only needs a
+      // faint tint — at 0.4 black plus its own blur it was doing the occluding
+      // the sheet's transparency was supposed to avoid.
+      slotProps={{ backdrop: { sx: { bgcolor: "rgba(0, 0, 0, 0.15)" } } }}
       sx={{ zIndex: (theme) => theme.zIndex.modal + 10 }}
     >
       <Slide in={open} direction="down" timeout={450} appear>
@@ -250,15 +182,21 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
             inset: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(6, 24, 59, 0.6)",
-            backdropFilter: "blur(24px)",
+            backgroundColor: "rgba(6, 24, 59, 0.28)",
+            backdropFilter: "blur(28px) saturate(140%)",
+            WebkitBackdropFilter: "blur(28px) saturate(140%)",
             color: "white",
             overflow: "hidden",
             willChange: "transform",
             outline: "none",
           }}
         >
-          {/* Background Ambient Glows & Dynamic Preview Image */}
+          {/* Background ambient glow.
+              There used to be a full-bleed blurred copy of the hovered item's
+              preview image behind this, swapping on every hover. Behind the old
+              opaque sheet it was a faint wash; against the glass it reads as the
+              whole backdrop changing, competing with the preview card that shows
+              the same image sharply. The glass now shows the page instead. */}
           <Box
             sx={{
               position: "absolute",
@@ -269,28 +207,12 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
             }}
           >
             <Box
-              component="img" decoding="async" loading="lazy"
-              key={activeItem.to}
-              src={activeItem.preview}
-              alt=""
               sx={{
                 position: "absolute",
                 inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                opacity: 0.18,
-                filter: "blur(10px) brightness(0.6)",
-                transform: "scale(1.05)",
-                transition: "opacity 0.4s ease, transform 0.6s ease",
-                willChange: "opacity, transform",
-              }}
-            />
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                background: "radial-gradient(circle at 70% 30%, rgba(var(--accent-rgb), 0.08) 0%, transparent 60%), linear-gradient(180deg, rgba(6, 24, 59, 0.85) 0%, #06183B 100%)",
+                // Was a gradient that bottomed out at solid #06183B, which made the
+                // whole sheet opaque no matter what the glass layer above it did.
+                background: "radial-gradient(circle at 70% 30%, rgba(var(--accent-rgb), 0.10) 0%, transparent 60%), linear-gradient(180deg, rgba(6, 24, 59, 0.30) 0%, rgba(6, 24, 59, 0.55) 100%)",
               }}
             />
           </Box>
@@ -489,8 +411,9 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                       borderRadius: 6,
                       overflow: "hidden",
                       border: "1px solid rgba(255, 255, 255, 0.15)",
-                      bgcolor: "rgba(10, 42, 102, 0.7)",
-                      backdropFilter: "blur(12px)",
+                      bgcolor: "rgba(10, 42, 102, 0.35)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
                       height: "100%",
                       display: "flex",
                       flexDirection: "column"
@@ -520,7 +443,11 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                               {rows.map((cmd) => {
                                 const index = filtered.indexOf(cmd);
                                 const selected = index === activeIndex;
-                                const copied = copiedId === cmd.id;
+                                const hint = commandHint(cmd, {
+                                  copied: copiedId === cmd.id,
+                                  heroMode,
+
+                                });
                                 return (
                                   <Box
                                     component="li"
@@ -528,8 +455,9 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                     id={optId(cmd.id)}
                                     role="option"
                                     aria-selected={selected}
+                                    {...(hint.active ? { "aria-current": "true" as const } : {})}
                                     onMouseDown={(e) => e.preventDefault()}
-                                    onClick={() => execute(cmd)}
+                                    onClick={() => execute(cmd, onClose)}
                                     onMouseMove={() => {
                                       if (!selected) setActiveIndex(index);
                                     }}
@@ -553,10 +481,16 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                       sx={{
                                         ...monoLabelSx,
                                         flexShrink: 0,
-                                        color: copied ? "var(--accent-fg)" : (selected ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.3)"),
+                                        color: copiedId === cmd.id
+                                          ? "var(--accent-fg)"
+                                          : hint.active
+                                            ? "var(--accent-fg)"
+                                            : selected
+                                              ? "rgba(255,255,255,0.5)"
+                                              : "rgba(255,255,255,0.3)",
                                       }}
                                     >
-                                      {copied ? "copied ✓" : cmd.run.kind === "nav" ? cmd.run.to : cmd.run.kind === "copy" ? cmd.run.address : "run"}
+                                      {hint.text}
                                     </Typography>
                                   </Box>
                                 );
@@ -595,13 +529,12 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                       bgcolor: "rgba(10, 42, 102, 0.4)",
                       boxShadow: "0 24px 60px rgba(0, 0, 0, 0.4)",
                       cursor: "pointer",
-                      transition: "all 0.3s ease",
+                      transition: "border-color 0.3s ease",
                       height: "100%",
                       display: "flex",
                       flexDirection: "column",
                       "&:hover": {
                         borderColor: "var(--accent)",
-                        transform: "scale(1.01)",
                       },
                     }}
                   >

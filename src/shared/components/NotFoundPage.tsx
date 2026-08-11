@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";

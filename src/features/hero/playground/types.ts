@@ -15,6 +15,8 @@
 
 import type { ReactElement, RefObject } from "react";
 
+import type { DayCycleSample } from "./dayCycle";
+
 /**
  * The pointer, projected onto the shared ground plane and smoothed.
  *
@@ -48,6 +50,25 @@ export interface SceneProps {
   pointerRef: RefObject<PointerPlane>;
   /** 0 → 1 over ENTRANCE_MS when this scene becomes active. */
   settleRef: RefObject<number>;
+  /**
+   * The chosen time of day — see `dayCycle.ts`.
+   *
+   * A plain prop, unlike everything above it: this changes when someone presses
+   * one of four buttons, not every frame, so a render is the right cost and the
+   * scene can key work off it. Scenes without a `dayCycle` variant flag always
+   * receive `BASE_PHASE` and can ignore it.
+   */
+  /** The room's live weather. */
+  /**
+   * The room's live weather — the eased sample the shared stage is currently
+   * showing, mutated in place every frame.
+   *
+   * Read, never written. The stage's `useFrame` steps it and the scene's reads
+   * it, in that order (siblings run in tree order and the stage is first), so a
+   * scene's own key light and the sky behind it are always describing the same
+   * instant.
+   */
+  daySample: Readonly<DayCycleSample>;
   /** Visitor prefers reduced motion — paint a designed resting frame, start no loop. */
   reduced: boolean;
   /** Low-tier device — take the cheap path (fewer instances, cheaper material). */

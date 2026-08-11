@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";

@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import PlaceIcon from "@mui/icons-material/Place";
 import NavigationIcon from "@mui/icons-material/Navigation";
 import { NOIR } from "@/shared/theme/palette";

@@ -29,7 +29,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { NOIR, DAWN, CHAPTER_ACCENTS, TECH_CAT_ACCENTS } from "@/shared/theme/palette";
+import { NOIR, DAWN, SKY, CHAPTER_ACCENTS, TECH_CAT_ACCENTS } from "@/shared/theme/palette";
 
 /** WCAG relative luminance. */
 function luminance(hex: string): number {
@@ -284,11 +284,85 @@ describe("hero motto over the dawn sky (stage 4)", () => {
   });
 });
 
+describe("hero motto over the 3D playground's sky", () => {
+  /**
+   * The gallery's motto sits top-left, exactly where it does in 2D, but it
+   * flips from `navyField` to `frost` when `isPhaseDark` calls the room dark.
+   * So `SKY`'s contrast contract differs from `DAWN`'s in its *foreground*
+   * rather than its position: the lit tokens are measured against navy, the
+   * night tokens against frost, and each only against the one it can actually
+   * appear behind.
+   *
+   * Large text (2.0–2.6rem / 800), so the floor is 3:1.
+   *
+   * The two worst cases are pinned by value and not only by threshold, so a
+   * re-cut that drifts either of them darker fails here rather than in
+   * somebody's eyes. `nightCloudLit` is the tighter of the two and is worth
+   * understanding: it is the *brightest* night token, so softening the night
+   * set any further — which moves every stop toward mid-grey and therefore
+   * toward frost — is the change this assertion is watching for.
+   */
+  const LIT = ["deepBlue", "periwinkle", "violet", "mauve", "rose", "blush", "peach", "cream", "sunCore", "cloudLit", "cloudMauve", "cloudDeep"] as const;
+  const NIGHT = ["nightZenith", "nightUpper", "nightMid", "nightLower", "nightHorizon", "nightCloudLit", "nightCloudMauve", "nightCloudDeep"] as const;
+
+  test("the deepest cloud valley is the worst case on the lit phases, and it clears", () => {
+    const ratio = contrast(NOIR.navyField, SKY.cloudDeep);
+    expect(ratio, `navyField on cloudDeep — ${ratio.toFixed(2)}:1`).toBeCloseTo(4.33, 1);
+    expect(ratio).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  test("the brightest night value is the worst case after dark, and it clears", () => {
+    const ratio = contrast(NOIR.frost, SKY.nightCloudLit);
+    expect(ratio, `frost on nightCloudLit — ${ratio.toFixed(2)}:1`).toBeCloseTo(3.59, 1);
+    expect(ratio).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  /** The softening pass moved every stop, so the arc's own darkest value is
+   *  pinned too — it is the ceiling on how deep the zenith may be re-cut. */
+  test("the zenith stays clear of the floor after the softening pass", () => {
+    const ratio = contrast(NOIR.navyField, SKY.deepBlue);
+    expect(ratio, `navyField on deepBlue — ${ratio.toFixed(2)}:1`).toBeCloseTo(4.81, 1);
+    expect(ratio).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  test("every lit stop clears the large-text floor against the navy motto", () => {
+    for (const name of LIT) {
+      const ratio = contrast(NOIR.navyField, SKY[name]);
+      expect(ratio, `navyField on SKY.${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(
+        AA_LARGE,
+      );
+    }
+  });
+
+  test("every night stop clears it against the frost motto it actually sits under", () => {
+    for (const name of NIGHT) {
+      const ratio = contrast(NOIR.frost, SKY[name]);
+      expect(ratio, `frost on SKY.${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(
+        AA_LARGE,
+      );
+    }
+  });
+
+  /** The split above is only sound while the chrome actually flips — the night
+   *  tokens are dark enough to fail against navy, and it is `isPhaseDark`
+   *  reading these very values that stops them ever being behind it. */
+  test("the night sky is dark enough that the chrome must flip, not merely may", () => {
+    for (const name of NIGHT) {
+      expect(contrast(NOIR.frost, SKY[name])).toBeGreaterThan(contrast(NOIR.navyField, SKY[name]));
+    }
+  });
+});
+
 describe("palette integrity", () => {
   test("every token is a full-length hex", () => {
     for (const [key, value] of Object.entries(NOIR)) {
       if (key.endsWith("Rgb")) continue;
       expect(value, `NOIR.${key}`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
+    // `SKY` is parsed by `new THREE.Color(hex)` in the playground's `PALETTE`,
+    // which accepts a great many things and silently returns black for the rest.
+    for (const [key, value] of Object.entries(SKY)) {
+      expect(value, `SKY.${key}`).toMatch(/^#[0-9A-Fa-f]{6}$/);
     }
   });
 

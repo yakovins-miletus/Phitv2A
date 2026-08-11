@@ -19,12 +19,10 @@ interface Pillar {
   detail: string;
 }
 
-// `goldDark`, not `gold`: these sit on a near-white ground, where the lighter
-// gold all but disappears.
 const PILLAR_ICONS = [
-  <MagnifyingGlass weight="light" size={32} color={NOIR.goldDark} />,
-  <TerminalWindow weight="light" size={32} color={NOIR.goldDark} />,
-  <GlobeHemisphereWest weight="light" size={32} color={NOIR.goldDark} />,
+  <MagnifyingGlass weight="duotone" size={28} color={NOIR.goldDark} />,
+  <TerminalWindow weight="duotone" size={28} color={NOIR.goldDark} />,
+  <GlobeHemisphereWest weight="duotone" size={28} color={NOIR.goldDark} />,
 ];
 
 export function OperatingPillars() {
@@ -33,40 +31,48 @@ export function OperatingPillars() {
   return (
     <StageSection section={homeSection("hero-pillars")}>
       <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
-        {/* Left-aligned with the columns below it. Centred heading over a
-         *  left-aligned grid reads as two designs sharing a section. */}
+        {/* Section Kicker & Main Heading */}
         <Box sx={{ mb: { xs: 6, md: 8 } }}>
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{
+                width: 24,
+                height: 2,
+                borderRadius: 1,
+                background: `linear-gradient(90deg, ${NOIR.goldDark}, transparent)`,
+              }}
+            />
+            <Typography
+              component="p"
+              variant="overline"
+              sx={{
+                fontFamily: MONO,
+                color: NOIR.goldDark,
+                display: "block",
+                letterSpacing: "0.2em",
+                fontWeight: 600,
+              }}
+            >
+              Organizational structure
+            </Typography>
+          </Box>
           <Typography
-            component="p"
-            variant="overline"
-            sx={{ fontFamily: MONO, color: NOIR.goldDark, display: "block", letterSpacing: "0.2em", mb: 2 }}
-          >
-            Organizational structure
-          </Typography>
-          <Typography 
-            variant="h2" 
-            component="h2" 
-            sx={{ 
-              maxWidth: "18ch", 
-              color: GROUND.fg, 
-              fontSize: { xs: "2.5rem", md: "3.5rem" },
+            variant="h2"
+            component="h2"
+            sx={{
+              maxWidth: "20ch",
+              color: GROUND.fg,
+              fontSize: { xs: "2.25rem", sm: "3rem", md: "3.5rem" },
+              fontWeight: 700,
               lineHeight: 1.1,
-              letterSpacing: "-0.02em"
+              letterSpacing: "-0.025em",
             }}
           >
             Three integrated operating pillars
           </Typography>
         </Box>
 
-        {/* Three plain columns under a hairline rule.
-         *
-         * This was a glass "monolith" — a translucent rounded card with a blur,
-         * a gold underline, a drop shadow, a decorative beam pinned at a magic
-         * `top: 100px`, and each icon in its own tinted chip. On a light ground
-         * none of that carried information: it read as a grey box of yellow
-         * tiles, and the beam fell wherever the copy happened to push it. The
-         * content is three labelled paragraphs, so it is set as three labelled
-         * paragraphs — the rule and the column gap do all the dividing. */}
+        {/* 3 Modern Pillar Cards with Pop-out Titles */}
         <Box
           component={motion.div}
           initial={{ opacity: 0, y: 24 }}
@@ -76,8 +82,7 @@ export function OperatingPillars() {
           sx={{
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            columnGap: { md: 8 },
-            rowGap: { xs: 6, md: 0 },
+            gap: { xs: 4, md: 4 },
           }}
         >
           {pillars.map((pillar, i) => {
@@ -86,35 +91,144 @@ export function OperatingPillars() {
             return (
               <Box
                 key={pillar.id}
-                sx={{ pt: { xs: 4, md: 5 }, borderTop: `1px solid ${GROUND.rule}` }}
+                sx={{
+                  position: "relative",
+                  borderRadius: "16px",
+                  p: { xs: 3.5, md: 4.5 },
+                  background: GROUND.dark
+                    ? "rgba(255, 255, 255, 0.03)"
+                    : "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 247, 252, 0.6) 100%)",
+                  border: `1px solid ${GROUND.dark ? "rgba(255, 255, 255, 0.08)" : "rgba(10, 42, 102, 0.12)"}`,
+                  boxShadow: GROUND.dark
+                    ? "0 4px 20px rgba(0, 0, 0, 0.2)"
+                    : "0 4px 20px rgba(10, 42, 102, 0.04)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  // Strict adherence to anti-slop rules:
+                  // ZERO translateY elevation or lift on hover.
+                  // Micro-interactions rely entirely on border color, glow, and fill transitions.
+                  transition: "border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease",
+                  "&:hover": {
+                    borderColor: NOIR.goldDark,
+                    boxShadow: GROUND.dark
+                      ? "0 4px 20px rgba(229, 178, 40, 0.15)"
+                      : "0 4px 24px rgba(229, 178, 40, 0.12)",
+                    "& .pillar-accent-line": {
+                      opacity: 1,
+                      width: "100%",
+                    },
+                    "& .pillar-icon-box": {
+                      borderColor: NOIR.goldDark,
+                      backgroundColor: "rgba(229, 178, 40, 0.12)",
+                    },
+                  },
+                }}
               >
-                <Typography
-                  component="span"
+                {/* Top Hairline Accent Line (Expands on Hover without physical card movement) */}
+                <Box
+                  className="pillar-accent-line"
                   sx={{
-                    display: "block",
-                    fontFamily: MONO,
-                    fontSize: "0.75rem",
-                    letterSpacing: "0.3em",
-                    color: NOIR.goldDark,
-                    mb: 3,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    height: "3px",
+                    width: "48px",
+                    opacity: 0.8,
+                    background: `linear-gradient(90deg, ${NOIR.goldDark} 0%, rgba(229, 178, 40, 0.4) 100%)`,
+                    transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
-                >
-                  {pillar.id}
-                </Typography>
+                />
 
-                <Box sx={{ mb: 3, lineHeight: 0 }}>{Icon}</Box>
+                <Box>
+                  {/* Icon & Pillar Index Header */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 3.5,
+                    }}
+                  >
+                    <Box
+                      className="pillar-icon-box"
+                      sx={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: GROUND.dark
+                          ? "rgba(255, 199, 44, 0.08)"
+                          : "rgba(10, 42, 102, 0.04)",
+                        border: `1px solid rgba(229, 178, 40, 0.3)`,
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      {Icon}
+                    </Box>
 
-                <Typography
-                  variant="h3"
-                  component="h3"
-                  sx={{ fontWeight: 600, color: GROUND.fg, letterSpacing: "-0.01em", mb: 2, fontSize: "1.5rem" }}
-                >
-                  {pillar.name}
-                </Typography>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontFamily: MONO,
+                        fontSize: "0.85rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.15em",
+                        color: NOIR.goldDark,
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: "6px",
+                        background: "rgba(229, 178, 40, 0.1)",
+                        border: "1px solid rgba(229, 178, 40, 0.25)",
+                      }}
+                    >
+                      {pillar.id}
+                    </Typography>
+                  </Box>
 
-                <Typography sx={{ color: GROUND.muted, lineHeight: 1.6, fontSize: "1.05rem", maxWidth: "34ch" }}>
-                  {pillar.detail}
-                </Typography>
+                  {/* POPPING PILLAR TITLE */}
+                  <Typography
+                    variant="h3"
+                    component="h3"
+                    sx={{
+                      fontWeight: 800,
+                      color: GROUND.fg,
+                      letterSpacing: "-0.02em",
+                      mb: 2,
+                      fontSize: { xs: "1.5rem", md: "1.75rem" },
+                      lineHeight: 1.25,
+                      position: "relative",
+                      display: "inline-block",
+                      "&::after": {
+                        content: '""',
+                        display: "block",
+                        width: "32px",
+                        height: "2px",
+                        backgroundColor: NOIR.goldDark,
+                        mt: 1.2,
+                        borderRadius: "1px",
+                      },
+                    }}
+                  >
+                    {pillar.name}
+                  </Typography>
+
+                  {/* Detail Copy */}
+                  <Typography
+                    sx={{
+                      color: GROUND.muted,
+                      lineHeight: 1.65,
+                      fontSize: "1.05rem",
+                      fontWeight: 400,
+                      mt: 1.5,
+                    }}
+                  >
+                    {pillar.detail}
+                  </Typography>
+                </Box>
               </Box>
             );
           })}
@@ -123,3 +237,4 @@ export function OperatingPillars() {
     </StageSection>
   );
 }
+

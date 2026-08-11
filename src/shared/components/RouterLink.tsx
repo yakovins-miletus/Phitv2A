@@ -1,4 +1,4 @@
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import MuiLink from "@mui/material/Link";
 import { createLink } from "@tanstack/react-router";
 

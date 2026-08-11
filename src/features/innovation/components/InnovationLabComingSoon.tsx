@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import { Flask, Cpu, HardDrives, TerminalWindow, CheckCircle, Sparkle, PaperPlaneRight } from "@phosphor-icons/react";
 
 import { NOIR } from "@/shared/theme/palette";

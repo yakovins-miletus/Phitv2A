@@ -26,7 +26,7 @@ interface ChoreoVariant {
 
 export const STAGE_CHOREO: Record<StageChoreo, ChoreoVariant> = {
   rise: {
-    from: { autoAlpha: 0.2, y: 64, scale: 0.94 },
+    from: { autoAlpha: 0.15, y: 96, scale: 0.90 },
     transformOrigin: "center center",
   },
   "grow-left": {
@@ -38,11 +38,11 @@ export const STAGE_CHOREO: Record<StageChoreo, ChoreoVariant> = {
     transformOrigin: "right center",
   },
   "zoom-center": {
-    from: { autoAlpha: 0.12, scale: 0.82, y: 32 },
+    from: { autoAlpha: 0.12, scale: 0.82, y: 48 },
     transformOrigin: "center center",
   },
   "spotlight-clip": {
-    from: { autoAlpha: 0.3, scale: 0.95, clipPath: "inset(14% 10% 14% 10% round 4px)" },
+    from: { autoAlpha: 0.3, scale: 0.92, clipPath: "inset(14% 10% 14% 10% round 4px)" },
     transformOrigin: "center center",
   },
 };
@@ -56,8 +56,8 @@ export const STAGE_LIT_CLIP = "inset(0% 0% 0% 0% round 4px)";
 export const STAGE_EXIT = { autoAlpha: 0.15, y: -40, scale: 0.94 } as const;
 
 /** Timeline phase durations as fractions of the scrubbed section timeline. */
-export const STAGE_ENTER_DURATION = 0.18;
-export const STAGE_HOLD_DURATION = 0.64;
+export const STAGE_ENTER_DURATION = 0.35;
+export const STAGE_HOLD_DURATION = 0.47;
 export const STAGE_EXIT_DURATION = 0.18;
 
 /** Widest x offset allowed under the MUI `sm` breakpoint — ±96px slides read

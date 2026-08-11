@@ -1,8 +1,8 @@
 import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Button from "@mui/material/Button";
+import { SpecularIconButton as IconButton } from "@/shared/components/ui/specular";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
 import CloseIcon from "@mui/icons-material/Close";

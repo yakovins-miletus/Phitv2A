@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useRef, useState, useEffect, useTransition } from "react";
+import { Suspense, lazy, useRef, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
@@ -11,12 +11,8 @@ import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
-import { PlaygroundTabs } from "./playground/PlaygroundTabs";
-import {
-  DEFAULT_VARIANT_ID,
-  VARIANTS,
-  type PlaygroundVariantId,
-} from "./playground/variants";
+import { isPhaseDark } from "./playground/dayCycle";
+import { useHeroModeState } from "./heroModeStore";
 /**
  * The 3D PoC gallery.
  *
@@ -33,8 +29,21 @@ import {
 const R3FHeroCanvas = lazy(() =>
   import("./R3FHeroCanvas").then((m) => ({ default: m.R3FHeroCanvas })),
 );
+/**
+ * The gunshot's drift wall — 24 photographs from the blog library, drifting behind a
+ * perspective tilt. Replaces the two 50vh split panes that auto-panned here.
+ *
+ * Lazy for the same reason as the gallery above: it drags `driftWall.css` and ~2.4MB
+ * of imagery, none of which a visitor who bounces off the first viewport should pay
+ * for. Unlike the gallery it is not behind a toggle — it is on the default scroll
+ * path — so the chunk is prefetched during idle (see the effect near the stage
+ * latch), and only the *fetch* is deferred, never the decision.
+ */
+const HeroImageWall = lazy(() =>
+  import("./HeroImageWall").then((m) => ({ default: m.HeroImageWall })),
+);
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
-import Switch from "@mui/material/Switch";
+import { DWELL_END } from "./heroPhases";
 import { NOIR, DAWN } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
@@ -57,58 +66,149 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  */
 const HERO_PIN_DISTANCE = "+=800%";
 
-/** Session key remembering which gallery design was last open. */
-const VARIANT_STORAGE_KEY = "phit:hero:poc-variant";
+/** Pin progress at which the drift wall's chunk is fetched. The gunshot starts at
+ *  0.60, so this buys roughly four viewports of scroll to cover the request. */
+const WALL_WARM_AT = 0.2;
 
 /**
  * The dark-room flip.
  *
- * The gallery scenes are staged in a near-black room (`PALETTE.navyInk`), and the
- * hero's own chrome is designed for a near-white card — navy headline, navy motto,
- * white pills. Left alone, turning the PoC on rendered navy text on black, which is
- * how the toggle shipped. These selectors invert the chrome for exactly as long as
- * the PoC is on.
+ * The Monolith room is near-black (`PALETTE.navyInk`), and the hero's own chrome
+ * is designed for a near-white card — navy headline, navy motto, white pills. Left
+ * alone, Monolith rendered navy text on black. These selectors invert the chrome
+ * for exactly as long as the room under it is dark.
+ *
+ * **Two attributes, not one.** `data-hero-mode` is structural — which mode is
+ * mounted — and gates the things that have no meaning in Monolith: the CSS dawn
+ * sky, the wordmark lockup. `data-sky` is the *colour* question, and Monolith's
+ * day cycle can answer it either way: at noon the room is a pale blue sky over a
+ * lit floor, and frost-on-frost chrome would be as unreadable there as navy-on-black
+ * is at midnight. Splitting them is what lets the same command that raises the sun
+ * hand the page back its light-ground chrome.
  *
  * Static, and attached once to the container's `sx`: Emotion serialises this object
- * a single time at mount and the flip is then a lone attribute write, not a
- * restyle. Nothing here runs per frame, and no extra React state exists for it —
- * `use3D` is the only source of truth.
+ * a single time at mount and each flip is then a lone attribute write, not a
+ * restyle. Nothing here runs per frame.
  *
  * Contrast, both directions, measured against the tokens in `palette.ts`:
  * `frost` on `navyInk` is 17.43:1; the pills invert to `navyField` text on `frost`,
  * which is the same pair the site already ships at 12.73:1.
  */
 const PLAYGROUND_FLIP_SX = {
-  '&[data-playground="on"]': {
+  '&[data-hero-mode="monolith"]': {
     "& .hero-card": { backgroundColor: NOIR.navyInk },
     // The dawn sky is the thing that actually paints the card's interior — a
     // near-white horizontal gradient at `zIndex: 0`, sitting ON TOP of the card's
     // own `bgcolor`. Flipping the card without retiring this leaves the white
     // exactly where it was and the flip looks like it did nothing.
     "& .hero-sky": { opacity: 0 },
-    "& .hero-motto, & .hero-wordmark": { color: NOIR.frost },
+    /**
+     * No wordmark lockup in Monolith.
+     *
+     * The legacy hero's gunshot is a *lockup*: the flat P slides left
+     * (`moveLeftProgress`) and `PHITOPOLIS` rises into the gap beside it, which
+     * is why the frame box carries `WORDMARK_INSET_MD` — the canvas solves the
+     * mark's travel against that inset. Monolith has no travelling P. Its mark
+     * is centred and stays centred, so the wordmark rose beside nothing and
+     * simply landed on top of the scene as the card scaled down.
+     *
+     * Opacity, not `display: none` and not an unmounted branch: the `<h1
+     * aria-label="Phitopolis">` inside is the page's only h1 and the accessible
+     * name every crawler and screen reader reads. It stays in the DOM and in the
+     * a11y tree; it just stops painting. The frame is already
+     * `pointerEvents: "none"`, so nothing else about it needs to change.
+     *
+     * With the lockup gone the scene simply follows the card's own
+     * `--hp-scale` morph through the gunshot — the canvas is a child of the
+     * card, so it scales with it — and the mission core takes the section at the
+     * final cut exactly as it does in 2D.
+     */
+    "& .hero-wordmark-frame": { opacity: 0 },
+
+    /**
+     * The directory pills are the legacy hero's call to action. In Monolith that
+     * job does not exist — the room is a thing to look at, not a doorway into
+     * the site, and three pills inviting you to leave are the wrong offer in
+     * front of it. So the pills simply go; nothing takes their corner.
+     *
+     * The motto is not mentioned here any more. It used to be a fixed top-left
+     * block with its own reasoning about which corner it should occupy; now it
+     * tracks the mark's own projected position (`--hp-px`/`--hp-py`, written by
+     * whichever renderer is live) in both modes, so there is no mode-specific
+     * placement left to flip.
+     */
+    "& .hero-directory": { display: "none" },
+  },
+  '&[data-sky="dark"]': {
+    // `.hero-wordmark` is deliberately absent here. It used to be flipped to
+    // frost alongside the motto; with the frame hidden that rule only recoloured
+    // something nobody can see.
+    "& .hero-motto": { color: NOIR.frost },
     "& .hero-eyebrow": { color: `rgba(${NOIR.frostRgb}, 0.72)` },
-    "& .hero-chip": {
-      backgroundColor: NOIR.navyInk,
-      borderColor: `rgba(${NOIR.frostRgb}, 0.18)`,
-    },
-    "& .hero-chip-label": { color: NOIR.gold },
+    // The scroll cue was missing from this list entirely, and it paints
+    // `text.secondary` — navy at 0.82 — so on the dark room it was not dim, it
+    // was gone. Its *position* is untouched; this is the contrast bug, not the
+    // alignment one.
+    "& .hero-scroll-cue": { color: `rgba(${NOIR.frostRgb}, 0.72)` },
+    // The unfilled part of the gunshot meter. Navy at 0.18 is invisible on a
+    // dark room, which would leave a gold fill floating on nothing.
+    "& .hero-gunshot-track": { backgroundColor: `rgba(${NOIR.frostRgb}, 0.22)` },
     "& .hero-pill": {
       backgroundColor: `rgba(${NOIR.frostRgb}, 0.08)`,
       boxShadow: "none",
       "& .btn-text": { color: NOIR.frost },
     },
   },
-  "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-chip, & .hero-pill": {
-    transition: "background-color 0.32s ease, color 0.32s ease, border-color 0.32s ease",
-  },
-  "@media (prefers-reduced-motion: reduce)": {
-    "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-chip, & .hero-pill": {
-      transition: "none",
+  "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-scroll-cue, & .hero-gunshot-track, & .hero-pill":
+    {
+      transition: "background-color 0.32s ease, color 0.32s ease, border-color 0.32s ease",
     },
+  "@media (prefers-reduced-motion: reduce)": {
+    "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-scroll-cue, & .hero-gunshot-track, & .hero-pill":
+      {
+        transition: "none",
+      },
   },
 } as const;
 const ANIM_LIMIT = 700 / 800;
+
+/**
+ * How far it is to the gunshot, as a hairline that fills.
+ *
+ * The hero pins for eight viewports and the gunshot does not begin until
+ * `DWELL_END` — six of them. Before this there was nothing on screen saying so,
+ * which makes the pin feel broken rather than long: the reader scrolls, the page
+ * does not advance, and they have no way to know whether that is the design or a
+ * stuck page. A meter turns "nothing is happening" into "something is coming",
+ * which is a different experience of the same six viewports.
+ *
+ * **Pure CSS, no JavaScript.** The fill reads `--hp` — the same custom property
+ * the pin driver already writes once per frame — through a `calc` in a static
+ * `sx` object. Emotion serialises this once at mount and scroll never touches
+ * React, which is the property the whole hero rests on. A `<progress>` or a
+ * state-driven width would put a render on every scroll tick and undo it.
+ *
+ * The divisor is `DWELL_END` imported from `heroPhases.ts`, not a literal: that
+ * file owns where the gunshot starts, and a meter that fills to a different
+ * number than the thing it is measuring is worse than no meter.
+ */
+const GUNSHOT_TRACK_SX = {
+  position: "relative",
+  width: 132,
+  height: "2px",
+  borderRadius: "1px",
+  overflow: "hidden",
+  backgroundColor: "rgba(10, 42, 102, 0.18)",
+  "& .hero-gunshot-fill": {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: NOIR.gold,
+    transformOrigin: "left center",
+    // `clamp` rather than `min`: progress can overshoot 1 (the driver clamps at
+    // 1.1) and a scaleX above 1 would run the fill out past its own track.
+    transform: `scaleX(clamp(0, calc(var(--hp, 0) / ${DWELL_END}), 1))`,
+  },
+} as const;
 
 /**
  * The three directory link pills below the hero card.
@@ -160,14 +260,12 @@ const LINK_PILL_SX = {
 //
 // Before this change one scroll pass injected 1,335 stylesheet rules and dropped 32% of
 // frames; see docs/perf-baseline.md.
-/**
- * Whether the "3D PoC" chip is offered in the hero.
- *
- * Off for now — the gallery is a developer affordance and is not something the
- * live hero should advertise. Flip to `true` to bring the chip back; the
- * gallery itself is untouched and still renders whenever `use3D` is on.
- */
-const SHOW_3D_TOGGLE = false;
+
+/** The hero's shared left/right inset, at every anchor that lines up against the
+ *  header's own gutter: the mode badge, the (removed) directory, the scroll cue.
+ *  72 on desktop is `AppShell`'s `minimal` toolbar padding, not a chosen number —
+ *  see the badge's own comment for the measurement. */
+const HERO_GUTTER = { xs: 32, md: 72 } as const;
 
 export function HeroSignalCore() {
   const pinRef = useRef<HTMLDivElement>(null);
@@ -180,79 +278,103 @@ export function HeroSignalCore() {
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
 
-  const [use3D, setUse3D] = useState(false);
-
   /**
-   * Which gallery design is showing.
+   * Hero mode ("legacy" the 2D dot plane, or "monolith" the R3F room) and the
+   * active time of day, read from `heroModeStore.ts`.
    *
-   * Seeded from `sessionStorage` so flipping the toggle off and on, or navigating
-   * away and back, returns you to the design you were looking at — the whole point
-   * of the gallery is comparison, and losing your place on every toggle makes that
-   * harder than it needs to be. Session, not local: this is a review affordance, not
-   * a preference worth remembering next week.
+   * Both used to be `useState` owned here. They moved out because the command
+   * palette — mounted in `AppShell`, a sibling subtree with nothing shared above
+   * it but `NavbarContext` — needs to both *set* these (running a command) and
+   * *read* them back (to mark the live one `● ACTIVE`), which a value owned
+   * inside this component cannot support without a new provider. See
+   * `heroModeStore.ts` for the full rationale.
    *
-   * Every read is guarded. `sessionStorage` throws outright in a Safari private
-   * window rather than returning null, and an unrecognised stored id (a variant
-   * renamed since the tab was opened) has to fall back rather than render nothing.
+   * The page chrome outside the canvas — the navbar, the EyeFlow chapter rail,
+   * this hero's own mode badge — reads `dayPhase` through the same `isPhaseDark`
+   * every mode-aware surface uses, so none of them can disagree about the sky
+   * they are describing.
    */
-  const [variantId, setVariantId] = useState<PlaygroundVariantId>(() => {
-    try {
-      const stored = sessionStorage.getItem(VARIANT_STORAGE_KEY);
-      if (stored && VARIANTS.some((v) => v.id === stored)) {
-        return stored as PlaygroundVariantId;
-      }
-    } catch {
-      /* private mode, or storage disabled. The default is a fine answer. */
-    }
-    return DEFAULT_VARIANT_ID;
-  });
-
-  /**
-   * Tab switching runs inside a transition, so React keeps the *current* scene on
-   * screen while the next one's chunk downloads instead of tearing the canvas down
-   * to a Suspense fallback. `pendingId` is set synchronously alongside it because
-   * `variantId` deliberately lags until the transition commits, and the strip needs
-   * to show its loading state on the tab you actually clicked.
-   */
-  const [isPending, startTransition] = useTransition();
-  const [pendingId, setPendingId] = useState<PlaygroundVariantId | null>(null);
-
-  // Derived, not stored-and-cleared. An effect that reset `pendingId` when
-  // `isPending` went false would be a setState inside an effect — a second render
-  // pass for a value that is a pure function of two things we already have. Gating
-  // on `isPending` makes a stale `pendingId` unobservable, so there is nothing to
-  // clean up.
-  const loadingId = isPending ? pendingId : null;
-
-  const selectVariant = useCallback(
-    (id: PlaygroundVariantId) => {
-      setPendingId(id);
-      startTransition(() => setVariantId(id));
-      try {
-        sessionStorage.setItem(VARIANT_STORAGE_KEY, id);
-      } catch {
-        /* Losing the memory is not worth losing the interaction over. */
-      }
-    },
-    [],
-  );
+  const { mode } = useHeroModeState();
+  const use3D = mode === "monolith";
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
 
+  /**
+   * The drift wall mounts once and never unmounts.
+   *
+   * `stage.gunshot` flips at pin progress ~0.601, a boundary a reader crosses by
+   * scrolling two viewports — and crossing it backwards on a plain `stage.gunshot &&`
+   * gate would tear the wall down, reset all four column offsets to 0 (the drift
+   * visibly snaps) and re-run 24 image decodes. Latching costs ~100 contained,
+   * invisible DOM nodes for the rest of the visit; `opacity: var(--hp-g)` hides it for
+   * free and `stage.wallDrift` stops its rAF, so an invisible wall animates nothing.
+   *
+   * Latched from inside the pin's `onUpdate` alongside the `setStage` that would have
+   * driven it, rather than from an effect watching `stage.gunshot`. Same value, one
+   * fewer render pass, and it keeps the setState in an event handler where it belongs
+   * — the effect form is exactly what `react-hooks/set-state-in-effect` exists to
+   * catch. The seeding effect below never needs to latch: it runs at progress 0, where
+   * `gunshot` is false by construction.
+   */
+  const [wallMounted, setWallMounted] = useState(false);
+
+  /**
+   * One-shot warm-up for the wall's chunk, fired from the pin driver below.
+   *
+   * Without it the lazy import starts at progress 0.601 — the same instant the wall
+   * is supposed to appear — and the Suspense boundary shows its `null` fallback for
+   * however long the fetch takes. Verified: seeking straight to p = 0.65 renders the
+   * navy wash with no wall behind it.
+   *
+   * Hung off scroll rather than off an idle callback at mount, for two reasons. It
+   * cannot compete with the preloader's own warmup, because nothing scrolls while the
+   * overlay is up. And it does not depend on `usePreloaderReady()`, which never
+   * resolves if the entrance warmup stalls — an idle prefetch gated on it silently
+   * never runs, which is exactly the case that needs the prefetch most.
+   *
+   * `WALL_WARM_AT` is four viewports of scroll ahead of the gunshot: far enough to
+   * hide the fetch, late enough that a reader who bounces off the first screen never
+   * pays for it.
+   */
+  const wallWarmedRef = useRef(false);
+
   useStagePresence(containerRef, "hero");
   const { registerAnchor } = useNavbar();
 
+  /**
+   * Who owns the navbar's light/dark, and when.
+   *
+   * Two things can put a dark ground under the header, and they take turns rather
+   * than fight. Before the pin's dwell ends, what is under the navbar is the hero
+   * card — so if the gallery is on, its *sky* decides, and dragging the slider to
+   * noon hands the navbar back its navy chrome. From the dwell onward the pin's
+   * own gunshot wash is what is up there, and `stage.navDark` decides as it always
+   * has.
+   *
+   * Without this the gallery shipped navy-on-near-black: the header, the EyeFlow
+   * chapter rail and the hero's own scroll cue all painted light-ground colours
+   * over a room that had gone black under them, because nothing ever told them.
+   */
+  /** Is the ground under the hero's chrome dark right now? Off, it is the pale
+   *  dawn card. On, it is Monolith's room at whichever phase is selected —
+   *  Monolith is the only mode with a time of day, so this is just `isPhaseDark`
+   *  gated on being in that mode. */
+  const roomIsDark = use3D && isPhaseDark();
+
+  const navActive = stage.navActive || use3D;
+  const navDark = use3D && !stage.navActive ? roomIsDark : stage.navDark;
+
   useEffect(() => {
-    if (stage.navActive) {
-      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, stage.navDark);
+    if (navActive) {
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, navDark);
     } else {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     }
     return () => {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     };
-  }, [stage.navActive, stage.navDark, registerAnchor]);
+  }, [navActive, navDark, registerAnchor]);
 
   // Seed the custom properties before first paint so the hero renders its settled state
   // even if no scroll ever happens (reduced motion, or a user who never scrolls).
@@ -321,10 +443,19 @@ export function HeroSignalCore() {
 
           // Coarse state: only commit when a boolean actually flips, which happens
           // roughly four times across the whole 30-viewport pin.
+          if (!wallWarmedRef.current && p > WALL_WARM_AT) {
+            wallWarmedRef.current = true;
+            void import("./HeroImageWall");
+          }
+
           const next = heroStage(p, false);
           if (!sameStage(stageRef.current, next)) {
             stageRef.current = next;
             setStage(next);
+            // One-way latch for the drift wall. Rides the same commit rather than a
+            // separate effect, so crossing the gunshot boundary backwards leaves the
+            // wall mounted and its column offsets intact. See `wallMounted` above.
+            if (next.gunshot) setWallMounted(true);
           }
         },
       });
@@ -341,7 +472,8 @@ export function HeroSignalCore() {
         ref={containerRef}
         id="hero"
         {...{ [STAGE_ATTR]: "" }}
-        data-playground={use3D ? "on" : "off"}
+        data-hero-mode={mode}
+        data-sky={roomIsDark ? "dark" : "light"}
         sx={{
           ...PLAYGROUND_FLIP_SX,
           position: "relative",
@@ -370,91 +502,37 @@ export function HeroSignalCore() {
           px: 0,
         }}
       >
-        {/* Dual Split-Pane Images Layer (Gunshot & Smoking Section) */}
-        {stage.gunshot && (
-          <Box
-            aria-hidden
-            sx={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 2,
-              pointerEvents: "none",
-              overflow: "hidden",
-            }}
-          >
-            {/* Top Split Panel (Left -> Right) */}
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "50vh",
-                overflow: "hidden",
-                borderBottom: "1px solid rgba(10, 42, 102, 0.15)",
-              }}
-            >
-              <Box
-                component="img" decoding="async"
-                src="/images/topHalfHero.webp"
-                alt=""
-                sx={{
-                  width: "140%",
-                  height: "100%",
-                  objectFit: "cover",
-                  filter: "brightness(0.92) contrast(1.02)",
-                  willChange: "transform",
-                  animation: "autoPanTop 25s linear infinite alternate",
-                  "@keyframes autoPanTop": {
-                    "0%": { transform: "translateX(-28.5714%)" },
-                    "100%": { transform: "translateX(0%)" },
-                  },
-                }}
-              />
-            </Box>
-
-            {/* Bottom Split Panel (Right -> Left) */}
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50vh",
-                left: 0,
-                width: "100%",
-                height: "50vh",
-                overflow: "hidden",
-                borderTop: "1px solid rgba(10, 42, 102, 0.15)",
-              }}
-            >
-              <Box
-                component="img" decoding="async"
-                src="/images/botHalfHero.webp"
-                alt=""
-                sx={{
-                  width: "140%",
-                  height: "100%",
-                  objectFit: "cover",
-                  filter: "brightness(0.92) contrast(1.02)",
-                  willChange: "transform",
-                  animation: "autoPanBottom 25s linear infinite alternate",
-                  "@keyframes autoPanBottom": {
-                    "0%": { transform: "translateX(0%)" },
-                    "100%": { transform: "translateX(-28.5714%)" },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
+        {/* The gunshot's imagery: a drift wall of blog photography, replacing the two
+            50vh split panes that used to auto-pan here. Latched, not gated on
+            `stage.gunshot` — see the `wallMounted` note above. */}
+        {wallMounted && (
+          <Suspense fallback={null}>
+            <HeroImageWall paused={!stage.wallDrift} />
+          </Suspense>
         )}
 
-        {/* Primary Soft Overlay during Gunshot (80% opacity overlay) */}
-        {stage.gunshot && (
+        {/* The navy wash over the wall.
+            Gated on `wallMounted` rather than `stage.gunshot` so the wash and the wall
+            can never disagree about whether this phase exists; `--hp-g` fades both to
+            nothing outside it.
+
+            0.42, down from 0.80. The wall now carries most of the tint itself through
+            its own `dim` and navy `overlayColor`, and 0.80 on top of that left the
+            photographs as an unreadable smudge. The floor is not aesthetic: the
+            flanking text below blends with `mixBlendMode: "difference"`, which paints
+            `255 - b` against a backdrop channel `b` and therefore has **zero contrast
+            at b = 127.5**. The composite has to stay well under ~95 per channel or
+            that text does not get dim, it disappears. 0.42 lands it near 83. The full
+            working is in `HeroImageWall.tsx`'s header. */}
+        {wallMounted && (
           <Box
             aria-hidden
             sx={{
               position: "absolute",
               inset: 0,
               zIndex: 3,
-              bgcolor: alpha(NOIR.navyField, 0.80),
+              bgcolor: alpha(NOIR.navyField, 0.42),
+              opacity: "var(--hp-g, 0)",
               pointerEvents: "none",
             }}
           />
@@ -680,16 +758,23 @@ export function HeroSignalCore() {
               transition: "opacity 0.6s ease-out",
             }}
           >
+            {/* `containerRef` (`#hero`), not `cardRef`: the mode badge and the
+                motto — the two DOM consumers of `--hp-px`/`--hp-py`/`--hp-pw`,
+                the P's projected position — are siblings of `.hero-card`, not
+                descendants of it, and a CSS custom property only cascades to
+                descendants. `--hp-mx`/`--hp-my` moving up here too is a strict
+                widening (`.hero-sky` is still a descendant of `#hero`), not a
+                behaviour change. */}
             {use3D ? (
               <Suspense fallback={null}>
                 <R3FHeroCanvas
                   handleRef={canvasHandleRef}
-                  varsHostRef={cardRef}
-                  variantId={variantId}
+                  varsHostRef={containerRef}
+
                 />
               </Suspense>
             ) : (
-              <LegacyHeroCanvas handleRef={canvasHandleRef} varsHostRef={cardRef} />
+              <LegacyHeroCanvas handleRef={canvasHandleRef} varsHostRef={containerRef} />
             )}
           </Box>
 
@@ -711,8 +796,12 @@ export function HeroSignalCore() {
           */}
 
 
-          {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2 */}
+          {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2.
+              Hidden wholesale while the 3D gallery is on; see
+              `PLAYGROUND_FLIP_SX`'s `.hero-wordmark-frame` rule for why the
+              lockup has no meaning there. */}
           <Box
+            className="hero-wordmark-frame"
             sx={{
               position: "absolute",
               top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
@@ -782,155 +871,118 @@ export function HeroSignalCore() {
           }}
         />
 
-        {/* Toggle Switch */}
-        {SHOW_3D_TOGGLE && (
+        {/*
+         * The motto — a wordmark-kicker line under the mark, not a headline.
+         *
+         * Used to be a fixed 2.6rem block, top-left, its own headline
+         * competing with the P for the frame's attention. It is centred under
+         * the mark now, in the mark's own type voice (Outfit 900, uppercase,
+         * wide tracking — see the wordmark's `PH`**`IT`**`OPOLIS` a few
+         * hundred lines up), sized and weighted like a sub-lockup line
+         * because that is what it now reads as.
+         *
+         * Anchored to `--hp-px`/`--hp-py` — the P's own projected centre-x
+         * and bottom-y, written per frame by whichever renderer is live
+         * (`heroPlaneRenderer.ts` in Legacy, `MonolithScene`'s anchor probe
+         * in `PlaygroundCanvas.tsx`) — rather than to a fixed slot, so "just
+         * below the P" stays true as the mark scales and slides through the
+         * pin instead of only at rest. The defaults (`0.5`/`0.60`) are the
+         * mark's resting position, so the line is already in the right place
+         * for the first frame, before either renderer has published anything.
+         *
+         * Card scale is not a factor: `.hero-card` only starts scaling down
+         * at `DWELL_END` (progress 0.60, `gunshotProgress`), and `--hp-panel`
+         * has already faded this block to 0 by progress 0.25 — the two
+         * animations never overlap.
+         */}
         <Box
-          className="hero-chip"
+          className="hero-motto-block"
           sx={{
             position: "absolute",
-            // Desktop only. At 375px it sat on top of the three-line headline —
-            // the chip is a developer affordance, and covering the page's single
-            // most important line to expose it is the wrong trade at any width.
-            // A WebGL playground is also the last thing a phone wants offered.
-            display: { xs: "none", md: "flex" },
-            top: 84,
-            // Shares the header toolbar's own gutter so the chip's right edge lines
-            // up with the menu button's, rather than floating on an unrelated inset.
-            // Measured before this change: menu right edge 1246, chip right edge
-            // 1208 at a 1280 viewport — 38px adrift, and visibly so once the header
-            // compacts into its white button.
-            right: { md: 24, lg: 24 },
-            zIndex: 10,
-            opacity: ready ? "var(--hp-panel, 1)" : 0,
-            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
-            alignItems: "center",
-            gap: 1.5,
-            px: 2,
-            py: 0.75,
-            borderRadius: "9999px",
-            border: `1px solid rgba(10, 42, 102, 0.15)`,
-            // Opaque, not translucent-with-blur. These two `backdrop-filter`
-            // declarations were the hero's last two blur layers, against a
-            // standing target of zero (docs/hero-upgrade/README.md rule 5, and
-            // the perf-baseline table). Over a ground that is now ~70% white
-            // there is nothing behind the chip worth blurring, so raising the
-            // fill to full opacity costs nothing visually and retires the rule's
-            // last violation.
-            backgroundColor: NOIR.void,
-            boxShadow: "0 4px 16px rgba(10, 42, 102, 0.06)",
-          }}
-        >
-          <Typography
-            className="hero-chip-label"
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.7rem",
-              color: use3D ? NOIR.gold : NOIR.navyField,
-              fontWeight: "bold",
-              letterSpacing: "0.12em",
-              userSelect: "none",
-              lineHeight: 1,
-            }}
-          >
-            3D PoC
-          </Typography>
-          <Switch
-            checked={use3D}
-            onChange={(e) => setUse3D(e.target.checked)}
-            size="small"
-            sx={{
-              margin: 0,
-              padding: 0,
-              width: 32,
-              height: 18,
-              display: "flex",
-              alignItems: "center",
-              flexShrink: 0,
-              // The thumb is centred by padding on the (absolutely positioned)
-              // switchBase, not by a margin. A margin here left the 14px thumb
-              // hanging off the track's baseline — the switchBase is pinned to
-              // the root's top-left, so only its own padding box actually moves
-              // the thumb, and 2px of padding is the exact (18 - 14) / 2 inset.
-              "& .MuiSwitch-switchBase": {
-                padding: "2px",
-                margin: 0,
-                transitionDuration: "250ms",
-                color: "rgba(10, 42, 102, 0.6)",
-                "&.Mui-checked": {
-                  transform: "translateX(14px)",
-                  color: "#ffffff",
-                  "& + .MuiSwitch-track": {
-                    backgroundColor: NOIR.gold,
-                    opacity: 1,
-                    border: 0,
-                  },
-                },
-              },
-              "& .MuiSwitch-thumb": {
-                boxSizing: "border-box",
-                width: 14,
-                height: 14,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-              },
-              "& .MuiSwitch-track": {
-                borderRadius: 9,
-                backgroundColor: "rgba(10, 42, 102, 0.15)",
-                opacity: 1,
-                transition: "background-color 250ms",
-              },
-            }}
-          />
-        </Box>
-        )}
-
-        {/* The gallery's tab strip. Mounted only while the PoC is on — there is
-            nothing to switch between otherwise, and an empty tablist is worse than
-            no tablist. */}
-        {use3D && (
-          <PlaygroundTabs
-            activeId={variantId}
-            onSelect={selectVariant}
-            loadingId={loadingId}
-          />
-        )}
-
-        {/* Top Left Motto Section */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: 60, md: 76 },
-            left: { xs: 32, md: 72 },
+            left: "calc(var(--hp-px, 0.5) * 100%)",
+            top: "calc(var(--hp-py, 0.60) * 100%)",
+            // Extra clearance past the anchor itself: `--hp-py` lands on the
+            // glyph's own bottom edge, but the ambient shadow pool beneath it
+            // (`blitShadow(..., lw * 0.72, ...)` in heroPlaneRenderer.ts) is
+            // wider than the glyph is tall and reaches a bit further down —
+            // this pushes the line clear of that too, not just the letterform.
+            transform: "translate(-50%, 0) translateY(clamp(48px, 7vh, 110px))",
             zIndex: 5,
             display: "flex",
             flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
             opacity: ready ? "var(--hp-panel, 1)" : 0,
-            transform: ready ? "translateY(0)" : "translateY(16px)",
             transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}, transform 2.4s ${EASE_OUT_EXPO_CSS}`,
-            maxWidth: { xs: "320px", sm: "600px", md: "780px" },
+            maxWidth: "min(92vw, 46rem)",
+            pointerEvents: "none",
           }}
         >
+          {/* The sub-lockup hairline — the standard "line over a kicker" move,
+              and the same gesture the wordmark makes with its gold middle
+              letters: a small gold touch tying this line to the mark above it
+              rather than letting it float as unrelated copy. */}
+          <Box
+            aria-hidden
+            sx={{
+              width: 32,
+              height: 1,
+              mb: "14px",
+              backgroundColor: NOIR.gold,
+              opacity: 0.5,
+            }}
+          />
           <Typography
-            variant="h4"
             className="hero-motto"
             sx={{
               fontFamily: DISPLAY_FONT,
-              fontWeight: 800,
-              fontSize: { xs: "2.0rem", md: "2.60rem" },
-              lineHeight: 1.15,
-              color: NOIR.navyField,
-              letterSpacing: "-0.03em",
+              fontWeight: 900,
+              textTransform: "uppercase",
+              fontSize: "clamp(0.60rem, 0.92vw, 0.84rem)",
+              letterSpacing: "0.30em",
+              // Optical fix: a centred, widely tracked line reads as shifted
+              // right by half a letter's worth of trailing tracking space —
+              // this pulls it back without touching `textAlign`.
+              pl: "0.30em",
+              lineHeight: 1,
+              opacity: 0.78,
+              whiteSpace: { xs: "normal", md: "nowrap" },
+              /**
+               * Bound to the room rather than left to the cascade.
+               *
+               * `PLAYGROUND_FLIP_SX` also carries a `[data-sky="dark"] &
+               * .hero-motto { color: frost }` rule, and that rule *matches* this
+               * element — verified in the browser — while losing to this `sx`
+               * anyway. Chasing which of two emotion-generated classes wins is
+               * the wrong thing to spend certainty on for a contrast rule: this
+               * is the one line of copy over a canvas that can be near-white or
+               * near-black, so it needs to be right by construction rather than
+               * right by specificity.
+               *
+               * `roomIsDark` is the same value that sets `data-sky` a few
+               * hundred lines up and the same one the navbar reads, so there is
+               * still exactly one source of truth for "is the room dark" — this
+               * just consumes it directly instead of through a selector.
+               */
+              color: roomIsDark ? NOIR.frost : NOIR.navyField,
             }}
           >
-            Making Tomorrow's Technology Available Today
+            Making Tomorrow's Technology{" "}
+            <Box component="span" sx={{ color: NOIR.gold }}>
+              ·
+            </Box>{" "}
+            Available Today
           </Typography>
         </Box>
 
-        {/* Bottom Left Navigation Launcher: Clumped links */}
+        {/* Bottom Left Navigation Launcher: Clumped links. Hidden while the
+            gallery is on — the mode badge takes the top-right corner instead. */}
         <Box
+          className="hero-directory"
           sx={{
             position: "absolute",
             bottom: { xs: 28, md: 44 },
-            left: { xs: 32, md: 72 },
+            left: HERO_GUTTER,
             zIndex: 5,
             display: "flex",
             flexDirection: "column",
@@ -1058,21 +1110,28 @@ export function HeroSignalCore() {
           </Box>
         </Box>
 
-        {/* Bottom Scroll Cue */}
+        {/* Bottom Scroll Cue, and how far it is to the gunshot.
+            See `GUNSHOT_TRACK_SX` for why the meter is pure CSS. */}
         <Box
           sx={{
             position: { xs: "relative", md: "absolute" },
-            bottom: { md: 48 },
-            right: { md: 56 },
+            // Matches the directory's own bottom baseline (44) and the shared
+            // gutter (72) — both were bespoke numbers (48/56) that broke the
+            // rhythm the other bottom-anchored chrome holds.
+            bottom: { md: 44 },
+            right: HERO_GUTTER,
             zIndex: 4,
             display: { xs: "none", md: "flex" },
-            alignItems: "center",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 1,
             opacity: ready ? "var(--hp-panel, 1)" : 0,
             transition: "opacity 2.4s ease-out",
             transitionDelay: ready ? "0.9s" : "0s",
           }}
         >
           <Typography
+            className="hero-scroll-cue"
             sx={{
               fontFamily: MONO,
               fontSize: "0.68rem",
@@ -1081,14 +1140,37 @@ export function HeroSignalCore() {
               display: "flex",
               alignItems: "center",
               gap: 1,
-              animation: "pulseBounce 7.2s ease-in-out infinite",
+              // The bounce is the *invitation* to scroll, so it retires once the
+              // reader has clearly accepted — a cue that keeps nudging while the
+              // meter is filling is a cue that has stopped listening.
+              animation: stage.gunshot ? "none" : "pulseBounce 7.2s ease-in-out infinite",
               "@keyframes pulseBounce": {
                 "0%, 100%": { transform: "translateY(0)" },
                 "50%": { transform: "translateY(5px)" },
               },
+              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
             }}
           >
-            [ SCROLL TO EXPLORE ↓ ]
+            {stage.gunshot ? "[ SEQUENCE ENGAGED ]" : "[ SCROLL TO EXPLORE ↓ ]"}
+          </Typography>
+
+          <Box className="hero-gunshot-track" sx={GUNSHOT_TRACK_SX} aria-hidden>
+            <Box className="hero-gunshot-fill" />
+          </Box>
+
+          <Typography
+            className="hero-scroll-cue"
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.56rem",
+              fontWeight: 700,
+              letterSpacing: "0.2em",
+              color: stage.gunshot ? NOIR.gold : "text.secondary",
+              opacity: stage.gunshot ? 1 : 0.7,
+              transition: "color 0.4s ease, opacity 0.4s ease",
+            }}
+          >
+            GUNSHOT
           </Typography>
         </Box>
       </Box>
