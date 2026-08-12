@@ -13,6 +13,7 @@ import { homeSection } from "@/shared/sections";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 // Intelligence Feed — the immersive blog showcase.
 export function BlogSection() {
@@ -75,7 +76,7 @@ export function BlogSection() {
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        transition: "transform 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        transition: `transform 1.2s ${EASE_OUT_EXPO_CSS}`,
                       }}
                     />
                   )}
@@ -127,7 +128,7 @@ export function BlogSection() {
                         border: "1px solid",
                         borderColor: "rgba(255,255,255,0.06)",
                         cursor: "pointer",
-                        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                        transition: `all 0.4s ${EASE_OUT_EXPO_CSS}`,
                         position: "relative",
                         overflow: "hidden",
                         "&:hover": {

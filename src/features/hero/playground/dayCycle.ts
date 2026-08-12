@@ -148,6 +148,24 @@ export interface DayCycleSample {
    *  thing lighting the room, exactly as it was before this file existed. */
   sunLight: THREE.Color;
   sunIntensity: number;
+
+  /* ── Night-sky survivors ─────────────────────────────────────────────────
+   * `SkyDome` draws a procedural star field, two planet discs and a nebula
+   * band directly in its fragment shader — no extra geometry. These three
+   * scalars are how the day/night crossfade reaches them: rather than a hard
+   * cut when the sky toggle flips, they ride the same `lerpDayCycleSamples`
+   * ease as every colour above, so stars/planets/nebula fade in and out on
+   * the same 1.2s curve as the sky itself. See `sampleForMode`'s docblock. */
+  /** Overall star-field brightness multiplier (the shader's own per-star
+   *  altitude fade is a separate, fixed shape on top of this). 1 at night,
+   *  a low fraction by day — near-zero at the horizon, faint at the zenith. */
+  starVisibility: number;
+  /** Planet-disc opacity. Full at night; low and desaturated toward the sky
+   *  colour by day, so they read as pale daytime moons rather than vanish. */
+  planetOpacity: number;
+  /** 0 = full nebula colour (night), 1 = desaturated and pushed toward warm
+   *  horizon haze (day). */
+  nebulaDesat: number;
 }
 
 /**
@@ -238,12 +256,100 @@ export function applyTwilightSample(out: DayCycleSample): void {
   out.keyIntensity = 15;
   out.sunLight.copy(PALETTE.twilightWhite);
   out.sunIntensity = 1.35;
+
+  // Full night sky: stars and planets at their designed strength, nebula at
+  // full colour.
+  out.starVisibility = 1;
+  out.planetOpacity = 1;
+  out.nebulaDesat = 0;
 }
 
-/** The room's one look, built once at module load. Frozen by convention:
- *  never lerp into it, only out of it. */
+/**
+ * Write the room's daytime look into a sample — the sky-toggle's other key.
+ *
+ * A blue gradient rather than `TWILIGHT`'s dawn/twilight arc, a warm-white sun
+ * core in place of the ember glow, and a bright cloud deck lit high-key. Built
+ * from the same `PALETTE` tokens `dayCycle.ts` already had lying around unused
+ * (`skyDeepBlue`…`skyCream`, `deckLit`/`deckMauve`/`deckDeep`) — see
+ * `constants.ts`'s `PALETTE` docblock: those are `SKY`'s own arc, carried since
+ * stage 4 for exactly this.
+ *
+ * Stars, planets and the nebula do not vanish here — see the three scalar
+ * fields on `DayCycleSample` and `SkyDome`'s fragment shader for how they
+ * survive daylight as faint zenith stars, pale desaturated "moons" and warm
+ * horizon haze instead.
+ */
+export function applyDaySample(out: DayCycleSample): void {
+  /* ── The sky, zenith → horizon ────────────────────────────────────────── */
+  out.skyZenith.copy(PALETTE.skyDeepBlue);
+  out.skyUpper.copy(PALETTE.skyPeriwinkle);
+  out.skyMid.copy(PALETTE.dawnHaze);
+  out.skyLower.copy(PALETTE.twilightWhite);
+  out.skyHorizon.copy(PALETTE.twilightWhite);
+
+  /* ── The light: high overhead, warm-white core ──────────────────────────
+   * Noon-ish rather than raking: mostly overhead, a hair toward camera-left
+   * so the monolith still catches a defined face instead of a flat top-lit
+   * read. */
+  out.glow.copy(PALETTE.twilightWhite);
+  out.glowStrength = 0.22;
+  out.glowFocus = 10;
+  out.glowCore.copy(PALETTE.sunCore);
+  out.coreStrength = 0.55;
+  out.coreFocus = 1400;
+  out.glowDirection.set(-0.22, 0.86, -0.32).normalize();
+
+  /* ── The distant banks ─────────────────────────────────────────────────── */
+  out.cloudLit.copy(PALETTE.twilightWhite);
+  out.cloudShadow.copy(PALETTE.skyPeriwinkle);
+  out.cloudCover = 0.46;
+  out.cloudOpacity = 0.8;
+
+  /* ── The deck underfoot: bright white cumulus ─────────────────────────── */
+  out.deckLit.copy(PALETTE.deckLit);
+  out.deckMid.copy(PALETTE.twilightWhite);
+  out.deckDeep.copy(PALETTE.deckMauve);
+
+  /* ── Air ───────────────────────────────────────────────────────────────── */
+  out.fog.copy(PALETTE.twilightWhite);
+  out.fogNear = 26;
+  out.fogFar = 84;
+  out.ground.copy(PALETTE.twilightWhite);
+
+  /* ── The rig: high-key, monolith reads warm/gold against the blue sky ──── */
+  out.ambientIntensity = 0.82;
+  out.bounceIntensity = 0.7;
+  out.roomLight.copy(PALETTE.twilightWhite);
+  out.roomIntensity = 1.1;
+  out.keyLight.copy(PALETTE.dawnWarm);
+  out.keyIntensity = 15;
+  out.sunLight.copy(PALETTE.twilightWhite);
+  out.sunIntensity = 1.7;
+
+  // Daylight survivors: stars retreat to a faint zenith glitter, planets pale
+  // toward the sky colour, the nebula desaturates to horizon haze.
+  out.starVisibility = 0.12;
+  out.planetOpacity = 0.22;
+  out.nebulaDesat = 1;
+}
+
+/** The room's night look, built once at module load. Frozen by convention:
+ *  never lerp into it, only out of it. Kept as `TWILIGHT_SAMPLE` for the
+ *  existing call sites; `NIGHT_SAMPLE` is the same object under the name the
+ *  day/night toggle actually reasons about. */
 export const TWILIGHT_SAMPLE = createDayCycleSample();
 applyTwilightSample(TWILIGHT_SAMPLE);
+export const NIGHT_SAMPLE = TWILIGHT_SAMPLE;
+
+/** The room's day look, built once at module load. Same "author once, never
+ *  lerp into it" convention as `NIGHT_SAMPLE`. */
+export const DAY_SAMPLE = createDayCycleSample();
+applyDaySample(DAY_SAMPLE);
+
+/** The sky toggle's two keys, by the mode `skyModeStore.ts` holds. */
+export function sampleForMode(mode: "day" | "night"): Readonly<DayCycleSample> {
+  return mode === "day" ? DAY_SAMPLE : NIGHT_SAMPLE;
+}
 
 export function phaseSample(): Readonly<DayCycleSample> {
   return TWILIGHT_SAMPLE;
@@ -282,6 +388,9 @@ export function createDayCycleSample(): DayCycleSample {
     keyIntensity: KEY_NIGHT_INTENSITY,
     sunLight: new THREE.Color(),
     sunIntensity: 0,
+    starVisibility: 1,
+    planetOpacity: 1,
+    nebulaDesat: 0,
   };
 }
 
@@ -333,6 +442,9 @@ export function lerpDayCycleSamples(
   out.keyIntensity = lerp(a.keyIntensity, b.keyIntensity, f);
   out.sunLight.lerpColors(a.sunLight, b.sunLight, f);
   out.sunIntensity = lerp(a.sunIntensity, b.sunIntensity, f);
+  out.starVisibility = lerp(a.starVisibility, b.starVisibility, f);
+  out.planetOpacity = lerp(a.planetOpacity, b.planetOpacity, f);
+  out.nebulaDesat = lerp(a.nebulaDesat, b.nebulaDesat, f);
   return out;
 }
 

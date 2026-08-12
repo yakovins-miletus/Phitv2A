@@ -13,6 +13,7 @@ import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { RouterButton } from "@/shared/components/RouterLink";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 interface ProgramPillar {
   icon: React.ComponentType<any>;
@@ -281,7 +282,7 @@ export function InternshipProgramSection() {
                   py: 1.5,
                   borderRadius: 12,
                   boxShadow: "0 6px 16px rgba(10, 42, 102, 0.15)",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
                   "&:hover": {
                     bgcolor: NOIR.gold,
                     color: NOIR.navyField,

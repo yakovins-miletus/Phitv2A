@@ -44,7 +44,7 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
-import { CAMERA, skyBounds, type CameraRig } from "./constants";
+import { CAMERA, PALETTE, skyBounds, type CameraRig } from "./constants";
 import type { DayCycleSample } from "./dayCycle";
 
 
@@ -85,6 +85,10 @@ const FRAGMENT = /* glsl */ `
   uniform vec3 uCloudShadow;
   uniform float uCloudCover;
   uniform float uCloudOpacity;
+  uniform float uStarVisibility;
+  uniform vec3 uNebulaColor;
+  uniform float uNebulaDesat;
+  uniform float uPlanetOpacity;
   varying vec3 vWorldPosition;
 
   // Value noise. A hash rather than a texture: one fewer asset, one fewer
@@ -163,6 +167,64 @@ const FRAGMENT = /* glsl */ `
     // would just flatten the only specular thing in the sky).
     float core = pow(max(dot(dir, uGlowDirection), 0.0), uCoreFocus);
     color += uGlowCore * core * uCoreStrength;
+
+    // ── Night-sky survivors: stars, planets, nebula ─────────────────────────
+    // All three ride uStarVisibility / uPlanetOpacity / uNebulaDesat —
+    // scalars on DayCycleSample that crossfade with everything else in
+    // lerpDayCycleSamples, so there is no hard day/night cut here, only a
+    // continuous fade. See dayCycle.ts's "Night-sky survivors" block.
+
+    // Stars: a sparse point field, hashed per grid cell so it is stable
+    // across reloads (same reasoning as the cloud deck's noise — a hash, not
+    // a texture). Faded by altitude: near-zero at the horizon, full toward
+    // the zenith, and scaled overall by uStarVisibility — which is where
+    // "12% at the zenith by day, full at night" actually happens.
+    if (uStarVisibility > 0.001) {
+      vec2 starUv = vec2(atan(dir.z, dir.x), dir.y) * 220.0;
+      vec2 cell = floor(starUv);
+      vec2 f = fract(starUv);
+      float starHash = hash(cell);
+      // Only a fraction of cells hold a star; the rest stay black.
+      if (starHash > 0.986) {
+        float twinkle = hash(cell + 7.0);
+        float d = length(f - vec2(hash(cell + 3.0), hash(cell + 5.0)));
+        float star = smoothstep(0.05, 0.0, d) * mix(0.5, 1.0, twinkle);
+        // Altitude fade: 0 at and below the horizon, full by the upper third
+        // of the visible strip.
+        float altitudeFade = smoothstep(0.0, 0.85, clamp(dir.y, 0.0, 1.0));
+        color += vec3(star) * altitudeFade * uStarVisibility;
+      }
+    }
+
+    // Nebula: the same fbm field as the cloud deck, sampled at a different
+    // frequency and painted as a soft colour wash rather than thresholded
+    // into cloud forms. By day it desaturates and shifts toward the warm
+    // horizon colour — the same trick uNebulaColor is bound to below — so
+    // it reads as haze instead of leftover night art.
+    {
+      vec2 nebUv = vec2(atan(dir.z, dir.x) * 0.6, dir.y * 1.4);
+      float nebDensity = fbm(nebUv + 19.0) * fbm(nebUv * 0.5 + 3.0);
+      float nebMask = smoothstep(0.18, 0.55, nebDensity) * smoothstep(0.0, 0.3, dir.y);
+      vec3 nebColor = mix(uNebulaColor, uHorizon, uNebulaDesat);
+      float nebStrength = mix(0.22, 0.05, uNebulaDesat);
+      color += nebColor * nebMask * nebStrength;
+    }
+
+    // Planets: two fixed discs, the same edgeless power-curve trick the sun
+    // core uses so there is never a hard edge to read as a drawn shape. Full
+    // opacity and full saturation at night; by day uPlanetOpacity drops and
+    // the colour desaturates toward the sky behind it, so they pale into
+    // daytime moons instead of disappearing.
+    {
+      vec3 planetA = normalize(vec3(0.55, 0.42, -0.6));
+      vec3 planetB = normalize(vec3(-0.68, 0.30, -0.45));
+      float discA = pow(max(dot(dir, planetA), 0.0), 3200.0);
+      float discB = pow(max(dot(dir, planetB), 0.0), 4200.0);
+      vec3 planetColorA = mix(uCloudLit, uHorizon, 1.0 - uPlanetOpacity);
+      vec3 planetColorB = mix(uUpper, uHorizon, 1.0 - uPlanetOpacity);
+      color += planetColorA * discA * uPlanetOpacity * 1.6;
+      color += planetColorB * discB * uPlanetOpacity * 1.6;
+    }
 
     // ── The cloud deck ─────────────────────────────────────────────────────
     // Everything below the floor's far edge is hidden by the ground plane, and
@@ -256,6 +318,12 @@ export function SkyDome({
         uCloudShadow: { value: new THREE.Color() },
         uCloudCover: { value: 0.5 },
         uCloudOpacity: { value: 0 },
+        uStarVisibility: { value: 1 },
+        // Fixed once, not part of the sample: the nebula's own hue never
+        // changes, only how much of it survives daylight (`uNebulaDesat`).
+        uNebulaColor: { value: PALETTE.skyViolet.clone() },
+        uNebulaDesat: { value: 0 },
+        uPlanetOpacity: { value: 1 },
       },
     });
   }, [rig]);
@@ -288,6 +356,9 @@ export function SkyDome({
         (u.uCloudShadow!.value as THREE.Color).copy(sample.cloudShadow);
         u.uCloudCover!.value = sample.cloudCover;
         u.uCloudOpacity!.value = sample.cloudOpacity;
+        u.uStarVisibility!.value = sample.starVisibility;
+        u.uNebulaDesat!.value = sample.nebulaDesat;
+        u.uPlanetOpacity!.value = sample.planetOpacity;
       },
     };
     return () => {

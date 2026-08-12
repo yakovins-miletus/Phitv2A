@@ -90,3 +90,20 @@ export const BACKGROUND_LOOP = {
   mp4: "/videos/daily-life-loop.mp4",
   poster: "/videos/daily-life-poster.jpg",
 } as const;
+
+/**
+ * The Monolith hero's "video" background mode: an 8s night→dawn transition
+ * baked into the footage itself (`public/_source/night-to-dawn-source.mp4`,
+ * transcoded down from 1280x720/1.3MB to a 960-wide loop — mp4 ~300KB, webm
+ * ~170KB, poster ~35KB — small enough that this hook's IntersectionObserver
+ * gate is a courtesy here rather than the load-bearing fix `BACKGROUND_LOOP`
+ * needed). Same shape as `BACKGROUND_LOOP` so both plug into
+ * `useBackgroundVideo()` identically; kept separate rather than folded into
+ * it because the two loops serve different sections and have no reason to
+ * change together.
+ */
+export const HERO_BG_VIDEO = {
+  webm: "/videos/hero-night-to-dawn.webm",
+  mp4: "/videos/hero-night-to-dawn.mp4",
+  poster: "/videos/hero-night-to-dawn-poster.jpg",
+} as const;

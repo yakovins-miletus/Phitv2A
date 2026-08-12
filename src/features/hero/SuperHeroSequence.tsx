@@ -6,13 +6,16 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { RouterLink } from "@/shared/components/RouterLink";
+import { Magnetic } from "@/shared/components/Magnetic";
 import { useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
-import { isPhaseDark } from "./playground/dayCycle";
 import { useHeroModeState } from "./heroModeStore";
+import { useHeroBgModeState } from "./heroBgModeStore";
+import { setSkyMode, useSkyModeState } from "./skyModeStore";
+import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
 /**
  * The 3D PoC gallery.
  *
@@ -296,6 +299,12 @@ export function HeroSignalCore() {
    */
   const { mode } = useHeroModeState();
   const use3D = mode === "monolith";
+  const { mode: skyMode } = useSkyModeState();
+  const { mode: heroBgMode } = useHeroBgModeState();
+  /** Video is only meaningful over the Monolith room — the legacy 2D canvas
+   *  has no notion of a background mode at all. */
+  const useVideoBg = use3D && heroBgMode === "video";
+  const heroBgVideo = useBackgroundVideo();
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -357,10 +366,12 @@ export function HeroSignalCore() {
    * over a room that had gone black under them, because nothing ever told them.
    */
   /** Is the ground under the hero's chrome dark right now? Off, it is the pale
-   *  dawn card. On, it is Monolith's room at whichever phase is selected —
-   *  Monolith is the only mode with a time of day, so this is just `isPhaseDark`
-   *  gated on being in that mode. */
-  const roomIsDark = use3D && isPhaseDark();
+   *  dawn card. On, it is Monolith's room in night mode — Monolith is the only
+   *  mode with a sky toggle, so this is `skyMode` gated on being in that mode.
+   *  Reads the user's own choice from `skyModeStore.ts` rather than
+   *  `isPhaseDark` (which the room's one-authored-look days answered on its
+   *  own); the toggle button below is what actually sets it. */
+  const roomIsDark = use3D && skyMode === "night";
 
   const navActive = stage.navActive || use3D;
   const navDark = use3D && !stage.navActive ? roomIsDark : stage.navDark;
@@ -746,6 +757,51 @@ export function HeroSignalCore() {
             }}
           />
 
+          {/* Video background mode: the baked night→dawn loop, filling the same
+              area the R3F canvas fills but sitting behind it — the canvas below
+              renders with a transparent clear colour and skips `SkyDome`/
+              `CloudSea` (see `PlaygroundCanvas.tsx`'s `hideSky`) so the mark and
+              its lighting draw on top of this rather than doubling up on it. */}
+          {useVideoBg && (
+            <Box
+              aria-hidden
+              ref={heroBgVideo.containerRef}
+              sx={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 3,
+                opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
+                transition: "opacity 0.6s ease-out",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                component="video"
+                ref={heroBgVideo.videoRef}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="none"
+                poster={HERO_BG_VIDEO.poster}
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              >
+                {heroBgVideo.shouldLoad && !heroBgVideo.posterOnly && (
+                  <>
+                    <source src={HERO_BG_VIDEO.webm} type="video/webm" />
+                    <source src={HERO_BG_VIDEO.mp4} type="video/mp4" />
+                  </>
+                )}
+              </Box>
+            </Box>
+          )}
+
           {/* The city: streets, buildings, dawn shadows, signal pulses and the P
               mark's own district — one canvas, no DOM per scene object. */}
           <Box
@@ -770,13 +826,87 @@ export function HeroSignalCore() {
                 <R3FHeroCanvas
                   handleRef={canvasHandleRef}
                   varsHostRef={containerRef}
-
+                  bgMode={heroBgMode}
                 />
               </Suspense>
             ) : (
               <LegacyHeroCanvas handleRef={canvasHandleRef} varsHostRef={containerRef} />
             )}
           </Box>
+
+          {/* The sky toggle: Monolith only, top-right corner — the same corner
+              the (now command-palette-driven) mode badge used to take, per the
+              comment on `.hero-directory` below. `Magnetic` for the hover feel,
+              the glass token surface used elsewhere in the chrome rather than a
+              one-off treatment. Sun in night mode (press to bring up the day
+              sky), moon in day mode — the icon always names the mode a press
+              switches *to*, matching how a light-switch plate reads.
+
+              Hidden in video background mode: the baked night→dawn transition
+              in the footage isn't user-controlled, so there is no day/night
+              choice here for the button to make. */}
+          {use3D && !useVideoBg && (
+            <Magnetic
+              sx={{
+                position: "absolute",
+                // Clears the MUI AppBar's toolbar band (z-index 1100, fixed
+                // top-right in the same corner) — anything placed at the old
+                // top:16/24 was physically under the toolbar and ate every
+                // click regardless of this element's own z-index, since an
+                // AppBar always stacks above page content.
+                top: { xs: 72, md: 88 },
+                right: { xs: 16, md: 24 },
+                zIndex: 6,
+              }}
+            >
+              <Box
+                component="button"
+                type="button"
+                aria-label={skyMode === "night" ? "Switch to day sky" : "Switch to night sky"}
+                aria-pressed={skyMode === "day"}
+                onClick={() => setSkyMode(skyMode === "night" ? "day" : "night")}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  border: "var(--glass-border)",
+                  background: "var(--glass-fill-2)",
+                  backdropFilter: "var(--glass-filter)",
+                  WebkitBackdropFilter: "var(--glass-filter)",
+                  color: roomIsDark ? NOIR.frost : NOIR.navyField,
+                  cursor: "pointer",
+                  transition: "background-color 0.32s ease, color 0.32s ease, transform 0.2s ease",
+                  "&:active": { transform: "scale(0.94)" },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    transition: "none",
+                    "&:active": { transform: "none" },
+                  },
+                }}
+              >
+                {skyMode === "night" ? (
+                  // Sun — pressing it brings up the day sky.
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+                    <g stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                      <path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5" />
+                      <path d="M18.4 5.6l-1.85 1.85M7.45 16.55L5.6 18.4M18.4 18.4l-1.85-1.85M7.45 7.45L5.6 5.6" />
+                    </g>
+                  </svg>
+                ) : (
+                  // Moon — pressing it brings up the night sky.
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M20 14.2A8.4 8.4 0 1 1 9.8 4a6.6 6.6 0 0 0 10.2 10.2Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                )}
+              </Box>
+            </Magnetic>
+          )}
 
           {/*
             The stage-4 in-card vignette used to live here: a centred ellipse

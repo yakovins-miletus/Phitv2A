@@ -3,14 +3,14 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
-  motion,
   useAnimationFrame,
-  useInView,
   useScroll,
   useSpring,
   useVelocity,
 } from "motion/react";
 
+import { Reveal } from "@/shared/components/Reveal";
+import { RevealLines } from "@/shared/components/reveal/RevealLines";
 import { FONT, MONO } from "@/shared/theme/theme";
 import { TECH_CAT_ACCENTS } from "@/shared/theme/palette";
 
@@ -330,8 +330,6 @@ function TechMarqueeRow({ items, basePPS = 55, reverse = false, activeCat }: { i
 }
 
 export function PoweredBySection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(sectionRef, { once: true, margin: "-60px" });
   const [activeCat, setActiveCat] = useState<string | null>(null);
 
   const categories = {
@@ -343,7 +341,6 @@ export function PoweredBySection() {
 
   return (
     <Box
-      ref={sectionRef}
       sx={{
         bgcolor: "background.default",
         minHeight: "100vh",
@@ -365,49 +362,50 @@ export function PoweredBySection() {
           >
             <Stack spacing={1.5}>
               <MetaLabel>Tech Stack</MetaLabel>
-              <Typography
-                variant="h2"
-                component="h2"
-                sx={{
-                  fontFamily: FONT,
-                  fontWeight: 900,
-                  fontSize: "clamp(2.8rem, 5vw, 5rem)",
-                  textTransform: "lowercase",
-                  color: "primary.main",
-                  lineHeight: 1
-                }}
-              >
-                powered by
-              </Typography>
+              <RevealLines headingLevel={2}>
+                <Typography
+                  variant="h2"
+                  component="h2"
+                  sx={{
+                    fontFamily: FONT,
+                    fontWeight: 900,
+                    fontSize: "clamp(2.8rem, 5vw, 5rem)",
+                    textTransform: "lowercase",
+                    color: "primary.main",
+                    lineHeight: 1
+                  }}
+                >
+                  powered by
+                </Typography>
+              </RevealLines>
             </Stack>
 
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.45, duration: 0.65 }}
-              style={{
-                color: "text.secondary",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "0.9rem",
-                lineHeight: 1.75,
-                maxWidth: 420
-              }}
-            >
-              the full arsenal — from model training and orchestration to deployment, data pipelines, and cloud infrastructure. Every tool chosen deliberately, every stack decision backed by real production experience.
-            </motion.p>
+            <Reveal delay={0.1}>
+              <Typography
+                component="p"
+                sx={{
+                  color: "text.secondary",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "0.9rem",
+                  lineHeight: 1.75,
+                  maxWidth: 420
+                }}
+              >
+                the full arsenal — from model training and orchestration to deployment, data pipelines, and cloud infrastructure. Every tool chosen deliberately, every stack decision backed by real production experience.
+              </Typography>
+            </Reveal>
           </Stack>
 
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 3,
-              mt: 5,
-              flexWrap: "wrap",
-              opacity: inView ? 1 : 0,
-              transition: "opacity 0.5s ease 0.6s"
-            }}
-          >
+          <Reveal delay={0.2}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
+                mt: 5,
+                flexWrap: "wrap"
+              }}
+            >
             {Object.entries(categories).map(([label, slug]) => {
               const isActive = activeCat === slug;
               const activeColor = TECH_CAT_COLORS[slug];
@@ -475,7 +473,8 @@ export function PoweredBySection() {
                 </Box>
               );
             })}
-          </Box>
+            </Box>
+          </Reveal>
         </Box>
       </Box>
 

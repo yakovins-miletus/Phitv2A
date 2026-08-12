@@ -23,6 +23,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { useIsLowPowerDevice, useReducedMotion } from "@/shared/motion";
+import { useSkyModeState } from "../skyModeStore";
+import type { HeroBgMode } from "../heroBgModeStore";
 import {
   AMBIENT_INTENSITY,
   CAMERAS,
@@ -41,7 +43,7 @@ import {
   copyDayCycleSample,
   createDayCycleSample,
   lerpDayCycleSamples,
-  TWILIGHT_SAMPLE,
+  sampleForMode,
   type DayCycleSample,
 } from "./dayCycle";
 import { CloudSea, type CloudSeaHandle } from "./CloudSea";
@@ -75,6 +77,17 @@ interface PlaygroundCanvasProps {
    * `HeroCanvas.tsx`'s `publishLogoBox` for the legacy-mode equivalent.
    */
   varsHostRef?: RefObject<HTMLElement | null> | undefined;
+  /**
+   * Read once here, near the top, rather than deep inside `Stage` or a
+   * scene — the same pattern `skyMode` already follows a few lines below.
+   * `"video"` means an HTML `<video>` layer behind this canvas supplies sky,
+   * cloud and the day/night transition; this canvas then renders with a
+   * transparent clear colour and skips `SkyDome`/`CloudSea` so they don't
+   * double up on or occlude it. Defaults to `"static"` so callers that don't
+   * pass it (there are none left, but the type stays optional for the same
+   * reason `camera` and `cloudDeck` are) get today's behaviour unchanged.
+   */
+  bgMode?: HeroBgMode;
 }
 
 /**
@@ -103,6 +116,7 @@ function Stage({
   rig,
   cloudDeck,
   reduced,
+  hideSky,
 }: {
   /** The room's live sample. Owned by `PlaygroundCanvas` and shared with the
    *  scene, so both read one object and cannot disagree about the hour. */
@@ -114,6 +128,14 @@ function Stage({
   /** This design floats over `CloudSea` instead of standing on the ground plane. */
   cloudDeck: boolean;
   reduced: boolean;
+  /**
+   * Video background mode: an HTML `<video>` layer behind this canvas already
+   * supplies sky, cloud and the day/night transition, so `SkyDome`/`CloudSea`
+   * (and the flat background colour) would just double up on or occlude it.
+   * The mark, its lighting and the ground/deck bounce still render — only the
+   * two weather layers and the opaque backdrop are skipped.
+   */
+  hideSky: boolean;
 }) {
   const fogRef = useRef<THREE.Fog>(null);
   const ambientRef = useRef<THREE.AmbientLight>(null);
@@ -133,8 +155,10 @@ function Stage({
     // less than the branch that would skip it.
     lerpDayCycleSamples(applied, applied, target, immediate ? 1 : 0.055);
 
-    skyRef.current?.apply(applied);
-    deckRef.current?.apply(applied);
+    if (!hideSky) {
+      skyRef.current?.apply(applied);
+      deckRef.current?.apply(applied);
+    }
 
     const fog = fogRef.current;
     if (fog) {
@@ -170,10 +194,17 @@ function Stage({
     <>
       {/* The dome paints every direction, so `background` is only ever seen in
           the one frame before it draws. It stays because a null background is
-          transparent-to-black, and one frame of black is a flash. */}
-      <color attach="background" args={[PALETTE.navyInk]} />
-      <SkyDome handleRef={skyRef} rig={rig} />
-      <fog ref={fogRef} attach="fog" args={[FOG.color, FOG.near, FOG.far]} />
+          transparent-to-black, and one frame of black is a flash. Neither
+          applies in video mode: the `<video>` layer behind this canvas is the
+          backdrop, so a painted dome or an opaque clear colour would sit on
+          top of it rather than let it show. */}
+      {!hideSky && <color attach="background" args={[PALETTE.navyInk]} />}
+      {!hideSky && <SkyDome handleRef={skyRef} rig={rig} />}
+      {/* Fog blends toward the background colour at the far plane — with no
+          opaque background in video mode, that blend would tint the mark
+          rather than fade toward the video showing through, so it is skipped
+          here too. */}
+      {!hideSky && <fog ref={fogRef} attach="fog" args={[FOG.color, FOG.near, FOG.far]} />}
       <ambientLight ref={ambientRef} intensity={AMBIENT_INTENSITY} />
       {/*
         Bounce off whatever is underneath. Ambient is directionless by
@@ -191,20 +222,23 @@ function Stage({
         color={PALETTE.frost}
       />
       {/* One floor or the other, never both — the deck is opaque and would
-          simply hide the plane, at the cost of drawing it. */}
-      {cloudDeck ? (
-        <CloudSea handleRef={deckRef} reduced={reduced} />
-      ) : (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, GROUND_Y, 0]} receiveShadow={false}>
-          <planeGeometry args={[GROUND_SIZE * 2, GROUND_SIZE * 2]} />
-          <meshStandardMaterial
-            ref={groundRef}
-            color={PALETTE.navyInk}
-            roughness={1}
-            metalness={0}
-          />
-        </mesh>
-      )}
+          simply hide the plane, at the cost of drawing it. Neither in video
+          mode: the video already shows a cloud sea under the mark, and either
+          surface here would occlude it. */}
+      {!hideSky &&
+        (cloudDeck ? (
+          <CloudSea handleRef={deckRef} reduced={reduced} />
+        ) : (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, GROUND_Y, 0]} receiveShadow={false}>
+            <planeGeometry args={[GROUND_SIZE * 2, GROUND_SIZE * 2]} />
+            <meshStandardMaterial
+              ref={groundRef}
+              color={PALETTE.navyInk}
+              roughness={1}
+              metalness={0}
+            />
+          </mesh>
+        ))}
     </>
   );
 }
@@ -328,8 +362,10 @@ export function PlaygroundCanvas({
   camera = "room",
   initialProgress = 0,
   varsHostRef,
+  bgMode = "static",
 }: PlaygroundCanvasProps) {
   const rig = CAMERAS[camera];
+  const hideSky = bgMode === "video";
   const hostRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(initialProgress);
   const settleRef = useRef(0);
@@ -386,6 +422,7 @@ export function PlaygroundCanvas({
 
   const reduced = useReducedMotion() === true;
   const lowPower = useIsLowPowerDevice();
+  const { mode: skyMode } = useSkyModeState();
 
   /** Filled by `AdvanceBridge` from inside the Canvas; null before it mounts. */
   const advanceRef = useRef<((t: number) => void) | null>(null);
@@ -450,8 +487,34 @@ export function PlaygroundCanvas({
    * frame — and "the mark's key light disagrees with the sky behind it" is a bug
    * nobody would think to look for.
    */
-  const target = useMemo(() => createDayCycleSample(), []);
-  const applied = useMemo(() => copyDayCycleSample(createDayCycleSample(), TWILIGHT_SAMPLE), []);
+  const target = useMemo(
+    () => copyDayCycleSample(createDayCycleSample(), sampleForMode(skyMode)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- built once from
+    // whatever mode was live at mount; the effect below keeps it live after.
+    [],
+  );
+  const applied = useMemo(() => copyDayCycleSample(createDayCycleSample(), target), [target]);
+
+  /**
+   * Re-point `target` at the chosen sky, in place.
+   *
+   * `sampleForMode` returns one of two frozen, module-level samples
+   * (`DAY_SAMPLE`/`NIGHT_SAMPLE`) — never the live `target` object itself, so
+   * copying into `target` cannot ever mutate an authored sample by accident.
+   * `Stage`'s own `useFrame` already eases `applied` toward `target` every
+   * frame (`lerpDayCycleSamples(applied, applied, target, ...)`), so simply
+   * moving the destination is the whole crossfade: no second ease, no React
+   * state, nothing that re-renders on toggle. ~1.2s at `PHASE_EASE`, instant
+   * whenever `immediate` is true (reduced motion or a parked loop).
+   *
+   * Low-power devices skip the star field at night entirely rather than
+   * paying for it and immediately fading it down — `starVisibility` is
+   * forced to 0 regardless of mode.
+   */
+  useEffect(() => {
+    copyDayCycleSample(target, sampleForMode(skyMode));
+    if (lowPower) target.starVisibility = 0;
+  }, [target, skyMode, lowPower]);
 
   /**
    * Arrive immediately rather than easing, whenever frames are not flowing.
@@ -481,7 +544,10 @@ export function PlaygroundCanvas({
     const now = performance.now();
     advanceRef.current?.(now);
     advanceRef.current?.(now + 16);
-  }, [parked]);
+    // `skyMode` too: toggling day/night while the loop is parked (reduced
+    // motion, or the hero off-screen) is exactly the same "nothing else will
+    // paint this" case `RestingFrame`'s docblock describes for a phase pick.
+  }, [parked, skyMode]);
 
   // A new tab restarts the settle. Keyed remount of the driver is cheaper and less
   // error-prone than resetting a ref from an effect that races the frame loop.
@@ -518,8 +584,13 @@ export function PlaygroundCanvas({
       powerPreference: "high-performance" as const,
       toneMapping: THREE.NeutralToneMapping,
       toneMappingExposure: 1.06,
+      // Only load-bearing in video mode, where `SkyDome`'s opaque `<color
+      // attach="background">` is skipped and the `<video>` layer behind this
+      // canvas has to show through. Harmless otherwise: static mode always
+      // paints an opaque dome or ground before the frame is seen.
+      alpha: hideSky,
     }),
-    [antialias],
+    [antialias, hideSky],
   );
 
   const onCreated = useCallback(() => {
@@ -566,6 +637,7 @@ export function PlaygroundCanvas({
           rig={rig}
           cloudDeck={cloudDeck}
           reduced={reduced}
+          hideSky={hideSky}
         />
         <SettleDriver key={settleKey} settleRef={settleRef} reduced={reduced} />
         <RestingFrame trigger={`${settleKey}:${reduced}:${running}`} />

@@ -17,6 +17,7 @@ import { ServiceIcon } from "./ServiceIcon";
 import { MONO } from "@/shared/theme/theme";
 import { usePointerFine } from "@/shared/motion";
 import type { Service } from "../api";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 const BANNER_MAP: Record<string, string> = {
   "Data Science": "/images/data-science-banner.webp",
@@ -85,7 +86,7 @@ function SubTeamVisualTile({ team }: { team: { name: string; description: string
         className="team-icon"
         sx={{
           color: "primary.main",
-          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: `all 0.4s ${EASE_OUT_EXPO_CSS}`,
           transform: "translateY(0)",
           opacity: 1,
           mb: 2,
@@ -99,7 +100,7 @@ function SubTeamVisualTile({ team }: { team: { name: string; description: string
         sx={{ 
           fontWeight: 600, 
           textAlign: "center",
-          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: `all 0.4s ${EASE_OUT_EXPO_CSS}`,
           transform: "translateY(0)",
           opacity: 1,
         }}
@@ -118,7 +119,7 @@ function SubTeamVisualTile({ team }: { team: { name: string; description: string
           justifyContent: "center",
           opacity: 0,
           transform: "translateY(20px)",
-          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: `all 0.4s ${EASE_OUT_EXPO_CSS}`,
           bgcolor: "background.default",
         }}
       >

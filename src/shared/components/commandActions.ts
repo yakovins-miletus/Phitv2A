@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavbar, type NavbarMode } from "./NavbarContext";
 import { useReducedMotion } from "@/shared/motion";
 import { setHeroMode, type HeroMode } from "@/features/hero/heroModeStore";
+import { setHeroBgMode, type HeroBgMode } from "@/features/hero/heroBgModeStore";
 
 export const GROUP_ORDER = ["NAVIGATE", "ACTION", "HERO", "SYSTEM"] as const;
 export type Group = (typeof GROUP_ORDER)[number];
@@ -35,6 +36,8 @@ export const COMMANDS = [
   { id: "act-inquiries", group: "ACTION", label: "Copy general inquiries email", keywords: "info hello support info@phitopolis.com", run: { kind: "copy", address: "info@phitopolis.com" } },
   { id: "hero-mode-monolith", group: "HERO", label: "Hero: Monolith", keywords: "hero mode monolith 3d room glass poc design", run: { kind: "hero-mode", mode: "monolith" } },
   { id: "hero-mode-legacy", group: "HERO", label: "Hero: Legacy Grid", keywords: "hero mode legacy grid plane 2d classic", run: { kind: "hero-mode", mode: "legacy" } },
+  { id: "hero-bg-static", group: "HERO", label: "Hero Background: Static", keywords: "hero background sky shader static day night cycle", run: { kind: "hero-bg-mode", mode: "static" } },
+  { id: "hero-bg-video", group: "HERO", label: "Hero Background: Video", keywords: "hero background video night dawn film loop", run: { kind: "hero-bg-mode", mode: "video" } },
 
   { id: "sys-signal", group: "SYSTEM", label: "Signal check", keywords: "ping latency status desk easter", run: { kind: "signal" } },
   { id: "sys-nav-minimal", group: "SYSTEM", label: "Navbar: Minimal Mode", keywords: "navbar minimal left logo padding margin 2xl default", run: { kind: "navbar-mode", mode: "minimal" } },
@@ -74,7 +77,7 @@ export function filterCommands(query: string): Cmd[] {
  */
 export function commandHint(
   cmd: Cmd,
-  ctx: { copied: boolean; heroMode: HeroMode },
+  ctx: { copied: boolean; heroMode: HeroMode; heroBgMode: HeroBgMode },
 ): { text: string; active: boolean } {
   if (ctx.copied) return { text: "copied ✓", active: false };
   switch (cmd.run.kind) {
@@ -84,6 +87,10 @@ export function commandHint(
       return { text: cmd.run.address, active: false };
     case "hero-mode": {
       const active = ctx.heroMode === cmd.run.mode;
+      return { text: active ? "● active" : "run", active };
+    }
+    case "hero-bg-mode": {
+      const active = ctx.heroBgMode === cmd.run.mode;
       return { text: active ? "● active" : "run", active };
     }
     default:
@@ -196,6 +203,10 @@ export function useCommandExecutor(navigate: (opts: { to: string }) => void) {
         case "hero-mode":
           close();
           setHeroMode(cmd.run.mode as HeroMode);
+          break;
+        case "hero-bg-mode":
+          close();
+          setHeroBgMode(cmd.run.mode as HeroBgMode);
           break;
       }
     },

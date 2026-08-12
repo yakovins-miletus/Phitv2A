@@ -16,6 +16,7 @@ import { lazy, useMemo, type RefObject } from "react";
 
 import { PlaygroundCanvas } from "./playground/PlaygroundCanvas";
 import { DEFAULT_VARIANT_ID, VARIANTS, getVariant, type PlaygroundVariantId } from "./playground/variants";
+import type { HeroBgMode } from "./heroBgModeStore";
 
 /** Kept for parity with `HeroCanvas.tsx` — the pin driver writes into either one
  *  through the same imperative handle, so the toggle can swap them freely. */
@@ -36,6 +37,8 @@ interface R3FHeroCanvasProps {
    * `PlaygroundCanvas.tsx` and `markAnchor.ts`.
    */
   varsHostRef?: RefObject<HTMLElement | null>;
+  /** Passed straight through to `PlaygroundCanvas` — see its doc comment. */
+  bgMode?: HeroBgMode;
 }
 
 /**
@@ -55,6 +58,7 @@ export function R3FHeroCanvas({
   initialProgress = 0,
   variantId = DEFAULT_VARIANT_ID,
   varsHostRef,
+  bgMode = "static",
 }: R3FHeroCanvasProps) {
   const variant = useMemo(() => getVariant(variantId), [variantId]);
   const Scene = LAZY_SCENES[variantId] ?? LAZY_SCENES[DEFAULT_VARIANT_ID];
@@ -69,6 +73,7 @@ export function R3FHeroCanvas({
       camera={variant.camera ?? "room"}
       initialProgress={initialProgress}
       varsHostRef={varsHostRef}
+      bgMode={bgMode}
     />
   );
 }

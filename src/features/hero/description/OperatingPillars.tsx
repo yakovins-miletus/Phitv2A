@@ -10,6 +10,7 @@ import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "void"];
 
@@ -137,7 +138,7 @@ export function OperatingPillars() {
                     width: "48px",
                     opacity: 0.8,
                     background: `linear-gradient(90deg, ${NOIR.goldDark} 0%, rgba(229, 178, 40, 0.4) 100%)`,
-                    transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                    transition: `all 0.4s ${EASE_OUT_EXPO_CSS}`,
                   }}
                 />
 

@@ -12,7 +12,6 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import ExploreIcon from "@mui/icons-material/Explore";
-import WorkIcon from "@mui/icons-material/Work";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import CorporateFareIcon from "@mui/icons-material/CorporateFare";
 import TerminalIcon from "@mui/icons-material/Terminal";
@@ -28,6 +27,7 @@ import { RouterLink, RouterButton } from "@/shared/components/RouterLink";
 import { LogoParticleField } from "@/shared/components/LogoParticleField";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 interface SiteFooterProps {
   footerAnchorRef: React.RefObject<HTMLElement | null>;
@@ -182,7 +182,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                             width: "0%",
                             bgcolor: NOIR.gold,
                             boxShadow: `0 0 8px ${NOIR.gold}`,
-                            transition: "width 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                            transition: `width 0.3s ${EASE_OUT_EXPO_CSS}`,
                           },
                           "&:hover": {
                             color: NOIR.goldLight,

@@ -16,6 +16,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CAREER_POSITIONS } from "@/shared/careersData";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { Section } from "@/shared/components/Section";
 import { RouterButton } from "@/shared/components/RouterLink";
@@ -170,7 +171,7 @@ export function CareersIndexPage() {
                           boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
                           transform: "translateY(-1px)",
                         },
-                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
                       }}
                     >
                       VIEW PROGRAM BROCHURE (PDF)

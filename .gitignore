@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# local-only source assets (video sources, not shipped)
+public/_source/

@@ -18,6 +18,7 @@ import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { NOIR } from "@/shared/theme/palette";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { MONO } from "@/shared/theme/theme";
 
 /**
@@ -173,7 +174,7 @@ export function CandidatesAndCareersSection() {
                 boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
                 transform: "translateY(-1px)",
               },
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               whiteSpace: "nowrap",
             }}
           >
@@ -224,7 +225,7 @@ export function CandidatesAndCareersSection() {
                 cursor: "pointer",
                 border: "1px solid",
                 borderColor: isActive ? NOIR.gold : "divider",
-                transition: "flex 0.5s cubic-bezier(0.25, 1, 0.5, 1), height 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s ease",
+                transition: `flex 0.5s ${EASE_OUT_EXPO_CSS}, height 0.5s ${EASE_OUT_EXPO_CSS}, border-color 0.3s ease`,
                 boxShadow: isActive ? "0 20px 45px rgba(10,42,102,0.22)" : "0 4px 10px rgba(0,0,0,0.03)",
                 "&:hover .arrow-icon": {
                   transform: "translateY(-4px)",
@@ -243,7 +244,7 @@ export function CandidatesAndCareersSection() {
                   height: "100%",
                   objectFit: "cover",
                   transform: isActive ? "scale(1.04)" : "scale(1)",
-                  transition: "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)",
+                  transition: `transform 0.8s ${EASE_OUT_EXPO_CSS}`,
                 }}
               />
 
@@ -254,7 +255,7 @@ export function CandidatesAndCareersSection() {
                   inset: 0,
                   bgcolor: "#0A2A66",
                   opacity: isActive ? 0.35 : 0.85,
-                  transition: "opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
+                  transition: `opacity 0.5s ${EASE_OUT_EXPO_CSS}`,
                   zIndex: 1,
                 }}
               />
@@ -314,7 +315,7 @@ export function CandidatesAndCareersSection() {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "flex-end",
-                    transition: "min-height 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
+                    transition: `min-height 0.5s ${EASE_OUT_EXPO_CSS}`,
                   }}
                 >
                   {/* Faded Details — positioned absolute above the title when expanded so they do not push the header position */}
@@ -389,7 +390,7 @@ export function CandidatesAndCareersSection() {
                           <ArrowUpwardIcon
                             sx={{
                               fontSize: 14,
-                              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                              transition: `transform 0.3s ${EASE_OUT_EXPO_CSS}`,
                             }}
                             className="arrow-icon"
                           />
@@ -413,7 +414,7 @@ export function CandidatesAndCareersSection() {
                       bottom: isMobile ? "auto" : isActive ? "0px" : "15px",
                       left: isMobile ? "auto" : isActive ? "0px" : "calc(50% - 8px)",
                       right: isMobile ? "auto" : isActive ? "24px" : "auto",
-                      transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), left 0.5s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), right 0.5s, font-size 0.3s ease",
+                      transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, left 0.5s ${EASE_OUT_EXPO_CSS}, bottom 0.5s ${EASE_OUT_EXPO_CSS}, right 0.5s, font-size 0.3s ease`,
                       textShadow: "0 2px 4px rgba(0,0,0,0.2)",
                     }}
                   >

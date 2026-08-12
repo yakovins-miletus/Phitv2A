@@ -9,6 +9,7 @@ import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { useStagePresence } from "@/shared/components/StageSection";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
+import { CloudProps } from "@/features/clouds/CloudProps";
 import { MissionStatement } from "@/features/hero/description/MissionStatement";
 import { OperatingPillars } from "@/features/hero/description/OperatingPillars";
 import { MarketPosition } from "@/features/hero/description/MarketPosition";
@@ -92,6 +93,11 @@ function HomePage() {
             borderTopRightRadius: { xs: 28, md: 48 },
           }}
         >
+          {/* Cloud plates extracted from the Monolith source video
+              (`scripts/extract-clouds.mjs`) — a parallax prop layer behind
+              the section's own text, negative z-index so it never competes
+              with it. See `CloudProps.tsx`'s module comment. */}
+          <CloudProps />
           <MissionStatement />
           <OperatingPillars />
           <MarketPosition />

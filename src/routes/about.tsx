@@ -7,6 +7,7 @@ import { Lightbulb, Target, UsersThree, Lightning, ShieldCheck } from "@phosphor
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CONTENT } from "@/shared/content";
+import { EASE_OUT_EXPO_CSS, EASE_SPRING_SOFT_CSS } from "@/shared/motion/easing";
 import { FillText } from "@/shared/components/FillText";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { Section } from "@/shared/components/Section";
@@ -18,6 +19,7 @@ import { HeroGallery } from "@/features/about/components/HeroGallery";
 import { MetaLabel } from "@/features/about/components/MetaLabel";
 import { SmoothSection } from "@/features/about/components/SmoothSection";
 import { PoweredBySection } from "@/features/about/components/PoweredBySection";
+import { SectionBgFlip } from "@/shared/components/SectionBgFlip";
 import { GraduateHallOfFameSection } from "@/features/about/components/GraduateHallOfFameSection";
 import { InternshipProgramSection } from "@/features/about/components/InternshipProgramSection";
 import { CertificationsSection } from "@/features/about/components/CertificationsSection";
@@ -68,7 +70,7 @@ function CoreCompetenciesSection() {
                     border: 1,
                     borderColor: 'divider',
                     borderRadius: 2,
-                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: `all 0.5s ${EASE_OUT_EXPO_CSS}`,
                     bgcolor: isFilled ? `rgba(${NOIR.navyFieldRgb}, 0.03)` : 'transparent',
                     transform: isFilled ? 'translateY(-4px)' : 'none',
                     boxShadow: isFilled ? `0 8px 24px rgba(${NOIR.navyFieldRgb}, 0.12)` : 'none',
@@ -86,7 +88,7 @@ function CoreCompetenciesSection() {
                       borderRadius: 'inherit',
                       pointerEvents: 'none',
                       clipPath: isFilled ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' : 'polygon(0 0, 0 0, 0 100%, 0 100%)',
-                      transition: 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: `clip-path 0.6s ${EASE_OUT_EXPO_CSS}`,
                       transitionDelay: `${i * 0.1}s`,
                     }
                   }}>
@@ -95,7 +97,7 @@ function CoreCompetenciesSection() {
                       <Box sx={{
                         opacity: isFilled ? 1 : 0,
                         transform: isFilled ? 'scale(1) rotate(0deg)' : 'scale(0.5) rotate(-45deg)',
-                        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        transition: `all 0.5s ${EASE_SPRING_SOFT_CSS}`,
                         transitionDelay: `${i * 0.1}s`,
                         color: 'primary.main',
                       }}>
@@ -158,7 +160,7 @@ function TalentSection() {
                       <StaggerItem key={discipline.label}>
                         <Box sx={{
                           p: 1.5, borderRadius: 1, ml: -1.5,
-                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
                           "&:hover": { bgcolor: "action.hover", transform: "translateX(8px)" }
                         }}>
                           <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.75 }}>
@@ -365,6 +367,32 @@ function AboutPage() {
         <SmoothSection>
           <TalentSection />
         </SmoothSection>
+
+        <SectionBgFlip variant="blinds" minHeight="70dvh">
+          <Section>
+            <Stack spacing={2} sx={{ maxWidth: 640 }}>
+              <Typography
+                variant="h2"
+                component="p"
+                sx={{
+                  fontWeight: 800,
+                  color: "common.white",
+                  fontSize: { xs: "2.2rem", sm: "2.8rem", md: "3.4rem" },
+                  lineHeight: 1.15,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Seven years. Manila to global markets.
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                sx={{ color: "rgba(255, 255, 255, 0.75)", fontSize: { xs: "1rem", md: "1.15rem" }, lineHeight: 1.65 }}
+              >
+                The people behind that work, next.
+              </Typography>
+            </Stack>
+          </Section>
+        </SectionBgFlip>
 
         <GraduateHallOfFameSection />
 

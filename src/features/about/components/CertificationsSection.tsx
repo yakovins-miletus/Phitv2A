@@ -12,6 +12,7 @@ import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { CONTENT } from "@/shared/content";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 export function CertificationsSection() {
   const { headline, note, groups } = CONTENT.certifications;
@@ -158,7 +159,7 @@ export function CertificationsSection() {
                               height: "100%",
                               position: "relative",
                               overflow: "hidden",
-                              transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                              transition: `all 0.35s ${EASE_OUT_EXPO_CSS}`,
                               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
                               "&:hover": {
                                 borderColor: "var(--accent)",
@@ -185,7 +186,7 @@ export function CertificationsSection() {
                                 justifyContent: "center",
                                 p: 1.5,
                                 mb: 2.5,
-                                transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                                transition: `all 0.35s ${EASE_OUT_EXPO_CSS}`,
                                 boxShadow: "0 6px 16px rgba(0, 0, 0, 0.04)",
                               }}
                             >

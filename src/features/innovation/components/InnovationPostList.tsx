@@ -17,6 +17,7 @@ import ScienceIcon from "@mui/icons-material/Science";
 import TerminalIcon from "@mui/icons-material/Terminal";
 
 import type { InnovationPostPage, InnovationPostSummary } from "../api";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
@@ -63,7 +64,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
       }}
       sx={{
         cursor: "pointer",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         backgroundColor: "background.paper",
         borderRadius: "16px",
         overflow: "hidden",
@@ -101,7 +102,7 @@ function InnovationPostCard({ post, activeCategory, onCategoryChange, isHero = f
                 height: "100%",
                 objectFit: "cover",
                 display: "block",
-                transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}`,
                 ".MuiCard-root:hover &": {
                   transform: "scale(1.06)",
                 },

@@ -8,6 +8,7 @@ import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 /**
  * ── WHY PICTURE FRAMES, AND WHY THEY CAME BACK ───────────────────────────────
@@ -161,7 +162,7 @@ export function ClosingShelf() {
                     // Reduced motion keeps the frames square-on: the tilt is decorative,
                     // and a static rotation still reads as movement to a vestibular user.
                     transform: reduced === true ? "none" : `rotate(${layout.rotate})`,
-                    transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                    transition: `transform 0.4s ${EASE_OUT_EXPO_CSS}`,
                     "&:hover, &:focus-within": {
                       transform: reduced === true ? "none" : "rotate(0deg) translateY(-4px)",
                     },

@@ -151,7 +151,7 @@ function AnimatedContactButton({
         boxShadow: "none !important",
         backdropFilter: "none !important",
         WebkitBackdropFilter: "none !important",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         "&:hover": {
           border: "none !important",
           bgcolor: "transparent !important",
@@ -276,7 +276,7 @@ function AnimatedMenuButton({
         // MuiCssBaseline's `*:focus-visible`, so suppressing the outline locally beat
         // the theme's designed focus ring and left the primary nav trigger with no
         // keyboard indicator at all.
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         ...sx,
         "&:hover": {
           border: "none !important",
@@ -460,7 +460,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             pointerEvents: showPreloader ? "none" : (isStandardOrGlass ? "auto" : "none"),
             transform: navHidden || showPreloader ? "translateY(-120%)" : "translateY(0%)",
             opacity: showPreloader ? 0 : 1,
-            transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s cubic-bezier(0.16,1,0.3,1), border-color 0.6s cubic-bezier(0.16,1,0.3,1), box-shadow 0.6s cubic-bezier(0.16,1,0.3,1)`,
+            transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s ${EASE_OUT_EXPO_CSS}, border-color 0.6s ${EASE_OUT_EXPO_CSS}, box-shadow 0.6s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
           {/* Glassmorphism Background layer (fades out at bottom) */}
@@ -479,7 +479,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)",
                 maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)",
                 bgcolor: isOverDarkSection ? "rgba(30, 30, 30, 0.25)" : "rgba(255, 255, 255, 0.4)",
-                transition: "background-color 0.6s cubic-bezier(0.16,1,0.3,1)",
+                transition: `background-color 0.6s ${EASE_OUT_EXPO_CSS}`,
                 borderBottom: isOverDarkSection ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.02)",
               }}
             />
@@ -502,13 +502,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 // liquid — they're driven by per-pointermove React state and
                 // would lag behind the cursor under a CSS transition.
                 transition:
-                  "background-color 0.6s cubic-bezier(0.16,1,0.3,1), " +
-                  "border-color 0.6s cubic-bezier(0.16,1,0.3,1), " +
-                  "box-shadow 0.6s cubic-bezier(0.16,1,0.3,1), " +
-                  "padding 0.6s cubic-bezier(0.16,1,0.3,1), " +
-                  "max-width 0.6s cubic-bezier(0.16,1,0.3,1), " +
-                  "backdrop-filter 0.6s cubic-bezier(0.16,1,0.3,1), " +
-                  "gap 0.6s cubic-bezier(0.16,1,0.3,1)",
+                  `background-color 0.6s ${EASE_OUT_EXPO_CSS}, ` +
+                  `border-color 0.6s ${EASE_OUT_EXPO_CSS}, ` +
+                  `box-shadow 0.6s ${EASE_OUT_EXPO_CSS}, ` +
+                  `padding 0.6s ${EASE_OUT_EXPO_CSS}, ` +
+                  `max-width 0.6s ${EASE_OUT_EXPO_CSS}, ` +
+                  `backdrop-filter 0.6s ${EASE_OUT_EXPO_CSS}, ` +
+                  `gap 0.6s ${EASE_OUT_EXPO_CSS}`,
                 bgcolor: isStandardOrGlass
                   ? "transparent"
                   : (isMinimal
