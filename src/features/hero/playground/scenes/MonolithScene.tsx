@@ -48,9 +48,9 @@
  * NO RAW HEX. Every colour is a `PALETTE` member from `../constants`.
  */
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useLoader, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Environment, Lightformer, MeshTransmissionMaterial } from "@react-three/drei";
+import { Environment, Lightformer, MeshTransmissionMaterial, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 
@@ -115,8 +115,8 @@ const MARK_CENTRE_Y = GROUND_Y + MARK_LIFT + MARK_HEIGHT / 2;
  * to the transmission pass on the glass, which `lowPower` still switches. A knob
  * that no longer moves anything is a knob to delete.
  */
-const DROPS_BODY = 87;
-const DROPS_COUNTER = 33;
+const DROPS_BODY = 600;
+const DROPS_COUNTER = 200;
 
 /**
  * Base droplet radius, and the per-droplet multiplier around it.
@@ -383,14 +383,20 @@ function buildDrops(geometry: THREE.BufferGeometry, count: number, seedOffset: n
     home[i * 3 + 1] = hy;
     home[i * 3 + 2] = hz;
 
-    // Scatter through the room as an annulus so the cloud has a middle to see
-    // through rather than a solid ball where the mark used to be.
+    // Map droplets to the 4 service nodes (R&D field mapping)
+    const SERVICE_NODES = [
+      [-3, 1.5, 1],
+      [-2, -1.2, 1.5],
+      [2.5, 2, 0.5],
+      [2, -1.8, 1]
+    ];
     const s = i + seedOffset;
+    const targetNode = SERVICE_NODES[i % 4] as [number, number, number];
     const angle = seeded(s) * Math.PI * 2;
-    const radius = ROAM_INNER + seeded(s + 91) * (ROAM_OUTER - ROAM_INNER);
-    roam[i * 3] = Math.cos(angle) * radius;
-    roam[i * 3 + 1] = ROAM_Y_MIN + seeded(s + 7) * (ROAM_Y_MAX - ROAM_Y_MIN);
-    roam[i * 3 + 2] = Math.sin(angle) * radius * ROAM_Z_SQUASH;
+    const radius = seeded(s + 91) * 1.5; // Spread around the node
+    roam[i * 3] = targetNode[0] + Math.cos(angle) * radius;
+    roam[i * 3 + 1] = targetNode[1] + Math.sin(angle) * radius;
+    roam[i * 3 + 2] = targetNode[2] + Math.cos(angle * 0.5) * radius * 0.5;
 
     live[i * 3] = hx;
     live[i * 3 + 1] = hy + MARK_CENTRE_Y;
@@ -426,6 +432,9 @@ export default function MonolithScene({
   const counterRef = useRef<THREE.MeshPhysicalMaterial>(null);
   const bodyDropsRef = useRef<THREE.InstancedMesh>(null);
   const counterDropsRef = useRef<THREE.InstancedMesh>(null);
+  const bodyMeshRef = useRef<THREE.Mesh>(null);
+  const counterMeshRef = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
 
   /* ── The sky's live state ─────────────────────────────────────────────────
    * `daySample` is the room's own eased sample, stepped by the shared stage and
@@ -626,13 +635,11 @@ export default function MonolithScene({
         const homeZ = -hx * yawSin + hz * yawCos;
         const homeY = hy + MARK_CENTRE_Y;
 
-        // A slow orbit plus a bob, so a resting cloud still breathes. Both are
-        // pure functions of time and the droplet's own phase — nothing integrates,
-        // so there is no drift to accumulate and no state to reset.
+        // A localized orbit/bob around their assigned node
         const ph = f.phase[i]!;
-        const roamX = f.roam[j]! * Math.cos(time * 0.06) - f.roam[j + 2]! * Math.sin(time * 0.06);
-        const roamZ = f.roam[j]! * Math.sin(time * 0.06) + f.roam[j + 2]! * Math.cos(time * 0.06);
-        const roamY = f.roam[j + 1]! + Math.sin(time * 0.5 + ph) * 0.22;
+        const roamX = f.roam[j]! + Math.sin(time * 0.2 + ph) * 0.2;
+        const roamY = f.roam[j + 1]! + Math.cos(time * 0.3 + ph) * 0.2;
+        const roamZ = f.roam[j + 2]! + Math.sin(time * 0.25 + ph) * 0.2;
 
         const targetX = homeX + (roamX - homeX) * melt;
         const targetY = homeY + (roamY - homeY) * melt;
@@ -727,6 +734,20 @@ export default function MonolithScene({
       meltRef.current = st.phase === "liquid" ? 1 : 0;
     }
     const melt = meltRef.current;
+
+
+
+    // ── Segmentation (Acquire -> Segment) ──────────────────────────────────
+    if (bodyMeshRef.current) {
+      bodyMeshRef.current.position.z = -melt * 1.2;
+      const mat = bodyMeshRef.current.material as THREE.Material;
+      if (mat) mat.opacity = (1 - melt) * 0.9;
+    }
+    if (counterMeshRef.current) {
+      counterMeshRef.current.position.z = melt * 1.5;
+      const mat = counterMeshRef.current.material as THREE.Material;
+      if (mat) mat.opacity = (1 - melt) * 0.9;
+    }
 
     // ── Interactive Rim Light ───────────────────────────────────────────────
     // Dual-purpose: in solid mode it sweeps gold highlights across the mark's
@@ -945,7 +966,58 @@ export default function MonolithScene({
         />
       </Environment>
 
-      <group ref={groupRef}>
+      <group 
+        ref={groupRef}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        {/* R&D Hover Overlay */}
+        <Html
+          position={[0, MARK_CENTRE_Y, 0]}
+          center
+          style={{
+            pointerEvents: "none",
+            opacity: hovered ? 1 : 0,
+            transition: "opacity 0.4s ease-out",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{
+            position: "relative",
+            width: "480px",
+            height: "480px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            {/* Brackets */}
+            <div style={{ position: "absolute", inset: 0, border: `1px solid rgba(255,255,255,0.05)`, transform: hovered ? "scale(1)" : "scale(1.1)", transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }} />
+            <div style={{ position: "absolute", top: -10, left: -10, width: 20, height: 20, borderTop: "2px solid #fff", borderLeft: "2px solid #fff" }} />
+            <div style={{ position: "absolute", top: -10, right: -10, width: 20, height: 20, borderTop: "2px solid #fff", borderRight: "2px solid #fff" }} />
+            <div style={{ position: "absolute", bottom: -10, left: -10, width: 20, height: 20, borderBottom: "2px solid #fff", borderLeft: "2px solid #fff" }} />
+            <div style={{ position: "absolute", bottom: -10, right: -10, width: 20, height: 20, borderBottom: "2px solid #fff", borderRight: "2px solid #fff" }} />
+            
+            {/* Action Prompt */}
+            <div style={{
+              position: "absolute",
+              bottom: "-40px",
+              color: "#fff",
+              fontFamily: "monospace",
+              fontSize: "11px",
+              letterSpacing: "0.2em",
+              whiteSpace: "nowrap",
+              textShadow: "0 0 10px rgba(255,255,255,0.5)",
+            }}>
+              INITIATE DECOMPOSITION
+            </div>
+          </div>
+        </Html>
+
+
+
         {/*
           The click target is the mark's *silhouette*, not its geometry.
 
@@ -967,7 +1039,9 @@ export default function MonolithScene({
           <meshBasicMaterial colorWrite={false} depthWrite={false} />
         </mesh>
 
-        <mesh geometry={body} onClick={onMarkClick}>
+
+
+        <mesh geometry={body} ref={bodyMeshRef} onClick={onMarkClick}>
           {lowPower ? (
             /* The cheap path. `MeshTransmissionMaterial` renders the scene into
                its own buffer every frame to refract it; `meshPhysicalMaterial`
@@ -1030,7 +1104,7 @@ export default function MonolithScene({
         </mesh>
 
         {counter && (
-          <mesh geometry={counter} onClick={onMarkClick}>
+          <mesh geometry={counter} ref={counterMeshRef} onClick={onMarkClick}>
             {lowPower ? (
               <meshPhysicalMaterial
                 ref={counterRef}
