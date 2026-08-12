@@ -1061,6 +1061,7 @@ export function HeroSignalCore() {
                   userSelect: "none",
                   color: NOIR.frost,
                   textShadow: "0 2px 20px rgba(0,0,0,0.4)",
+                  opacity: 0.95, // Reduced by 5 points from 1.0
                 }}
               >
                 PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
@@ -1074,7 +1075,7 @@ export function HeroSignalCore() {
                 width: 48,
                 height: 2,
                 backgroundColor: NOIR.gold,
-                opacity: 0.8,
+                opacity: 0.75, // Reduced by 5 points from 0.8
                 borderRadius: 1,
               }}
             />
@@ -1089,7 +1090,7 @@ export function HeroSignalCore() {
                 letterSpacing: "0.22em",
                 lineHeight: 1.4,
                 color: NOIR.frost,
-                opacity: 0.9,
+                opacity: 0.85, // Reduced by 5 points from 0.9
               }}
             >
               Making Tomorrow's Technology{" "}
@@ -1107,7 +1108,7 @@ export function HeroSignalCore() {
                 fontSize: { xs: "0.68rem", sm: "0.75rem", md: "0.82rem" },
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                color: `rgba(${NOIR.frostRgb}, 0.72)`,
+                color: `rgba(${NOIR.frostRgb}, 0.67)`, // Reduced alpha by 5 points from 0.72
                 lineHeight: 1.5,
                 mt: 0.5,
               }}

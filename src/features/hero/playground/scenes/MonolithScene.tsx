@@ -423,7 +423,7 @@ export default function MonolithScene({
   const gl = useThree((s) => s.gl);
 
   const groupRef = useRef<THREE.Group>(null);
-  const counterRef = useRef<THREE.MeshStandardMaterial>(null);
+  const counterRef = useRef<THREE.MeshPhysicalMaterial>(null);
   const bodyDropsRef = useRef<THREE.InstancedMesh>(null);
   const counterDropsRef = useRef<THREE.InstancedMesh>(null);
 
@@ -983,6 +983,8 @@ export default function MonolithScene({
               ior={1.5}
               metalness={0}
               envMapIntensity={1.6}
+              transparent={true}
+              opacity={0.9}
             />
           ) : (
             <MeshTransmissionMaterial
@@ -1021,25 +1023,55 @@ export default function MonolithScene({
               temporalDistortion={0}
               anisotropicBlur={0.08}
               envMapIntensity={1.8}
+              transparent={true}
+              opacity={0.9}
             />
           )}
         </mesh>
 
         {counter && (
           <mesh geometry={counter} onClick={onMarkClick}>
-            {/* `goldLight` as the emissive, brand `gold` as the body. Emission
-                stacks on top of the diffuse, so emitting the same saturated
-                value the surface already is drives the red channel to clip and
-                the counter-form goes orange at the edges. The paler token
-                keeps the glow reading as light rather than as more paint. */}
-            <meshStandardMaterial
-              ref={counterRef}
-              color={PALETTE.gold}
-              emissive={PALETTE.goldLight}
-              emissiveIntensity={0.2}
-              roughness={0.4}
-              metalness={0.14}
-            />
+            {lowPower ? (
+              <meshPhysicalMaterial
+                ref={counterRef}
+                color={PALETTE.gold}
+                emissive={PALETTE.goldLight}
+                emissiveIntensity={0.2}
+                transmission={0.94}
+                thickness={0.55}
+                roughness={0.1}
+                ior={1.5}
+                metalness={0}
+                envMapIntensity={1.6}
+                transparent={true}
+                opacity={0.9}
+              />
+            ) : (
+              <MeshTransmissionMaterial
+                ref={counterRef}
+                color={PALETTE.gold}
+                emissive={PALETTE.goldLight}
+                emissiveIntensity={0.2}
+                attenuationColor={PALETTE.goldLight}
+                attenuationDistance={0.9}
+                samples={8}
+                resolution={384}
+                backside
+                backsideThickness={0.28}
+                thickness={0.6}
+                transmission={1}
+                roughness={0.045}
+                ior={1.52}
+                chromaticAberration={0.07}
+                distortion={0.1}
+                distortionScale={0.28}
+                temporalDistortion={0}
+                anisotropicBlur={0.08}
+                envMapIntensity={1.8}
+                transparent={true}
+                opacity={0.9}
+              />
+            )}
           </mesh>
         )}
       </group>
