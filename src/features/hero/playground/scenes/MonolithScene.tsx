@@ -1108,6 +1108,10 @@ export default function MonolithScene({
           // white catchlight, and a hundred and twenty hard catchlights read as
           // glitter rather than as water.
           envMapIntensity={1.6}
+          transmission={0.9}
+          ior={1.5}
+          transparent={true}
+          opacity={0.9}
         />
       </instancedMesh>
       {drops.counterDrops && (
@@ -1129,9 +1133,40 @@ export default function MonolithScene({
             clearcoat={1}
             clearcoatRoughness={0.06}
             envMapIntensity={1.5}
+            transmission={0.9}
+            ior={1.5}
+            transparent={true}
+            opacity={0.9}
           />
         </instancedMesh>
       )}
+
+      {/* 4 Larger Droplets (Service Placeholders) */}
+      <group>
+        {[
+          { pos: [-3, 1.5, 1], color: PALETTE.steel },
+          { pos: [-2, -1.2, 1.5], color: PALETTE.goldLight, isGold: true },
+          { pos: [2.5, 2, 0.5], color: PALETTE.steel },
+          { pos: [2, -1.8, 1], color: PALETTE.goldLight, isGold: true },
+        ].map((d, i) => (
+          <mesh key={`service-drop-${i}`} position={d.pos as [number, number, number]} scale={0.4} geometry={dropGeometry}>
+            <meshPhysicalMaterial
+              color={d.color}
+              emissive={d.isGold ? PALETTE.goldLight : undefined}
+              emissiveIntensity={d.isGold ? 0.16 : 0}
+              roughness={0.1}
+              metalness={0}
+              clearcoat={1}
+              clearcoatRoughness={0.05}
+              envMapIntensity={1.6}
+              transmission={0.9}
+              ior={1.5}
+              transparent={true}
+              opacity={0.9}
+            />
+          </mesh>
+        ))}
+      </group>
     </>
   );
 }
