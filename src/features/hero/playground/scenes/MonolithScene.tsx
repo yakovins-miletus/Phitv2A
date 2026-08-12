@@ -435,6 +435,7 @@ export default function MonolithScene({
   const sample = daySample;
   const keyRef = useRef<THREE.PointLight>(null);
   const sunLightRef = useRef<THREE.DirectionalLight>(null);
+  const rimLightRef = useRef<THREE.PointLight>(null);
 
   /**
    * The sky the probe is rendered against.
@@ -684,7 +685,7 @@ export default function MonolithScene({
     [reduced, scratch],
   );
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const settle = settleRef.current ?? 1;
     const progress = progressRef.current ?? 0;
     const time = state.clock.elapsedTime;
@@ -727,13 +728,66 @@ export default function MonolithScene({
     }
     const melt = meltRef.current;
 
+    // ── Interactive Rim Light ───────────────────────────────────────────────
+    // Dual-purpose: in solid mode it sweeps gold highlights across the mark's
+    // bevels; in liquid/particle mode it broadens into an ambient glow that
+    // bathes the cloud. The light never vanishes — it cross-fades between the
+    // two behaviours so the transition reads as the mark's own light diffusing
+    // into its matter rather than switching off.
+    const rim = rimLightRef.current;
+    if (rim) {
+      const px = state.pointer.x;
+      const py = state.pointer.y;
+      const dist = Math.sqrt(px * px + py * py);
+      const distClamped = Math.min(1.0, dist);
+
+      // Position: tight tracking in solid, wider orbit in liquid
+      const solidSpread = 4.5;
+      const liquidSpread = 6.0;
+      const spread = solidSpread + (liquidSpread - solidSpread) * melt;
+      const targetX = px * spread;
+      const targetY = MARK_CENTRE_Y + py * (3.5 + melt * 1.5);
+      const targetZ = 3.0 + melt * 2.0;
+
+      // Smooth damp toward target — no snapping
+      rim.position.x = THREE.MathUtils.damp(rim.position.x, targetX, 5, delta);
+      rim.position.y = THREE.MathUtils.damp(rim.position.y, targetY, 5, delta);
+      rim.position.z = THREE.MathUtils.damp(rim.position.z, targetZ, 5, delta);
+
+      // Colour: gold when close, frost when far — in liquid, tint toward
+      // a cooler steel to complement the particle palette
+      const warmT = distClamped * (1 + melt * 0.3);
+      rim.color.copy(PALETTE.gold).lerp(PALETTE.frost, Math.min(1.0, warmT));
+
+      // Intensity: brighter at centre, never zero — in liquid the base is
+      // higher so the cloud stays lit, but proximity still matters
+      const solidBase = 0.8;
+      const liquidBase = 1.8;
+      const base = solidBase + (liquidBase - solidBase) * melt;
+      const peak = 3.5 - melt * 1.0;
+      const rimIntensity = Math.max(base, peak * (1.0 - distClamped));
+      rim.intensity = rimIntensity * settle;
+
+      // Reach: wider in liquid so it covers the whole cloud
+      rim.distance = 8 + melt * 6;
+    }
+
     // ── The mark ───────────────────────────────────────────────────────────
     const group = groupRef.current;
     let yaw = 0;
     if (group) {
       // Bounded and scroll-driven, centred on zero at mid-pin.
       yaw = (progress - 0.5) * 2 * MAX_YAW;
-      group.rotation.y = yaw;
+
+      // 3D Gyroscopic Cursor Tilt — additive over scroll yaw, damped to
+      // avoid snapping. Tilt fades out as the mark melts (a cloud of
+      // droplets does not rotate as a rigid body).
+      const tiltStrength = 1 - melt;
+      const targetRotX = -state.pointer.y * 0.20 * tiltStrength;
+      const targetRotY = yaw + state.pointer.x * 0.25 * tiltStrength;
+
+      group.rotation.x = THREE.MathUtils.damp(group.rotation.x, targetRotX, 4, delta);
+      group.rotation.y = THREE.MathUtils.damp(group.rotation.y, targetRotY, 4, delta);
       group.position.y = MARK_CENTRE_Y;
       // The solid collapses as the liquid appears. One number drives both, so
       // there is never a frame with two marks or none.
@@ -808,6 +862,16 @@ export default function MonolithScene({
         intensity={0}
         distance={KEY_DISTANCE}
         color={PALETTE.frost}
+      />
+
+      {/* Interactive Fresnel Rim Light */}
+      <pointLight
+        ref={rimLightRef}
+        position={[0, MARK_CENTRE_Y, 3]}
+        intensity={0}
+        distance={8}
+        decay={2}
+        color={PALETTE.gold}
       />
 
       {/* The celestial light: whatever is above the horizon, aimed at the mark.

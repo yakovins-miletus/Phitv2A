@@ -71,7 +71,7 @@ export const VARIANTS: readonly PlaygroundVariant[] = [
     tagline: "Cast glass, above the clouds",
     antialias: true,
     cloudDeck: true,
-    camera: "altitude",
+    camera: "altitudeRight",
     load: () => import("./scenes/MonolithScene"),
   },
 ] as const;

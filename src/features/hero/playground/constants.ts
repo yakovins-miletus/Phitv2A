@@ -122,10 +122,24 @@ export const CAMERA_ALTITUDE = {
   target: [0, 2.6, 0] as const,
 } as const;
 
-/** The two rigs, by the name a variant asks for them under. */
-export const CAMERAS: Record<"room" | "altitude", CameraRig> = {
+/**
+ * Right-biased altitude rig: shifts the camera target to the left (x = -2.2)
+ * so the 3D Monolith mark renders in the right third of the frame, clearing
+ * space on the left for the brand lockup and motto.
+ */
+export const CAMERA_ALTITUDE_RIGHT = {
+  fov: 40,
+  near: 0.5,
+  far: 150,
+  position: [0, 1.2, 10.5] as const,
+  target: [-2.2, 2.6, 0] as const,
+} as const;
+
+/** The rigs, by the name a variant asks for them under. */
+export const CAMERAS: Record<"room" | "altitude" | "altitudeRight", CameraRig> = {
   room: CAMERA,
   altitude: CAMERA_ALTITUDE,
+  altitudeRight: CAMERA_ALTITUDE_RIGHT,
 };
 
 export type CameraRigId = keyof typeof CAMERAS;

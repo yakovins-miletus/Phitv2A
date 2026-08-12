@@ -16,6 +16,7 @@ import { useHeroModeState } from "./heroModeStore";
 import { useHeroBgModeState } from "./heroBgModeStore";
 import { setSkyMode, useSkyModeState } from "./skyModeStore";
 import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
+import { ParallaxHeroBg } from "./ParallaxHeroBg";
 /**
  * The 3D PoC gallery.
  *
@@ -100,46 +101,11 @@ const WALL_WARM_AT = 0.2;
 const PLAYGROUND_FLIP_SX = {
   '&[data-hero-mode="monolith"]': {
     "& .hero-card": { backgroundColor: NOIR.navyInk },
-    // The dawn sky is the thing that actually paints the card's interior — a
-    // near-white horizontal gradient at `zIndex: 0`, sitting ON TOP of the card's
-    // own `bgcolor`. Flipping the card without retiring this leaves the white
-    // exactly where it was and the flip looks like it did nothing.
     "& .hero-sky": { opacity: 0 },
-    /**
-     * No wordmark lockup in Monolith.
-     *
-     * The legacy hero's gunshot is a *lockup*: the flat P slides left
-     * (`moveLeftProgress`) and `PHITOPOLIS` rises into the gap beside it, which
-     * is why the frame box carries `WORDMARK_INSET_MD` — the canvas solves the
-     * mark's travel against that inset. Monolith has no travelling P. Its mark
-     * is centred and stays centred, so the wordmark rose beside nothing and
-     * simply landed on top of the scene as the card scaled down.
-     *
-     * Opacity, not `display: none` and not an unmounted branch: the `<h1
-     * aria-label="Phitopolis">` inside is the page's only h1 and the accessible
-     * name every crawler and screen reader reads. It stays in the DOM and in the
-     * a11y tree; it just stops painting. The frame is already
-     * `pointerEvents: "none"`, so nothing else about it needs to change.
-     *
-     * With the lockup gone the scene simply follows the card's own
-     * `--hp-scale` morph through the gunshot — the canvas is a child of the
-     * card, so it scales with it — and the mission core takes the section at the
-     * final cut exactly as it does in 2D.
-     */
-    "& .hero-wordmark-frame": { opacity: 0 },
-
-    /**
-     * The directory pills are the legacy hero's call to action. In Monolith that
-     * job does not exist — the room is a thing to look at, not a doorway into
-     * the site, and three pills inviting you to leave are the wrong offer in
-     * front of it. So the pills simply go; nothing takes their corner.
-     *
-     * The motto is not mentioned here any more. It used to be a fixed top-left
-     * block with its own reasoning about which corner it should occupy; now it
-     * tracks the mark's own projected position (`--hp-px`/`--hp-py`, written by
-     * whichever renderer is live) in both modes, so there is no mode-specific
-     * placement left to flip.
-     */
+    // Show wordmark frame in monolith mode (positioned on left lockup) and don't fade on scroll
+    "& .hero-wordmark-frame": { opacity: "1 !important" },
+    // Hide centered motto block in monolith mode (left lockup contains motto)
+    "& .hero-motto-block": { display: "none" },
     "& .hero-directory": { display: "none" },
   },
   '&[data-sky="dark"]': {
@@ -303,8 +269,138 @@ export function HeroSignalCore() {
   const { mode: heroBgMode } = useHeroBgModeState();
   /** Video is only meaningful over the Monolith room — the legacy 2D canvas
    *  has no notion of a background mode at all. */
-  const useVideoBg = use3D && heroBgMode === "video";
+  const useVideoBg = false; // Disabled to use ParallaxHeroBg instead
   const heroBgVideo = useBackgroundVideo();
+
+  /**
+   * Ref-based parallax — no React re-renders.
+   *
+   * The old `useState` approach fired `setVideoParallax` on every mousemove,
+   * which is a React setState at 60 fps — 60 commits/sec for a CSS transform
+   * that could have been a direct DOM write. This version stores the target in
+   * a ref, and a rAF loop smoothly interpolates the video element's transform
+   * directly, never touching React state.
+   */
+  const parallaxTarget = useRef({ x: 0, y: 0 });
+  const parallaxCurrent = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!useVideoBg || reduced) return;
+
+    const onMove = (e: MouseEvent) => {
+      parallaxTarget.current.x = (e.clientX / window.innerWidth - 0.5) * -18;
+      parallaxTarget.current.y = (e.clientY / window.innerHeight - 0.5) * -18;
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+
+    let raf: number;
+    const tick = () => {
+      const cur = parallaxCurrent.current;
+      const tgt = parallaxTarget.current;
+      // Smooth lerp — 8% per frame ≈ 120ms settle at 60fps
+      cur.x += (tgt.x - cur.x) * 0.08;
+      cur.y += (tgt.y - cur.y) * 0.08;
+
+      const video = heroBgVideo.videoRef.current;
+      if (video) {
+        video.style.transform =
+          `translate3d(${cur.x}px, ${cur.y}px, 0) scale(1.04)`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, [useVideoBg, reduced, heroBgVideo.videoRef]);
+
+  /**
+   * Ping-pong video playback.
+   *
+   * The hero video (`hero-night-to-dawn`) is an 8-second night→dawn
+   * transition. With `loop`, it hard-cuts from dawn back to night — a jarring
+   * snap. This effect lets the video play forward normally (the browser's
+   * native decoder handles it perfectly), then when it reaches the end,
+   * manually scrubs backward using rAF. For a ~300KB fully-buffered clip,
+   * backward seeking is instantaneous.
+   */
+  useEffect(() => {
+    if (!useVideoBg || reduced) return;
+    const video = heroBgVideo.videoRef.current;
+    if (!video) return;
+
+    // Disable native loop — we own the playback direction
+    video.loop = false;
+
+    let direction: 1 | -1 = 1;
+    let rafId: number;
+    let lastTs = 0;
+
+    const step = (ts: number) => {
+      if (lastTs === 0) lastTs = ts;
+      const dt = Math.min((ts - lastTs) / 1000, 0.05); // cap at 50ms
+      lastTs = ts;
+
+      if (video.readyState >= 3 && video.duration > 0) {
+        if (direction === 1) {
+          // Forward: let native playback handle it, just watch for the end
+          if (video.currentTime >= video.duration - 0.08) {
+            direction = -1;
+            video.pause();
+          }
+        } else {
+          // Backward: manually scrub currentTime
+          const next = video.currentTime - dt;
+          if (next <= 0.08) {
+            video.currentTime = 0.08;
+            direction = 1;
+            void video.play().catch(() => {});
+          } else {
+            video.currentTime = next;
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [useVideoBg, reduced, heroBgVideo.videoRef]);
+
+  /**
+   * Eager video preload.
+   *
+   * When monolith mode is active, preload the hero video sources via `<link
+   * rel="preload">` so they are already in the browser cache when the user
+   * switches to video background mode. The files are tiny (~300KB mp4,
+   * ~170KB webm) so this is effectively free.
+   */
+  useEffect(() => {
+    if (!use3D || heroBgVideo.posterOnly) return;
+
+    const links: HTMLLinkElement[] = [];
+    for (const [src, type] of [
+      [HERO_BG_VIDEO.mp4, "video/mp4"],
+      [HERO_BG_VIDEO.webm, "video/webm"],
+    ] as const) {
+      // Don't duplicate if already present
+      if (document.querySelector(`link[rel="preload"][href="${src}"]`)) continue;
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "video";
+      link.type = type;
+      link.href = src;
+      document.head.appendChild(link);
+      links.push(link);
+    }
+
+    return () => {
+      for (const link of links) link.remove();
+    };
+  }, [use3D, heroBgVideo.posterOnly]);
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -757,6 +853,9 @@ export function HeroSignalCore() {
             }}
           />
 
+          {/* 3-layer Parallax Image Background (imagebg_renew.jpg) */}
+          {use3D && <ParallaxHeroBg ready={ready} />}
+
           {/* Video background mode: the baked night→dawn loop, filling the same
               area the R3F canvas fills but sitting behind it — the canvas below
               renders with a transparent clear colour and skips `SkyDome`/
@@ -780,16 +879,16 @@ export function HeroSignalCore() {
                 ref={heroBgVideo.videoRef}
                 autoPlay
                 muted
-                loop
                 playsInline
                 preload="none"
                 poster={HERO_BG_VIDEO.poster}
                 sx={{
                   position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
+                  inset: -20,
+                  width: "calc(100% + 40px)",
+                  height: "calc(100% + 40px)",
                   objectFit: "cover",
+                  willChange: "transform",
                 }}
               >
                 {heroBgVideo.shouldLoad && !heroBgVideo.posterOnly && (
@@ -826,7 +925,7 @@ export function HeroSignalCore() {
                 <R3FHeroCanvas
                   handleRef={canvasHandleRef}
                   varsHostRef={containerRef}
-                  bgMode={heroBgMode}
+                  bgMode="video" // Force transparent background for ParallaxHeroBg
                 />
               </Suspense>
             ) : (
@@ -930,40 +1029,23 @@ export function HeroSignalCore() {
               Hidden wholesale while the 3D gallery is on; see
               `PLAYGROUND_FLIP_SX`'s `.hero-wordmark-frame` rule for why the
               lockup has no meaning there. */}
+          {/* Left-Aligned Brand Lockup (Phitopolis + Motto + Subtitle) */}
           <Box
             className="hero-wordmark-frame"
             sx={{
               position: "absolute",
-              top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
-              // These two insets are half of a lockup: the canvas solves the P's
-              // travel against them so the mark lands a fixed gap to their left
-              // (see `LOCKUP_GAP` in heroPlaneRenderer.ts). Import them rather than
-              // restating the numbers — a silent drift here collides the two.
-              left: {
-                xs: "50%",
-                sm: `calc(50% - ${WORDMARK_INSET_SM}px)`,
-                md: `calc(50% - ${WORDMARK_INSET_MD}px)`,
-              },
-              width: "auto",
-              textAlign: { xs: "center", sm: "left" },
+              top: "50%",
+              left: { xs: "5%", sm: "7%", md: "9%" },
+              transform: "translateY(-50%)",
               zIndex: 5,
-              overflow: "hidden",
-              clipPath: "inset(0 0 0 0)",
-              opacity: "var(--hp-word, 0)",
-              // Stage 4 fix (README open question, assigned here): this box sits
-              // at plane centre and was swallowing pointer events even while
-              // invisible (opacity driven by --hp-word, which is 0 for most of
-              // the pin), killing cursor interaction with the canvas underneath
-              // over the middle of the scene. The wordmark inside is decorative
-              // for sighted users and load-bearing only for crawlers (aria-label
-              // "Phitopolis" on the h1) — it must never take input.
               pointerEvents: "none",
-              transform: {
-                xs: "translate(-50%, -50%)",
-                sm: "translate(0, -50%)",
-              },
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.5,
+              maxWidth: { xs: "90%", sm: "440px", md: "560px" },
             }}
           >
+            {/* H1 Brand Wordmark */}
             <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
               <Typography
                 variant="h1"
@@ -971,19 +1053,67 @@ export function HeroSignalCore() {
                 aria-label="Phitopolis"
                 className="hero-wordmark"
                 sx={{
-                  fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
+                  fontSize: { xs: "2.5rem", sm: "3.6rem", md: "4.8rem" },
                   fontWeight: 900,
-                  letterSpacing: "0.02em",
+                  letterSpacing: "0.04em",
                   lineHeight: 1,
                   textTransform: "uppercase",
                   userSelect: "none",
-                  color: NOIR.navyField,
-                  transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
+                  color: NOIR.frost,
+                  textShadow: "0 2px 20px rgba(0,0,0,0.4)",
                 }}
               >
                 PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
               </Typography>
             </Box>
+
+            {/* Gold Hairline Divider */}
+            <Box
+              aria-hidden
+              sx={{
+                width: 48,
+                height: 2,
+                backgroundColor: NOIR.gold,
+                opacity: 0.8,
+                borderRadius: 1,
+              }}
+            />
+
+            {/* Motto */}
+            <Typography
+              sx={{
+                fontFamily: DISPLAY_FONT,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                fontSize: { xs: "0.70rem", sm: "0.85rem", md: "0.95rem" },
+                letterSpacing: "0.22em",
+                lineHeight: 1.4,
+                color: NOIR.frost,
+                opacity: 0.9,
+              }}
+            >
+              Making Tomorrow's Technology{" "}
+              <Box component="span" sx={{ color: NOIR.gold }}>
+                ·
+              </Box>{" "}
+              Available Today
+            </Typography>
+
+            {/* Subtitle / Minor text */}
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontWeight: 600,
+                fontSize: { xs: "0.68rem", sm: "0.75rem", md: "0.82rem" },
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: `rgba(${NOIR.frostRgb}, 0.72)`,
+                lineHeight: 1.5,
+                mt: 0.5,
+              }}
+            >
+              A Striving Competitive R&D Firm in the Philippines
+            </Typography>
           </Box>
         </Box>
 
