@@ -31,8 +31,6 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  perspective: var(--dw-perspective);
-  perspective-origin: 50% 50%;
 
   /* The edge dissolve. Two masks intersected: a radial ellipse that fades the
      corners, and a linear ramp that fades the top. `--dw-edge` is where the
@@ -50,13 +48,7 @@
   mask-composite: intersect;
 }
 
-/* The wall itself: one transformed plane holding every column.
-   `--dw-zoom` overfills the frame so the yaw, pitch and roll below never swing a
-   bare edge into view — the roll in particular sweeps the near corners inward, so
-   too little zoom leaves a wedge of backplate down one side. The rotate order is
-   fixed — X (pitch), Y (yaw), Z (roll) — and `translateZ` pushes the whole thing
-   away last, after the rotations, so `depth` reads as distance rather than as a
-   diagonal slide. */
+/* The wall itself: flat 2D plane holding every column. */
 .dw-plane {
   position: absolute;
   top: 50%;
@@ -64,11 +56,7 @@
   display: flex;
   flex-direction: row;
   transform-origin: 50% 50%;
-  transform-style: preserve-3d;
-  transform:
-    translate(-50%, -50%) scale(var(--dw-zoom)) rotateX(var(--dw-tilt))
-    rotateY(var(--dw-turn)) rotateZ(var(--dw-roll))
-    translateZ(calc(-1 * var(--dw-depth)));
+  transform: translate(-50%, -50%) scale(var(--dw-zoom));
 }
 
 /* `contain: layout paint style` and not `content-visibility: auto`. Every column

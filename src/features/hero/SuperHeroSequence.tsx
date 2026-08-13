@@ -853,14 +853,7 @@ export function HeroSignalCore() {
               inset: 0,
               zIndex: 0,
               opacity: "var(--hp-sky, 1)",
-              backgroundImage: [
-                `radial-gradient(circle at 8% 26%, rgba(${NOIR.goldRgb}, calc(0.26 * var(--hp-sun, 1))) 0%, rgba(${DAWN.warmRgb}, 0.20) 11%, rgba(${DAWN.warmRgb}, 0.07) 26%, rgba(${DAWN.warmRgb}, 0.00) 44%)`,
-                `linear-gradient(100deg, ${DAWN.haze} 0%, ${NOIR.void} 22%, ${NOIR.white} 52%)`,
-              ].join(", "),
-              backgroundRepeat: "no-repeat, no-repeat",
-              backgroundSize: "150% 150%, 108% 108%",
-              backgroundPosition:
-                "calc(10% + var(--hp-mx, 0) * 8px) calc(30% + var(--hp-my, 0) * 8px), calc(50% + var(--hp-mx, 0) * 3px) calc(50% + var(--hp-my, 0) * 3px)",
+              background: "linear-gradient(180deg, #FFFFFF 0%, #F4F7FA 100%)",
             }}
           />
 
@@ -1037,289 +1030,262 @@ export function HeroSignalCore() {
           */}
 
 
-          {/* PHITOPOLIS Word Transition — Phase 3 & Shift Left in Sub-Phase 2.
-              Hidden wholesale while the 3D gallery is on; see
-              `PLAYGROUND_FLIP_SX`'s `.hero-wordmark-frame` rule for why the
-              lockup has no meaning there. */}
-          {/* Left-Aligned Brand Lockup (Phitopolis + Motto + Subtitle) */}
-          <Box
-            className="hero-wordmark-frame"
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: { xs: "5%", sm: "7%", md: "9%" },
-              transform: "translateY(-50%)",
-              zIndex: 5,
-              pointerEvents: "none",
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.5,
-              maxWidth: { xs: "90%", sm: "440px", md: "560px" },
-            }}
-          >
-            {/* H1 Brand Wordmark */}
-            <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
-              <Typography
-                variant="h1"
-                component="h1"
-                aria-label="Phitopolis"
-                className="hero-wordmark"
+          {/* PHITOPOLIS Word Transition & Motto Lockup — Mode-Aware */}
+          {use3D ? (
+            /* Left-Aligned Brand Lockup (Phitopolis + Motto + Subtitle) - Monolith Mode */
+            <Box
+              className="hero-wordmark-frame"
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: { xs: "5%", sm: "7%", md: "9%" },
+                transform: "translateY(-50%)",
+                zIndex: 7,
+                pointerEvents: "none",
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.5,
+                maxWidth: { xs: "90%", sm: "440px", md: "560px" },
+              }}
+            >
+              {/* H1 Brand Wordmark */}
+              <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
+                <Typography
+                  variant="h1"
+                  component="h1"
+                  aria-label="Phitopolis"
+                  className="hero-wordmark"
+                  sx={{
+                    fontSize: { xs: "2.5rem", sm: "3.6rem", md: "4.8rem" },
+                    fontWeight: 900,
+                    letterSpacing: "0.04em",
+                    lineHeight: 1,
+                    textTransform: "uppercase",
+                    userSelect: "none",
+                    color: NOIR.frost,
+                    textShadow: "0 2px 20px rgba(0,0,0,0.4)",
+                    opacity: 0.95,
+                  }}
+                >
+                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                </Typography>
+              </Box>
+
+              {/* Gold Hairline Divider */}
+              <Box
+                aria-hidden
                 sx={{
-                  fontSize: { xs: "2.5rem", sm: "3.6rem", md: "4.8rem" },
-                  fontWeight: 900,
-                  letterSpacing: "0.04em",
-                  lineHeight: 1,
-                  textTransform: "uppercase",
-                  userSelect: "none",
-                  color: NOIR.frost,
-                  textShadow: "0 2px 20px rgba(0,0,0,0.4)",
-                  opacity: 0.95, // Reduced by 5 points from 1.0
+                  width: 48,
+                  height: 2,
+                  backgroundColor: NOIR.gold,
+                  opacity: 0.75,
+                  borderRadius: 1,
+                }}
+              />
+
+              {/* Dual-Track Segment Control Toggle */}
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  mt: 0.5,
+                  p: 0.6,
+                  borderRadius: "8px",
+                  bgcolor: "rgba(6, 10, 22, 0.75)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 215, 0, 0.3)",
+                  width: "fit-content",
+                  pointerEvents: "auto",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
                 }}
               >
-                PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                <Button
+                  size="small"
+                  onClick={() => setHeroTrack("enterprise")}
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: { xs: "0.65rem", sm: "0.72rem" },
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    px: 1.6,
+                    py: 0.5,
+                    borderRadius: "5px",
+                    color: heroTrack === "enterprise" ? "#060A16" : "rgba(255,255,255,0.75)",
+                    bgcolor: heroTrack === "enterprise" ? "#FFD700" : "transparent",
+                    boxShadow: heroTrack === "enterprise" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
+                    "&:hover": {
+                      bgcolor: heroTrack === "enterprise" ? "#FFE44D" : "rgba(255,255,255,0.12)",
+                    },
+                  }}
+                >
+                  [DEVELOPING RELIABLE SYSTEMS]
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setHeroTrack("talent")}
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: { xs: "0.65rem", sm: "0.72rem" },
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    px: 1.6,
+                    py: 0.5,
+                    borderRadius: "5px",
+                    color: heroTrack === "talent" ? "#060A16" : "rgba(255,255,255,0.75)",
+                    bgcolor: heroTrack === "talent" ? "#FFD700" : "transparent",
+                    boxShadow: heroTrack === "talent" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
+                    "&:hover": {
+                      bgcolor: heroTrack === "talent" ? "#FFE44D" : "rgba(255,255,255,0.12)",
+                    },
+                  }}
+                >
+                  [FAST-PACED CAREER GROWTH]
+                </Button>
+              </Box>
+
+              {/* Motto */}
+              <Typography
+                sx={{
+                  fontFamily: DISPLAY_FONT,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  fontSize: { xs: "0.75rem", sm: "0.88rem", md: "1.02rem" },
+                  letterSpacing: "0.18em",
+                  lineHeight: 1.4,
+                  color: NOIR.frost,
+                  opacity: 0.95,
+                  mt: 0.5,
+                }}
+              >
+                {heroTrack === "enterprise" ? (
+                  <>
+                    Engineering Reliable{" "}
+                    <Box component="span" sx={{ color: NOIR.gold }}>
+                      ·
+                    </Box>{" "}
+                    FinTech & Quant Systems
+                  </>
+                ) : (
+                  <>
+                    Fast-Paced Career Growth{" "}
+                    <Box component="span" sx={{ color: NOIR.gold }}>
+                      ·
+                    </Box>{" "}
+                    For Serious Engineers
+                  </>
+                )}
+              </Typography>
+
+              {/* Subtitle / Minor text */}
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontWeight: 600,
+                  fontSize: { xs: "0.68rem", sm: "0.76rem", md: "0.82rem" },
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: `rgba(${NOIR.frostRgb}, 0.78)`,
+                  lineHeight: 1.5,
+                }}
+              >
+                {heroTrack === "enterprise"
+                  ? "Building high-availability market infrastructure and R&D products from the Philippines."
+                  : "Accelerate your engineering impact on complex R&D products in Manila."}
               </Typography>
             </Box>
-
-            {/* Gold Hairline Divider */}
+          ) : (
+            /* PHITOPOLIS Word Transition — Legacy 2D Hero Sequence Mode */
             <Box
-              aria-hidden
+              className="hero-wordmark-frame"
               sx={{
-                width: 48,
-                height: 2,
-                backgroundColor: NOIR.gold,
-                opacity: 0.75, // Reduced by 5 points from 0.8
-                borderRadius: 1,
-              }}
-            />
-
-            {/* Dual-Track Segment Control Toggle */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1,
-                mt: 0.5,
-                p: 0.6,
-                borderRadius: "8px",
-                bgcolor: "rgba(6, 10, 22, 0.75)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255, 215, 0, 0.3)",
-                width: "fit-content",
-                pointerEvents: "auto",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                position: "absolute",
+                top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
+                left: {
+                  xs: "50%",
+                  sm: `calc(50% - ${WORDMARK_INSET_SM}px)`,
+                  md: `calc(50% - ${WORDMARK_INSET_MD}px)`,
+                },
+                width: "auto",
+                textAlign: { xs: "center", sm: "left" },
+                zIndex: 7,
+                overflow: "hidden",
+                clipPath: "inset(0 0 0 0)",
+                opacity: "var(--hp-word, 0)",
+                pointerEvents: "none",
+                transform: {
+                  xs: "translate(-50%, -50%)",
+                  sm: "translate(0, -50%)",
+                },
               }}
             >
-              <Button
-                size="small"
-                onClick={() => setHeroTrack("enterprise")}
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: { xs: "0.65rem", sm: "0.72rem" },
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  px: 1.6,
-                  py: 0.5,
-                  borderRadius: "5px",
-                  color: heroTrack === "enterprise" ? "#060A16" : "rgba(255,255,255,0.75)",
-                  bgcolor: heroTrack === "enterprise" ? "#FFD700" : "transparent",
-                  boxShadow: heroTrack === "enterprise" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
-                  "&:hover": {
-                    bgcolor: heroTrack === "enterprise" ? "#FFE44D" : "rgba(255,255,255,0.12)",
-                  },
-                }}
-              >
-                [DEVELOPING RELIABLE SYSTEMS]
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setHeroTrack("talent")}
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: { xs: "0.65rem", sm: "0.72rem" },
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  px: 1.6,
-                  py: 0.5,
-                  borderRadius: "5px",
-                  color: heroTrack === "talent" ? "#060A16" : "rgba(255,255,255,0.75)",
-                  bgcolor: heroTrack === "talent" ? "#FFD700" : "transparent",
-                  boxShadow: heroTrack === "talent" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
-                  "&:hover": {
-                    bgcolor: heroTrack === "talent" ? "#FFE44D" : "rgba(255,255,255,0.12)",
-                  },
-                }}
-              >
-                [FAST-PACED CAREER GROWTH]
-              </Button>
+              <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
+                <Typography
+                  variant="h1"
+                  component="h1"
+                  aria-label="Phitopolis"
+                  className="hero-wordmark"
+                  sx={{
+                    fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
+                    fontWeight: 900,
+                    letterSpacing: "0.02em",
+                    lineHeight: 1,
+                    textTransform: "uppercase",
+                    userSelect: "none",
+                    color: NOIR.navyField,
+                    transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
+                  }}
+                >
+                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                </Typography>
+              </Box>
             </Box>
+          )}
 
-            {/* Motto */}
-            <Typography
-              sx={{
-                fontFamily: DISPLAY_FONT,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                fontSize: { xs: "0.75rem", sm: "0.88rem", md: "1.02rem" },
-                letterSpacing: "0.18em",
-                lineHeight: 1.4,
-                color: NOIR.frost,
-                opacity: 0.95,
-                mt: 0.5,
-              }}
-            >
-              {heroTrack === "enterprise" ? (
-                <>
-                  Engineering Reliable{" "}
-                  <Box component="span" sx={{ color: NOIR.gold }}>
-                    ·
-                  </Box>{" "}
-                  FinTech & Quant Systems
-                </>
-              ) : (
-                <>
-                  Fast-Paced Career Growth{" "}
-                  <Box component="span" sx={{ color: NOIR.gold }}>
-                    ·
-                  </Box>{" "}
-                  For Serious Engineers
-                </>
-              )}
-            </Typography>
-
-            {/* Subtitle / Minor text */}
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                fontWeight: 600,
-                fontSize: { xs: "0.68rem", sm: "0.76rem", md: "0.82rem" },
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: `rgba(${NOIR.frostRgb}, 0.78)`,
-                lineHeight: 1.5,
-              }}
-            >
-              {heroTrack === "enterprise"
-                ? "Building high-availability market infrastructure and R&D products from the Philippines."
-                : "Accelerate your engineering impact on complex R&D products in Manila."}
-            </Typography>
-          </Box>
         </Box>
 
 
-        {/* Plain Navy Radial Vignette */}
+        {/* Primary Navy Professional Radial Vignette */}
         <Box
           aria-hidden
           sx={{
             position: "absolute",
             inset: 0,
-            zIndex: 3,
+            zIndex: 6,
             pointerEvents: "none",
-            background: "radial-gradient(ellipse at center, transparent 60%, rgba(10, 42, 102, 0.15) 100%)",
+            background: "radial-gradient(ellipse 92% 92% at 50% 50%, transparent 35%, rgba(10, 42, 102, 0.12) 65%, rgba(10, 42, 102, 0.35) 88%, rgba(10, 42, 102, 0.58) 100%)",
             opacity: "var(--hp-panel, 1)",
           }}
         />
 
-        {/*
-         * The motto — a wordmark-kicker line under the mark, not a headline.
-         *
-         * Used to be a fixed 2.6rem block, top-left, its own headline
-         * competing with the P for the frame's attention. It is centred under
-         * the mark now, in the mark's own type voice (Outfit 900, uppercase,
-         * wide tracking — see the wordmark's `PH`**`IT`**`OPOLIS` a few
-         * hundred lines up), sized and weighted like a sub-lockup line
-         * because that is what it now reads as.
-         *
-         * Anchored to `--hp-px`/`--hp-py` — the P's own projected centre-x
-         * and bottom-y, written per frame by whichever renderer is live
-         * (`heroPlaneRenderer.ts` in Legacy, `MonolithScene`'s anchor probe
-         * in `PlaygroundCanvas.tsx`) — rather than to a fixed slot, so "just
-         * below the P" stays true as the mark scales and slides through the
-         * pin instead of only at rest. The defaults (`0.5`/`0.60`) are the
-         * mark's resting position, so the line is already in the right place
-         * for the first frame, before either renderer has published anything.
-         *
-         * Card scale is not a factor: `.hero-card` only starts scaling down
-         * at `DWELL_END` (progress 0.60, `gunshotProgress`), and `--hp-panel`
-         * has already faded this block to 0 by progress 0.25 — the two
-         * animations never overlap.
-         */}
+        {/* Top Left Motto Section — Legacy / Default Hero Mode */}
         <Box
           className="hero-motto-block"
           sx={{
             position: "absolute",
-            left: "calc(var(--hp-px, 0.5) * 100%)",
-            top: "calc(var(--hp-py, 0.60) * 100%)",
-            // Extra clearance past the anchor itself: `--hp-py` lands on the
-            // glyph's own bottom edge, but the ambient shadow pool beneath it
-            // (`blitShadow(..., lw * 0.72, ...)` in heroPlaneRenderer.ts) is
-            // wider than the glyph is tall and reaches a bit further down —
-            // this pushes the line clear of that too, not just the letterform.
-            transform: "translate(-50%, 0) translateY(clamp(48px, 7vh, 110px))",
-            zIndex: 5,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
+            top: { xs: 64, md: 80 },
+            left: HERO_GUTTER,
+            zIndex: 7,
+            maxWidth: { xs: "calc(100% - 32px)", sm: "440px", md: "520px" },
             opacity: ready ? "var(--hp-panel, 1)" : 0,
-            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}, transform 2.4s ${EASE_OUT_EXPO_CSS}`,
-            maxWidth: "min(92vw, 46rem)",
             pointerEvents: "none",
+            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
-          {/* The sub-lockup hairline — the standard "line over a kicker" move,
-              and the same gesture the wordmark makes with its gold middle
-              letters: a small gold touch tying this line to the mark above it
-              rather than letting it float as unrelated copy. */}
-          <Box
-            aria-hidden
-            sx={{
-              width: 32,
-              height: 1,
-              mb: "14px",
-              backgroundColor: NOIR.gold,
-              opacity: 0.5,
-            }}
-          />
           <Typography
+            variant="h2"
             className="hero-motto"
             sx={{
               fontFamily: DISPLAY_FONT,
-              fontWeight: 900,
-              textTransform: "uppercase",
-              fontSize: "clamp(0.60rem, 0.92vw, 0.84rem)",
-              letterSpacing: "0.30em",
-              // Optical fix: a centred, widely tracked line reads as shifted
-              // right by half a letter's worth of trailing tracking space —
-              // this pulls it back without touching `textAlign`.
-              pl: "0.30em",
-              lineHeight: 1,
-              opacity: 0.78,
-              whiteSpace: { xs: "normal", md: "nowrap" },
-              /**
-               * Bound to the room rather than left to the cascade.
-               *
-               * `PLAYGROUND_FLIP_SX` also carries a `[data-sky="dark"] &
-               * .hero-motto { color: frost }` rule, and that rule *matches* this
-               * element — verified in the browser — while losing to this `sx`
-               * anyway. Chasing which of two emotion-generated classes wins is
-               * the wrong thing to spend certainty on for a contrast rule: this
-               * is the one line of copy over a canvas that can be near-white or
-               * near-black, so it needs to be right by construction rather than
-               * right by specificity.
-               *
-               * `roomIsDark` is the same value that sets `data-sky` a few
-               * hundred lines up and the same one the navbar reads, so there is
-               * still exactly one source of truth for "is the room dark" — this
-               * just consumes it directly instead of through a selector.
-               */
+              fontWeight: 800,
+              textTransform: "none",
+              fontSize: { xs: "1.4rem", sm: "1.9rem", md: "2.3rem" },
+              letterSpacing: "-0.02em",
+              lineHeight: 1.18,
               color: roomIsDark ? NOIR.frost : NOIR.navyField,
             }}
           >
-            Making Tomorrow's Technology{" "}
-            <Box component="span" sx={{ color: NOIR.gold }}>
-              ·
-            </Box>{" "}
-            Available Today
+            Making Tomorrow's Technology Available Today
           </Typography>
         </Box>
 
@@ -1331,7 +1297,7 @@ export function HeroSignalCore() {
             position: "absolute",
             bottom: { xs: 28, md: 44 },
             left: HERO_GUTTER,
-            zIndex: 5,
+            zIndex: 7,
             display: "flex",
             flexDirection: "column",
             gap: 1.2,

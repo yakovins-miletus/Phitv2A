@@ -85,24 +85,13 @@ export function HeroImageWall({ paused }: HeroImageWallProps) {
         tileHeight={360}
         gap={24}
         radius={14}
-        // Upstream's pitch and yaw, with a clockwise roll. Positive rotateZ turns the
-        // whole plane clockwise, so the columns lean right and the wall reads as one
-        // tilted surface rather than as vertical strips that happen to be skewed.
-        tilt={16}
-        turn={-14}
-        roll={8}
-        // Matches the projection the hero canvas already solves against
-        // (docs/hero-upgrade/README.md records `perspective(1600px)`), so the wall and
-        // the city agree about depth instead of being two unrelated 3D spaces stacked
-        // on each other.
-        perspective={1600}
-        depth={220}
-        // 1.3, up from the component's 1.18. The clockwise roll sweeps the plane's
-        // near corners inward, which left a wedge of bare backplate down the left
-        // edge at 1.18 — visible as a navy strip beside the first column. Zooming the
-        // plane closes it without touching the angles. Raising this raises the height
-        // the wrap must cover, so `tileHeight` is solved against it.
-        zoom={1.3}
+        // Flat 2D layout without 3D tilt, turn, roll, perspective, or translateZ depth.
+        tilt={0}
+        turn={0}
+        roll={0}
+        perspective={0}
+        depth={0}
+        zoom={1.1}
         speed={26}
         direction="up"
         variance={0.35}
