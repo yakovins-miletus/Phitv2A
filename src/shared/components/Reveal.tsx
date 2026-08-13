@@ -16,7 +16,7 @@ import { EASE_OUT_EXPO } from "@/shared/motion/easing";
  *  in place of this fixed "rise" case. */
 const CLIP_HIDDEN = "inset(100% 0% 0% 0%)";
 const CLIP_VISIBLE = "inset(0% 0% 0% 0%)";
-const LIFT = 28;
+const LIFT = 16;
 
 /** Shared scroll-into-view reveal. Content is visible by default via CSS;
  *  the JS animation enhances. */
@@ -24,7 +24,7 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px", amount: 0.3 });
+  const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: 0.05 });
 
   const shouldAnimate = ready && inView;
   const styleProp = style ? { style } : {};
@@ -35,7 +35,7 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
       initial={reduced ? false : { clipPath: CLIP_HIDDEN, y: LIFT }}
       animate={shouldAnimate ? { clipPath: CLIP_VISIBLE, y: 0 } : { clipPath: CLIP_HIDDEN, y: LIFT }}
       transition={{
-        duration: 0.8,
+        duration: 0.4,
         ease: EASE_OUT_EXPO,
         delay,
       }}
@@ -51,7 +51,7 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
 export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px", amount: 0.25 });
+  const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: 0.05 });
 
   const shouldAnimate = ready && inView;
 

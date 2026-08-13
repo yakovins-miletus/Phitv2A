@@ -21,8 +21,8 @@ import { CommandPalette } from "./CommandPalette";
 import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
 import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
-// Removed Magnetic imports
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
+import { TransitionCurtainProvider } from "./TransitionCurtain";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
 import { SiteFooter } from "./SiteFooter";
@@ -31,7 +31,6 @@ import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS, EASE_OUT_EXPO } from "@/shared/motion/easing";
-import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { useNavAutohide } from "./useNavAutohide";
 
 const NAV_ITEMS = [
@@ -74,22 +73,35 @@ const WARM_ROUTES = [
   { to: "/contact", label: "CONTACT" },
 ] as const;
 
-/** Warmed during the preloader. These point at the 1200px derivatives rather than the
-    originals — `data-science-banner.png` alone was 975 KB, preloaded on every first
-    visit on every device, before anything had asked for it. */
-const CRITICAL_IMAGES = [
-  { src: "/phitopolis_logo_hero.svg", label: "BRAND LOGO" },
-  { src: "/images/careers/quant-research-banner.webp", label: "RESEARCH CORE" },
-  { src: "/images/careers/data-science-banner.webp", label: "DATA STREAM" },
-] as const;
+import publicAssets from "virtual:public-assets";
 
-function preloadImage(src: string): Promise<void> {
+const srcAssetModules = import.meta.glob([
+  '/src/**/*.{png,jpg,jpeg,webp,svg,gif,mp4,webm,glb,gltf,woff2}'
+], { eager: true, query: '?url', import: 'default' });
+const srcAssets = Object.values(srcAssetModules) as string[];
+const ALL_ASSETS = [...publicAssets, ...srcAssets];
+
+function preloadAsset(url: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   return new Promise((resolve) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => resolve();
-    img.onerror = () => resolve(); // failsafe: do not block load if asset is missing
+    const ext = url.split('.').pop()?.toLowerCase() || '';
+    const done = () => resolve();
+
+    if (['mp4', 'webm'].includes(ext)) {
+      const v = document.createElement('video');
+      v.preload = 'auto';
+      v.oncanplaythrough = done;
+      v.onerror = done;
+      v.src = url;
+      v.load();
+    } else if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
+      const img = new Image();
+      img.onload = done;
+      img.onerror = done;
+      img.src = url;
+    } else {
+      fetch(url, { cache: 'force-cache' }).then(done).catch(done);
+    }
   });
 }
 
@@ -103,12 +115,15 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
       promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
     }));
 
-    const imageSignals = CRITICAL_IMAGES.map((img) => ({
-      label: img.label,
-      promise: preloadImage(img.src),
-    }));
+    const assetSignals = ALL_ASSETS.map((url) => {
+      const filename = url.split('/').pop() || 'ASSET';
+      return {
+        label: filename.toUpperCase().substring(0, 15),
+        promise: preloadAsset(url),
+      };
+    });
 
-    return [...routeSignals, ...imageSignals];
+    return [...routeSignals, ...assetSignals];
   });
   return signals;
 }
@@ -357,9 +372,17 @@ function AppShellInner({ children }: { children: ReactNode }) {
     if (typeof document !== "undefined") {
       document.body.style.overflow = "";
     }
-    // No-op until the lazy home chunk has loaded — see scrollTriggerBridge.ts
-    // for why AppShell cannot import gsap directly.
-    refreshScrollTriggers();
+    // The GSAP overlay curtain (TransitionCurtain.tsx) now handles stopLenis() and refreshScrollTriggers().
+
+    // Trigger staggered entrance animations for the new route
+    if (hadPreloaderRef.current && phase === "open") {
+      setPhase("hero");
+      const timers = entranceTimersRef.current;
+      timers.forEach((id) => window.clearTimeout(id));
+      timers.length = 0;
+      timers.push(window.setTimeout(() => setPhase("header"), HEADER_AT_MS));
+      timers.push(window.setTimeout(() => setPhase("open"), OPEN_AT_MS));
+    }
   }, [pathname]);
 
 
@@ -799,8 +822,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <NavbarProvider>
-      <AppShellInner>{children}</AppShellInner>
-    </NavbarProvider>
+    <TransitionCurtainProvider>
+      <NavbarProvider>
+        <AppShellInner>{children}</AppShellInner>
+      </NavbarProvider>
+    </TransitionCurtainProvider>
   );
 }

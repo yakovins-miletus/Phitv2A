@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import { motion } from "motion/react";
+
 import { MagnifyingGlass, TerminalWindow, GlobeHemisphereWest } from "@phosphor-icons/react";
 
 import { CONTENT } from "@/shared/content";
@@ -11,6 +11,7 @@ import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { AppetizerReveal } from "@/shared/components/AppetizerReveal";
 
 const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "void"];
 
@@ -31,63 +32,60 @@ export function OperatingPillars() {
 
   return (
     <StageSection section={homeSection("hero-pillars")}>
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
-        {/* Section Kicker & Main Heading */}
-        <Box sx={{ mb: { xs: 6, md: 8 } }}>
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-            <Box
-              sx={{
-                width: 24,
-                height: 2,
-                borderRadius: 1,
-                background: `linear-gradient(90deg, ${NOIR.goldDark}, transparent)`,
-              }}
-            />
+      <AppetizerReveal
+        headerContent={
+          <Box sx={{ mb: { xs: 2, md: 4 } }}>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 24,
+                  height: 2,
+                  borderRadius: 1,
+                  background: `linear-gradient(90deg, ${NOIR.goldDark}, transparent)`,
+                }}
+              />
+              <Typography
+                component="p"
+                variant="overline"
+                sx={{
+                  fontFamily: MONO,
+                  color: NOIR.goldDark,
+                  display: "block",
+                  letterSpacing: "0.2em",
+                  fontWeight: 600,
+                }}
+              >
+                Organizational structure
+              </Typography>
+            </Box>
             <Typography
-              component="p"
-              variant="overline"
+              variant="h2"
+              component="h2"
               sx={{
-                fontFamily: MONO,
-                color: NOIR.goldDark,
-                display: "block",
-                letterSpacing: "0.2em",
-                fontWeight: 600,
+                maxWidth: "20ch",
+                color: GROUND.fg,
+                fontSize: { xs: "2.25rem", sm: "3rem", md: "3.5rem" },
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: "-0.025em",
               }}
             >
-              Organizational structure
+              Three integrated operating pillars
             </Typography>
           </Box>
-          <Typography
-            variant="h2"
-            component="h2"
-            sx={{
-              maxWidth: "20ch",
-              color: GROUND.fg,
-              fontSize: { xs: "2.25rem", sm: "3rem", md: "3.5rem" },
-              fontWeight: 700,
-              lineHeight: 1.1,
-              letterSpacing: "-0.025em",
-            }}
-          >
-            Three integrated operating pillars
-          </Typography>
-        </Box>
-
-        {/* 3 Modern Pillar Cards with Pop-out Titles */}
-        <Box
-          component={motion.div}
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            gap: { xs: 4, md: 4 },
-          }}
-        >
-          {pillars.map((pillar, i) => {
-            const Icon = PILLAR_ICONS[i] ?? PILLAR_ICONS[0]!;
+        }
+        mainContent={
+          <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                gap: { xs: 4, md: 4 },
+                width: '100%',
+              }}
+            >
+              {pillars.map((pillar, i) => {
+                const Icon = PILLAR_ICONS[i] ?? PILLAR_ICONS[0]!;
 
             return (
               <Box
@@ -233,8 +231,10 @@ export function OperatingPillars() {
               </Box>
             );
           })}
-        </Box>
-      </Container>
+            </Box>
+          </Container>
+        }
+      />
     </StageSection>
   );
 }

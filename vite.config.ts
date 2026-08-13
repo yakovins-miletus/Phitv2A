@@ -1,5 +1,7 @@
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
+import fs from "node:fs";
+import path from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { compression } from "vite-plugin-compression2";
 
@@ -60,12 +62,54 @@ function assertApiUrl(): Plugin {
   };
 }
 
+/**
+ * Expose all files in the public/ directory as an array of paths for the preloader.
+ */
+function publicAssetsPlugin(): Plugin {
+  const virtualModuleId = "virtual:public-assets";
+  const resolvedVirtualModuleId = "\0" + virtualModuleId;
+
+  return {
+    name: "vite-plugin-public-assets",
+    resolveId(id) {
+      if (id === virtualModuleId) {
+        return resolvedVirtualModuleId;
+      }
+    },
+    load(id) {
+      if (id === resolvedVirtualModuleId) {
+        const publicDir = path.resolve(process.cwd(), "public");
+        const assets: string[] = [];
+
+        function walk(dir: string) {
+          if (!fs.existsSync(dir)) return;
+          const files = fs.readdirSync(dir);
+          for (const file of files) {
+            const filePath = path.join(dir, file);
+            const stat = fs.statSync(filePath);
+            if (stat.isDirectory()) {
+              walk(filePath);
+            } else {
+              if (file.startsWith(".") || file.endsWith(".html")) continue;
+              const relPath = path.relative(publicDir, filePath);
+              assets.push("/" + relPath.replace(/\\/g, "/"));
+            }
+          }
+        }
+        walk(publicDir);
+        return `export default ${JSON.stringify(assets)};`;
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
     preloadFonts(),
     assertApiUrl(),
+    publicAssetsPlugin(),
     // Precompressed assets (.gz + .br) emitted at build time so any static
     // host/nginx can serve them with zero runtime cost.
     compression({ algorithms: ["gzip", "brotliCompress"] }),

@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { motion } from "motion/react";
+
 
 import { CONTENT } from "@/shared/content";
 import { StageSection } from "@/shared/components/StageSection";
@@ -8,6 +8,7 @@ import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { AppetizerReveal } from "@/shared/components/AppetizerReveal";
 
 const GROUND = GROUNDS[homeSection("hero-position").ground ?? "panel"];
 
@@ -47,25 +48,17 @@ export function MarketPosition() {
 
   return (
     <StageSection section={homeSection("hero-position")}>
-      <Box sx={{ width: "100%", position: "relative" }}>
-        <Typography
-          component="p"
-          variant="overline"
-          sx={{ fontFamily: MONO, color: NOIR.goldDark, display: "block", mb: { xs: 4, md: 6 } }}
-        >
-          Market position
-        </Typography>
+      <AppetizerReveal
+        headerContent={
+          <Box sx={{ width: "100%", maxWidth: "600px", textAlign: "center" }}>
+            <Typography
+              component="p"
+              variant="overline"
+              sx={{ fontFamily: MONO, color: NOIR.goldDark, display: "block", mb: { xs: 4, md: 6 } }}
+            >
+              Market position
+            </Typography>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "minmax(0, 5fr) minmax(0, 7fr)" },
-            gap: { xs: 6, md: 10 },
-            alignItems: "start",
-          }}
-        >
-          {/* The claim. */}
-          <Box>
             <Typography
               variant="h2"
               component="h2"
@@ -83,22 +76,17 @@ export function MarketPosition() {
               </Box>
             </Typography>
             <Typography
-              sx={{ mt: 3, color: GROUND.muted, fontSize: "1.0625rem", maxWidth: "28ch" }}
+              sx={{ mt: 3, color: GROUND.muted, fontSize: "1.0625rem", maxWidth: "28ch", mx: "auto" }}
             >
               Decades of Wall St. Experience and a Competitive Edge of Development
             </Typography>
           </Box>
-
-          {/* The three facts, all of them, all the time. */}
-          <Box>
+        }
+        mainContent={
+          <Box sx={{ width: "100%", maxWidth: "800px" }}>
             {differentiators.map((diff, i) => (
               <Box
                 key={diff.heading}
-                component={motion.div}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.6, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "auto 1fr",
@@ -147,8 +135,8 @@ export function MarketPosition() {
               </Box>
             ))}
           </Box>
-        </Box>
-      </Box>
+        }
+      />
     </StageSection>
   );
 }

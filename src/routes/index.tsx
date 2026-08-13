@@ -21,6 +21,7 @@ import { DailyLifeSection } from "@/features/home/components/DailyLifeSection/Da
 import { TestimonialsSection } from "@/features/home/components/TestimonialsSection";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
+import { PreHeaderSequence } from "@/features/home/components/PreHeaderSequence";
 
 // No gsap/lenis imports at route-module scope: this file stays in the eager
 // bundle even with autoCodeSplitting, so anything imported here ships to every
@@ -65,6 +66,7 @@ function HomePage() {
           announces the cut instead of absorbing it, and it fought the ground
           transitions directly. Separation is space and ground change now. */}
       <Box component="main" id="home-main" sx={{ position: "relative", overflowX: "clip" }}>
+        <PreHeaderSequence />
         {/* 01. Hero Sequence — stays GSAP-pinned (position: fixed) during
             the scroll animation. The overlay sheet below uses negative margin
             to slide up and cover it while it is still pinned. */}
@@ -90,7 +92,6 @@ function HomePage() {
             bgcolor: "background.default",
             borderTopLeftRadius: { xs: 28, md: 48 },
             borderTopRightRadius: { xs: 28, md: 48 },
-            boxShadow: "0 -20px 60px rgba(6, 10, 22, 0.40), 0 -4px 16px rgba(10, 42, 102, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
           }}
         >
           <MissionStatement />

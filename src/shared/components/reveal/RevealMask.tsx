@@ -36,7 +36,7 @@ export function RevealMask({
   direction = "up",
   distance = 28,
   delay = 0,
-  duration = 0.8,
+  duration = 0.4,
   once = true,
   style,
 }: {
@@ -51,7 +51,7 @@ export function RevealMask({
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once, margin: "0px 0px -10% 0px", amount: 0.3 });
+  const inView = useInView(ref, { once, margin: "0px 0px 100px 0px", amount: 0.05 });
   const shouldAnimate = ready && inView;
 
   const cfg = CLIP[direction];

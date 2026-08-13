@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { motion } from "motion/react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import { MONO } from "@/shared/theme/theme";
 
@@ -12,7 +12,6 @@ import { EASE_IN_OUT_QUART } from "@/shared/motion/easing";
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
 const IS_JSDOM = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") === true;
-const HARD_CAP_MS = IS_JSDOM ? 150 : 800;
 /** The one deliberate hold: enough to read as an entrance, not enough to be a wait. */
 const ENTRY_SETTLE_MS = IS_JSDOM ? 5 : 180;
 
@@ -103,8 +102,6 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
 
   const total = Math.max(signals.length, 1);
 
-  const capRef = useRef<number | undefined>(undefined);
-
   // Monitor loading signals
   useEffect(() => {
     let cancelled = false;
@@ -116,21 +113,10 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
         }
       });
     }
-    capRef.current = window.setTimeout(() => {
-      if (!cancelled) setForced(true);
-    }, HARD_CAP_MS);
     return () => {
       cancelled = true;
-      window.clearTimeout(capRef.current);
     };
   }, [signals]);
-
-  // Prevent the hard cap from forcing dismissal if we've successfully reached 100%
-  useEffect(() => {
-    if (phase === "complete") {
-      window.clearTimeout(capRef.current);
-    }
-  }, [phase]);
 
   // Monitor Escape key for skipping
   useEffect(() => {

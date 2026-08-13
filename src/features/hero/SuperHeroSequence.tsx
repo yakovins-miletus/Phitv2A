@@ -196,18 +196,22 @@ const GUNSHOT_TRACK_SX = {
 const LINK_PILL_SX = {
   borderRadius: "100px",
   textDecoration: "none !important",
-  border: "none",
-  backgroundColor: "#FFFFFF",
-  boxShadow: "0 4px 16px rgba(10, 42, 102, 0.08)",
-  transition: "all 0.25s ease",
+  border: "1px solid rgba(255, 255, 255, 0.85)",
+  outline: "1px solid rgba(10, 42, 102, 0.14)",
+  backgroundColor: "rgba(255, 255, 255, 0.72)",
+  backdropFilter: "blur(16px) saturate(180%)",
+  WebkitBackdropFilter: "blur(16px) saturate(180%)",
+  boxShadow: "0 8px 24px rgba(10, 42, 102, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9)",
+  transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
   "&, & *": {
     textDecoration: "none !important",
   },
   "@media (hover: hover)": {
     "&:hover": {
       transform: "translateY(-2px)",
-      backgroundColor: NOIR.navyField,
-      boxShadow: `0 4px 20px rgba(10, 42, 102, 0.25), 0 0 12px ${NOIR.gold}40`,
+      backgroundColor: "rgba(10, 42, 102, 0.92)",
+      outline: "1px solid rgba(255, 215, 0, 0.50)",
+      boxShadow: "0 12px 32px rgba(10, 42, 102, 0.35), 0 0 16px rgba(255, 215, 0, 0.30)",
       "& .btn-text": {
         color: `${NOIR.gold} !important`,
       },
