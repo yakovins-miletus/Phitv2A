@@ -1,18 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-// api + component imported directly (not the barrel) so the eager loader
-// doesn't pull the component into the main bundle.
 import { servicesQuery } from "@/features/services/api";
 import type { Service } from "@/features/services/api";
 import { DetailedServiceList } from "@/features/services/components/DetailedServiceList";
-import { PageHeader } from "@/shared/components/PageHeader";
+import { ServicesHeroHeader } from "@/features/services/components/ServicesHeroHeader";
+import { TechStackSection } from "@/features/services/components/TechStackSection";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 
-// Static marketing fallback so the Services page always renders full content —
-// live data when the API is reachable, this copy when it is not. A marketing
-// page must never degrade to a spinner or an error card.
 const FALLBACK_SERVICES: Service[] = [
   {
     id: "development",
@@ -20,7 +17,7 @@ const FALLBACK_SERVICES: Service[] = [
     name: "Software Development",
     tagline: "Cloud-native platforms built for reliability and scale",
     description:
-      "We architect secure web platforms using modern stacks, engineered for enterprise reliability and high availability — enabling teams to visualize complex data and manage operations in real time.",
+      "We architect secure web platforms using modern stacks, engineered for enterprise reliability and high availability - enabling teams to visualize complex data and manage operations in real time.",
     icon: "hub",
     highlights: ["TypeScript", "React", "GraphQL", "Docker", "AWS", "CI/CD"],
     display_order: 1,
@@ -88,28 +85,45 @@ export const Route = createFileRoute("/services")({
   head: () =>
     pageHead(
       "Services · Phitopolis",
-      "Full-stack development, quantitative research, data science, and 24/7 global operational continuity — engineering built for financial technology at petabyte scale.",
+      "Full-stack development, quantitative research, data science, and 24/7 global operational continuity - engineering built for financial technology at petabyte scale.",
     ),
-  // Warm the cache without blocking or failing the route — the page renders
-  // its static fallback immediately and swaps in live data when it arrives.
   loader: ({ context }) => {
     void context.queryClient.ensureQueryData(servicesQuery()).catch(() => undefined);
   },
   component: ServicesPage,
 });
 
+function matchCategory(service: Service, categoryId: string): boolean {
+  if (categoryId === "all") return true;
+  const target = categoryId.toLowerCase();
+  const idStr = String(service.id).toLowerCase();
+  const slugStr = (service.slug || "").toLowerCase();
+  const nameStr = (service.name || "").toLowerCase();
+
+  return (
+    idStr === target ||
+    idStr.includes(target) ||
+    slugStr.includes(target) ||
+    nameStr.includes(target)
+  );
+}
+
 function ServicesPage() {
   const services = useQuery(servicesQuery());
   const list = services.data ?? FALLBACK_SERVICES;
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const filtered = list.filter((s) => matchCategory(s, selectedCategory));
+  const displayList = filtered.length > 0 ? filtered : list;
 
   return (
     <Section>
-      <PageHeader
-        overline="Capabilities"
-        title="Three engines. One discipline"
-        lead="Development, Research, and Ops Support — with Quantitative Research turning the discipline into deployable trading signals"
+      <ServicesHeroHeader
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
       />
-      <DetailedServiceList services={list} />
+      <DetailedServiceList services={displayList} />
+      <TechStackSection />
     </Section>
   );
 }

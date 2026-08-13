@@ -1,5 +1,4 @@
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import SchoolIcon from "@mui/icons-material/School";
@@ -14,17 +13,17 @@ export function HeroGallery() {
     <Box
       sx={{
         width: "100%",
-        maxWidth: 860,
+        maxWidth: 880,
         mx: "auto",
         display: "grid",
         gridTemplateColumns: { xs: "1fr", sm: "repeat(12, 1fr)" },
         gridTemplateRows: { xs: "auto auto auto", sm: "repeat(2, 1fr)" },
         gap: { xs: 3, sm: 3, md: 4 },
-        height: { xs: "auto", sm: 540, md: 640 },
+        height: { xs: "auto", sm: 520, md: 600 },
         alignItems: "stretch",
       }}
     >
-      {/* ── Image 1: Primary Focal Centerpiece (Large Left) ── */}
+      {/* ── Image 1: Primary Focal Centerpiece ── */}
       <Box
         component={motion.div}
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -35,62 +34,80 @@ export function HeroGallery() {
           gridColumn: { xs: "1 / -1", sm: "1 / 8" },
           gridRow: { xs: "auto", sm: "1 / 3" },
           position: "relative",
-          borderRadius: 5,
+          borderRadius: "24px",
           overflow: "hidden",
-          border: "2.5px solid rgba(var(--accent-rgb), 0.8)",
-          boxShadow: "0 28px 60px rgba(0, 0, 0, 0.4), 0 0 25px var(--accent-15)",
-          bgcolor: "rgba(10, 42, 102, 0.6)",
-          minHeight: { xs: 300, sm: "auto" },
+          border: "2.5px solid #EAB308",
+          minHeight: { xs: 320, sm: "auto" },
           transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         }}
       >
         <Box
-          component="img" decoding="async"
+          component="img"
+          decoding="async"
           src="/images/AboutPage1.webp"
           alt="Phitopolis Headquarters & Engineers"
           sx={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            display: "block",
           }}
         />
+        {/* Subtle Dark Gradient Overlay for bottom text legibility */}
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to top, rgba(5, 15, 38, 0.85) 0%, rgba(5, 15, 38, 0.1) 60%)",
+            background: "linear-gradient(to top, rgba(9, 18, 38, 0.88) 0%, rgba(9, 18, 38, 0.1) 60%)",
             pointerEvents: "none",
           }}
         />
+        {/* Badge Pill: PHITOPOLIS R&D FIRM */}
         <Box
           sx={{
             position: "absolute",
-            bottom: 24,
-            left: 24,
-            right: 24,
-            display: "flex",
+            bottom: 20,
+            left: 20,
+            display: "inline-flex",
             alignItems: "center",
+            gap: 1.25,
+            px: 2,
+            py: 1,
+            bgcolor: "rgba(9, 18, 38, 0.88)",
+            backdropFilter: "blur(12px)",
+            border: "1.5px solid rgba(234, 179, 8, 0.6)",
+            borderRadius: "12px",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <VerifiedIcon sx={{ color: "var(--accent-fg)", fontSize: "1.4rem" }} />
-            <Typography
-              sx={{
-                color: "common.white",
-                fontSize: "1rem",
-                fontWeight: 700,
-                fontFamily: MONO,
-                letterSpacing: "0.08em",
-                textShadow: "0 2px 4px rgba(0,0,0,0.8)",
-              }}
-            >
-              PHITOPOLIS R&D FIRM
-            </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              bgcolor: "rgba(234, 179, 8, 0.18)",
+            }}
+          >
+            <VerifiedIcon sx={{ color: "#EAB308", fontSize: "1.1rem" }} />
           </Box>
+          <Typography
+            sx={{
+              color: "#EAB308",
+              fontSize: "0.85rem",
+              fontWeight: 800,
+              fontFamily: MONO,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            PHITOPOLIS R&D FIRM
+          </Typography>
         </Box>
       </Box>
 
-      {/* ── Image 2: Secondary Background Card (Top Right) ── */}
+      {/* ── Image 2: Secondary Card (Top Right - TRUSTED COLLABORATION) ── */}
       <Box
         component={motion.div}
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -101,56 +118,80 @@ export function HeroGallery() {
           gridColumn: { xs: "1 / -1", sm: "8 / 13" },
           gridRow: { xs: "auto", sm: "1 / 2" },
           position: "relative",
-          borderRadius: 4,
+          borderRadius: "20px",
           overflow: "hidden",
-          border: "1px solid rgba(10, 42, 102, 0.18)",
-          boxShadow: "0 12px 36px rgba(10, 42, 102, 0.15)",
-          bgcolor: "rgba(244, 247, 252, 0.85)",
+          border: "1.5px solid rgba(255, 255, 255, 0.18)",
           minHeight: { xs: 200, sm: "auto" },
           transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         }}
       >
         <Box
-          component="img" decoding="async"
+          component="img"
+          decoding="async"
           src="/images/AboutPageHero2.webp"
           alt="Phitopolis Engineering Team Collaboration"
           sx={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "brightness(0.92) contrast(1.05)",
+            display: "block",
+            filter: "brightness(0.95) contrast(1.05)",
           }}
         />
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to top, rgba(10, 42, 102, 0.7) 0%, transparent 60%)",
+            background: "linear-gradient(to top, rgba(9, 18, 38, 0.85) 0%, transparent 60%)",
             pointerEvents: "none",
           }}
         />
-        <Chip
-          icon={<GroupsIcon sx={{ fontSize: "1rem !important", color: "var(--accent-fg) !important" }} />}
-          label="COLLABORATION"
-          size="small"
+        {/* Badge Pill: TRUSTED COLLABORATION */}
+        <Box
           sx={{
             position: "absolute",
             bottom: 16,
             left: 16,
-            bgcolor: "rgba(10, 42, 102, 0.85)",
-            color: "common.white",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(var(--accent-rgb), 0.3)",
-            fontFamily: MONO,
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            py: 1,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1,
+            px: 1.75,
+            py: 0.75,
+            bgcolor: "rgba(9, 18, 38, 0.88)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            borderRadius: "10px",
           }}
-        />
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              bgcolor: "rgba(234, 179, 8, 0.2)",
+            }}
+          >
+            <GroupsIcon sx={{ color: "#EAB308", fontSize: "0.95rem" }} />
+          </Box>
+          <Typography
+            sx={{
+              color: "common.white",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              fontFamily: MONO,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            TRUSTED COLLABORATION
+          </Typography>
+        </Box>
       </Box>
 
-      {/* ── Image 3: Tertiary Overlay Card (Bottom Right) ── */}
+      {/* ── Image 3: Tertiary Card (Bottom Right - FUTURE-READY ENGAGEMENT) ── */}
       <Box
         component={motion.div}
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -161,51 +202,76 @@ export function HeroGallery() {
           gridColumn: { xs: "1 / -1", sm: "8 / 13" },
           gridRow: { xs: "auto", sm: "2 / 3" },
           position: "relative",
-          borderRadius: 4,
+          borderRadius: "20px",
           overflow: "hidden",
-          border: "1.5px solid rgba(10, 42, 102, 0.25)",
-          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.25)",
-          bgcolor: "rgba(10, 42, 102, 0.5)",
+          border: "1.5px solid rgba(255, 255, 255, 0.18)",
           minHeight: { xs: 200, sm: "auto" },
           transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         }}
       >
         <Box
-          component="img" decoding="async"
+          component="img"
+          decoding="async"
           src="/images/AteneoQR.webp"
-          alt="Academic Engagement & Ateneo"
+          alt="Academic Engagement & Presentation"
           sx={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            display: "block",
           }}
         />
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to top, rgba(10, 42, 102, 0.8) 0%, transparent 65%)",
+            background: "linear-gradient(to top, rgba(9, 18, 38, 0.85) 0%, transparent 60%)",
             pointerEvents: "none",
           }}
         />
-        <Chip
-          icon={<SchoolIcon sx={{ fontSize: "1rem !important", color: "var(--accent-fg) !important" }} />}
-          label="ACADEMIC ENGAGEMENT"
-          size="small"
+        {/* Badge Pill: ACADEMIC ENGAGEMENT */}
+        <Box
           sx={{
             position: "absolute",
             bottom: 16,
             left: 16,
-            bgcolor: "rgba(10, 42, 102, 0.9)",
-            color: "common.white",
-            border: "1px solid rgba(10, 42, 102, 0.2)",
-            fontFamily: MONO,
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            py: 1,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1,
+            px: 1.75,
+            py: 0.75,
+            bgcolor: "rgba(9, 18, 38, 0.88)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            borderRadius: "10px",
           }}
-        />
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              bgcolor: "rgba(234, 179, 8, 0.2)",
+            }}
+          >
+            <SchoolIcon sx={{ color: "#EAB308", fontSize: "0.95rem" }} />
+          </Box>
+          <Typography
+            sx={{
+              color: "common.white",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              fontFamily: MONO,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            ACADEMIC ENGAGEMENT
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

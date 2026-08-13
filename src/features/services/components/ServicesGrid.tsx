@@ -21,6 +21,7 @@ function ServiceCard({ service }: { service: Service }) {
         height: 1,
         position: "relative",
         overflow: "hidden",
+        boxShadow: "none",
         transition: "border-color 0.25s ease",
         "&:hover": { borderColor: "primary.dark" },
         // Gold sheen sweep on hover — transform-only, no-preference gated.

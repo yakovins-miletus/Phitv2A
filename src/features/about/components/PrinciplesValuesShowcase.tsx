@@ -128,20 +128,12 @@ export function PrinciplesValuesShowcase() {
           zIndex: 5,
         }}
       >
-        {/* Background Ambient Glow & Radial Texture */}
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background: "radial-gradient(circle at 80% 20%, rgba(var(--accent-rgb), 0.08) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(10, 42, 102, 0.04) 0%, transparent 60%)",
-            pointerEvents: "none",
-          }}
-        />
+
 
         <Container maxWidth="xl" sx={{ height: "100%", py: { xs: 4, md: 8 }, px: { xs: 3, md: 8 }, position: "relative", zIndex: 1 }}>
           <Stack spacing={{ xs: 4, md: 6 }} sx={{ height: "100%", justifyContent: "center" }}>
             {/* Section Overhead Title Bar */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2, borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2 }}>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                 <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
                 <Typography

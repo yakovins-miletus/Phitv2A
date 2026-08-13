@@ -139,8 +139,8 @@
   --glass-rim: rgba(255, 255, 255, 0.85); /* the top-edge light catch */
   --glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   --glass-inset: inset 0 1px 2px rgba(10, 42, 102, 0.1); /* input wells, pressed */
-  --glass-divider: rgba(10, 42, 102, 0.1); /* hairline inside a panel */
-  --hairline: rgba(10, 42, 102, 0.08);
+  --glass-divider: transparent;
+  --hairline: transparent;
 
   /* ── Shadows: one outer drop + one inner glow, per elevation ─────────────── */
   --glass-shadow-1: 0 4px 16px rgba(10, 42, 102, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.65);
@@ -282,8 +282,8 @@
   --glass-rim: rgba(255, 255, 255, 0.25);
   --glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   --glass-inset: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-  --glass-divider: rgba(255, 255, 255, 0.08);
-  --hairline: rgba(255, 255, 255, 0.07);
+  --glass-divider: transparent;
+  --hairline: transparent;
 
   --glass-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --glass-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);

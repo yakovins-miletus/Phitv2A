@@ -132,15 +132,11 @@ export const CONTENT = {
   about: {
     title: "About Us",
     body: "The architectural backbone of modern quantitative engineering",
-    // "elite investors" → the geography IS the claim. Naming three continents is
-    // checkable; "elite" is not, and it dilutes the fact standing next to it.
     sub: "Born where mathematics and modern engineering meet, backed by investors across the USA, Europe, and Hong Kong.",
-    /** /about page header — the full company narrative. */
-    overline: "Who We Are",
-    heading: "An R&D firm, built in Manila for global markets",
-    lead: "Built in Manila from international technical expertise, we deliver R&D engineering for demanding global markets.",
+    overline: "WHO WE ARE",
+    heading: "Your Global R&D Partner, Built on Trust and Innovation.",
+    lead: "Accelerating Your Future with Manila's Top Technical Talent and International Expertise.",
   },
-  /** The four values Phitopolis is rooted in. */
   principles: {
     values: [
       {

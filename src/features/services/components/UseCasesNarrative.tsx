@@ -209,7 +209,7 @@ export function UseCasesNarrative() {
                       alignItems: 'center',
                       textAlign: 'center',
                       width: '100%',
-                      boxShadow: '0 24px 48px -12px rgba(0,0,0,0.1)',
+                      boxShadow: 'none',
                     }}
                   >
                     <Typography variant="overline" color="primary" sx={{ display: "block" }}>

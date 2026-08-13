@@ -64,9 +64,47 @@ export function CareersIndexPage() {
   }, [selectedCategory, searchQuery]);
 
   return (
-    <Box sx={{ width: "100%", bgcolor: NOIR.void, pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 } }}>
+    <Box sx={{ width: "100%", bgcolor: NOIR.void, pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 }, position: "relative" }}>
+      {/* ── Background Hero Image with Gradial Mask ── */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: { xs: "680px", md: "600px" },
+          overflow: "hidden",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/careers/careers-hero-bg.jpg"
+          alt="Phitopolis Careers Background"
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: { xs: "75% center", md: "60% center" },
+            opacity: 0.85,
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: `
+              linear-gradient(to right, ${NOIR.void} 0%, rgba(244, 247, 252, 0.95) 25%, rgba(244, 247, 252, 0.75) 48%, rgba(244, 247, 252, 0.35) 72%, rgba(244, 247, 252, 0.1) 100%),
+              radial-gradient(ellipse 65% 100% at 15% 50%, ${NOIR.void} 0%, rgba(244, 247, 252, 0.9) 45%, transparent 100%),
+              linear-gradient(to bottom, transparent 70%, ${NOIR.void} 100%)
+            `,
+          }}
+        />
+      </Box>
+
       <Section>
-        <Stack spacing={{ xs: 6, md: 10 }}>
+        <Stack spacing={{ xs: 6, md: 10 }} sx={{ position: "relative", zIndex: 1 }}>
           {/* ── Interactive Recruitment Header ── */}
           <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
             <Grid size={{ xs: 12, md: 7 }}>
@@ -121,6 +159,7 @@ export function CareersIndexPage() {
                     bgcolor: "rgba(244, 247, 252, 0.95)",
                     border: "1px solid rgba(10, 42, 102, 0.18)",
                     boxShadow: "0 10px 32px rgba(10, 42, 102, 0.06)",
+                    backdropFilter: "blur(8px)",
                   }}
                 >
                   <Stack spacing={2.5}>
@@ -183,9 +222,9 @@ export function CareersIndexPage() {
           </Grid>
 
           <Box>
-            {/* ── Search & Department Filter Rail ── */}
+            {/* ── Search & Department Filter Rail (No Dividers) ── */}
             <Reveal delay={0.3}>
-              <Stack spacing={3} sx={{ pb: 3, borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
+              <Stack spacing={3} sx={{ pb: 3 }}>
                 <Grid container spacing={2} alignItems="center" justifyContent="space-between">
                   {/* Search Bar */}
                   <Grid size={{ xs: 12, md: 5 }}>
@@ -249,23 +288,25 @@ export function CareersIndexPage() {
               </Stack>
             </Reveal>
 
-            {/* ── Positions List (Brochure Styling: Full width rows, clean typography) ── */}
+            {/* ── Positions List (Divider-free, clean spacing and hover states) ── */}
             <StaggerGroup key={selectedCategory + searchQuery}>
-              <Stack spacing={0}>
+              <Stack spacing={1.5}>
                 {filteredPositions.map((position) => (
-                  <Box key={position.id} sx={{ borderBottom: "1px solid rgba(10, 42, 102, 0.18)" }}>
+                  <Box key={position.id}>
                     <StaggerItem>
                       <Box
                         sx={{
-                          py: { xs: 4, md: 5 },
-                          px: { xs: 2, md: 4 },
+                          py: { xs: 3.5, md: 4 },
+                          px: { xs: 3, md: 4 },
+                          borderRadius: 4,
                           display: "flex",
                           flexDirection: { xs: "column", md: "row" },
                           gap: { xs: 4, md: 6 },
                           alignItems: { xs: "flex-start", md: "center" },
-                          transition: "background-color 0.25s ease",
+                          transition: "all 0.25s ease",
                           "&:hover": {
-                            bgcolor: "rgba(10, 42, 102, 0.02)",
+                            bgcolor: "rgba(10, 42, 102, 0.03)",
+                            boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
                           },
                         }}
                       >

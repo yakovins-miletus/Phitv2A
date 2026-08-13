@@ -1,30 +1,27 @@
 import { motion } from "motion/react";
+import Drawer from "@mui/material/Drawer";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import Chip from "@mui/material/Chip";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
+import CloseIcon from "@mui/icons-material/Close";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { Link } from "@tanstack/react-router";
 import { NOIR } from "@/shared/theme/palette";
+import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
+import type { Service } from "../api";
+import { ServiceIcon } from "./ServiceIcon";
 
 // Simple abstract 2D Vector visualizations based on service ID with continuous animations
-//
-// ── EVERY LOOPING `animate` HERE NEEDS A MATCHING `initial` ──────────────────────
-//
-// These graphics use keyframe arrays with no `initial`. Motion renders SVG geometry
-// (`r`, `height`, `y`, …) by writing its own `latestValues` onto the element as
-// attributes — and it *overwrites* whatever static JSX attribute is there. Before the
-// first keyframe resolves `latestValues` has no entry, so Motion wrote `r="undefined"`
-// and `height="undefined"`, and the browser threw
-//   `<circle> attribute r: Expected length, "undefined".`
-// five times on every home-page load (this component ships inside CapabilityRack).
-//
-// A static `r="120"` is NOT enough — it is what Motion overwrites. The value has to be
-// in `initial`, which seeds `latestValues` on the first render. Both are kept: the
-// static attribute is the correct SVG for a no-JS render, `initial` is what Motion reads.
-// Set `initial` to the animation's FIRST keyframe so nothing jumps on mount.
 export function ServiceVector({ id }: { id: string }) {
-  if (id === "development" || id === "service-dev") {
+  const targetId = String(id || "").toLowerCase();
+
+  if (targetId === "development" || targetId === "service-dev" || targetId.includes("dev") || targetId.includes("software") || targetId === "1") {
     return (
       <svg width="100%" height="100%" viewBox="-70 0 540 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Abstract Software Development Lifecycle: 4 phases connected in a clockwise loop.
-            viewBox is widened left/right (vs. the 400x400 node geometry) so the CODE and
-            MONITOR labels have room to sit beside their icons instead of clipping. */}
-
         <defs>
           <marker id="sdlc-arrow-gold" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={NOIR.gold} />
@@ -64,7 +61,7 @@ export function ServiceVector({ id }: { id: string }) {
           strokeDasharray="4 6"
         />
 
-        {/* Circular Lifecycle Path (Clockwise Flow) */}
+        {/* Circular Lifecycle Path */}
         <motion.circle
           animate={{ rotate: [0, 360] }}
           transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
@@ -77,9 +74,7 @@ export function ServiceVector({ id }: { id: string }) {
           style={{ transformOrigin: "200px 200px" }}
         />
 
-        {/* Directional Curved Arrows Connecting the 4 Phases (marker-end keeps each
-            arrowhead locked to its arc's endpoint, tangent to the curve) */}
-        {/* Top-Right Arc Arrow (Plan -> Code) */}
+        {/* Arc Arrows */}
         <motion.path
           d="M 230 84 A 120 120 0 0 1 313 166"
           stroke={NOIR.gold}
@@ -88,8 +83,6 @@ export function ServiceVector({ id }: { id: string }) {
           fill="none"
           markerEnd="url(#sdlc-arrow-gold)"
         />
-
-        {/* Bottom-Right Arc Arrow (Code -> Deploy) */}
         <motion.path
           d="M 316 230 A 120 120 0 0 1 233 313"
           stroke={NOIR.goldLight}
@@ -98,8 +91,6 @@ export function ServiceVector({ id }: { id: string }) {
           fill="none"
           markerEnd="url(#sdlc-arrow-goldLight)"
         />
-
-        {/* Bottom-Left Arc Arrow (Deploy -> Monitor) */}
         <motion.path
           d="M 170 316 A 120 120 0 0 1 87 233"
           stroke={NOIR.goldDark}
@@ -108,8 +99,6 @@ export function ServiceVector({ id }: { id: string }) {
           fill="none"
           markerEnd="url(#sdlc-arrow-goldDark)"
         />
-
-        {/* Top-Left Arc Arrow (Monitor -> Plan) */}
         <motion.path
           d="M 84 170 A 120 120 0 0 1 167 87"
           stroke={NOIR.mist}
@@ -119,41 +108,37 @@ export function ServiceVector({ id }: { id: string }) {
           markerEnd="url(#sdlc-arrow-mist)"
         />
 
-        {/* 4 Abstract SDLC Phase Nodes, each labeled so the loop reads as
-            Plan -> Code -> Deploy -> Monitor -> Plan without guessing at the icons */}
-        {/* Phase 1: Plan / Design */}
+        {/* Phase Nodes */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
           <rect x="165" y="55" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.gold} strokeWidth="2" />
           <rect x="177" y="70" width="22" height="4" rx="2" fill={NOIR.goldLight} />
           <rect x="177" y="80" width="46" height="4" rx="2" fill={NOIR.mist} />
           <circle cx="218" cy="72" r="6" fill={NOIR.gold} />
-          <text x="200" y="40" textAnchor="middle" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>PLAN</text>
+          <text x="200" y="40" textAnchor="middle" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.frost}>PLAN</text>
         </motion.g>
 
-        {/* Phase 2: Code / Build */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
           <rect x="295" y="175" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.goldLight} strokeWidth="2" />
           <path d="M 315 192 L 308 200 L 315 208 M 345 192 L 352 200 L 345 208 M 332 190 L 328 210" stroke={NOIR.goldLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="372" y="204" textAnchor="start" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>CODE</text>
+          <text x="372" y="204" textAnchor="start" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.frost}>CODE</text>
         </motion.g>
 
-        {/* Phase 3: Test / Deploy */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}>
           <rect x="165" y="295" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.goldDark} strokeWidth="2" />
           <path d="M 185 320 L 195 328 L 215 312" stroke={NOIR.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="200" y="363" textAnchor="middle" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>DEPLOY</text>
+          <text x="200" y="363" textAnchor="middle" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.frost}>DEPLOY</text>
         </motion.g>
 
-        {/* Phase 4: Operate / Monitor */}
         <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 3 }}>
           <rect x="35" y="175" width="70" height="50" rx="12" fill={NOIR.navyPanel} stroke={NOIR.mist} strokeWidth="2" />
           <path d="M 48 200 L 58 200 L 63 190 L 70 210 L 77 195 L 82 200 L 92 200" stroke={NOIR.mist} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="28" y="204" textAnchor="end" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.ink}>MONITOR</text>
+          <text x="28" y="204" textAnchor="end" fontSize="12" fontWeight="700" letterSpacing="0.08em" fill={NOIR.frost}>MONITOR</text>
         </motion.g>
       </svg>
     );
   }
-  if (id === "quant-research" || id === "service-quant") {
+
+  if (targetId === "quant-research" || targetId === "service-quant" || targetId.includes("quant") || targetId === "2") {
     return (
       <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
         <motion.circle
@@ -188,20 +173,14 @@ export function ServiceVector({ id }: { id: string }) {
       </svg>
     );
   }
-  if (id === "data-science" || id === "service-data") {
-    // 3 ascending bars, trend line floating cleanly 30px above the bar tops.
-    // 3 data-point dots centered over each bar, arrowhead connected at line top-right.
+
+  if (targetId === "data-science" || targetId === "service-data" || targetId.includes("data") || targetId === "3") {
     const barW = 50;
     return (
       <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Bar 1 — center x=80, top y=250 */}
         <rect x={80 - barW / 2} y="250" width={barW} height="90" rx="8" fill={NOIR.goldDark} />
-        {/* Bar 2 — center x=200, top y=170 */}
         <rect x={200 - barW / 2} y="170" width={barW} height="170" rx="8" fill={NOIR.gold} />
-        {/* Bar 3 — center x=320, top y=90 */}
         <rect x={320 - barW / 2} y="90" width={barW} height="250" rx="8" fill={NOIR.goldLight} />
-
-        {/* Upward Trend Line — passes through (80,220), (200,140), (320,60) */}
         <path
           d="M 40 247 L 360 33"
           stroke={NOIR.gold}
@@ -210,8 +189,6 @@ export function ServiceVector({ id }: { id: string }) {
           strokeLinejoin="round"
           fill="none"
         />
-
-        {/* Upward Arrowhead — perfectly aligned with trend line angle (33.7°) */}
         <path
           d="M 339 35 L 360 33 L 350 52"
           stroke={NOIR.gold}
@@ -220,32 +197,27 @@ export function ServiceVector({ id }: { id: string }) {
           strokeLinejoin="round"
           fill="none"
         />
-
-        {/* 3 Data Node Dots — centered over each bar along the trend line */}
         <circle cx="80" cy="220" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" />
         <circle cx="200" cy="140" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" />
         <circle cx="320" cy="60" r="5" fill={NOIR.goldLight} stroke={NOIR.goldDark} strokeWidth="2" />
       </svg>
     );
   }
-  // Support / DevOps: Terminal monitor with flowing code streams
+
+  // Support / DevOps
   return (
     <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
       <motion.g
         animate={{ y: [0, -4, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
-        {/* Outer Glow Backdrop */}
-        <rect x="50" y="75" width="300" height="250" rx="14" fill={NOIR.navyInk} stroke={NOIR.gold} strokeWidth="2.5" style={{ filter: "drop-shadow(0 12px 32px rgba(212,175,55,0.2))" }} />
-        
-        {/* Terminal Header */}
+        <rect x="50" y="75" width="300" height="250" rx="14" fill={NOIR.navyInk} stroke={NOIR.gold} strokeWidth="2.5" />
         <rect x="50" y="75" width="300" height="34" rx="14" fill={NOIR.navyPanel} />
         <circle cx="70" cy="92" r="4" fill={NOIR.gold} opacity="0.9" />
         <circle cx="84" cy="92" r="4" fill={NOIR.gold} opacity="0.55" />
         <circle cx="98" cy="92" r="4" fill={NOIR.gold} opacity="0.3" />
         <line x1="50" y1="109" x2="350" y2="109" stroke={NOIR.goldDark} strokeWidth="1" opacity="0.4" />
 
-        {/* Abstract Terminal Code Streams */}
         <motion.rect animate={{ opacity: [0.9, 0.4, 0.9] }} transition={{ duration: 2, repeat: Infinity }} x="70" y="125" width="40" height="5" rx="2.5" fill={NOIR.goldLight} />
         <rect x="118" y="125" width="100" height="5" rx="2.5" fill={NOIR.mist} opacity="0.6" />
         <rect x="226" y="125" width="60" height="5" rx="2.5" fill={NOIR.goldDark} opacity="0.75" />
@@ -271,7 +243,6 @@ export function ServiceVector({ id }: { id: string }) {
 
         <rect x="70" y="265" width="110" height="5" rx="2.5" fill={NOIR.goldLight} opacity="0.9" />
         
-        {/* Blinking Cursor */}
         <motion.rect 
           animate={{ opacity: [1, 0, 1] }} 
           transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} 
@@ -279,5 +250,127 @@ export function ServiceVector({ id }: { id: string }) {
         />
       </motion.g>
     </svg>
+  );
+}
+
+export interface ServiceDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  service: Service | null;
+}
+
+export function ServiceDrawer({ open, onClose, service }: ServiceDrawerProps) {
+  if (!service) return null;
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: "100%", sm: 520, md: 620 },
+          bgcolor: NOIR.panel,
+          color: NOIR.navyField,
+          p: 0,
+          boxShadow: "0 20px 60px rgba(10, 42, 102, 0.15)",
+        },
+      }}
+    >
+      <Box sx={{ p: { xs: 3, sm: 4 }, borderBottom: "1px solid rgba(10, 42, 102, 0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.8 }}>
+          <Box sx={{ p: 1.2, borderRadius: "10px", bgcolor: "rgba(10, 42, 102, 0.06)", color: NOIR.navyField, display: "flex" }}>
+            <ServiceIcon icon={service.icon} />
+          </Box>
+          <Box>
+            <Typography variant="h4" sx={{ fontFamily: DISPLAY_FONT, fontWeight: 800, color: NOIR.navyField, fontSize: "1.4rem" }}>
+              {service.name}
+            </Typography>
+            <Typography sx={{ fontFamily: MONO, fontSize: "0.75rem", color: "rgba(10, 42, 102, 0.7)", fontWeight: 700 }}>
+              TECHNICAL SPECIFICATIONS
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={onClose} sx={{ color: NOIR.navyField }}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      {/* Drawer Content */}
+      <Box sx={{ p: { xs: 3, sm: 4 }, overflowY: "auto", flexGrow: 1 }}>
+        <Stack spacing={3.5}>
+
+          {/* Description */}
+          <Box>
+            <Typography sx={{ fontFamily: MONO, fontSize: "0.82rem", fontWeight: 700, color: NOIR.navyField, mb: 1 }}>
+              {service.tagline}
+            </Typography>
+            <Typography sx={{ fontSize: "0.95rem", color: "rgba(10, 42, 102, 0.8)", lineHeight: 1.65 }}>
+              {service.description}
+            </Typography>
+          </Box>
+
+          {/* Stack Chips */}
+          <Box>
+            <Typography sx={{ fontFamily: MONO, fontSize: "0.7rem", color: "rgba(10, 42, 102, 0.6)", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", mb: 1.2 }}>
+              ENGINEERING STACK
+            </Typography>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {service.highlights.map((h) => (
+                <Chip key={h} label={h} size="small" sx={{ fontFamily: MONO, fontWeight: 700, fontSize: "0.72rem", bgcolor: "rgba(10, 42, 102, 0.06)", color: NOIR.navyField }} />
+              ))}
+            </Stack>
+          </Box>
+
+          {/* Sub-teams */}
+          {service.sub_teams && service.sub_teams.length > 0 && (
+            <Box>
+              <Typography sx={{ fontFamily: MONO, fontSize: "0.7rem", color: "rgba(10, 42, 102, 0.6)", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", mb: 1.5 }}>
+                SPECIALIZED R&D SUB-TEAMS
+              </Typography>
+              <Grid container spacing={1.5}>
+                {service.sub_teams.map((team, idx) => (
+                  <Grid size={{ xs: 12, sm: 6 }} key={idx}>
+                    <Box sx={{ p: 2, borderRadius: "8px", bgcolor: "rgba(10, 42, 102, 0.04)", border: "1px solid rgba(10, 42, 102, 0.1)" }}>
+                      <Typography sx={{ fontFamily: MONO, fontSize: "0.82rem", fontWeight: 700, color: NOIR.navyField, mb: 0.5 }}>
+                        {team.name}
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.78rem", color: "rgba(10, 42, 102, 0.7)", lineHeight: 1.5 }}>
+                        {team.description}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
+
+          {/* CTA inside Drawer */}
+          <Box sx={{ pt: 2, borderTop: "1px solid rgba(10, 42, 102, 0.1)" }}>
+            <Button
+              component={Link}
+              to="/contact"
+              variant="contained"
+              fullWidth
+              endIcon={<ArrowForwardIcon />}
+              onClick={onClose}
+              sx={{
+                fontFamily: MONO,
+                fontWeight: 800,
+                bgcolor: NOIR.navyField,
+                color: "#FFFFFF",
+                py: 1.4,
+                borderRadius: "8px",
+                boxShadow: "none",
+                textTransform: "none",
+                "&:hover": { bgcolor: "#081F4D" },
+              }}
+            >
+              Inquire About {service.name}
+            </Button>
+          </Box>
+        </Stack>
+      </Box>
+    </Drawer>
   );
 }

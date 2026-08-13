@@ -67,36 +67,29 @@ function CoreCompetenciesSection() {
                 <StaggerItem key={item.label}>
                   <Box sx={{
                     p: { xs: 3, md: 5 },
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    transition: `all 0.5s ${EASE_OUT_EXPO_CSS}`,
-                    bgcolor: isFilled ? `rgba(${NOIR.navyFieldRgb}, 0.03)` : 'transparent',
-                    transform: isFilled ? 'translateY(-4px)' : 'none',
-                    boxShadow: isFilled ? `0 8px 24px rgba(${NOIR.navyFieldRgb}, 0.12)` : 'none',
+                    border: "1px solid rgba(10, 42, 102, 0.12)",
+                    borderRadius: "16px",
+                    bgcolor: "rgba(255, 255, 255, 0.75)",
+                    backdropFilter: "blur(8px)",
+                    transition: "all 0.4s ease",
+                    boxShadow: "0 4px 16px rgba(10, 42, 102, 0.04)",
                     display: 'flex',
                     flexDirection: { xs: 'column', md: 'row' },
                     gap: { xs: 3, md: 6 },
                     position: 'relative',
                     overflow: 'hidden',
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      inset: "-1px",
-                      border: 1,
-                      borderColor: 'primary.main',
-                      borderRadius: 'inherit',
-                      pointerEvents: 'none',
-                      clipPath: isFilled ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' : 'polygon(0 0, 0 0, 0 100%, 0 100%)',
-                      transition: `clip-path 0.6s ${EASE_OUT_EXPO_CSS}`,
-                      transitionDelay: `${i * 0.1}s`,
+                    "&:hover": {
+                      bgcolor: "rgba(255, 255, 255, 0.95)",
+                      transform: "translateY(-3px)",
+                      borderColor: "rgba(10, 42, 102, 0.22)",
+                      boxShadow: "0 12px 32px rgba(10, 42, 102, 0.08)",
                     }
                   }}>
                     {/* Left Column: Icon and Label */}
                     <Box sx={{ flex: '0 0 auto', width: { md: '35%' }, display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{
-                        opacity: isFilled ? 1 : 0,
-                        transform: isFilled ? 'scale(1) rotate(0deg)' : 'scale(0.5) rotate(-45deg)',
+                        opacity: isFilled ? 1 : 0.8,
+                        transform: isFilled ? 'scale(1) rotate(0deg)' : 'scale(0.9)',
                         transition: `all 0.5s ${EASE_SPRING_SOFT_CSS}`,
                         transitionDelay: `${i * 0.1}s`,
                         color: 'primary.main',
@@ -104,7 +97,8 @@ function CoreCompetenciesSection() {
                          <Icon size={40} weight="light" />
                       </Box>
                       <Box>
-                        <Typography variant="h4" color={isFilled ? 'primary.main' : 'text.primary'} sx={{
+                        <Typography variant="h4" color="primary.main" sx={{
+                           fontWeight: 700,
                            transition: 'color 0.5s ease',
                            transitionDelay: `${i * 0.1}s`,
                         }}>
@@ -114,7 +108,7 @@ function CoreCompetenciesSection() {
                     </Box>
                     
                     {/* Right Column: Business Value */}
-                    <Box sx={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', borderLeft: { md: 1 }, borderColor: { md: 'divider' }, pl: { md: 6 } }}>
+                    <Box sx={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', borderLeft: { md: '1px solid rgba(10, 42, 102, 0.08)' }, pl: { md: 6 } }}>
                       <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem', lineHeight: 1.7 }}>
                         {item.businessValue}
                       </Typography>
@@ -277,18 +271,19 @@ function AboutPage() {
           sx={{ position: "relative", zIndex: 2, width: "100%", mx: "auto" }}
         >
           {/* Left Column: Centralized Left-Aligned Text Block */}
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 5.5 }}>
             <Reveal>
               <Stack spacing={3} sx={{ textAlign: "left", maxWidth: 620 }}>
                 <Box sx={{ display: "inline-flex" }}>
                   <Typography
                     variant="overline"
                     sx={{
-                      color: "var(--accent-fg)",
+                      color: "#EAB308",
                       fontWeight: 800,
-                      letterSpacing: "0.2em",
+                      letterSpacing: "0.22em",
                       fontSize: "0.85rem",
                       fontFamily: MONO,
+                      textTransform: "uppercase",
                     }}
                   >
                     {CONTENT.about.overline}
@@ -299,22 +294,26 @@ function AboutPage() {
                   component="h1"
                   sx={{
                     fontWeight: 800,
-                    color: "common.white",
-                    fontSize: { xs: "2.2rem", sm: "2.8rem", md: "3.4rem" },
+                    fontSize: { xs: "2.3rem", sm: "3.1rem", md: "3.6rem" },
                     lineHeight: 1.15,
-                    letterSpacing: "-0.02em",
-                    mixBlendMode: "difference",
+                    letterSpacing: "-0.025em",
                   }}
                 >
-                  {CONTENT.about.heading}
+                  <Box component="span" sx={{ color: "#EAB308", display: "inline" }}>
+                    Your Global R&D Partner,{" "}
+                  </Box>
+                  <Box component="span" sx={{ color: "#FFFFFF", display: "inline" }}>
+                    Built on Trust and Innovation.
+                  </Box>
                 </Typography>
                 <Typography
                   variant="subtitle1"
                   sx={{
                     color: "rgba(255, 255, 255, 0.85)",
-                    fontSize: { xs: "1rem", md: "1.15rem" },
-                    lineHeight: 1.65,
+                    fontSize: { xs: "1.05rem", md: "1.2rem" },
+                    lineHeight: 1.6,
                     fontWeight: 400,
+                    maxWidth: 540,
                   }}
                 >
                   {CONTENT.about.lead}
@@ -323,8 +322,8 @@ function AboutPage() {
             </Reveal>
           </Grid>
 
-          {/* Right Column: 3-Image Dynamic Composition */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          {/* Right Column: 3-Image Composition with Glowing Center Piece */}
+          <Grid size={{ xs: 12, md: 6.5 }}>
             <Reveal delay={0.2}>
               <HeroGallery />
             </Reveal>
@@ -368,31 +367,7 @@ function AboutPage() {
           <TalentSection />
         </SmoothSection>
 
-        <SectionBgFlip variant="blinds" minHeight="70dvh">
-          <Section>
-            <Stack spacing={2} sx={{ maxWidth: 640 }}>
-              <Typography
-                variant="h2"
-                component="p"
-                sx={{
-                  fontWeight: 800,
-                  color: "common.white",
-                  fontSize: { xs: "2.2rem", sm: "2.8rem", md: "3.4rem" },
-                  lineHeight: 1.15,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Seven years. Manila to global markets.
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: "rgba(255, 255, 255, 0.75)", fontSize: { xs: "1rem", md: "1.15rem" }, lineHeight: 1.65 }}
-              >
-                The people behind that work, next.
-              </Typography>
-            </Stack>
-          </Section>
-        </SectionBgFlip>
+
 
         <GraduateHallOfFameSection />
 

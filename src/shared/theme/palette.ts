@@ -374,7 +374,7 @@ export const palette: PaletteOptions = {
     dark: NOIR.goldDark,
     contrastText: NOIR.navyInk,
   },
-  divider: "rgba(10, 42, 102, 0.18)",
+  divider: "rgba(0, 0, 0, 0)",
   action: {
     hover: "rgba(10, 42, 102, 0.04)",
     selected: "rgba(10, 42, 102, 0.08)",

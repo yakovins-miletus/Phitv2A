@@ -343,8 +343,7 @@ export function PoweredBySection() {
     <Box
       sx={{
         bgcolor: "background.default",
-        minHeight: "100vh",
-        py: { xs: 8, md: 12 },
+        py: { xs: 8, md: 10 },
         position: "relative",
         overflow: "hidden",
         display: "flex",
