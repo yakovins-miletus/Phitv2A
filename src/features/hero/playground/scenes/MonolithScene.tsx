@@ -57,6 +57,7 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { DECK_Y, GROUND_Y, PALETTE } from "../constants";
 import { setMarkAnchorBox } from "../markAnchor";
 import type { PointerPlane, SceneProps } from "../types";
+import { useHeroTrack } from "../../heroModeStore";
 
 const LOGO_SRC = "/phitopolis_logo_hero.svg";
 
@@ -115,8 +116,52 @@ const MARK_CENTRE_Y = GROUND_Y + MARK_LIFT + MARK_HEIGHT / 2;
  * to the transmission pass on the glass, which `lowPower` still switches. A knob
  * that no longer moves anything is a knob to delete.
  */
-const DROPS_BODY = 600;
-const DROPS_COUNTER = 200;
+const DROPS_BODY = 360;
+const DROPS_COUNTER = 120;
+
+export interface ServiceNode {
+  id: string;
+  pos: [number, number, number];
+  enterpriseLabel: string;
+  enterpriseTag: string;
+  talentLabel: string;
+  talentTag: string;
+}
+
+export const SERVICE_NODES: ServiceNode[] = [
+  {
+    id: "tl",
+    pos: [-3.8, 3.2, 0.5],
+    enterpriseLabel: "QUANTITATIVE R&D",
+    enterpriseTag: "SLA: 99.999%",
+    talentLabel: "TECH STACK DEPTH",
+    talentTag: "C++20 / RUST",
+  },
+  {
+    id: "bl",
+    pos: [-3.8, 0.3, 0.5],
+    enterpriseLabel: "SYSTEMS ARCHITECTURE",
+    enterpriseTag: "LATENCY: SUB-MS",
+    talentLabel: "CAREER VELOCITY",
+    talentTag: "FAST-TRACK PROMOTION",
+  },
+  {
+    id: "tr",
+    pos: [3.8, 3.2, 0.5],
+    enterpriseLabel: "AI & INTELLIGENCE",
+    enterpriseTag: "ACCURACY: 99.4%",
+    talentLabel: "INNOVATION LAB",
+    talentTag: "20% R&D TIME",
+  },
+  {
+    id: "br",
+    pos: [3.8, 0.3, 0.5],
+    enterpriseLabel: "FINTECH INTERACTIVE",
+    enterpriseTag: "SECURITY: SOC2 II",
+    talentLabel: "ENGINEERING CULTURE",
+    talentTag: "HIGH AUTONOMY",
+  },
+];
 
 /**
  * Base droplet radius, and the per-droplet multiplier around it.
@@ -348,22 +393,18 @@ interface Drops {
   /** Live world position and velocity. */
   pos: Float32Array;
   vel: Float32Array;
-  /** Per-droplet phase, so the bob is not in unison. */
+  /** Per-droplet phase, so orbital motion is not in unison. */
   phase: Float32Array;
   /** Per-droplet size multiplier. */
   size: Float32Array;
+  /** Concentric orbital shell radius. */
+  radius: Float32Array;
 }
 
 /**
  * Sample droplet origins off the real extruded surface.
- *
- * An even index stride over the position attribute, not a random pick: the cloud
- * has to be identical on every mount, or reforming would land the mark somewhere
- * slightly different each time and the reduced-motion resting frame would not be a
- * frame at all. `ExtrudeGeometry` lays out its front cap, back cap and side walls
- * in sequence, so a constant stride draws from all three.
  */
-function buildDrops(geometry: THREE.BufferGeometry, count: number, seedOffset: number): Drops {
+function buildDrops(geometry: THREE.BufferGeometry, count: number, seedOffset: number, isInnerCore: boolean = false): Drops {
   const pos = geometry.getAttribute("position");
   const total = pos.count;
   const stride = Math.max(1, Math.floor(total / count));
@@ -373,6 +414,7 @@ function buildDrops(geometry: THREE.BufferGeometry, count: number, seedOffset: n
   const live = new Float32Array(count * 3);
   const phase = new Float32Array(count);
   const size = new Float32Array(count);
+  const radius = new Float32Array(count);
 
   for (let i = 0; i < count; i++) {
     const v = (i * stride) % total;
@@ -383,33 +425,28 @@ function buildDrops(geometry: THREE.BufferGeometry, count: number, seedOffset: n
     home[i * 3 + 1] = hy;
     home[i * 3 + 2] = hz;
 
-    // Map droplets to the 4 service nodes (R&D field mapping)
-    const SERVICE_NODES = [
-      [-3, 1.5, 1],
-      [-2, -1.2, 1.5],
-      [2.5, 2, 0.5],
-      [2, -1.8, 1]
-    ];
+    // Quantum Data Lattice concentric shell radii
     const s = i + seedOffset;
-    const targetNode = SERVICE_NODES[i % 4] as [number, number, number];
+    const targetNode = SERVICE_NODES[i % 4]!.pos;
+    const orbRadius = isInnerCore 
+      ? 0.35 + seeded(s + 91) * 0.45   // Inner core shell (gold energy orbs)
+      : 0.85 + seeded(s + 91) * 0.75;  // Outer lattice shell (faceted voxels)
+    radius[i] = orbRadius;
+
     const angle = seeded(s) * Math.PI * 2;
-    const radius = seeded(s + 91) * 1.5; // Spread around the node
-    roam[i * 3] = targetNode[0] + Math.cos(angle) * radius;
-    roam[i * 3 + 1] = targetNode[1] + Math.sin(angle) * radius;
-    roam[i * 3 + 2] = targetNode[2] + Math.cos(angle * 0.5) * radius * 0.5;
+    roam[i * 3] = targetNode[0] + Math.cos(angle) * orbRadius;
+    roam[i * 3 + 1] = targetNode[1] + Math.sin(angle) * orbRadius * 0.65;
+    roam[i * 3 + 2] = targetNode[2] + Math.sin(angle * 2.0) * orbRadius * 0.4;
 
     live[i * 3] = hx;
     live[i * 3 + 1] = hy + MARK_CENTRE_Y;
     live[i * 3 + 2] = hz;
     phase[i] = seeded(s + 313) * Math.PI * 2;
-    // Cubed, so most droplets are small and a few are conspicuously fat. A linear
-    // spread gives a uniform gradient of sizes, which reads as a mistake rather
-    // than as a distribution.
     const u = seeded(s + 1777);
     size[i] = DROP_SIZE_MIN + Math.pow(u, 3) * (DROP_SIZE_MAX - DROP_SIZE_MIN);
   }
 
-  return { count, home, roam, pos: live, vel: new Float32Array(count * 3), phase, size };
+  return { count, home, roam, pos: live, vel: new Float32Array(count * 3), phase, size, radius };
 }
 
 /** The mark's two states, and the two one-way trips between them. */
@@ -422,7 +459,9 @@ export default function MonolithScene({
   daySample,
   reduced,
   lowPower,
+  onNodeSelect,
 }: SceneProps) {
+  const heroTrack = useHeroTrack();
   const svg = useLoader(SVGLoader, LOGO_SRC);
   const advance = useThree((s) => s.advance);
   const camera = useThree((s) => s.camera);
@@ -434,7 +473,11 @@ export default function MonolithScene({
   const counterDropsRef = useRef<THREE.InstancedMesh>(null);
   const bodyMeshRef = useRef<THREE.Mesh>(null);
   const counterMeshRef = useRef<THREE.Mesh>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
+  const hoveredNodeRef = useRef<number | null>(null);
+  const nodeOverlayRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const nodeMatRefs = useRef<Array<THREE.MeshPhysicalMaterial | null>>([]);
 
   /* ── The sky's live state ─────────────────────────────────────────────────
    * `daySample` is the room's own eased sample, stepped by the shared stage and
@@ -492,17 +535,17 @@ export default function MonolithScene({
 
   const drops = useMemo(
     () => ({
-      bodyDrops: buildDrops(body, DROPS_BODY, 0),
-      counterDrops: counter ? buildDrops(counter, DROPS_COUNTER, 5000) : null,
+      bodyDrops: buildDrops(body, DROPS_BODY, 0, false),
+      counterDrops: counter ? buildDrops(counter, DROPS_COUNTER, 5000, true) : null,
     }),
     [body, counter],
   );
 
-  /** Segment counts went up with the radius. At 0.055 units a sphere was a few
-   *  pixels and 8×6 was already generous; at 0.1 and up to 2.4× that, the silhouette
-   *  is large enough for facets to show, and a faceted droplet is a gem. */
   const dropGeometry = useMemo(() => new THREE.SphereGeometry(DROP_RADIUS, 10, 8), []);
   useEffect(() => () => dropGeometry.dispose(), [dropGeometry]);
+
+  const voxelGeometry = useMemo(() => new THREE.IcosahedronGeometry(DROP_RADIUS * 1.15, 0), []);
+  useEffect(() => () => voxelGeometry.dispose(), [voxelGeometry]);
 
 
   /**
@@ -513,6 +556,7 @@ export default function MonolithScene({
    * per-frame state rather than in React. Nothing here causes a render, which is
    * the property the whole hero rests on.
    */
+  /** The mark's phase: solid at rest, liquid while roaming, reforming back. */
   const phaseRef = useRef<{ phase: Phase; since: number }>({ phase: "solid", since: 0 });
   /** 0 = fully solid, 1 = fully liquid. Read by the glass, the droplets and the
    *  hit test, so all three can never disagree about how melted the mark is. */
@@ -594,8 +638,7 @@ export default function MonolithScene({
     advance(now);
     advance(now + 16);
     advance(now + 32);
-  }, [advance, body]);
-
+  }, [advance]);
   /**
    * Step one droplet population.
    *
@@ -613,6 +656,7 @@ export default function MonolithScene({
       yawCos: number,
       yawSin: number,
       settle: number,
+      activeNode: number | null,
     ) => {
       if (!mesh) return;
       const repelling = melt > 0.05 && p?.active === true && !reduced;
@@ -635,11 +679,18 @@ export default function MonolithScene({
         const homeZ = -hx * yawSin + hz * yawCos;
         const homeY = hy + MARK_CENTRE_Y;
 
-        // A localized orbit/bob around their assigned node
+        // Concentric orbital trajectory around assigned node
         const ph = f.phase[i]!;
-        const roamX = f.roam[j]! + Math.sin(time * 0.2 + ph) * 0.2;
-        const roamY = f.roam[j + 1]! + Math.cos(time * 0.3 + ph) * 0.2;
-        const roamZ = f.roam[j + 2]! + Math.sin(time * 0.25 + ph) * 0.2;
+        const r = f.radius[i]!;
+        const nodeIdx = i % 4;
+        const targetNode = SERVICE_NODES[nodeIdx]!.pos;
+        const isNodeHovered = activeNode === nodeIdx;
+        const orbSpeed = isNodeHovered ? 1.4 : 0.45;
+        const orbAngle = ph + time * orbSpeed;
+
+        const roamX = targetNode[0] + Math.cos(orbAngle) * r;
+        const roamY = targetNode[1] + Math.sin(orbAngle) * r * 0.65;
+        const roamZ = targetNode[2] + Math.sin(orbAngle * 2.0) * r * 0.4;
 
         const targetX = homeX + (roamX - homeX) * melt;
         const targetY = homeY + (roamY - homeY) * melt;
@@ -652,14 +703,12 @@ export default function MonolithScene({
         let ax = 0;
         let ay = 0;
         let az = 0;
-        if (repelling) {
+        if (repelling && (activeNode === null || (i % 4) === activeNode)) {
           const dx = f.pos[j]! - cx;
           const dy = f.pos[j + 1]! - cy;
           const dz = f.pos[j + 2]! - cz;
           const d2 = dx * dx + dy * dy + dz * dz;
           if (d2 < REPEL_RADIUS * REPEL_RADIUS && d2 > 0.0001) {
-            // 1/d falloff computed from the squared distance, so the only sqrt in
-            // the loop is the one genuinely needed.
             const d = Math.sqrt(d2);
             const force = ((REPEL_RADIUS - d) / REPEL_RADIUS) * (REPEL_STRENGTH / d) * melt;
             ax = dx * force;
@@ -735,7 +784,9 @@ export default function MonolithScene({
     }
     const melt = meltRef.current;
 
-
+    if (overlayRef.current) {
+      overlayRef.current.style.opacity = (hovered && melt === 0) ? "1" : "0";
+    }
 
     // ── Segmentation (Acquire -> Segment) ──────────────────────────────────
     if (bodyMeshRef.current) {
@@ -863,13 +914,45 @@ export default function MonolithScene({
       gold.emissiveIntensity = (0.2 + progress * 0.26) * settle;
     }
 
-    // ── The liquid ─────────────────────────────────────────────────────────
+    // ── Quadrant Proximity Hover Detection ──────────────────────────────────
     const p = pointerRef.current;
+    let closestIndex: number | null = null;
+    if (p && p.active && melt > 0.5) {
+      let closestDist = 2.8;
+      SERVICE_NODES.forEach((node, i) => {
+        const dx = p.x - node.pos[0];
+        const dy = (MARK_CENTRE_Y + p.y) - node.pos[1];
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIndex = i;
+        }
+      });
+    }
+    hoveredNodeRef.current = closestIndex;
+
+    // Direct UI updates without React state re-renders
+    SERVICE_NODES.forEach((_, i) => {
+      const isH = closestIndex === i;
+      const overlayEl = nodeOverlayRefs.current[i];
+      if (overlayEl) {
+        overlayEl.style.opacity = (isH && melt > 0.5) ? "1" : "0";
+        overlayEl.style.transform = isH ? "scale(1)" : "scale(0.85)";
+        overlayEl.style.boxShadow = isH ? "0 0 25px rgba(255,215,0,0.25)" : "none";
+      }
+      const mat = nodeMatRefs.current[i];
+      if (mat) {
+        const isGold = i % 2 === 1;
+        mat.emissiveIntensity = (isH ? 0.8 : (isGold ? 0.2 : 0.05)) * melt;
+        mat.opacity = melt * 0.95;
+      }
+    });
     const yawCos = Math.cos(yaw);
     const yawSin = Math.sin(yaw);
-    stepDrops(drops.bodyDrops, bodyDropsRef.current, melt, time, p, yawCos, yawSin, settle);
+
+    stepDrops(drops.bodyDrops, bodyDropsRef.current, melt, time, p, yawCos, yawSin, settle, hoveredNodeRef.current);
     if (drops.counterDrops) {
-      stepDrops(drops.counterDrops, counterDropsRef.current, melt, time, p, yawCos, yawSin, settle);
+      stepDrops(drops.counterDrops, counterDropsRef.current, melt, time, p, yawCos, yawSin, settle, hoveredNodeRef.current);
     }
   });
 
@@ -973,25 +1056,23 @@ export default function MonolithScene({
       >
         {/* R&D Hover Overlay */}
         <Html
-          position={[0, MARK_CENTRE_Y, 0]}
+          position={[0, 0, 0]}
           center
           style={{
             pointerEvents: "none",
-            opacity: hovered ? 1 : 0,
-            transition: "opacity 0.4s ease-out",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
           }}
         >
-          <div style={{
+          <div 
+            ref={overlayRef}
+            style={{
             position: "relative",
-            width: "480px",
-            height: "480px",
+            width: "500px",
+            height: "500px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            opacity: 0, // Controlled via useFrame
+            transition: "opacity 0.2s ease-out",
           }}>
             {/* Brackets */}
             <div style={{ position: "absolute", inset: 0, border: `1px solid rgba(255,255,255,0.05)`, transform: hovered ? "scale(1)" : "scale(1.1)", transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }} />
@@ -1155,35 +1236,20 @@ export default function MonolithScene({
           stay wet, and that is a material difference, not a colour one. */}
       <instancedMesh
         ref={bodyDropsRef}
-        args={[dropGeometry, undefined, drops.bodyDrops.count]}
+        args={[voxelGeometry, undefined, drops.bodyDrops.count]}
         frustumCulled={false}
         visible={false}
       >
-        {/*
-          Wet, not matte. The first liquid pass used a plain standard material at
-          roughness 0.12 and the cloud read as confetti — the size spread fixes
-          half of that and the specular fixes the rest. `clearcoat` is the cheap
-          way to get the tight highlight a droplet's surface tension gives it: a
-          second specular lobe over the base, no render target, no transmission
-          pass. That mattered at 500 instances and still earns its place at 120:
-          it is the highlight, not the size, that says "wet", and the droplets are
-          now small enough that the highlight is most of what you see of one.
-          A high `envMapIntensity` lets the
-          authored `<Environment>` be what the droplets reflect, so the cloud is
-          lit by the same room the glass is.
-        */}
         <meshPhysicalMaterial
           color={PALETTE.steel}
-          roughness={0.1}
-          metalness={0}
+          roughness={0.08}
+          metalness={0.1}
+          flatShading={true}
           clearcoat={1}
           clearcoatRoughness={0.05}
-          // Softened from 2.2. At that strength every droplet carried a hard
-          // white catchlight, and a hundred and twenty hard catchlights read as
-          // glitter rather than as water.
-          envMapIntensity={1.6}
+          envMapIntensity={2.0}
           transmission={0.9}
-          ior={1.5}
+          ior={1.52}
           transparent={true}
           opacity={0.9}
         />
@@ -1215,31 +1281,98 @@ export default function MonolithScene({
         </instancedMesh>
       )}
 
-      {/* 4 Larger Droplets (Service Placeholders) */}
+      {/* 4 Central Node Droplets + Quadrant Interaction Overlays */}
       <group>
-        {[
-          { pos: [-3, 1.5, 1], color: PALETTE.steel },
-          { pos: [-2, -1.2, 1.5], color: PALETTE.goldLight, isGold: true },
-          { pos: [2.5, 2, 0.5], color: PALETTE.steel },
-          { pos: [2, -1.8, 1], color: PALETTE.goldLight, isGold: true },
-        ].map((d, i) => (
-          <mesh key={`service-drop-${i}`} position={d.pos as [number, number, number]} scale={0.4} geometry={dropGeometry}>
-            <meshPhysicalMaterial
-              color={d.color}
-              emissive={d.isGold ? PALETTE.goldLight : undefined}
-              emissiveIntensity={d.isGold ? 0.16 : 0}
-              roughness={0.1}
-              metalness={0}
-              clearcoat={1}
-              clearcoatRoughness={0.05}
-              envMapIntensity={1.6}
-              transmission={0.9}
-              ior={1.5}
-              transparent={true}
-              opacity={0.9}
-            />
-          </mesh>
-        ))}
+        {SERVICE_NODES.map((node, i) => {
+          const isGold = i % 2 === 1;
+          return (
+            <group key={`service-node-${node.id}`} position={node.pos}>
+              {/* Central Stationary Node Droplet */}
+              <mesh scale={0.45} geometry={dropGeometry}>
+                <meshPhysicalMaterial
+                  ref={(el) => { nodeMatRefs.current[i] = el; }}
+                  color={isGold ? PALETTE.goldLight : PALETTE.steel}
+                  emissive={isGold ? PALETTE.goldLight : PALETTE.frost}
+                  emissiveIntensity={isGold ? 0.2 : 0.05}
+                  roughness={0.08}
+                  metalness={0.1}
+                  clearcoat={1}
+                  envMapIntensity={2.2}
+                  transmission={0.85}
+                  ior={1.5}
+                  transparent={true}
+                  opacity={0.95}
+                />
+              </mesh>
+
+              {/* Individual Quadrant Interaction Box Overlay */}
+              <Html center style={{ pointerEvents: "auto" }}>
+                <div
+                  ref={(el) => { nodeOverlayRefs.current[i] = el; }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNodeSelect?.(i);
+                  }}
+                  style={{
+                    position: "relative",
+                    width: "200px",
+                    padding: "12px 14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: "6px",
+                    opacity: 0,
+                    transform: "scale(0.85)",
+                    transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+                    border: "1px solid rgba(255, 215, 0, 0.3)",
+                    borderRadius: "4px",
+                    background: "rgba(6, 10, 22, 0.85)",
+                    backdropFilter: "blur(12px)",
+                    cursor: "pointer",
+                    pointerEvents: "auto",
+                    boxShadow: "0 0 30px rgba(0, 0, 0, 0.8)",
+                  }}
+                >
+                  {/* Corner Brackets */}
+                  <div style={{ position: "absolute", top: -4, left: -4, width: 10, height: 10, borderTop: "2px solid #FFD700", borderLeft: "2px solid #FFD700" }} />
+                  <div style={{ position: "absolute", top: -4, right: -4, width: 10, height: 10, borderTop: "2px solid #FFD700", borderRight: "2px solid #FFD700" }} />
+                  <div style={{ position: "absolute", bottom: -4, left: -4, width: 10, height: 10, borderBottom: "2px solid #FFD700", borderLeft: "2px solid #FFD700" }} />
+                  <div style={{ position: "absolute", bottom: -4, right: -4, width: 10, height: 10, borderBottom: "2px solid #FFD700", borderRight: "2px solid #FFD700" }} />
+
+                  {/* Header Tag */}
+                  <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: "9px", color: "#FFD700", letterSpacing: "0.15em", opacity: 0.9 }}>
+                      NODE // 0{i + 1}
+                    </span>
+                    <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#00FF88", boxShadow: "0 0 8px #00FF88" }} />
+                  </div>
+
+                  {/* Title */}
+                  <span style={{
+                    color: "#FFFFFF",
+                    fontFamily: "monospace",
+                    fontSize: "10px",
+                    letterSpacing: "0.1em",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}>
+                    {heroTrack === "enterprise" ? node.enterpriseLabel : node.talentLabel}
+                  </span>
+
+                  {/* Diagnostic Line */}
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", width: "100%", paddingTop: "4px", marginTop: "2px", display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: "8px", color: "rgba(255,255,255,0.5)", letterSpacing: "0.08em" }}>
+                      {heroTrack === "enterprise" ? node.enterpriseTag : node.talentTag}
+                    </span>
+                    <span style={{ fontFamily: "monospace", fontSize: "8px", color: "#FFD700", letterSpacing: "0.08em", fontWeight: 700 }}>
+                      [SPEC →]
+                    </span>
+                  </div>
+                </div>
+              </Html>
+            </group>
+          );
+        })}
       </group>
     </>
   );

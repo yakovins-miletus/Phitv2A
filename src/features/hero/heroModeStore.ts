@@ -95,3 +95,34 @@ export function setHeroMode(mode: HeroMode): void {
   notify();
 }
 
+/* ── Hero Track Store (Enterprise vs Talent Dual-Track Portal) ────────────── */
+
+export type HeroTrack = "enterprise" | "talent";
+
+const TRACK_STORAGE_KEY = "phit:hero:track";
+const HERO_TRACKS: readonly HeroTrack[] = ["enterprise", "talent"];
+
+let trackState: HeroTrack = readStorage(TRACK_STORAGE_KEY, HERO_TRACKS, "enterprise");
+const trackListeners = new Set<() => void>();
+
+function notifyTrack(): void {
+  for (const l of trackListeners) l();
+}
+
+export function useHeroTrack(): HeroTrack {
+  return useSyncExternalStore(
+    (l) => {
+      trackListeners.add(l);
+      return () => trackListeners.delete(l);
+    },
+    () => trackState
+  );
+}
+
+export function setHeroTrack(track: HeroTrack): void {
+  if (trackState === track) return;
+  trackState = track;
+  writeStorage(TRACK_STORAGE_KEY, track);
+  notifyTrack();
+}
+

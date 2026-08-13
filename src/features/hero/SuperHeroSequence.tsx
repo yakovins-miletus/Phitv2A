@@ -1,6 +1,7 @@
 import { Suspense, lazy, useRef, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 import { alpha } from "@mui/material/styles";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -12,11 +13,12 @@ import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
-import { useHeroModeState } from "./heroModeStore";
+import { useHeroModeState, useHeroTrack, setHeroTrack } from "./heroModeStore";
 import { useHeroBgModeState } from "./heroBgModeStore";
 import { setSkyMode, useSkyModeState } from "./skyModeStore";
 import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
 import { ParallaxHeroBg } from "./ParallaxHeroBg";
+import { NodeSpecDrawer } from "./components/NodeSpecDrawer";
 /**
  * The 3D PoC gallery.
  *
@@ -265,6 +267,15 @@ export function HeroSignalCore() {
    */
   const { mode } = useHeroModeState();
   const use3D = mode === "monolith";
+  const heroTrack = useHeroTrack();
+  const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleNodeSelect = (index: number) => {
+    setSelectedNodeIndex(index);
+    setDrawerOpen(true);
+  };
+
   const { mode: skyMode } = useSkyModeState();
   const { mode: heroBgMode } = useHeroBgModeState();
   /** Video is only meaningful over the Monolith room — the legacy 2D canvas
@@ -926,6 +937,7 @@ export function HeroSignalCore() {
                   handleRef={canvasHandleRef}
                   varsHostRef={containerRef}
                   bgMode="video" // Force transparent background for ParallaxHeroBg
+                  onNodeSelect={handleNodeSelect}
                 />
               </Suspense>
             ) : (
@@ -1080,24 +1092,98 @@ export function HeroSignalCore() {
               }}
             />
 
+            {/* Dual-Track Segment Control Toggle */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1,
+                mt: 0.5,
+                p: 0.6,
+                borderRadius: "8px",
+                bgcolor: "rgba(6, 10, 22, 0.75)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255, 215, 0, 0.3)",
+                width: "fit-content",
+                pointerEvents: "auto",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              }}
+            >
+              <Button
+                size="small"
+                onClick={() => setHeroTrack("enterprise")}
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "0.65rem", sm: "0.72rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  px: 1.6,
+                  py: 0.5,
+                  borderRadius: "5px",
+                  color: heroTrack === "enterprise" ? "#060A16" : "rgba(255,255,255,0.75)",
+                  bgcolor: heroTrack === "enterprise" ? "#FFD700" : "transparent",
+                  boxShadow: heroTrack === "enterprise" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
+                  "&:hover": {
+                    bgcolor: heroTrack === "enterprise" ? "#FFE44D" : "rgba(255,255,255,0.12)",
+                  },
+                }}
+              >
+                [DEVELOPING RELIABLE SYSTEMS]
+              </Button>
+              <Button
+                size="small"
+                onClick={() => setHeroTrack("talent")}
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "0.65rem", sm: "0.72rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  px: 1.6,
+                  py: 0.5,
+                  borderRadius: "5px",
+                  color: heroTrack === "talent" ? "#060A16" : "rgba(255,255,255,0.75)",
+                  bgcolor: heroTrack === "talent" ? "#FFD700" : "transparent",
+                  boxShadow: heroTrack === "talent" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
+                  "&:hover": {
+                    bgcolor: heroTrack === "talent" ? "#FFE44D" : "rgba(255,255,255,0.12)",
+                  },
+                }}
+              >
+                [FAST-PACED CAREER GROWTH]
+              </Button>
+            </Box>
+
             {/* Motto */}
             <Typography
               sx={{
                 fontFamily: DISPLAY_FONT,
                 fontWeight: 800,
                 textTransform: "uppercase",
-                fontSize: { xs: "0.70rem", sm: "0.85rem", md: "0.95rem" },
-                letterSpacing: "0.22em",
+                fontSize: { xs: "0.75rem", sm: "0.88rem", md: "1.02rem" },
+                letterSpacing: "0.18em",
                 lineHeight: 1.4,
                 color: NOIR.frost,
-                opacity: 0.85, // Reduced by 5 points from 0.9
+                opacity: 0.95,
+                mt: 0.5,
               }}
             >
-              Making Tomorrow's Technology{" "}
-              <Box component="span" sx={{ color: NOIR.gold }}>
-                ·
-              </Box>{" "}
-              Available Today
+              {heroTrack === "enterprise" ? (
+                <>
+                  Engineering Reliable{" "}
+                  <Box component="span" sx={{ color: NOIR.gold }}>
+                    ·
+                  </Box>{" "}
+                  FinTech & Quant Systems
+                </>
+              ) : (
+                <>
+                  Fast-Paced Career Growth{" "}
+                  <Box component="span" sx={{ color: NOIR.gold }}>
+                    ·
+                  </Box>{" "}
+                  For Serious Engineers
+                </>
+              )}
             </Typography>
 
             {/* Subtitle / Minor text */}
@@ -1105,15 +1191,16 @@ export function HeroSignalCore() {
               sx={{
                 fontFamily: MONO,
                 fontWeight: 600,
-                fontSize: { xs: "0.68rem", sm: "0.75rem", md: "0.82rem" },
-                letterSpacing: "0.12em",
+                fontSize: { xs: "0.68rem", sm: "0.76rem", md: "0.82rem" },
+                letterSpacing: "0.1em",
                 textTransform: "uppercase",
-                color: `rgba(${NOIR.frostRgb}, 0.67)`, // Reduced alpha by 5 points from 0.72
+                color: `rgba(${NOIR.frostRgb}, 0.78)`,
                 lineHeight: 1.5,
-                mt: 0.5,
               }}
             >
-              A Striving Competitive R&D Firm in the Philippines
+              {heroTrack === "enterprise"
+                ? "Building high-availability market infrastructure and R&D products from the Philippines."
+                : "Accelerate your engineering impact on complex R&D products in Manila."}
             </Typography>
           </Box>
         </Box>
@@ -1435,6 +1522,14 @@ export function HeroSignalCore() {
           </Typography>
         </Box>
       </Box>
+
+      {/* Interactive R&D Spec Sheet Drawer */}
+      <NodeSpecDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        nodeIndex={selectedNodeIndex}
+        track={heroTrack}
+      />
     </Box>
   );
 }

@@ -88,6 +88,7 @@ interface PlaygroundCanvasProps {
    * reason `camera` and `cloudDeck` are) get today's behaviour unchanged.
    */
   bgMode?: HeroBgMode;
+  onNodeSelect?: (index: number) => void;
 }
 
 /**
@@ -363,6 +364,7 @@ export function PlaygroundCanvas({
   initialProgress = 0,
   varsHostRef,
   bgMode = "static",
+  onNodeSelect,
 }: PlaygroundCanvasProps) {
   const rig = CAMERAS[camera];
   const hideSky = bgMode === "video";
@@ -652,6 +654,7 @@ export function PlaygroundCanvas({
             daySample={applied}
             reduced={reduced}
             lowPower={lowPower}
+            onNodeSelect={onNodeSelect}
           />
         </Suspense>
       </Canvas>

@@ -29,16 +29,9 @@ interface R3FHeroCanvasProps {
   initialProgress?: number;
   /** Which gallery design to show. */
   variantId?: PlaygroundVariantId;
-  /**
-   * The `#hero` container. Unlike the 2D canvas fork, this path publishes no
-   * `--hp-mx` / `--hp-my` — nothing in the dark room reads pointer tilt — but
-   * it does publish `--hp-px` / `--hp-py` / `--hp-pw`, the mark's screen box,
-   * which the motto (a DOM sibling of the canvas) anchors to. See
-   * `PlaygroundCanvas.tsx` and `markAnchor.ts`.
-   */
   varsHostRef?: RefObject<HTMLElement | null>;
-  /** Passed straight through to `PlaygroundCanvas` — see its doc comment. */
   bgMode?: HeroBgMode;
+  onNodeSelect?: (index: number) => void;
 }
 
 /**
@@ -59,6 +52,7 @@ export function R3FHeroCanvas({
   variantId = DEFAULT_VARIANT_ID,
   varsHostRef,
   bgMode = "static",
+  onNodeSelect,
 }: R3FHeroCanvasProps) {
   const variant = useMemo(() => getVariant(variantId), [variantId]);
   const Scene = LAZY_SCENES[variantId] ?? LAZY_SCENES[DEFAULT_VARIANT_ID];
@@ -74,6 +68,7 @@ export function R3FHeroCanvas({
       initialProgress={initialProgress}
       varsHostRef={varsHostRef}
       bgMode={bgMode}
+      onNodeSelect={onNodeSelect}
     />
   );
 }
