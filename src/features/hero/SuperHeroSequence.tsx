@@ -796,9 +796,12 @@ export function HeroSignalCore() {
              * synced with webpage background color.
              */
             bgcolor: NOIR.void,
-            borderRadius: "calc(var(--hp-g, 0) * 24px)",
-            border: "1px solid rgba(10,42,102,calc(0.12 * var(--hp-g, 0)))",
-            boxShadow: "0 20px 50px rgba(10, 42, 102, calc(0.12 * var(--hp-g, 0)))",
+            borderRadius: "calc(var(--hp-g, 0) * 28px)",
+            border: "2px solid rgba(10, 42, 102, calc(0.35 * var(--hp-g, 0)))",
+            outline: "1px solid rgba(255, 215, 0, calc(0.50 * var(--hp-g, 0)))",
+            outlineOffset: "-3px",
+            boxShadow: "0 24px 60px rgba(6, 10, 22, calc(0.45 * var(--hp-g, 0))), 0 0 40px rgba(10, 42, 102, calc(0.20 * var(--hp-g, 0)))",
+            overflow: "hidden",
             maxWidth: "100%",
             maxHeight: "100%",
             m: "auto",

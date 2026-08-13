@@ -100,39 +100,5 @@ const LAYOUT: ReadonlyArray<{ left: number; top: number }> = [
 ];
 
 export function CloudProps() {
-  const reduced = useReducedMotion() === true;
-  const lowPower = useIsLowPowerDevice();
-  const containerRef = useRef<HTMLElement>(null);
-
-  // Low-power tier: one plate instead of six, matching the hero playground's
-  // own low-power guardrail for the night sky's star field.
-  const plates = lowPower ? CLOUD_PLATES.slice(0, 1) : CLOUD_PLATES;
-
-  return (
-    <Box
-      ref={containerRef}
-      aria-hidden
-      sx={{
-        position: "absolute",
-        inset: 0,
-        overflow: "hidden",
-        // Negative, not 0: the parent overlay sheet is itself a positioned
-        // stacking context (`zIndex: 2` in `routes/index.tsx`), so a negative
-        // value here stays inside that context and paints behind the
-        // sheet's own non-positioned content instead of leaking above it.
-        zIndex: -1,
-      }}
-    >
-      {plates.map((plate, i) => (
-        <PlateLayer
-          key={plate.id}
-          plate={plate}
-          left={LAYOUT[i % LAYOUT.length]!.left}
-          top={LAYOUT[i % LAYOUT.length]!.top}
-          containerRef={containerRef}
-          reduced={reduced}
-        />
-      ))}
-    </Box>
-  );
+  return null;
 }
