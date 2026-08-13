@@ -79,7 +79,7 @@ const ENTERPRISE_NODES = [
     capabilities: [
       "High-density WebGL / Canvas market charts and order-book depth visualizers.",
       "Institutional client portals with granular role-based permissioning.",
-      "Seamless REST, FIX Protocol, and gRPC enterprise API gateways.",
+      "Direct REST, FIX Protocol, and gRPC enterprise API gateways.",
     ],
   },
 ];
@@ -146,7 +146,7 @@ const TALENT_NODES = [
     capabilities: [
       "High-trust environment: ownership over technical decisions and system designs.",
       "Top-tier competitive salary, performance bonuses, health coverage, and wellness perks.",
-      "Modern collaborative hub in Manila with state-of-the-art workstations and R&D labs.",
+      "Modern collaborative hub in Manila with high-spec workstations and R&D labs.",
     ],
   },
 ];

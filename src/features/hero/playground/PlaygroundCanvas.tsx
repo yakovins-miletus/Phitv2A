@@ -88,7 +88,7 @@ interface PlaygroundCanvasProps {
    * reason `camera` and `cloudDeck` are) get today's behaviour unchanged.
    */
   bgMode?: HeroBgMode;
-  onNodeSelect?: (index: number) => void;
+  onNodeSelect?: ((index: number) => void) | undefined;
 }
 
 /**
@@ -654,7 +654,7 @@ export function PlaygroundCanvas({
             daySample={applied}
             reduced={reduced}
             lowPower={lowPower}
-            onNodeSelect={onNodeSelect}
+            {...(onNodeSelect && { onNodeSelect })}
           />
         </Suspense>
       </Canvas>

@@ -74,7 +74,7 @@ export interface SceneProps {
   /** Low-tier device — take the cheap path (fewer instances, cheaper material). */
   lowPower: boolean;
   /** Triggered when a 3D service node is selected / clicked. */
-  onNodeSelect?: (index: number) => void;
+  onNodeSelect?: ((index: number) => void) | undefined;
 }
 
 /**

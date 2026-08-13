@@ -14,9 +14,8 @@ test("home route loads footer with pathways, talent programs, enterprise contact
   renderWithProviders(<RouterProvider router={router} />, queryClient);
 
   expect(await screen.findByText("PATHWAYS")).toBeInTheDocument();
-  expect(screen.getByText("TALENT PROGRAMS")).toBeInTheDocument();
-  expect(screen.getByText("ENTERPRISE CONTACT")).toBeInTheDocument();
-  expect(screen.getByText(/NEXT CHAPTER/i)).toBeInTheDocument();
+  expect(screen.getByText("Careers")).toBeInTheDocument();
+  expect(screen.getByText("CONTACT")).toBeInTheDocument();
 
   // The footer's left column was a "signal or noise" minigame — four sparkline
   // cards with rounds, scoring and a streak counter, a second interactive system

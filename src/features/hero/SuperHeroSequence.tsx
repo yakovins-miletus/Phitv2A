@@ -14,7 +14,6 @@ import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
 import { useHeroModeState, useHeroTrack, setHeroTrack } from "./heroModeStore";
-import { useHeroBgModeState } from "./heroBgModeStore";
 import { setSkyMode, useSkyModeState } from "./skyModeStore";
 import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
 import { ParallaxHeroBg } from "./ParallaxHeroBg";
@@ -50,7 +49,7 @@ const HeroImageWall = lazy(() =>
 );
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import { DWELL_END } from "./heroPhases";
-import { NOIR, DAWN } from "@/shared/theme/palette";
+import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
@@ -277,7 +276,6 @@ export function HeroSignalCore() {
   };
 
   const { mode: skyMode } = useSkyModeState();
-  const { mode: heroBgMode } = useHeroBgModeState();
   /** Video is only meaningful over the Monolith room — the legacy 2D canvas
    *  has no notion of a background mode at all. */
   const useVideoBg = false; // Disabled to use ParallaxHeroBg instead

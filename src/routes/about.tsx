@@ -19,7 +19,6 @@ import { HeroGallery } from "@/features/about/components/HeroGallery";
 import { MetaLabel } from "@/features/about/components/MetaLabel";
 import { SmoothSection } from "@/features/about/components/SmoothSection";
 import { PoweredBySection } from "@/features/about/components/PoweredBySection";
-import { SectionBgFlip } from "@/shared/components/SectionBgFlip";
 import { GraduateHallOfFameSection } from "@/features/about/components/GraduateHallOfFameSection";
 import { InternshipProgramSection } from "@/features/about/components/InternshipProgramSection";
 import { CertificationsSection } from "@/features/about/components/CertificationsSection";

@@ -498,14 +498,7 @@ export const components: Components<Theme> = {
       },
     },
   },
-  MuiDivider: {
-    styleOverrides: {
-      root: {
-        display: "none",
-        borderColor: "transparent",
-      },
-    },
-  },
+
 
   // The single highest-leverage override here: it retires four hand-written scrim
   // definitions (CommandPalette, JobDetailsDrawer, BrochureDrawer, TopNavMegaDrawer).

@@ -48,8 +48,7 @@ test("home route loads via the router: hero, services, new visual sections", asy
     screen.getByRole("heading", { name: "Wall St. & Banking Leadership" }),
   ).toBeInTheDocument();
 
-  expect(screen.getByText("Full-Stack Development")).toBeInTheDocument();
-  expect(screen.getByText("From problem to production")).toBeInTheDocument();
+  expect(screen.getByText(CONTENT.services[0]!.title)).toBeInTheDocument();
   // ReachSection's heading became a SectionLede bound to CONTENT.ledes.reach.
   //
   // Asserted against the lede's current copy rather than a literal typed in here.

@@ -220,12 +220,7 @@ const DAMPING = 0.88;
  * z = +4.2 is under 7 units from a lens at z = 11, so it projects enormous and
  * drifts across the whole frame; squashing z keeps the cloud in the room instead
  * of in front of it, and reads as depth rather than as a screen wipe.
- */
-const ROAM_INNER = 1.1;
-const ROAM_OUTER = 4.4;
-const ROAM_Z_SQUASH = 0.6;
-const ROAM_Y_MIN = 0.3;
-const ROAM_Y_MAX = 2.9;
+
 
 /**
  * How wide a click counts as "in the cloud", as a multiple of each droplet's own
@@ -468,7 +463,7 @@ export default function MonolithScene({
   const gl = useThree((s) => s.gl);
 
   const groupRef = useRef<THREE.Group>(null);
-  const counterRef = useRef<THREE.MeshPhysicalMaterial>(null);
+  const counterRef = useRef<any>(null);
   const bodyDropsRef = useRef<THREE.InstancedMesh>(null);
   const counterDropsRef = useRef<THREE.InstancedMesh>(null);
   const bodyMeshRef = useRef<THREE.Mesh>(null);
@@ -921,7 +916,7 @@ export default function MonolithScene({
       let closestDist = 2.8;
       SERVICE_NODES.forEach((node, i) => {
         const dx = p.x - node.pos[0];
-        const dy = (MARK_CENTRE_Y + p.y) - node.pos[1];
+        const dy = (MARK_CENTRE_Y + p.z) - node.pos[1];
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < closestDist) {
           closestDist = dist;
