@@ -8,17 +8,6 @@ import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO, EASE_SPRING_SOFT } from "@/shared/motion/easing";
 
-/**
- * The dock at the end of the pipeline — where a materialized idea becomes a
- * Phitopolis product.
- *
- * This plays in REAL TIME off a latched boolean, not scrubbed off scroll
- * progress. A delivery scrubbed to the reader's scroll speed stops being a
- * delivery: it becomes another progress bar, and the one moment the section is
- * built around has to land at its own tempo. It also latches — scrolling back
- * up does not replay it, because a product does not un-ship.
- */
-
 const ENTER = { duration: 0.55, ease: EASE_OUT_EXPO } as const;
 
 interface ProcessShipPlateProps {
@@ -33,43 +22,120 @@ interface ProcessShipPlateProps {
 }
 
 export function ProcessShipPlate({ buildNumber, shipped, reduced, children }: ProcessShipPlateProps) {
-  // Reduced motion resolves to the final frame with no `initial` at all, so
-  // there is nothing to animate away from and nothing ever renders unshipped.
   const state = reduced || shipped ? "shipped" : "idle";
 
   return (
-    <Box sx={{ position: "relative", maxWidth: 640, mx: "auto" }}>
+    <Box sx={{ position: "relative", width: "100%", maxWidth: { xs: "100%", md: 840 }, mx: "auto" }}>
       <motion.div
         initial={reduced ? false : "idle"}
         animate={state}
         variants={{
-          idle: { borderColor: `rgba(${NOIR.goldRgb}, 0.16)`, boxShadow: "0 0 0 rgba(0,0,0,0)" },
+          idle: { borderColor: "rgba(255, 199, 44, 0.2)", backgroundColor: "rgba(10, 42, 102, 0.2)" },
           shipped: {
-            borderColor: `rgba(${NOIR.goldRgb}, 0.55)`,
-            boxShadow: `0 0 64px rgba(${NOIR.goldRgb}, 0.14)`,
+            borderColor: NOIR.gold,
+            backgroundColor: "rgba(10, 42, 102, 0.4)",
+            boxShadow: `0 0 32px rgba(${NOIR.goldRgb}, 0.15)`,
           },
         }}
         transition={ENTER}
         style={{
           position: "relative",
-          borderRadius: 24,
+          borderRadius: 0,
           borderWidth: 1,
           borderStyle: "solid",
-          // A frame, not a filled card. The payload docks *behind* the list so
-          // it can pass behind the endpoint headings without colliding with
-          // them; any fill here would tint the mark once it arrives.
           background: "transparent",
         }}
       >
-        {/* No horizontal padding on mobile: the node body is already inset from
-            the spine by exactly the same amount as every other phase, and a
-            plate padding on top of that would step its text out of line with
-            the rest of the pipeline. */}
-        <Stack spacing={4} sx={{ px: { xs: 0, md: 6 }, pb: 3 }}>
+        {/* Tactical Corner Brackets */}
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            top: -1,
+            left: -1,
+            width: 8,
+            height: 8,
+            borderTop: `2px solid ${NOIR.gold}`,
+            borderLeft: `2px solid ${NOIR.gold}`,
+          }}
+        />
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            top: -1,
+            right: -1,
+            width: 8,
+            height: 8,
+            borderTop: `2px solid ${NOIR.gold}`,
+            borderRight: `2px solid ${NOIR.gold}`,
+          }}
+        />
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            bottom: -1,
+            left: -1,
+            width: 8,
+            height: 8,
+            borderBottom: `2px solid ${NOIR.gold}`,
+            borderLeft: `2px solid ${NOIR.gold}`,
+          }}
+        />
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            bottom: -1,
+            right: -1,
+            width: 8,
+            height: 8,
+            borderBottom: `2px solid ${NOIR.gold}`,
+            borderRight: `2px solid ${NOIR.gold}`,
+          }}
+        />
+
+        {/* Top CAD Header Bar */}
+        <Box
+          aria-hidden="true"
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            px: { xs: 2, md: 4 },
+            py: 1,
+            borderBottom: "1px solid rgba(255, 199, 44, 0.2)",
+            bgcolor: "rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.6875rem",
+              color: NOIR.gold,
+              letterSpacing: "0.2em",
+              fontWeight: 700,
+            }}
+          >
+            [ DOCK // FINAL_OUTPUT ]
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.6875rem",
+              color: "rgba(244, 247, 252, 0.5)",
+              letterSpacing: "0.15em",
+            }}
+          >
+            SYS.STATUS: RELEASE_VERIFIED
+          </Typography>
+        </Box>
+
+        <Stack spacing={4} sx={{ px: { xs: 2, md: 6 }, pb: 3, pt: 2 }}>
           {children}
 
-          {/* Brand stamp. The hairline above it is the plate's only internal
-              rule — it separates the phase from the receipt for it. */}
+          {/* Brand Stamp & Telemetry Receipt */}
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
@@ -77,12 +143,10 @@ export function ProcessShipPlate({ buildNumber, shipped, reduced, children }: Pr
             justifyContent="space-between"
             sx={{
               pt: 3,
-              mx: { xs: 2, md: 0 },
-              borderTop: `1px solid rgba(${NOIR.goldRgb}, 0.16)`,
+              mx: 0,
+              borderTop: `1px solid rgba(${NOIR.goldRgb}, 0.2)`,
             }}
           >
-            {/* Overflow mask + translate, so the wordmark wipes in on the
-                compositor rather than animating clip-path or width. */}
             <Box sx={{ overflow: "hidden", py: 0.5 }}>
               <motion.div
                 initial={reduced ? false : "idle"}
@@ -94,9 +158,9 @@ export function ProcessShipPlate({ buildNumber, shipped, reduced, children }: Pr
                   component="span"
                   sx={{
                     fontFamily: MONO,
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    letterSpacing: "0.28em",
+                    fontWeight: 800,
+                    fontSize: "1.125rem",
+                    letterSpacing: "0.3em",
                     textTransform: "uppercase",
                     color: NOIR.gold,
                     display: "block",
@@ -116,7 +180,7 @@ export function ProcessShipPlate({ buildNumber, shipped, reduced, children }: Pr
               <Stack direction="row" spacing={1.5} alignItems="center">
                 <Box
                   aria-hidden="true"
-                  sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: NOIR.live }}
+                  sx={{ width: 6, height: 6, borderRadius: 0, bgcolor: NOIR.live }}
                 />
                 <Typography
                   aria-hidden="true"
@@ -124,10 +188,9 @@ export function ProcessShipPlate({ buildNumber, shipped, reduced, children }: Pr
                     fontFamily: MONO,
                     fontSize: "0.75rem",
                     letterSpacing: "0.2em",
-                    // 0.78 alpha on this ground measures 7.6:1 — the receipt
-                    // line is small type and has to clear AA on its own.
-                    color: `rgba(${NOIR.frostRgb}, 0.78)`,
+                    color: `rgba(${NOIR.frostRgb}, 0.88)`,
                     whiteSpace: "nowrap",
+                    fontWeight: 700,
                   }}
                 >
                   {`BUILD ${buildNumber} · SHIPPED`}
@@ -137,18 +200,17 @@ export function ProcessShipPlate({ buildNumber, shipped, reduced, children }: Pr
           </Stack>
         </Stack>
 
-        {/* One confirming pulse. Small and discrete — the single case
-            EASE_SPRING_SOFT is reserved for. */}
+        {/* Shipped confirming tactical frame pulse */}
         {!reduced && shipped && (
           <motion.div
             aria-hidden="true"
-            initial={{ opacity: 0.55, scale: 1 }}
-            animate={{ opacity: 0, scale: 1.06 }}
+            initial={{ opacity: 0.8, scale: 1 }}
+            animate={{ opacity: 0, scale: 1.04 }}
             transition={{ duration: 0.9, ease: EASE_SPRING_SOFT }}
             style={{
               position: "absolute",
               inset: 0,
-              borderRadius: 24,
+              borderRadius: 0,
               border: `1px solid ${NOIR.gold}`,
               pointerEvents: "none",
             }}

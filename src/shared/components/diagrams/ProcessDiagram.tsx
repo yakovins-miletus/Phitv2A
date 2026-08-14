@@ -7,7 +7,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 import { ProcessNode } from "./process/ProcessNode";
 import { ProcessPayload } from "./process/ProcessPayload";
-import { ACTIVATION_RAMP, SPINE_X, WELL, type NodeStatus } from "./process/processStages";
+import { ACTIVATION_RAMP, WELL, type NodeStatus } from "./process/processStages";
 
 export interface ProcessStep {
   number: string;
@@ -19,28 +19,6 @@ interface ProcessDiagramProps {
   steps: readonly ProcessStep[];
 }
 
-/**
- * "From problem to production", as a pipeline that actually runs.
- *
- * One payload travels the spine and changes state at each phase; each phase it
- * passes locks in and reports QUEUED → RUNNING → SHIPPED; the last phase docks
- * it into a branded plate and ships it.
- *
- * This component is the conductor and owns exactly three things: scroll
- * progress, where each node's dock sits, and which node the payload has
- * reached. Everything visual belongs to ./process/*.
- *
- * ## Why the dock positions are measured
- *
- * The obvious implementation gives node `i` a threshold of `i / (n - 1)`. It
- * looks right in a mock and is wrong on the page: the endpoint rows carry a
- * 4rem heading and a payload well, the middle rows a 2.5rem heading, so the
- * real gaps between dock centres differ by a factor of two. Evenly-spaced
- * thresholds leave the payload visibly short of, or past, the node it is
- * supposed to be arriving at — which is the one thing the whole section is
- * asking the reader to believe. So each node registers its dock element and
- * the centres are measured, and re-measured on resize.
- */
 export function ProcessDiagram({ steps }: ProcessDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const docksRef = useRef<(HTMLElement | null)[]>([]);
@@ -84,28 +62,20 @@ export function ProcessDiagram({ steps }: ProcessDiagramProps) {
     return () => observer.disconnect();
   }, [steps.length]);
 
-  /**
-   * Progress values at which the payload reaches each node, normalised so the
-   * travel runs from the first dock to the last rather than edge to edge of
-   * the container's padding box. Falls back to even spacing until the first
-   * measurement lands.
-   */
-  const { arrivals, startFrac, endFrac } = useMemo(() => {
+  const { centersFrac, centersPx, arrivals } = useMemo(() => {
     const measured = metrics.centers.length === steps.length && metrics.centers.some((c) => c > 0);
-    if (!measured || steps.length < 2) {
-      return {
-        arrivals: steps.map((_, i) => (steps.length < 2 ? 1 : i / (steps.length - 1))),
-        startFrac: 0,
-        endFrac: 1,
-      };
-    }
-    const first = metrics.centers[0] ?? 0;
-    const last = metrics.centers[lastIndex] ?? 1;
+    const validCenters = measured
+      ? metrics.centers
+      : steps.map((_, i) => (steps.length < 2 ? 0 : i / (steps.length - 1)));
+
+    const first = validCenters[0] ?? 0;
+    const last = validCenters[lastIndex] ?? 1;
     const span = last - first || 1;
+
     return {
-      arrivals: metrics.centers.map((c) => (c - first) / span),
-      startFrac: first,
-      endFrac: last,
+      centersFrac: validCenters,
+      centersPx: validCenters.map((c) => c * metrics.height),
+      arrivals: validCenters.map((c) => (c - first) / span),
     };
   }, [metrics, steps, lastIndex]);
 
@@ -113,43 +83,22 @@ export function ProcessDiagram({ steps }: ProcessDiagramProps) {
     target: containerRef,
     offset: ["start center", "end center"],
   });
-  const raw = useSpring(scrollYProgress, { stiffness: 50, damping: 20 });
+  const raw = useSpring(scrollYProgress, { stiffness: 60, damping: 22 });
 
-  /**
-   * Raw progress runs edge-to-edge of the container, which would put the ship
-   * moment at the bottom of the container's padding — long after the Products
-   * plate has left the middle of the screen. Remapped to the docks instead.
-   *
-   * With `offset: ["start center", "end center"]`, raw progress `p` puts the
-   * container's top at `viewportCentre − p·height`, so a dock at fraction `f`
-   * of the container sits dead centre exactly when `p === f`. Remapping
-   * [startFrac, endFrac] → [0, 1] therefore makes every node arrive at the
-   * instant it reaches the middle of the screen, which is the only moment the
-   * reader is actually looking at it.
-   */
-  const progress = useTransform(raw, [startFrac, endFrac], [0, 1]);
+  const firstFrac = centersFrac[0] ?? 0;
+  const lastFrac = centersFrac[lastIndex] ?? 1;
 
-  // Continuous node index. `arrivals` is monotonic by construction; the
-  // identity output makes this "which node am I between, and how far".
-  const stage = useTransform(
-    progress,
-    arrivals,
-    arrivals.map((_, i) => i),
-  );
-  const travelY = useTransform(progress, [0, 1], [startFrac * metrics.height, endFrac * metrics.height]);
-  // Relative to the rail, which now spans first dock → last dock rather than
-  // the full container, so 0 → 1 is exactly "no phases reached" → "all of them".
-  const spineScale = useTransform(progress, [0, 1], [0, 1]);
+  // Direct precision mapping: at scroll position centersFrac[i], the payload is exactly at centersPx[i]
+  const stageIndices = useMemo(() => steps.map((_, i) => i), [steps]);
+  const progress = useTransform(raw, [firstFrac, lastFrac], [0, 1], { clamp: true });
+  const stage = useTransform(raw, centersFrac, stageIndices, { clamp: true });
+  const travelY = useTransform(raw, centersFrac, centersPx, { clamp: true });
+  const spineScale = useTransform(raw, [firstFrac, lastFrac], [0, 1], { clamp: true });
 
-  // One piece of React state on the scroll path: which node the payload has
-  // reached. Six nodes means at most twelve renders for the whole section.
   const [activeIndex, setActiveIndex] = useState(reduced ? lastIndex : 0);
-  useMotionValueEvent(progress, "change", (value) => {
+  useMotionValueEvent(stage, "change", (value) => {
     if (reduced) return;
-    let next = 0;
-    for (let i = 0; i < arrivals.length; i += 1) {
-      if (value >= (arrivals[i] ?? 0)) next = i;
-    }
+    const next = Math.min(lastIndex, Math.max(0, Math.round(value)));
     setActiveIndex((prev) => (prev === next ? prev : next));
   });
 
@@ -157,27 +106,30 @@ export function ProcessDiagram({ steps }: ProcessDiagramProps) {
     if (reduced) return "shipped";
     if (index > activeIndex) return "queued";
     if (index < activeIndex) return "shipped";
-    // A product does not un-ship: the last node latches on arrival.
     return index === lastIndex ? "shipped" : "running";
   };
 
   return (
-    <Box ref={containerRef} sx={{ position: "relative", maxWidth: 900, mx: "auto", py: { xs: 8, md: 12 } }}>
-      {/* Spine. The rail runs from the first dock to the last and stops there
-          — running it to the container's padding edge leaves a hairline
-          hanging below the shipped plate, pointing at nothing. The lit portion
-          is scaled rather than grown by height, so the fill stays on the
-          compositor with the payload it is chasing. */}
+    <Box
+      ref={containerRef}
+      sx={{
+        position: "relative",
+        width: "100%",
+        py: { xs: 4, md: 8 },
+      }}
+    >
+      {/* Industrial Spine Rail */}
       <Box
         aria-hidden="true"
         sx={{
           position: "absolute",
-          top: `${startFrac * 100}%`,
-          height: `${(endFrac - startFrac) * 100}%`,
-          left: { xs: `${SPINE_X}px`, md: "50%" },
+          top: `${firstFrac * 100}%`,
+          height: `${(lastFrac - firstFrac) * 100}%`,
+          left: { xs: "32px", md: "50%" },
           width: "2px",
           ml: "-1px",
-          bgcolor: `rgba(${NOIR.frostRgb}, 0.08)`,
+          bgcolor: "rgba(244, 247, 252, 0.1)",
+          zIndex: 3,
         }}
       >
         <motion.div
@@ -186,30 +138,24 @@ export function ProcessDiagram({ steps }: ProcessDiagramProps) {
             height: "100%",
             transformOrigin: "top center",
             background: `linear-gradient(to bottom, transparent, ${NOIR.gold} 20%, ${NOIR.goldDark})`,
-            boxShadow: `0 0 16px ${NOIR.gold}`,
+            boxShadow: `0 0 18px ${NOIR.gold}`,
             scaleY: reduced ? 1 : spineScale,
           }}
         />
       </Box>
 
-      {/* The payload. Positioned once, moved only by translate. */}
+      {/* Travelling Payload */}
       <Box
         aria-hidden="true"
         sx={{
           position: "absolute",
           top: 0,
-          left: { xs: `${SPINE_X}px`, md: "50%" },
+          left: { xs: "32px", md: "50%" },
           width: WELL,
           height: WELL,
           ml: { xs: `${-WELL.xs / 2}px`, md: `${-WELL.md / 2}px` },
           mt: { xs: `${-WELL.xs / 2}px`, md: `${-WELL.md / 2}px` },
-          // Behind the list, not above it. The endpoint headings are centred
-          // on the spine, so a payload painted on top of them lands squarely
-          // in the middle of the word "Ideas" on its way out of phase 00 — it
-          // reads as a collision. Sliding behind the display type reads as
-          // travel. The ship plate is a frame with no fill precisely so the
-          // payload is still fully visible once it docks inside it.
-          zIndex: 4,
+          zIndex: 6,
           pointerEvents: "none",
         }}
       >
@@ -217,21 +163,25 @@ export function ProcessDiagram({ steps }: ProcessDiagramProps) {
           style={{
             width: "100%",
             height: "100%",
-            y: reduced ? endFrac * metrics.height : travelY,
+            y: reduced ? (centersPx[lastIndex] ?? 0) : travelY,
           }}
         >
           <ProcessPayload stage={stage} lastIndex={lastIndex} reduced={reduced} />
         </motion.div>
       </Box>
 
-      {/* An ordered process is an ordered list. It was a stack of divs.
-          Spacing came down from 24 (192px) when the phase glyphs landed: the
-          rows are roughly twice as tall now, and the old gap — set when a row
-          was three lines of text — left a void between every phase. */}
+      {/* Ordered Process Stages */}
       <Stack
         component="ol"
-        spacing={{ xs: 10, md: 14 }}
-        sx={{ position: "relative", zIndex: 5, listStyle: "none", m: 0, p: 0 }}
+        spacing={{ xs: 6, md: 8 }}
+        sx={{
+          position: "relative",
+          zIndex: 5,
+          listStyle: "none",
+          m: 0,
+          p: 0,
+          width: "100%",
+        }}
       >
         {steps.map((step, index) => (
           <ProcessNode

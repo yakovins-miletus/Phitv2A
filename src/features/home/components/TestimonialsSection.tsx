@@ -3,219 +3,179 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
-import { alpha } from "@mui/material/styles";
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { motion, useInView } from "motion/react";
+import { useRef, useState } from "react";
 
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 interface Testimonial {
+  id: string;
   name: string;
   role: string;
-  text: string;
-  bgColor: string;
-  textColor: string;
-  subColor: string;
+  quote: string;
   colSpan: { xs: number; md: number };
-  yOffset?: number;
 }
 
-const TESTIMONIALS: Testimonial[] = [
+const TESTIMONIALS: readonly Testimonial[] = [
   {
-    name: "MIKKI",
-    role: "QUANTITATIVE RESEARCHER",
-    text: "Joining Phitopolis is one of the best decisions I've ever made. I am fortunate to be part of a very talented team... It is refreshing to be in a work environment where everyone collaborates and roots for each other's success.",
-    bgColor: "rgba(92, 113, 157, 0.95)",
-    textColor: "#FFFFFF",
-    subColor: "rgba(255, 255, 255, 0.75)",
+    id: "mikki",
+    name: "Mikki",
+    role: "Quantitative Researcher",
+    quote:
+      "Joining Phitopolis is one of the best decisions I've ever made. I am fortunate to be part of a deeply talented team where high-stakes collaboration is the default and everyone roots for each other's success on every trading model.",
     colSpan: { xs: 12, md: 6 },
-    yOffset: 0
   },
   {
-    name: "TYRONE",
-    role: "GRADUATE TRAINEE",
-    text: "What helped me the most were the teammates around me who mentored me and supported my growth. The sense of community... really stands out as it made it easier for me to ask questions and provided the perfect opportunity... to develop my skills.",
-    bgColor: "rgba(0, 101, 138, 0.95)",
-    textColor: "#FFFFFF",
-    subColor: "rgba(255, 255, 255, 0.8)",
+    id: "tyrone",
+    name: "Tyrone",
+    role: "Graduate Trainee",
+    quote:
+      "What helped me the most were the teammates around me who mentored me and supported my growth. The sense of community stands out—asking questions is actively encouraged, providing the perfect runway to build production-grade instincts.",
     colSpan: { xs: 12, md: 6 },
-    yOffset: 40
   },
   {
-    name: "PATRICIA",
-    role: "DATA SCIENTIST / GRADUATE TRAINEE",
-    text: "Phitopolis is the kind of place that keeps you on your toes, as every day brings something new to learn and discover. What makes it truly special are the people who genuinely support you... You're encouraged to grow... in an environment that values teamwork, curiosity, and continuous learning.",
-    bgColor: "rgba(5, 26, 59, 0.98)",
-    textColor: "#FFFFFF",
-    subColor: "rgba(255, 255, 255, 0.7)",
+    id: "patricia",
+    name: "Patricia",
+    role: "Data Scientist / Graduate Trainee",
+    quote:
+      "Phitopolis keeps you on your toes because every day brings a complex real-world puzzle. What makes it truly special are the people who genuinely support you in an environment that values deep mathematical curiosity, rigorous testing, and continuous learning.",
     colSpan: { xs: 12, md: 12 },
-    yOffset: 0
   },
   {
-    name: "JES",
-    role: "DEVOPS ENGINEER",
-    text: "Work in a highly collaborative development environment with people that are hands-on... Have a real-world experience in leveraging free and open-source technologies... and how the real-world problems and opportunities... are being transformed into a business avenue.",
-    bgColor: "rgba(138, 158, 167, 0.95)",
-    textColor: "#0A2A66",
-    subColor: "rgba(10, 42, 102, 0.8)",
+    id: "jes",
+    name: "Jes",
+    role: "DevOps Engineer",
+    quote:
+      "Working hands-on with people solving high-throughput latency problems gives you real-world experience transforming distributed open-source technologies and complex infrastructure into high-reliability business systems.",
     colSpan: { xs: 12, md: 6 },
-    yOffset: 0
   },
   {
-    name: "AYESHA",
-    role: "SOFTWARE ENGINEER",
-    text: "I like how the atmosphere is very collaborative and everyone's just open to discuss everything... It has been a perfect place to transition from intern to a full time low-latency engineer.",
-    bgColor: "rgba(10, 46, 92, 0.95)",
-    textColor: "#FFFFFF",
-    subColor: "rgba(255, 255, 255, 0.75)",
+    id: "ayesha",
+    name: "Ayesha",
+    role: "Software Engineer",
+    quote:
+      "The engineering atmosphere is transparent, demanding, and immensely collaborative. It provided the ideal environment to transition smoothly from an intern into a full-time low-latency systems engineer.",
     colSpan: { xs: 12, md: 6 },
-    yOffset: 40
-  }
+  },
 ];
 
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
-  const cardRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: cardRef,
-    offset: ["0 1", "1 0.5"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], [80, 0]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 1], [0, 1, 1]);
+function TestimonialCard({
+  testimonial,
+  index,
+}: {
+  testimonial: Testimonial;
+  index: number;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(cardRef, { once: true, amount: 0.15 });
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <Grid 
-      size={{ xs: testimonial.colSpan.xs, md: testimonial.colSpan.md }} 
-      sx={{ 
-        mt: { xs: 0, md: `${testimonial.yOffset || 0}px` } 
-      }}
+    <Grid
+      size={{ xs: testimonial.colSpan.xs, md: testimonial.colSpan.md }}
+      sx={{ display: "flex" }}
     >
       <Box
         ref={cardRef}
         component={motion.div}
-        style={{ y, opacity }}
+        initial={{ opacity: 0, y: 36 }}
+        animate={inView ? { opacity: 1, y: 0 } : false}
+        transition={{
+          duration: 0.6,
+          delay: index * 0.1,
+          ease: EASE_OUT_EXPO,
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         sx={{
           position: "relative",
-          p: "1px", // for the moving border thickness
-          borderRadius: "28px",
-          height: "100%",
-          overflow: "hidden",
-          boxShadow: "0 15px 30px rgba(0,0,0,0.08)",
-          // Subtle outer border that acts as base for the animated signal
-          bgcolor: alpha(testimonial.textColor, 0.05),
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          bgcolor: "rgba(255, 255, 255, 0.92)",
+          border: "1px solid",
+          borderColor: hovered ? "rgba(255, 199, 44, 0.5)" : "rgba(10, 42, 102, 0.1)",
+          boxShadow: hovered
+            ? "0 24px 48px -12px rgba(10, 42, 102, 0.12)"
+            : "0 12px 32px -8px rgba(10, 42, 102, 0.05)",
+          borderRadius: 4,
+          p: { xs: 3.5, md: 4.5 },
+          transition: "border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease",
+          transform: hovered ? "translateY(-4px)" : "translateY(0)",
         }}
       >
-        {/* Animated Moving Border Signal */}
-        <Box
-          component={motion.div}
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 6, ease: "linear" }}
+        {/* Testimonial Quote */}
+        <Typography
+          variant="body1"
           sx={{
-            position: "absolute",
-            top: "-50%",
-            left: "-50%",
-            width: "200%",
-            height: "200%",
-            background: `conic-gradient(from 0deg, transparent 70%, ${alpha(testimonial.textColor, 0.8)} 100%)`,
-            zIndex: 0,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Inner Card Content */}
-        <Box
-          sx={{
-            position: "relative",
-            bgcolor: testimonial.bgColor,
-            color: testimonial.textColor,
-            p: { xs: 4, md: 5 },
-            borderRadius: "27px", // 1px smaller to fit perfectly inside the 28px outer radius
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            backdropFilter: "blur(20px)",
-            zIndex: 1,
+            fontSize: { xs: "1.05rem", md: testimonial.colSpan.md === 12 ? "1.2rem" : "1.1rem" },
+            lineHeight: 1.65,
+            fontWeight: 500,
+            color: NOIR.navyDeep,
+            mb: 4,
+            flexGrow: 1,
+            letterSpacing: "-0.01em",
           }}
         >
-          {/* Decorative Quote Mark */}
-          <Typography
+          &ldquo;{testimonial.quote}&rdquo;
+        </Typography>
+
+        {/* Author Details Footer */}
+        <Box
+          sx={{
+            pt: 2.5,
+            borderTop: "1px solid rgba(10, 42, 102, 0.08)",
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <Avatar
             sx={{
-              position: "absolute",
-              top: -10,
-              right: 16,
-              fontSize: "8rem",
-              lineHeight: 1,
-              fontFamily: "serif",
-              opacity: 0.05,
-              userSelect: "none",
-              pointerEvents: "none",
+              width: 44,
+              height: 44,
+              bgcolor: NOIR.navyField,
+              color: NOIR.frost,
+              fontFamily: MONO,
+              fontWeight: 700,
+              fontSize: "0.95rem",
+              border: "1px solid rgba(255, 199, 44, 0.3)",
             }}
           >
-            "
-          </Typography>
-
-          <Stack spacing={3} sx={{ height: "100%", position: "relative", zIndex: 1 }}>
-            {/* Testimonial Quote Text */}
+            {testimonial.name[0]}
+          </Avatar>
+          <Box>
             <Typography
-              variant="body1"
+              variant="h6"
+              component="h3"
               sx={{
-                fontSize: { xs: "1rem", md: "1.15rem" },
-                lineHeight: 1.65,
-                fontWeight: 500,
-                opacity: 0.95,
-                textWrap: "pretty",
-                flex: 1,
-                fontStyle: "italic"
+                fontWeight: 800,
+                fontSize: "1rem",
+                lineHeight: 1.2,
+                letterSpacing: "-0.01em",
+                color: NOIR.navyDeep,
               }}
             >
-              "{testimonial.text}"
+              {testimonial.name}
             </Typography>
-
-            {/* Header: Avatar, Name, Role */}
-            <Stack direction="row" spacing={2.5} alignItems="center">
-              <Avatar
-                sx={{
-                  width: 52,
-                  height: 52,
-                  border: `2px solid ${alpha(testimonial.textColor, 0.2)}`,
-                  bgcolor: alpha(testimonial.textColor, 0.1),
-                  color: testimonial.textColor,
-                  fontWeight: 800,
-                  fontSize: "1.25rem"
-                }}
-              >
-                {testimonial.name[0]}
-              </Avatar>
-              <Stack spacing={0.25}>
-                <Typography
-                  variant="h6"
-                  component="h3"
-                  sx={{
-                    fontWeight: 800,
-                    letterSpacing: "0.05em",
-                    fontSize: "1rem",
-                  }}
-                >
-                  {testimonial.name}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.7rem",
-                    color: testimonial.subColor,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  {testimonial.role}
-                </Typography>
-              </Stack>
-            </Stack>
-          </Stack>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.75rem",
+                color: NOIR.mist,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                mt: 0.25,
+              }}
+            >
+              {testimonial.role}
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </Grid>
@@ -225,64 +185,76 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 export function TestimonialsSection() {
   return (
     <StageSection section={homeSection("testimonials")} muted>
-      <Grid container spacing={{ xs: 4, md: 8 }} sx={{ width: "100%" }}>
-        {/* Left Sticky Header Info Panel */}
-        <Grid size={{ xs: 12, md: 4 }} sx={{ position: { md: "sticky" }, top: "120px", height: "fit-content" }}>
-          <Stack spacing={4}>
-            {/* Section Eyebrow */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ width: "100%", py: { xs: 4, md: 8 } }}>
+        <Grid container spacing={{ xs: 5, md: 8 }} sx={{ width: "100%" }}>
+          {/* Left Column (Sticky Overview) */}
+          <Grid
+            size={{ xs: 12, lg: 4 }}
+            sx={{
+              position: { lg: "sticky" },
+              top: "120px",
+              height: "fit-content",
+            }}
+          >
+            <Stack spacing={3.5}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Box sx={{ width: 8, height: 8, bgcolor: NOIR.gold }} />
+                <Typography
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: NOIR.navyField,
+                    fontWeight: 700,
+                  }}
+                >
+                  ENGINEERING PERSPECTIVES
+                </Typography>
+              </Stack>
+
               <Typography
+                variant="h2"
+                component="h2"
                 sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.85rem",
-                  color: "var(--accent-fg)",
-                  letterSpacing: "0.2em",
-                  fontWeight: 700,
+                  fontFamily: DISPLAY_FONT,
+                  fontWeight: 800,
+                  fontSize: { xs: "2.5rem", sm: "3rem", md: "3.5rem" },
+                  lineHeight: 1.05,
+                  letterSpacing: "-0.035em",
+                  color: NOIR.navyDeep,
                 }}
               >
-                HEAR FROM OUR PEOPLE
+                At the core of our business is our people.
               </Typography>
-              <Box sx={{ width: 24, height: "1px", bgcolor: NOIR.gold }} />
-            </Box>
 
-            {/* Main Gunshot Title */}
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                fontSize: { xs: "2.5rem", sm: "3rem", md: "4rem" },
-                lineHeight: 1.1,
-                letterSpacing: "-0.03em",
-                color: "text.primary",
-              }}
-            >
-              At the core of our business is our People.
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "1.1rem",
+                  lineHeight: 1.65,
+                  color: NOIR.mist,
+                  maxWidth: 400,
+                }}
+              >
+                Meet the researchers, engineers, and platform architects building the next generation of institutional financial technology in Manila.
+              </Typography>
+            </Stack>
+          </Grid>
 
-            {/* Description */}
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                fontSize: "1.2rem",
-                lineHeight: 1.7,
-                maxWidth: 420,
-              }}
-            >
-              Meet some of them, get inspired, and see how you will shape your future within Phitopolis.
-            </Typography>
-          </Stack>
-        </Grid>
-
-        {/* Right Testimonials Grid */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={{ xs: 4, md: 5 }}>
-            {TESTIMONIALS.map((testimonial) => (
-              <TestimonialCard key={testimonial.name} testimonial={testimonial} />
-            ))}
+          {/* Right Column (Editorial Testimonial Bento Grid) */}
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <Grid container spacing={3.5}>
+              {TESTIMONIALS.map((testimonial, idx) => (
+                <TestimonialCard
+                  key={testimonial.id}
+                  testimonial={testimonial}
+                  index={idx}
+                />
+              ))}
+            </Grid>
           </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </StageSection>
   );
 }

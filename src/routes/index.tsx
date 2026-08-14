@@ -22,11 +22,12 @@ import { DailyLifeSection } from "@/features/home/components/DailyLifeSection/Da
 import { TestimonialsSection } from "@/features/home/components/TestimonialsSection";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
-import { PreHeaderSequence } from "@/features/home/components/PreHeaderSequence";
 import { PillarsEstablishingShot } from "@/features/home/components/establishing/PillarsEstablishingShot";
 import { ProcessEstablishingShot } from "@/features/home/components/establishing/ProcessEstablishingShot";
 import { SeamEstablishingShot } from "@/features/home/components/establishing/SeamEstablishingShot";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
+import { CurtainTransition } from "@/shared/components/CurtainTransition";
+import { NOIR } from "@/shared/theme/palette";
 
 // No gsap/lenis imports at route-module scope: this file stays in the eager
 // bundle even with autoCodeSplitting, so anything imported here ships to every
@@ -53,7 +54,6 @@ function HomePage() {
       <GroundLayer />
       <EyeFlow />
       <Box component="main" id="home-main" sx={{ position: "relative", overflowX: "clip" }}>
-        <PreHeaderSequence />
         {/* 01. Hero Sequence */}
         <Box
           component="section"
@@ -163,9 +163,6 @@ function HomePage() {
             />
           </Container>
 
-          {/* Major Establishing Shot 3: Before The Seam (Act I -> Act II) */}
-          <SeamEstablishingShot />
-
           {/* Global Footprint — closes Act I */}
           <Box
             component="section"
@@ -176,6 +173,9 @@ function HomePage() {
             <ReachSection />
           </Box>
 
+          {/* Major Establishing Shot 3: The Seam / Handover between Act I (Services) and Act II (People) */}
+          <SeamEstablishingShot />
+
           {/* ── ACT II · PEOPLE ───────────────────────────────────────────────── */}
           <Box
             component="section"
@@ -184,15 +184,6 @@ function HomePage() {
             data-act="people"
           >
             <DailyLifeSection />
-          </Box>
-
-          <Box
-            component="section"
-            id="testimonials-sequence"
-            aria-label="Hear From Our People"
-            data-act="people"
-          >
-            <TestimonialsSection />
           </Box>
 
           {/* Mini Establishing Shot 5: Talent & Careers */}
@@ -215,39 +206,55 @@ function HomePage() {
             <CandidatesAndCareersSection />
           </Box>
 
-          {/* Mini Establishing Shot 6: Intelligence Feed */}
-          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
-            <MiniEstablishingShot
-              indexTag="06.MINI"
-              category="TECHNICAL DISPATCHES"
-              title="Research, Whitepapers &"
-              titleAccent="Engineering Signals"
-              tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
-              status="FEED: LIVE"
-              dark
-            />
-          </Container>
           <Box
             component="section"
-            id="blog-sequence"
-            aria-label="Intelligence Feed and Blog"
+            id="testimonials-sequence"
+            aria-label="Hear From Our People"
             data-act="people"
           >
-            <BlogSection />
+            <TestimonialsSection />
           </Box>
 
-          {/* Mini Establishing Shot 7: Horizon Gateway */}
-          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
-            <MiniEstablishingShot
-              indexTag="07.MINI"
-              category="GATEWAY TERMINAL"
-              title="Initialize Collaboration &"
-              titleAccent="Institutional Partnership"
-              tracer="Direct line to our technical leadership and quantitative engineering directors."
-              status="READY"
-            />
-          </Container>
-          <ClosingShelf />
+          {/* Dynamic Row-by-Row Curtain Transition into Deep Navy Act II Finale */}
+          <CurtainTransition rows={6} />
+
+          {/* Deep Navy Dark Zone for Intelligence Feed & Horizon Gateway */}
+          <Box sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>
+            {/* Mini Establishing Shot 6: Intelligence Feed */}
+            <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+              <MiniEstablishingShot
+                indexTag="06.MINI"
+                category="TECHNICAL DISPATCHES"
+                title="Research, Whitepapers &"
+                titleAccent="Engineering Signals"
+                tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
+                status="FEED: LIVE"
+                dark
+              />
+            </Container>
+            <Box
+              component="section"
+              id="blog-sequence"
+              aria-label="Intelligence Feed and Blog"
+              data-act="people"
+            >
+              <BlogSection />
+            </Box>
+
+            {/* Mini Establishing Shot 7: Horizon Gateway */}
+            <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+              <MiniEstablishingShot
+                indexTag="07.MINI"
+                category="GATEWAY TERMINAL"
+                title="Initialize Collaboration &"
+                titleAccent="Institutional Partnership"
+                tracer="Direct line to our technical leadership and quantitative engineering directors."
+                status="READY"
+                dark
+              />
+            </Container>
+            <ClosingShelf />
+          </Box>
         </Box>
       </Box>
     </>

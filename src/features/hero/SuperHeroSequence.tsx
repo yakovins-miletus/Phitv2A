@@ -19,7 +19,15 @@ import { useHeroModeState, useHeroTrack, setHeroTrack } from "./heroModeStore";
 import { setSkyMode, useSkyModeState } from "./skyModeStore";
 import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
 import { ParallaxHeroBg } from "./ParallaxHeroBg";
-import { NodeSpecDrawer } from "./components/NodeSpecDrawer";
+
+const SANS = "Inter, system-ui, -apple-system, sans-serif";
+
+const ACTIVE_NODE_DATA = [
+  { tag: "NODE 01 // TEAM", label: "Quantitative Research & Modeling Team" },
+  { tag: "NODE 02 // TEAM", label: "Core Execution & Systems Engineering Team" },
+  { tag: "NODE 03 // TEAM", label: "Market Data & Data Fabrics Team" },
+  { tag: "NODE 04 // TEAM", label: "Global Infrastructure & Trading Operations Team" },
+] as const;
 /**
  * The 3D PoC gallery.
  *
@@ -275,11 +283,9 @@ export function HeroSignalCore() {
   const use3D = mode === "monolith";
   const heroTrack = useHeroTrack();
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleNodeSelect = (index: number) => {
-    setSelectedNodeIndex(index);
-    setDrawerOpen(true);
+    setSelectedNodeIndex((prev) => (prev === index ? null : index));
   };
 
   const { mode: skyMode } = useSkyModeState();
@@ -968,7 +974,12 @@ export function HeroSignalCore() {
                 />
               </Suspense>
             ) : (
-              <LegacyHeroCanvas handleRef={canvasHandleRef} varsHostRef={containerRef} />
+              <LegacyHeroCanvas
+                handleRef={canvasHandleRef}
+                varsHostRef={containerRef}
+                activeNode={selectedNodeIndex}
+                onNodeSelect={handleNodeSelect}
+              />
             )}
           </Box>
 
@@ -1044,6 +1055,81 @@ export function HeroSignalCore() {
                 )}
               </Box>
             </Magnetic>
+          )}
+
+          {/* Active Node Telemetry HUD Chip (Single focused readout on click) */}
+          {selectedNodeIndex !== null && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: { xs: 72, md: 88 },
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1, md: 1.5 },
+                px: { xs: 2, md: 2.75 },
+                py: 0.9,
+                borderRadius: "100px",
+                backgroundColor: "rgba(6, 16, 38, 0.92)",
+                border: "1px solid rgba(255, 199, 44, 0.65)",
+                boxShadow: "0 12px 32px rgba(6, 10, 22, 0.45), 0 0 20px rgba(255, 199, 44, 0.25)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                pointerEvents: "auto",
+                cursor: "pointer",
+                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+              onClick={() => setSelectedNodeIndex(null)}
+              title="Click to dismiss"
+            >
+              <Box
+                sx={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  bgcolor: NOIR.gold,
+                  boxShadow: "0 0 8px #FFC72C",
+                }}
+              />
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: { xs: "0.68rem", md: "0.72rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  color: NOIR.gold,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {ACTIVE_NODE_DATA[selectedNodeIndex]?.tag}
+              </Typography>
+              <Box sx={{ width: "1px", height: 12, bgcolor: "rgba(255, 255, 255, 0.25)" }} />
+              <Typography
+                sx={{
+                  fontFamily: SANS,
+                  fontSize: { xs: "0.74rem", md: "0.8rem" },
+                  fontWeight: 600,
+                  color: "#FFFFFF",
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {ACTIVE_NODE_DATA[selectedNodeIndex]?.label}
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  color: "rgba(255, 255, 255, 0.45)",
+                  ml: 0.5,
+                }}
+              >
+                ✕
+              </Typography>
+            </Box>
           )}
 
           {/*
@@ -1399,100 +1485,94 @@ export function HeroSignalCore() {
             }}
           >
             {/* Link 1: ABOUT */}
-            <Magnetic>
-              <Box
-                component={RouterLink}
-                className="hero-pill"
-                to="/about"
+            <Box
+              component={RouterLink}
+              className="hero-pill"
+              to="/about"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                px: 3,
+                py: 1.2,
+                ...LINK_PILL_SX,
+              }}
+            >
+              <Typography
+                className="btn-text"
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.2,
-                  px: 3,
-                  py: 1.2,
-                  ...LINK_PILL_SX,
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.14em",
+                  color: NOIR.navyField,
+                  textTransform: "uppercase",
+                  transition: "color var(--dur) var(--ease-out)",
                 }}
               >
-                <Typography
-                  className="btn-text"
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.78rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.14em",
-                    color: NOIR.navyField,
-                    textTransform: "uppercase",
-                    transition: "color var(--dur) var(--ease-out)",
-                  }}
-                >
-                  ABOUT PHITOPOLIS <Box component="span" sx={{ ml: 0.5 }}>→</Box>
-                </Typography>
-              </Box>
-            </Magnetic>
+                ABOUT PHITOPOLIS <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+              </Typography>
+            </Box>
 
             {/* Link 2: SERVICES */}
-            <Magnetic>
-              <Box
-                component={RouterLink}
-                className="hero-pill"
-                to="/services"
+            <Box
+              component={RouterLink}
+              className="hero-pill"
+              to="/services"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                px: 3,
+                py: 1.2,
+                ...LINK_PILL_SX,
+              }}
+            >
+              <Typography
+                className="btn-text"
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.2,
-                  px: 3,
-                  py: 1.2,
-                  ...LINK_PILL_SX,
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.14em",
+                  color: NOIR.navyField,
+                  textTransform: "uppercase",
+                  transition: "color var(--dur) var(--ease-out)",
                 }}
               >
-                <Typography
-                  className="btn-text"
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.78rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.14em",
-                    color: NOIR.navyField,
-                    textTransform: "uppercase",
-                    transition: "color var(--dur) var(--ease-out)",
-                  }}
-                >
-                  WHAT WE DO <Box component="span" sx={{ ml: 0.5 }}>→</Box>
-                </Typography>
-              </Box>
-            </Magnetic>
+                WHAT WE DO <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+              </Typography>
+            </Box>
 
             {/* Link 3: BLOG */}
-            <Magnetic>
-              <Box
-                component={RouterLink}
-                className="hero-pill"
-                to="/blog"
+            <Box
+              component={RouterLink}
+              className="hero-pill"
+              to="/blog"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                px: 3,
+                py: 1.2,
+                ...LINK_PILL_SX,
+              }}
+            >
+              <Typography
+                className="btn-text"
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.2,
-                  px: 3,
-                  py: 1.2,
-                  ...LINK_PILL_SX,
+                  fontFamily: MONO,
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.14em",
+                  color: NOIR.navyField,
+                  textTransform: "uppercase",
+                  transition: "color var(--dur) var(--ease-out)",
                 }}
               >
-                <Typography
-                  className="btn-text"
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.78rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.14em",
-                    color: NOIR.navyField,
-                    textTransform: "uppercase",
-                    transition: "color var(--dur) var(--ease-out)",
-                  }}
-                >
-                  EXPLORE COMMUNITY <Box component="span" sx={{ ml: 0.5 }}>→</Box>
-                </Typography>
-              </Box>
-            </Magnetic>
+                EXPLORE COMMUNITY <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
@@ -1560,14 +1640,6 @@ export function HeroSignalCore() {
           </Typography>
         </Box>
       </Box>
-
-      {/* Interactive R&D Spec Sheet Drawer */}
-      <NodeSpecDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        nodeIndex={selectedNodeIndex}
-        track={heroTrack}
-      />
     </Box>
   );
 }

@@ -10,7 +10,7 @@ import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import CloseIcon from "@mui/icons-material/Close";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
@@ -21,7 +21,7 @@ import { CommandPalette } from "./CommandPalette";
 import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
 import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
-import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
+import { Preloader } from "./Preloader";
 import { TransitionCurtainProvider, useTransitionCurtain } from "./TransitionCurtain";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
@@ -54,11 +54,7 @@ const NARRATION_FLOW: Record<string, { next: string; label: string }> = {
 
 function shouldShowPreloader(reduced: boolean): boolean {
   if (reduced) return false;
-  try {
-    return sessionStorage.getItem(PRELOADER_SESSION_KEY) === null;
-  } catch {
-    return false;
-  }
+  return true;
 }
 
 /** Routes warmed while the preloader plays: preloadRoute downloads + compiles
@@ -76,31 +72,53 @@ const WARM_ROUTES = [
 import publicAssets from "virtual:public-assets";
 
 const srcAssetModules = import.meta.glob([
-  '/src/**/*.{png,jpg,jpeg,webp,svg,gif,mp4,webm,glb,gltf,woff2}'
+  '/src/**/*.{png,jpg,jpeg,webp,svg,woff2}'
 ], { eager: true, query: '?url', import: 'default' });
 const srcAssets = Object.values(srcAssetModules) as string[];
-const ALL_ASSETS = [...publicAssets, ...srcAssets];
+
+// Filter out heavy videos/PDFs/unneeded files to keep warmup ultra-lightweight
+const ALL_ASSETS = [...publicAssets, ...srcAssets].filter((url) => {
+  const ext = url.split('.').pop()?.toLowerCase() || '';
+  return !['mp4', 'webm', 'pdf', 'txt', 'map'].includes(ext);
+});
 
 function preloadAsset(url: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   return new Promise((resolve) => {
     const ext = url.split('.').pop()?.toLowerCase() || '';
-    const done = () => resolve();
+    let doneCalled = false;
+    const done = () => {
+      if (!doneCalled) {
+        doneCalled = true;
+        resolve();
+      }
+    };
 
-    if (['mp4', 'webm'].includes(ext)) {
-      const v = document.createElement('video');
-      v.preload = 'auto';
-      v.oncanplaythrough = done;
-      v.onerror = done;
-      v.src = url;
-      v.load();
-    } else if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
-      const img = new Image();
-      img.onload = done;
-      img.onerror = done;
-      img.src = url;
-    } else {
-      fetch(url, { cache: 'force-cache' }).then(done).catch(done);
+    // Safety timeout so no broken/slow asset ever hangs preloader
+    const timer = setTimeout(done, 800);
+
+    try {
+      if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
+        if (typeof Image !== "undefined") {
+          const img = new Image();
+          img.onload = () => { clearTimeout(timer); done(); };
+          img.onerror = () => { clearTimeout(timer); done(); };
+          img.src = url;
+        } else {
+          clearTimeout(timer);
+          done();
+        }
+      } else if (typeof fetch !== "undefined") {
+        fetch(url, { cache: 'force-cache' })
+          .then(() => { clearTimeout(timer); done(); })
+          .catch(() => { clearTimeout(timer); done(); });
+      } else {
+        clearTimeout(timer);
+        done();
+      }
+    } catch {
+      clearTimeout(timer);
+      done();
     }
   });
 }
@@ -115,7 +133,7 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
       promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
     }));
 
-    const assetSignals = ALL_ASSETS.map((url) => {
+    const assetSignals = ALL_ASSETS.slice(0, 15).map((url) => {
       const filename = url.split('/').pop() || 'ASSET';
       return {
         label: filename.toUpperCase().substring(0, 15),
@@ -335,14 +353,18 @@ function AppShellInner({ children }: { children: ReactNode }) {
     setMobileNavOpen(false);
   };
 
-  const releaseEntrance = () => {
+  const releaseEntrance = useCallback(() => {
     if (releasedRef.current) return;
     releasedRef.current = true;
     const timers = entranceTimersRef.current;
     setPhase("hero");
     timers.push(window.setTimeout(() => setPhase("header"), HEADER_AT_MS));
     timers.push(window.setTimeout(() => setPhase("open"), OPEN_AT_MS));
-  };
+  }, []);
+
+  const handlePreloaderDone = useCallback(() => {
+    setShowPreloader(false);
+  }, []);
 
   useEffect(() => {
     // Repeat visits skip the preloader, so nothing else triggers the release.
@@ -354,7 +376,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       timers.forEach((id) => window.clearTimeout(id));
       timers.length = 0;
     };
-  }, []);
+  }, [releaseEntrance]);
 
   // The overscroll-to-navigate machine that used to live here is gone.
   // It accumulated "scroll pressure" from non-passive wheel/touchmove listeners —
@@ -454,7 +476,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           <Preloader
             warmup={warmup}
             onStartExit={releaseEntrance}
-            onDone={() => setShowPreloader(false)}
+            onDone={handlePreloaderDone}
           />
         ) : null}
         <TopNavMegaDrawer open={megaNavOpen} onClose={() => setMegaNavOpen(false)} />

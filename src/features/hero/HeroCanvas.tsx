@@ -29,8 +29,19 @@
 
 import { useEffect, useImperativeHandle, useRef, type RefObject } from "react";
 import { useReducedMotion, useIsLowPowerDevice, usePointerFine } from "@/shared/motion";
-import { CONTAINER_START } from "./heroPhases";
-import { heroFrameState, PERSPECTIVE, PLANE_SIZE, makeCamera, project, unproject2D } from "./heroScene";
+import {
+  CONTAINER_START,
+} from "./heroPhases";
+import {
+  SERVICE_NODES,
+  SERVICE_NODE_SIZE,
+  heroFrameState,
+  PERSPECTIVE,
+  PLANE_SIZE,
+  makeCamera,
+  project,
+  unproject2D,
+} from "./heroScene";
 import { loadLogoMask } from "./heroLogoMask";
 import {
   HORIZON,
@@ -53,10 +64,10 @@ const LOGO_SRC = "/phitopolis_logo_hero.svg";
 const RESIZE_DEBOUNCE_MS = 120;
 
 /** Lerp the normalised pointer position eases with, for the camera tilt and CSS parallax. */
-const POINTER_LERP = 0.08;
+const POINTER_LERP = 0.09;
 
-/** Maximum camera tilt contributed by the pointer, in radians (~8deg). */
-const TILT_AMOUNT = 0.14;
+/** Maximum camera tilt contributed by the pointer, in radians (~11deg). */
+const TILT_AMOUNT = 0.19;
 
 export interface HeroCanvasHandle {
   /** Push the pin's 0..1 progress. Cheap, synchronous, causes no render. */
@@ -81,11 +92,23 @@ interface HeroCanvasProps {
    * position in the reduced-motion resting frame too.
    */
   varsHostRef?: RefObject<HTMLElement | null>;
+  /** Currently selected service node index (0..3) or null. */
+  activeNode?: number | null;
+  /** Callback fired when a service node (0..3) is clicked on canvas. */
+  onNodeSelect?: (index: number) => void;
 }
 
-export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: HeroCanvasProps) {
+export function HeroCanvas({
+  handleRef,
+  initialProgress = 0,
+  varsHostRef,
+  activeNode = null,
+  onNodeSelect,
+}: HeroCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progressRef = useRef(initialProgress);
+  const activeNodeRef = useRef<number | null>(activeNode);
+  activeNodeRef.current = activeNode;
   const reduced = useReducedMotion();
   const lowPower = useIsLowPowerDevice();
   // Gates affordances, never cost. A pointer-type change (hybrid devices) must
@@ -273,6 +296,7 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
       interaction.tiltX = tiltCurrent.x * TILT_AMOUNT * strength;
       interaction.tiltY = tiltCurrent.y * TILT_AMOUNT * strength;
       interaction.pointerActive = pointerActive;
+      interaction.activeNode = activeNodeRef.current;
 
       if (pointerActive) {
         const p = toPlane(state.flatten, pointerScreen.x, pointerScreen.y);
@@ -319,6 +343,8 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
       startLoop();
     });
 
+    let hoveredNode: number | null = null;
+
     /* ── Pointer ── */
 
     const onPointerMove = (e: PointerEvent) => {
@@ -333,9 +359,29 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
       pointerScreen.y = y;
       pointerActive = true;
 
-      if (progressRef.current >= INTERACT_END) return;
+      if (progressRef.current >= INTERACT_END) {
+        hoveredNode = null;
+        canvas.style.cursor = "default";
+        return;
+      }
       tiltTarget.x = (x / rect.width) * 2 - 1;
       tiltTarget.y = (y / rect.height) * 2 - 1;
+
+      // Hit-test the 4 elevated service nodes in plane space
+      const state = heroFrameState(progressRef.current, false, CONTAINER_START);
+      const p = toPlane(state.flatten, x, y);
+      let matched: number | null = null;
+      for (let i = 0; i < SERVICE_NODES.length; i++) {
+        const node = SERVICE_NODES[i]!;
+        const dx = p.x - node.cx;
+        const dy = p.y - node.cy;
+        if (Math.hypot(dx, dy) <= SERVICE_NODE_SIZE * 0.9) {
+          matched = i;
+          break;
+        }
+      }
+      hoveredNode = matched;
+      canvas.style.cursor = matched !== null ? "pointer" : "default";
     };
 
     const onPointerLeave = () => {
@@ -343,12 +389,24 @@ export function HeroCanvas({ handleRef, initialProgress = 0, varsHostRef }: Hero
       tiltTarget.y = 0;
       pointerActive = false;
       rawSpeed = 0;
+      hoveredNode = null;
+      canvas.style.cursor = "default";
     };
 
     const onClick = (e: MouseEvent) => {
       // A coarse pointer never has `pointerEvents: "auto"` in the first place, but
       // guard explicitly since the handler is attached regardless of pointer type.
       if (!pointerFine || progressRef.current >= HIT_TEST_END) return;
+      if (hoveredNode !== null) {
+        const targetNode = SERVICE_NODES[hoveredNode];
+        if (targetNode) {
+          interaction.rippleX = targetNode.cx;
+          interaction.rippleY = targetNode.cy;
+          rippleAt = performance.now() - start;
+        }
+        onNodeSelect?.(hoveredNode);
+        return;
+      }
       const rect = canvas.getBoundingClientRect();
       const state = heroFrameState(progressRef.current, false, CONTAINER_START);
       const p = toPlane(state.flatten, e.clientX - rect.left, e.clientY - rect.top);

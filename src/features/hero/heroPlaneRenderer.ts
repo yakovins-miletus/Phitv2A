@@ -36,10 +36,10 @@ import {
   CUBE_POSITIONS,
   GRID_CELL,
   PLANE_SIZE,
-  RGB_FROST,
   RGB_GOLD,
   RGB_NAVY,
   RGB_SHADOW,
+  RGB_STEEL,
   SERVICE_NODES,
   SERVICE_NODE_SIZE,
   SIGNAL_LOOPS,
@@ -57,7 +57,6 @@ import {
   type ServiceNodeSpec,
 } from "./heroScene";
 import {
-  AVENUE_SPACING,
   DOTS_PER_AXIS,
   DOT_DENSITY,
   DOT_STEP,
@@ -104,13 +103,15 @@ export interface PlaneInteraction {
   rippleY: number;
   /** Milliseconds since the click, or a negative number when no ripple is live. */
   rippleAge: number;
+  /** Index of currently clicked/selected service node (0..3) or null/undefined. */
+  activeNode?: number | null;
 }
 
 /* ═══════════════════════════════ (a) Streets ═══════════════════════════════ */
 
 /** Alpha of a street hairline at the centre of the plane, before the edge fade thins
- *  it. Identical to the city's. */
-const STREET_ALPHA = 0.095;
+ *  it. */
+const STREET_ALPHA = 0.13;
 
 /**
  * Pieces each avenue is cut into, per axis, so the edge fade can vary *along* a line.
@@ -151,11 +152,11 @@ const GRID_FADE_TIERS = 6;
  * Deliberately *not* `DOT_DENSITY` from `heroCity.ts`: that mask carries the deleted city's
  * district massing and a sun bias, so it thins the field unevenly rather than radially. */
 
-const GRID_FADE_INNER_R = PLANE_SIZE * 0.3;
-const GRID_FADE_OUTER_R = PLANE_SIZE * 0.52;
-/** The gradient's middle stop: alpha at 70 % of the way from inner to outer radius. */
-const GRID_FADE_MID_STOP = 0.7;
-const GRID_FADE_MID_ALPHA = 0.4;
+const GRID_FADE_INNER_R = PLANE_SIZE * 0.44;
+const GRID_FADE_OUTER_R = PLANE_SIZE * 0.72;
+/** The gradient's middle stop: alpha at 75 % of the way from inner to outer radius. */
+const GRID_FADE_MID_STOP = 0.75;
+const GRID_FADE_MID_ALPHA = 0.5;
 
 /** Falloff, 0..1, at distance `r` (plane px) from the plane's centre. */
 function gridFalloff(r: number): number {
@@ -175,15 +176,9 @@ function gridFalloff(r: number): number {
  * the projection depends on the camera, so only the projection happens per frame. */
 
 /**
- * Lattice steps between avenues — the grid's pitch, and the one knob that changes how
- * fine the floor reads.
- *
- * `AVENUE_SPACING` (4) gives 11 lines per axis, which is what the city drew and what
- * ships. Halving it to 2 gives 22 and lands on the pre-lattice renderer's own
- * `GRID_CELL`-pitch grid. Named rather than inlined because the two are a look-and-pick,
- * not a correctness question.
+ * Lattice steps between avenues — the grid's pitch, halved to 2 for a fine, crisp floor grid.
  */
-const GRID_LINE_STRIDE = AVENUE_SPACING;
+const GRID_LINE_STRIDE = 2;
 
 const GRID_LINES_PER_AXIS = Math.ceil(DOTS_PER_AXIS / GRID_LINE_STRIDE);
 const GRID_SEG_COUNT = GRID_LINES_PER_AXIS * 2 * GRID_SEGMENTS;
@@ -316,41 +311,32 @@ function drawStreets(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFram
  * work — dot size *was* building height. These are doing texture work only, so a
  * quarter of the density reads as "sparse field," not "the city got smaller."
  */
-const DOT_STRIDE = 2;
+const DOT_STRIDE = 1;
 const FIELD_AXIS = Math.floor((DOTS_PER_AXIS - 1) / DOT_STRIDE) + 1;
 const FIELD_COUNT = FIELD_AXIS * FIELD_AXIS;
 
 /**
- * Resting radius, in plane px. Below the city's own floor (`DOT_MIN` = 1.4 in
- * `heroCity.ts`) on purpose — these dots carry no height information, so nothing
- * about them needs to compete with the mark or the headline for attention at rest.
+ * Resting radius, in plane px. Sized for crisp visual definition across the plane.
  */
-const FIELD_DOT_RADIUS = 1.0;
-/** How much a fully-lit dot's radius grows. Small — a swell, not a growth spurt. */
-const FIELD_RADIUS_LIFT = 0.45;
+const FIELD_DOT_RADIUS = 1.35;
+/** How much a fully-lit dot's radius grows under cursor spotlight. */
+const FIELD_RADIUS_LIFT = 0.85;
 
 /**
- * Resting alpha at full density (i.e. dead centre of the field, before the edge mask
- * thins it). Sits just above the city's `ALPHA_MIN` (0.07) floor, because unlike the
- * city this field has no taller, brighter dots to carry the composition — every dot
- * here is at the quiet end or the field disappears.
+ * Resting alpha at full density. Sits with clear contrast against the light void floor.
  */
-const FIELD_DOT_ALPHA = 0.11;
+const FIELD_DOT_ALPHA = 0.35;
 /** How much brighter a fully-lit dot gets. */
-const FIELD_ALPHA_LIFT = 0.7;
+const FIELD_ALPHA_LIFT = 1.5;
 /** Ceiling alpha a dot can reach under full cursor light, at full density. */
-const FIELD_ALPHA_CEILING = FIELD_DOT_ALPHA * (1 + FIELD_ALPHA_LIFT);
+const FIELD_ALPHA_CEILING = Math.min(1, FIELD_DOT_ALPHA * (1 + FIELD_ALPHA_LIFT));
 
 /**
- * How far a fully-lit dot rises off the plane, in plane px. A third of the city's
- * `STOREY_HEIGHT` (27) — enough to read as a soft swell under the pointer, nowhere
- * near enough to read as a spike or a building trying to happen.
+ * How far a fully-lit dot rises off the plane, in plane px.
  */
-const FIELD_LIFT_HEIGHT = 16;
+const FIELD_LIFT_HEIGHT = 32;
 
-/** Alpha tiers the field batches into for drawing. Six, matching the city's own
- *  granularity — enough steps that the swell reads continuous, few enough that a
- *  frame changes `fillStyle` at most six times for the whole field. */
+/** Alpha tiers the field batches into for drawing. Six steps for smooth gradient transitions. */
 const FIELD_ALPHA_TIERS = 6;
 
 /** Plane-space position of each sparse dot, sampled straight off the city's own
@@ -358,8 +344,7 @@ const FIELD_ALPHA_TIERS = 6;
 const FIELD_X = new Float32Array(FIELD_COUNT);
 const FIELD_Y = new Float32Array(FIELD_COUNT);
 /** Base alpha per dot: `FIELD_DOT_ALPHA` scaled by the lattice's own edge-density
- *  mask (`DOT_DENSITY`), so the field dissolves at the margins exactly the way the
- *  city did, with no visible rectangular boundary. */
+ *  mask (`DOT_DENSITY`), so the field dissolves at the margins cleanly. */
 const FIELD_ALPHA = new Float32Array(FIELD_COUNT);
 
 (function buildField(): void {
@@ -371,18 +356,22 @@ const FIELD_ALPHA = new Float32Array(FIELD_COUNT);
       const i = row * DOTS_PER_AXIS + col;
       FIELD_X[fi] = DOT_X[i]!;
       FIELD_Y[fi] = DOT_Y[i]!;
-      FIELD_ALPHA[fi] = FIELD_DOT_ALPHA * DOT_DENSITY[i]!;
+      FIELD_ALPHA[fi] = FIELD_DOT_ALPHA * (0.55 + 0.45 * DOT_DENSITY[i]!);
     }
   }
 })();
 
-/** `rgba()` string per alpha tier, in `RGB_FROST` — the palette's hairline colour,
- *  the same family the isometric grid used before it became a lattice. Built once. */
+/** `rgba()` string per alpha tier: steel navy for resting floor dots, shifting to gold when lit under the cursor. */
 const FIELD_TIER_FILL: readonly string[] = (() => {
   const out: string[] = [];
   for (let t = 0; t < FIELD_ALPHA_TIERS; t++) {
     const frac = FIELD_ALPHA_TIERS <= 1 ? 1 : t / (FIELD_ALPHA_TIERS - 1);
-    out.push(rgba(RGB_FROST, frac * FIELD_ALPHA_CEILING));
+    const alpha = Math.max(0.12, frac * FIELD_ALPHA_CEILING);
+    if (frac > 0.5) {
+      out.push(rgba(RGB_GOLD, Math.min(1, alpha * 1.2)));
+    } else {
+      out.push(rgba(RGB_STEEL, alpha));
+    }
   }
   return out;
 })();
@@ -709,15 +698,56 @@ function collectCube(
   cam: Camera,
   spec: CubeSpec,
   state: HeroFrameState,
+  interaction?: PlaneInteraction,
+  elapsed: number = 0,
 ): void {
   const base: Rgb = spec.type === "navy" ? RGB_NAVY : RGB_GOLD;
   const x0 = spec.c * GRID_CELL;
   const y0 = spec.r * GRID_CELL;
   const x1 = x0 + GRID_CELL;
   const y1 = y0 + GRID_CELL;
-  // Extrusion collapses linearly with flatten.
-  const hz = Math.max(0, spec.h * (1 - state.flatten));
-  const centre = project(cam, x0 + GRID_CELL / 2, y0 + GRID_CELL / 2, hz);
+  const cx = x0 + GRID_CELL / 2;
+  const cy = y0 + GRID_CELL / 2;
+
+  const lit = interaction !== undefined && interaction.pointerActive && interaction.strength > 0;
+  const falloff = lit ? cursorFalloff(cx - interaction.lightX, cy - interaction.lightY, CURSOR_RADIUS) : 0;
+  const stretch = lit && falloff > 0 ? skylineStretch(falloff, interaction.strength, interaction.velocity) : 0;
+
+  // Active node reactive behavior across all 16 boxes
+  let activeStretch = 0;
+  let activeHighlight = 0;
+  if (interaction?.activeNode !== undefined && interaction.activeNode !== null) {
+    const activeIdx = interaction.activeNode;
+    const targetNode = SERVICE_NODES[activeIdx];
+    if (targetNode) {
+      const dist = Math.hypot(cx - targetNode.cx, cy - targetNode.cy);
+      if (activeIdx === 0) {
+        // Node 0: Quant R&D wave
+        activeStretch = Math.sin(dist * 0.035 - elapsed * 0.004) * 0.4 + 0.4;
+        activeHighlight = 0.32;
+      } else if (activeIdx === 1) {
+        // Node 1: Systematic Execution stepped matrix
+        activeStretch = dist < 240 ? 0.65 : 0.25;
+        activeHighlight = dist < 240 ? 0.38 : 0.15;
+      } else if (activeIdx === 2) {
+        // Node 2: Data Fabric dual-tier cascade
+        activeStretch = ((spec.c + spec.r) % 2 === 0 ? 0.55 : 0.2) + Math.sin(elapsed * 0.005 + dist * 0.02) * 0.15;
+        activeHighlight = 0.34;
+      } else if (activeIdx === 3) {
+        // Node 3: High-Availability Fortress perimeter
+        const isPerimeter = spec.c === 0 || spec.c === 21 || spec.r === 0 || spec.r === 21;
+        activeStretch = isPerimeter ? 0.7 : 0.2;
+        activeHighlight = isPerimeter ? 0.45 : 0.15;
+      }
+    }
+  }
+
+  const totalStretch = Math.max(stretch, activeStretch * (1 - state.flatten));
+  const highlight = Math.max(falloff * (interaction?.strength ?? 0) * 0.28, activeHighlight);
+
+  // Extrusion collapses linearly with flatten, lifts reactively under cursor spotlight / active node.
+  const hz = Math.max(0, spec.h * (1 - state.flatten) * (1 + totalStretch * 0.32));
+  const centre = project(cam, cx, cy, hz);
 
   out.push({
     depth: centre.depth,
@@ -725,7 +755,7 @@ function collectCube(
       if (state.sideOpacity > 0.01) {
         blitShadow(
           ctx, cam,
-          x0 + GRID_CELL / 2, y0 + GRID_CELL / 2,
+          cx, cy,
           GRID_CELL * 1.5, state.sideOpacity * 0.9,
         );
       }
@@ -737,12 +767,12 @@ function collectCube(
         gradientQuad(
           ctx, cam,
           [[x0, y0, hz], [x0, y1, hz], [x0, y1, 0], [x0, y0, 0]],
-          shade(base, 0.12), shade(base, -0.32),
+          shade(base, 0.12 + highlight * 0.4), shade(base, -0.32 + highlight * 0.2),
         );
         gradientQuad(
           ctx, cam,
           [[x0, y1, hz], [x1, y1, hz], [x1, y1, 0], [x0, y1, 0]],
-          shade(base, -0.12), shade(base, -0.5),
+          shade(base, -0.12 + highlight * 0.3), shade(base, -0.5 + highlight * 0.1),
         );
         ctx.globalAlpha = 1;
       }
@@ -752,8 +782,8 @@ function collectCube(
         gradientQuad(
           ctx, cam,
           [[x0, y0, hz], [x1, y0, hz], [x1, y1, hz], [x0, y1, hz]],
-          shade(base, 0.32 * state.sideOpacity),
-          shade(base, 0.05 * state.sideOpacity),
+          shade(base, (0.32 + highlight) * state.sideOpacity),
+          shade(base, (0.05 + highlight * 0.6) * state.sideOpacity),
         );
         ctx.globalAlpha = 1;
       }
@@ -769,13 +799,23 @@ function collectNode(
   cam: Camera,
   spec: ServiceNodeSpec,
   state: HeroFrameState,
+  interaction?: PlaneInteraction,
+  elapsed: number = 0,
+  nodeIdx: number = 0,
 ): void {
   const half = SERVICE_NODE_SIZE / 2;
   const x0 = spec.cx - half;
   const y0 = spec.cy - half;
   const x1 = spec.cx + half;
   const y1 = spec.cy + half;
-  const ez = Math.max(0, spec.elevation * (1 - state.flatten));
+
+  const lit = interaction !== undefined && interaction.pointerActive && interaction.strength > 0;
+  const falloff = lit ? cursorFalloff(spec.cx - interaction.lightX, spec.cy - interaction.lightY, CURSOR_RADIUS) : 0;
+  const stretch = lit && falloff > 0 ? skylineStretch(falloff, interaction.strength, interaction.velocity) : 0;
+  const isActive = interaction?.activeNode === nodeIdx;
+  const highlight = Math.max(falloff * (interaction?.strength ?? 0) * 0.32, isActive ? 0.45 : 0);
+
+  const ez = Math.max(0, spec.elevation * (1 - state.flatten) * (1 + (isActive ? 0.35 : stretch * 0.2)));
   const centre = project(cam, spec.cx, spec.cy, ez);
 
   out.push({
@@ -792,9 +832,9 @@ function collectNode(
         for (let i = 0; i < numSlabs; i++) {
           const z = (i / (numSlabs - 1)) * ez;
           const ratio = i / (numSlabs - 1);
-          const r = Math.round(6 + (10 - 6) * ratio);
-          const g = Math.round(14 + (24 - 14) * ratio);
-          const b = Math.round(32 + (51 - 32) * ratio);
+          const r = Math.min(255, Math.round(6 + (10 - 6) * ratio + highlight * 25));
+          const g = Math.min(255, Math.round(14 + (24 - 14) * ratio + highlight * 35));
+          const b = Math.min(255, Math.round(32 + (51 - 32) * ratio + highlight * 20));
           traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, NODE_RADIUS);
           ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
           ctx.fill();
@@ -807,19 +847,31 @@ function collectNode(
         ctx.globalAlpha = state.topOpacity;
 
         traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, top, NODE_RADIUS);
-        ctx.fillStyle = shade(RGB_NAVY, -0.62);
+        ctx.fillStyle = shade(RGB_NAVY, -0.62 + highlight * 0.35);
         ctx.fill();
 
         // Outer glow, standing in for the old `boxShadow: 0 0 28px gold@0.5`.
         if (state.sideOpacity > 0.05) {
           ctx.save();
-          ctx.lineWidth = 6 * cam.scale;
-          ctx.strokeStyle = rgba(RGB_GOLD, 0.18 * state.sideOpacity);
+          ctx.lineWidth = (6 + highlight * 4) * cam.scale;
+          ctx.strokeStyle = rgba(RGB_GOLD, Math.min(1, (0.18 + highlight * 0.4) * state.sideOpacity));
           ctx.stroke();
           ctx.restore();
         }
 
-        ctx.lineWidth = 2 * cam.scale;
+        // Active node beacon halo ring
+        if (isActive) {
+          ctx.save();
+          const haloR = (SERVICE_NODE_SIZE * 0.65 + Math.sin(elapsed * 0.006) * 3) * cam.scale;
+          ctx.lineWidth = 2.5 * cam.scale;
+          ctx.strokeStyle = rgba(RGB_GOLD, 0.95);
+          ctx.beginPath();
+          ctx.arc(centre.sx, centre.sy, haloR, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.lineWidth = (isActive ? 2.5 : 2) * cam.scale;
         ctx.strokeStyle = rgba(RGB_GOLD, 1);
         ctx.stroke();
 
@@ -888,11 +940,15 @@ function drawSceneObjects(
   ctx: CanvasRenderingContext2D,
   cam: Camera,
   state: HeroFrameState,
+  interaction?: PlaneInteraction,
+  elapsed: number = 0,
 ): void {
   if (state.flat) return;
   drawables.length = 0;
-  for (const cube of CUBE_POSITIONS) collectCube(drawables, ctx, cam, cube, state);
-  for (const node of SERVICE_NODES) collectNode(drawables, ctx, cam, node, state);
+  for (const cube of CUBE_POSITIONS) collectCube(drawables, ctx, cam, cube, state, interaction, elapsed);
+  for (let i = 0; i < SERVICE_NODES.length; i++) {
+    collectNode(drawables, ctx, cam, SERVICE_NODES[i]!, state, interaction, elapsed, i);
+  }
   drawables.sort((a, b) => a.depth - b.depth);
   for (const item of drawables) item.draw();
   drawables.length = 0;
@@ -1398,6 +1454,6 @@ export function drawPlaneFrame(
   drawStreets(ctx, cam, state);
   drawDotField(ctx, cam);
   drawSignals(ctx, cam, state, elapsed);
-  drawSceneObjects(ctx, cam, state);
+  drawSceneObjects(ctx, cam, state, interaction, elapsed);
   drawLogo(ctx, cam, state, w, h);
 }

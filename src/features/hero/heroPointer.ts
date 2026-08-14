@@ -94,10 +94,10 @@ export function easeToward(current: number, target: number, lerp: number): numbe
 /* ─────────────────────── The cursor as a second light ─────────────────────── */
 
 /** Radius of the cursor light, in plane units. */
-export const CURSOR_RADIUS = 5 * GRID_CELL;
+export const CURSOR_RADIUS = 6 * GRID_CELL;
 
 /** How much taller a building gets directly under the cursor, as a fraction of its own height. */
-export const LIFT_STRETCH = 0.9;
+export const LIFT_STRETCH = 1.25;
 
 /** How many steps toward the warm end of `CITY_RAMP` a fully lit building shifts. */
 export const CURSOR_WARM_SHIFT = 2;
@@ -113,7 +113,7 @@ export const VELOCITY_REF = 26;
 export const VELOCITY_LERP = 0.09;
 
 /** Share of the lift that pointer speed controls; the rest is always available. */
-export const VELOCITY_GAIN = 0.4;
+export const VELOCITY_GAIN = 0.45;
 
 /**
  * Falloff of the cursor light at plane offset `(dx, dy)`: 1 at the cursor, 0 at and

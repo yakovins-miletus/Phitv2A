@@ -1,150 +1,268 @@
 import Box from "@mui/material/Box";
-import { useTheme } from "@mui/material/styles";
 import { motion, useInView } from "motion/react";
-import { useRef } from "react";
+import { useState, useRef, useId } from "react";
 
 import { useReducedMotion } from "@/shared/motion";
-import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { MONO } from "@/shared/theme/theme";
 
-// Authored SVG — three shift arcs hand off around the clock from the
-// Philippine hubs, while the latency line below stays flat.
+interface NodeItem {
+  id: string;
+  label: string;
+  utc: string;
+  x: number;
+  y: number;
+  labelX: number;
+  labelY: number;
+  textAnchor: "middle" | "start" | "end";
+  color: string;
+}
 
-const CX = 320;
-const CY = 120;
-const SHIFT_ARCS = [
-  { path: "M 320 30 A 90 90 0 0 1 397.9 165", stroke: NOIR.gold },
-  { path: "M 397.9 165 A 90 90 0 0 1 242.1 165", stroke: NOIR.goldDark },
-  { path: "M 242.1 165 A 90 90 0 0 1 320 30", stroke: NOIR.goldLight },
+const CX = 390;
+const CY = 145;
+const RADIUS = 96;
+
+// 3 Abstract shift rotation nodes (120° equidistant distribution, no geographical names)
+const NODES: readonly NodeItem[] = [
+  {
+    id: "shift-01",
+    label: "SHIFT 01",
+    utc: "00:00 — 08:00 UTC",
+    x: 390,
+    y: 49,
+    labelX: 390,
+    labelY: 30,
+    textAnchor: "middle",
+    color: NOIR.gold,
+  },
+  {
+    id: "shift-02",
+    label: "SHIFT 02",
+    utc: "08:00 — 16:00 UTC",
+    x: 473.14,
+    y: 193,
+    labelX: 492,
+    labelY: 198,
+    textAnchor: "start",
+    color: NOIR.goldDark,
+  },
+  {
+    id: "shift-03",
+    label: "SHIFT 03",
+    utc: "16:00 — 24:00 UTC",
+    x: 306.86,
+    y: 193,
+    labelX: 288,
+    labelY: 198,
+    textAnchor: "end",
+    color: NOIR.live,
+  },
 ];
-const HANDOFFS = [
-  { x: 320, y: 30, label: "SHIFT 01", tx: 320, ty: 16, anchor: "middle" },
-  { x: 397.9, y: 165, label: "SHIFT 02", tx: 414, ty: 186, anchor: "start" },
-  { x: 242.1, y: 165, label: "SHIFT 03", tx: 226, ty: 186, anchor: "end" },
-] as const;
-const ORBIT_PATH = "M 320 30 A 90 90 0 1 1 320 210 A 90 90 0 1 1 320 30";
+
+// Circular trajectory
+const ORBIT_PATH = `M 390 49 A 96 96 0 1 1 390 241 A 96 96 0 1 1 390 49`;
+
+// Handover arcs connecting the 3 shift nodes
+const HANDOVER_ARCS = [
+  { path: "M 390 49 A 96 96 0 0 1 473.14 193", stroke: NOIR.gold },
+  { path: "M 473.14 193 A 96 96 0 0 1 306.86 193", stroke: NOIR.goldDark },
+  { path: "M 306.86 193 A 96 96 0 0 1 390 49", stroke: NOIR.live },
+];
 
 export function FollowTheSunDiagram() {
-  const theme = useTheme();
   const reduced = useReducedMotion();
-  const dots = theme.palette.divider;
   const rootRef = useRef<HTMLDivElement>(null);
-  // The orbiting pulse mounts only while on screen (see SignalDiagram).
-  const inView = useInView(rootRef, { amount: 0.2 });
+  const inView = useInView(rootRef, { once: true, amount: 0.2 });
+  const uid = useId();
 
-  // Lock animation once triggered — acts as `once: true` without relying on
-  // per-element IntersectionObservers that fail inside GSAP's pinned scrub.
-  const hasPlayed = useRef(false);
-  if (inView) hasPlayed.current = true;
-  const show = reduced === true || hasPlayed.current;
+  const [activeNodeId, setActiveNodeId] = useState<string>("shift-01");
+
+  const show = reduced === true || inView;
 
   return (
-    <Box ref={rootRef} sx={{ width: 1, overflow: "hidden" }}>
+    <Box
+      ref={rootRef}
+      sx={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: { xs: 1, md: 2 },
+      }}
+    >
       <svg
-        viewBox="0 0 640 320"
+        viewBox="0 0 780 340"
         width="100%"
+        height="100%"
         role="img"
         aria-label="Follow-the-sun coverage. Multi-region shift handover around a 24-hour dial centered on the Philippine hubs, while a flat line below shows constant millisecond-level latency."
-        style={{ display: "block" }}
+        style={{ display: "block", overflow: "visible", maxHeight: 360 }}
       >
         <defs>
-          <pattern id="fts-dots" width="28" height="28" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.2" fill={dots} />
-          </pattern>
+          <filter id={`ftsGlow-${uid}`} x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
-        <rect width="640" height="320" fill="url(#fts-dots)" />
 
-        <circle cx={CX} cy={CY} r="90" fill="none" stroke={NOIR.hairline} strokeWidth="1" strokeDasharray="3 6" />
+        {/* Outer Orbit Guide Halo Rings */}
+        <circle cx={CX} cy={CY} r={RADIUS + 20} fill="none" stroke="rgba(10, 42, 102, 0.05)" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r={RADIUS} fill="none" stroke="rgba(10, 42, 102, 0.1)" strokeWidth="1.5" strokeDasharray="3 5" />
+        <circle cx={CX} cy={CY} r={RADIUS - 28} fill="none" stroke="rgba(10, 42, 102, 0.05)" strokeWidth="1" />
 
-        {SHIFT_ARCS.map((arc, index) => (
+        {/* Handover Arcs */}
+        {HANDOVER_ARCS.map((arc, index) => (
           <motion.path
-            key={`arc-${String(index)}`}
+            key={`handover-arc-${String(index)}`}
             d={arc.path}
             fill="none"
             stroke={arc.stroke}
-            strokeWidth="2.5"
+            strokeWidth="3"
+            strokeLinecap="round"
+            filter={`url(#ftsGlow-${uid})`}
             initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
             animate={show ? { pathLength: 1 } : false}
-            transition={{ duration: 0.7, delay: index * 0.35, ease: "easeInOut" }}
+            transition={{ duration: 0.8, delay: index * 0.2, ease: "easeInOut" }}
           />
         ))}
 
-        {HANDOFFS.map((node) => (
-          <g key={node.label}>
-            <circle cx={node.x} cy={node.y} r="5" fill={NOIR.panel} stroke={NOIR.ink} strokeWidth="2" />
-            <text
-              x={node.tx}
-              y={node.ty}
-              fill={NOIR.mist}
-              fontFamily={MONO}
-              fontSize="13"
-              letterSpacing="2"
-              textAnchor={node.anchor}
-            >
-              {node.label}
-            </text>
-          </g>
+        {/* Central Core Radar Ping */}
+        {!reduced && inView && [0, 1].map((ring) => (
+          <motion.circle
+            key={`radar-${String(ring)}`}
+            cx={CX}
+            cy={CY}
+            r="16"
+            fill="none"
+            stroke={NOIR.gold}
+            strokeWidth="1.5"
+            initial={{ scale: 1, opacity: 0.8 }}
+            animate={{ scale: [1, 2.5], opacity: [0.8, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, delay: ring * 1.25, ease: "easeOut" }}
+            style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
+          />
         ))}
 
-        {reduced === true || !inView ? null : (
-          <circle r="3" fill={NOIR.gold} opacity="0.9">
-            <animateMotion dur="6s" repeatCount="indefinite" begin="1.4s" path={ORBIT_PATH} />
-          </circle>
-        )}
+        {/* Center Node Core */}
+        <circle cx={CX} cy={CY} r="10" fill={NOIR.navyPanel} stroke={NOIR.goldDark} strokeWidth="2" />
+        <circle cx={CX} cy={CY} r="4" fill={NOIR.goldLight} />
 
-        {reduced === true
-          ? null
-          : [0, 1].map((ring) => (
-              <motion.circle
-                key={`radar-${String(ring)}`}
-                cx={CX}
-                cy={CY}
-                r="10"
-                fill="none"
-                stroke={NOIR.gold}
-                strokeWidth="1"
-                initial={{ scale: 1, opacity: 0 }}
-                animate={show ? { scale: [1, 3], opacity: [0.5, 0] } : false}
-                transition={{ duration: 2, repeat: 2, delay: 1.2 + ring }}
-                style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
-              />
-            ))}
-        <circle cx={CX} cy={CY} r="6" fill={NOIR.gold} />
         <text
           x={CX}
-          y={CY + 28}
-          fill={NOIR.mist}
+          y={CY + 32}
+          fill={NOIR.navyField}
           fontFamily={MONO}
-          fontSize="13"
-          letterSpacing="2"
+          fontSize="10"
+          fontWeight="700"
+          letterSpacing="1.4"
           textAnchor="middle"
         >
-          PH HUBS · 24/7
+          24/7 CONTINUITY
         </text>
 
-        <line x1="80" y1="262" x2="560" y2="262" stroke={NOIR.hairline} strokeWidth="1" />
-        <motion.path
-          d="M 80 252 L 560 252"
-          fill="none"
-          stroke={NOIR.gold}
+        {/* 3 Abstract Shift Nodes */}
+        {NODES.map((node) => {
+          const isSelected = activeNodeId === node.id;
+          return (
+            <g
+              key={node.id}
+              onClick={() => setActiveNodeId(node.id)}
+              style={{ cursor: "pointer" }}
+            >
+              {/* Outer target circle */}
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r={isSelected ? 14 : 10}
+                fill={NOIR.white}
+                stroke={isSelected ? NOIR.gold : node.color}
+                strokeWidth={isSelected ? 3 : 2}
+                filter={isSelected ? `url(#ftsGlow-${uid})` : undefined}
+              />
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r={isSelected ? 5 : 3.5}
+                fill={isSelected ? NOIR.goldDark : node.color}
+              />
+
+              {/* Node Title & Timestamp Subtitle */}
+              <text
+                x={node.labelX}
+                y={node.labelY}
+                fill={isSelected ? NOIR.goldDark : NOIR.navyField}
+                fontFamily={MONO}
+                fontSize="11"
+                fontWeight="800"
+                letterSpacing="1.2"
+                textAnchor={node.textAnchor}
+              >
+                {node.label}
+              </text>
+              <text
+                x={node.labelX}
+                y={node.labelY + (node.textAnchor === "middle" ? 14 : 13)}
+                fill={NOIR.mist}
+                fontFamily={MONO}
+                fontSize="9"
+                fontWeight="600"
+                letterSpacing="0.8"
+                textAnchor={node.textAnchor}
+              >
+                {node.utc}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Orbit Photon Tracer */}
+        {!reduced && inView && (
+          <>
+            <circle r="5" fill={NOIR.goldLight} filter={`url(#ftsGlow-${uid})`}>
+              <animateMotion dur="5s" repeatCount="indefinite" path={ORBIT_PATH} />
+            </circle>
+            <circle r="2.5" fill={NOIR.white}>
+              <animateMotion dur="5s" repeatCount="indefinite" path={ORBIT_PATH} />
+            </circle>
+          </>
+        )}
+
+        {/* Bottom Latency Performance Ruler */}
+        <line x1="120" y1="290" x2="660" y2="290" stroke="rgba(10, 42, 102, 0.12)" strokeWidth="1" />
+        <motion.line
+          x1="120"
+          y1="290"
+          x2="660"
+          y2="290"
+          stroke={NOIR.goldDark}
           strokeWidth="2"
           initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
           animate={show ? { pathLength: 1 } : false}
-          transition={{ duration: 1, delay: 1.1, ease: "easeInOut" }}
+          transition={{ duration: 1, delay: 0.5, ease: "easeInOut" }}
         />
-        {[160, 320, 480].map((x) => (
-          <circle key={`tick-${String(x)}`} cx={x} cy="252" r="3" fill={NOIR.gold} />
+
+        {/* Marker Points along timeline */}
+        {[200, 320, 440, 560].map((x) => (
+          <g key={`marker-${String(x)}`}>
+            <circle cx={x} cy="290" r="3.5" fill={NOIR.navyPanel} stroke={NOIR.goldDark} strokeWidth="1.5" />
+            <circle cx={x} cy="290" r="1.5" fill={NOIR.goldLight} />
+          </g>
         ))}
+
         <text
-          x="320"
-          y="296"
-          fill={NOIR.mist}
+          x={CX}
+          y="314"
+          fill={NOIR.navyField}
           fontFamily={MONO}
-          fontSize="13"
-          letterSpacing="2"
+          fontSize="10"
+          fontWeight="700"
+          letterSpacing="1.8"
           textAnchor="middle"
         >
-          MS LATENCY — FLAT
+          CONTINUOUS OPERATIONS · &lt; 0.4MS AVERAGE TRANSIT JITTER
         </text>
       </svg>
     </Box>

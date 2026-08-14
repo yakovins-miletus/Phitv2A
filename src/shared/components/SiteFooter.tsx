@@ -428,6 +428,12 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                 component={RouterLink}
                 to={currentNarration.next}
                 underline="none"
+                onClick={(e: React.MouseEvent) => {
+                  if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                    e.preventDefault();
+                    navigateWithCurtain(currentNarration.next);
+                  }
+                }}
                 sx={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -439,6 +445,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                   borderRadius: "100px",
                   bgcolor: "rgba(255, 255, 255, 0.04)",
                   border: `1px solid ${alpha(NOIR.gold, 0.3)}`,
+                  cursor: "pointer",
                   transition: "all 0.25s ease",
                   "&, &:hover, &:focus, &:active": {
                     textDecoration: "none !important",

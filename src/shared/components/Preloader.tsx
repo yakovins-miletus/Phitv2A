@@ -5,10 +5,10 @@ import gsap from "gsap";
 
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { ScrambleText } from "./ScrambleText";
+import PhitopolisLogo from "./PhitopolisLogo";
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
-const HARD_CAP_MS = 2400;
+const HARD_CAP_MS = 5000;
 
 export interface LoadSignal {
   label: string;
@@ -27,26 +27,85 @@ interface PreloaderProps {
   warmup?: LoadSignal[];
 }
 
+/** Corner Crosshair Hairline Marker */
+function Crosshair({ position, refCallback }: { position: "tl" | "tr" | "bl" | "br"; refCallback?: (el: HTMLDivElement | null) => void }) {
+  const styles: Record<string, object> = {
+    tl: { top: -7, left: -7 },
+    tr: { top: -7, right: -7 },
+    bl: { bottom: -7, left: -7 },
+    br: { bottom: -7, right: -7 },
+  };
+
+  return (
+    <Box
+      ref={refCallback}
+      sx={{
+        position: "absolute",
+        width: 14,
+        height: 14,
+        pointerEvents: "none",
+        zIndex: 5,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: NOIR.gold,
+        opacity: 0,
+        ...styles[position],
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 0V14M0 7H14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
+      </svg>
+    </Box>
+  );
+}
+
 export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const [signals] = useState<LoadSignal[]>(() => [...collectFontSignals(), ...(warmup ?? [])]);
   const [resolved, setResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("ASSETS");
   const [forced, setForced] = useState(false);
+  const [entranceDone, setEntranceDone] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const contentWrapperRef = useRef<HTMLDivElement>(null);
-  const centerCardRef = useRef<HTMLDivElement>(null);
-  const innerRingRef = useRef<SVGSVGElement>(null);
-  const ringProgressRef = useRef<SVGCircleElement>(null);
-  const watermarkRef = useRef<HTMLDivElement>(null);
-  const hudElementsRef = useRef<HTMLDivElement[]>([]);
+  const topShutterRef = useRef<HTMLDivElement>(null);
+  const bottomShutterRef = useRef<HTMLDivElement>(null);
+  const coordsRef = useRef<HTMLDivElement>(null);
+  const centerStageRef = useRef<HTMLDivElement>(null);
+  const frameBoxRef = useRef<HTMLDivElement>(null);
+  const crosshairRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const logoMarkRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLDivElement>(null);
+  const subtitleRef = useRef<HTMLDivElement>(null);
+  const counterWrapRef = useRef<HTMLDivElement>(null);
+  const progressFillRef = useRef<HTMLDivElement>(null);
 
-  // The expanding white box ending ref
-  const whiteExpansionBoxRef = useRef<HTMLDivElement>(null);
+  const entranceTlRef = useRef<gsap.core.Timeline | null>(null);
+  const exitTlRef = useRef<gsap.core.Timeline | null>(null);
 
   const total = Math.max(signals.length, 1);
   const isDoneRef = useRef(false);
   const exitFiredRef = useRef(false);
+  const hasStartedExitRef = useRef(false);
+
+  const onDoneRef = useRef(onDone);
+  const onStartExitRef = useRef(onStartExit);
+
+  useEffect(() => {
+    onDoneRef.current = onDone;
+    onStartExitRef.current = onStartExit;
+  });
+
+  // Lock body scroll while preloader is active
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, []);
 
   // Monitor loading signals
   useEffect(() => {
@@ -82,384 +141,416 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     : Math.round((Math.min(resolved, total) / total) * 100);
 
   const isComplete = progressPercent >= 100;
-  const RING_CIRCUMFERENCE = 389.5; // 2 * PI * 62
 
-  // Initial entrance animations for card and HUD
+  // Stately, one-at-a-time buffered entrance choreography
   useEffect(() => {
-    const centerCardEl = centerCardRef.current;
-    const innerRingEl = innerRingRef.current;
-    const watermarkEl = watermarkRef.current;
-    const huds = hudElementsRef.current.filter(Boolean);
+    const coordsEl = coordsRef.current;
+    const stageEl = centerStageRef.current;
+    const frameEl = frameBoxRef.current;
+    const crosshairs = crosshairRefs.current.filter(Boolean);
+    const logoEl = logoMarkRef.current;
+    const headEl = headlineRef.current;
+    const subEl = subtitleRef.current;
+    const countEl = counterWrapRef.current;
 
-    gsap.set(centerCardEl, { opacity: 0, scale: 0.95, y: 15 });
-    gsap.set(innerRingEl, { scale: 0.9, opacity: 0, rotation: -45 });
-    gsap.set(watermarkEl, { opacity: 0, scale: 0.95 });
-    gsap.set(huds, { opacity: 0, y: -10 });
+    // Reset initial states
+    gsap.set(coordsEl, { opacity: 0, y: -8 });
+    gsap.set(stageEl, { opacity: 0 });
+    gsap.set(frameEl, { scale: 0.93, opacity: 0 });
+    gsap.set(crosshairs, { opacity: 0, scale: 0.6 });
+    gsap.set(logoEl, { scale: 0.88, opacity: 0, y: 10 });
+    gsap.set(headEl, { opacity: 0, y: 12 });
+    gsap.set(subEl, { opacity: 0, y: 8 });
+    gsap.set(countEl, { opacity: 0, y: 8 });
 
-    const tl = gsap.timeline();
-    tl.to(centerCardEl, { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "expo.out" }, 0.05);
-    tl.to(huds, { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }, 0.1);
-    tl.to(innerRingEl, { scale: 1, opacity: 0.9, rotation: 0, duration: 0.8, ease: "power3.out" }, 0.15);
-    tl.to(watermarkEl, { opacity: 0.03, scale: 1, duration: 1.0, ease: "power2.out" }, 0.2);
+    // Step-by-step buffered timeline (Strictly ONE AT A TIME with explicit pause buffers)
+    const tl = gsap.timeline({
+      onComplete: () => {
+        setEntranceDone(true);
+      },
+    });
+
+    entranceTlRef.current = tl;
+
+    // 1. Stage ground & coordinates fade in -> buffer
+    tl.to(coordsEl, { opacity: 0.5, y: 0, duration: 0.35, ease: "power2.out" }, 0);
+    tl.to(stageEl, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+    tl.to({}, { duration: 0.15 }); // Buffer
+
+    // 2. Center frame emerges -> buffer
+    tl.to(frameEl, { scale: 1, opacity: 1, duration: 0.5, ease: "expo.out" });
+    tl.to({}, { duration: 0.15 }); // Buffer
+
+    // 3. Corner crosshairs lock into place one-by-one -> buffer
+    tl.to(crosshairs, { opacity: 1, scale: 1, duration: 0.35, stagger: 0.06, ease: "back.out(1.8)" });
+    tl.to({}, { duration: 0.18 }); // Buffer
+
+    // 4. Logo mark reveals inside frame -> buffer
+    tl.to(logoEl, { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" });
+    tl.to({}, { duration: 0.18 }); // Buffer
+
+    // 5. Headline "Welcome to Phitopolis" reveals -> buffer
+    tl.to(headEl, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" });
+    tl.to({}, { duration: 0.15 }); // Buffer
+
+    // 6. Subtitle brand pillar tag reveals -> buffer
+    tl.to(subEl, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" });
+    tl.to({}, { duration: 0.15 }); // Buffer
+
+    // 7. Counter & diagnostics reveal at bottom
+    tl.to(countEl, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" });
 
     return () => {
       tl.kill();
     };
   }, []);
 
-  // Update ring progress on change
+  // Update progress hairline width
   useEffect(() => {
-    if (ringProgressRef.current) {
-      const offset = RING_CIRCUMFERENCE - (progressPercent / 100) * RING_CIRCUMFERENCE;
-      gsap.to(ringProgressRef.current, {
-        strokeDashoffset: offset,
-        duration: 0.35,
+    if (progressFillRef.current) {
+      gsap.to(progressFillRef.current, {
+        width: `${progressPercent}%`,
+        duration: forced ? 0.1 : 0.3,
         ease: "power2.out",
       });
     }
-  }, [progressPercent]);
+  }, [progressPercent, forced]);
 
-  // When 100% is reached: Trigger White Box Growing Expansion from Center to Screen Size in All Directions!
+  // Master Synchronized Exit Choreography with center-to-outward split black curtain
   useEffect(() => {
-    if (!isComplete || isDoneRef.current) return;
+    const shouldExit = (entranceDone && isComplete) || forced;
+    if (!shouldExit || isDoneRef.current || hasStartedExitRef.current) return;
+    hasStartedExitRef.current = true;
 
-    const contentEl = contentWrapperRef.current;
-    const whiteBoxEl = whiteExpansionBoxRef.current;
-    const rootEl = rootRef.current;
+    if (forced && entranceTlRef.current) {
+      entranceTlRef.current.progress(1);
+    }
+
+    const topShutter = topShutterRef.current;
+    const bottomShutter = bottomShutterRef.current;
+    const stageEl = centerStageRef.current;
+    const countEl = counterWrapRef.current;
+    const coordsEl = coordsRef.current;
+
+    const delay = forced ? 0 : 0.25;
 
     const tl = gsap.timeline({
-      delay: 0.15,
+      delay,
       onComplete: () => {
         if (!isDoneRef.current) {
           isDoneRef.current = true;
           sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-          onDone();
+          onDoneRef.current?.();
         }
       },
     });
 
-    // 1. Content Card softly fades and blurs
-    tl.to(contentEl, {
-      opacity: 0,
-      scale: 1.03,
-      filter: "blur(6px)",
-      duration: 0.3,
-      ease: "power2.in",
-    }, 0);
+    exitTlRef.current = tl;
 
-    // 2. White Box starts at scale 0 at center, grows outward in all directions to fill the screen
-    tl.fromTo(
-      whiteBoxEl,
-      { scale: 0, opacity: 1, borderRadius: "16px" },
+    // Step 1: Bottom counter, coordinates and diagnostics gently draw back
+    tl.to(
+      [countEl, coordsEl],
       {
-        scale: 40,
-        borderRadius: "0px",
-        duration: 0.75,
-        ease: "expo.inOut",
+        opacity: 0,
+        y: 8,
+        duration: 0.3,
+        ease: "power2.in",
       },
-      0.15
+      0
     );
 
-    // 3. Mid-expansion: notify AppShell to release hero stage behind full white coverage
+    // Step 2: Center stage content softly scales and fades
+    tl.to(
+      stageEl,
+      {
+        opacity: 0,
+        scale: 0.96,
+        y: -10,
+        duration: 0.38,
+        ease: "power2.inOut",
+      },
+      0.12
+    );
+
+    // Step 3: Reverted Center-to-Outward Black Curtain Split Reveal!
+    // Top shutter moves up to -100%, bottom shutter moves down to 100%
+    tl.to(
+      topShutter,
+      {
+        yPercent: -100,
+        duration: 0.85,
+        ease: "expo.inOut",
+      },
+      0.35
+    );
+
+    tl.to(
+      bottomShutter,
+      {
+        yPercent: 100,
+        duration: 0.85,
+        ease: "expo.inOut",
+      },
+      0.35
+    );
+
+    // Mid-curtain release: notify AppShell at 50% curtain split
     tl.add(() => {
-      if (!exitFiredRef.current && onStartExit) {
+      if (!exitFiredRef.current && onStartExitRef.current) {
         exitFiredRef.current = true;
-        onStartExit();
+        onStartExitRef.current();
       }
-    }, 0.55);
-
-    // 4. White box dissolves smoothly into the clean hero section
-    tl.to(rootEl, {
-      opacity: 0,
-      duration: 0.4,
-      ease: "power2.out",
-    }, 0.85);
-
-    return () => {
-      tl.kill();
-    };
-  }, [isComplete, onDone, onStartExit]);
+    }, 0.7);
+  }, [entranceDone, isComplete, forced]);
 
   return (
     <Box
       ref={rootRef}
       data-testid="preloader"
-      onClick={() => setForced(true)}
       sx={{
         position: "fixed",
         inset: 0,
-        zIndex: 9999,
-        cursor: "pointer",
+        zIndex: 99999,
         overflow: "hidden",
-        bgcolor: "#030712",
-        background: "radial-gradient(ellipse at center, #07152d 0%, #030712 75%)",
+        pointerEvents: hasStartedExitRef.current ? "none" : "auto",
       }}
     >
-      {/* Expanding White Box (Clean Center Expansion Transition) */}
+      {/* Top Half Black/Navy Shutter Curtain (Moves upward to -100%) */}
       <Box
-        ref={whiteExpansionBoxRef}
+        ref={topShutterRef}
         sx={{
           position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%) scale(0)",
-          width: { xs: "80px", md: "110px" },
-          height: { xs: "80px", md: "110px" },
-          bgcolor: "#FFFFFF",
-          zIndex: 50,
-          pointerEvents: "none",
-          willChange: "transform, border-radius",
-          boxShadow: "0 0 80px rgba(255, 255, 255, 0.9)",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "50.5vh", // Slight overlap to prevent subpixel hairline gap at horizon
+          bgcolor: NOIR.navyInk,
+          background: "linear-gradient(180deg, #030712 0%, #06183B 100%)",
+          borderBottom: "1px solid rgba(255, 199, 44, 0.15)",
+          zIndex: 2,
+          willChange: "transform",
         }}
       />
 
-      {/* Subtle Background Watermark */}
+      {/* Bottom Half Black/Navy Shutter Curtain (Moves downward to 100%) */}
       <Box
-        ref={watermarkRef}
+        ref={bottomShutterRef}
         sx={{
           position: "absolute",
-          inset: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "50.5vh",
+          bgcolor: NOIR.navyInk,
+          background: "linear-gradient(180deg, #06183B 0%, #030712 100%)",
+          borderTop: "1px solid rgba(255, 199, 44, 0.15)",
           zIndex: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-          opacity: 0,
+          willChange: "transform",
         }}
-      >
-        <Typography
-          sx={{
-            fontWeight: 900,
-            fontSize: { xs: "14vw", md: "18vw" },
-            letterSpacing: "0.15em",
-            color: "#FFFFFF",
-            fontFamily: "Inter, sans-serif",
-            whiteSpace: "nowrap",
-            userSelect: "none",
-          }}
-        >
-          PHITOPOLIS
-        </Typography>
-      </Box>
+      />
 
-      {/* Main Interactive Telemetry Content Layer */}
+      {/* Center Interactive Foreground Layer */}
       <Box
-        ref={contentWrapperRef}
         sx={{
           position: "absolute",
           inset: 0,
           zIndex: 10,
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           justifyContent: "space-between",
-          p: { xs: 3.5, md: 6 },
-          color: "#F4F7FC",
+          py: { xs: 5, md: 7 },
+          px: 3,
         }}
       >
-        {/* Top Header Telemetry */}
-        <Box
-          ref={(el) => {
-            if (el) hudElementsRef.current[0] = el as unknown as HTMLDivElement;
-          }}
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "100%",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                bgcolor: NOIR.gold,
-                boxShadow: `0 0 10px ${NOIR.gold}`,
-              }}
-            />
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                fontSize: { xs: 9, md: 11 },
-                letterSpacing: "0.22em",
-                color: "rgba(244, 247, 252, 0.7)",
-                textTransform: "uppercase",
-              }}
-            >
-              SYS.LOC // MANILA [14.5995° N, 120.9842° E]
-            </Typography>
-          </Box>
-
+        {/* Top Subtle Coordinates Tag */}
+        <Box ref={coordsRef} sx={{ opacity: 0, userSelect: "none" }}>
           <Typography
             sx={{
               fontFamily: MONO,
-              fontSize: { xs: 9, md: 11 },
+              fontSize: { xs: "0.6rem", md: "0.68rem" },
               letterSpacing: "0.22em",
-              color: NOIR.gold,
+              color: "rgba(244, 247, 252, 0.6)",
               textTransform: "uppercase",
             }}
           >
-            ● QUANTITATIVE PLATFORM
+            SYS.LOC // MANILA [14.5995° N, 120.9842° E]
           </Typography>
         </Box>
 
-        {/* Center Stage: Refined Frosted Glass Card */}
+        {/* Center Stage Container */}
         <Box
-          ref={centerCardRef}
+          ref={centerStageRef}
           sx={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 2.2,
+            gap: { xs: 2.5, md: 3 },
             my: "auto",
-            mx: "auto",
-            position: "relative",
-            p: { xs: 4, md: 5.5 },
-            maxWidth: 640,
-            width: "100%",
-            borderRadius: "24px",
-            bgcolor: "rgba(8, 18, 38, 0.5)",
-            backdropFilter: "blur(24px) saturate(140%)",
-            WebkitBackdropFilter: "blur(24px) saturate(140%)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            boxShadow: "0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
           }}
         >
-          {/* Central Logo & Circular Progress */}
-          <Box sx={{ position: "relative", width: 130, height: 130, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg ref={innerRingRef} width="130" height="130" viewBox="0 0 140 140" style={{ position: "absolute" }}>
-              <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="1.5" />
-              <circle
-                ref={ringProgressRef}
-                cx="70"
-                cy="70"
-                r="62"
-                fill="none"
-                stroke={NOIR.gold}
-                strokeWidth="2"
-                strokeDasharray="389.5"
-                strokeDashoffset="389.5"
-                strokeLinecap="round"
-                style={{ transform: "rotate(-90deg)", transformOrigin: "70px 70px" }}
-              />
-            </svg>
+          {/* Framed Square with Corner Gold Crosshairs */}
+          <Box
+            ref={frameBoxRef}
+            sx={{
+              position: "relative",
+              width: { xs: 160, sm: 190, md: 210 },
+              height: { xs: 160, sm: 190, md: 210 },
+              bgcolor: "rgba(6, 18, 38, 0.6)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.09)",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {/* 4 Corner Precision Crosshairs */}
+            <Crosshair position="tl" refCallback={(el) => { crosshairRefs.current[0] = el; }} />
+            <Crosshair position="tr" refCallback={(el) => { crosshairRefs.current[1] = el; }} />
+            <Crosshair position="bl" refCallback={(el) => { crosshairRefs.current[2] = el; }} />
+            <Crosshair position="br" refCallback={(el) => { crosshairRefs.current[3] = el; }} />
 
+            {/* Central Phitopolis Logo Mark with Gold Phi Accent */}
             <Box
-              component="img"
-              src="/phitopolis_logo_hero.svg"
-              alt="Phitopolis Logo"
+              ref={logoMarkRef}
               sx={{
-                width: 50,
-                height: 50,
-                filter: `drop-shadow(0 0 20px rgba(255, 215, 0, 0.4))`,
-                zIndex: 2,
+                width: { xs: 75, sm: 90, md: 100 },
+                height: { xs: 75, sm: 90, md: 100 },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                filter: "drop-shadow(0 4px 20px rgba(255, 199, 44, 0.2))",
+              }}
+            >
+              <PhitopolisLogo
+                style={{ width: "100%", height: "100%" }}
+                color="#FFFFFF"
+                accentColor={NOIR.gold}
+                title="Phitopolis"
+              />
+            </Box>
+          </Box>
+
+          {/* Center Editorial Headline: "Welcome to Phitopolis" */}
+          <Box
+            ref={headlineRef}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              userSelect: "none",
+            }}
+          >
+            <Typography
+              component="h1"
+              sx={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: { xs: "1.25rem", sm: "1.6rem", md: "1.95rem" },
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                color: NOIR.frost,
+                lineHeight: 1.2,
+                textTransform: "none",
+              }}
+            >
+              Welcome to{" "}
+              <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>
+                Phitopolis
+              </Box>
+            </Typography>
+          </Box>
+
+          {/* Under-Headline Subtitle: Brand Pillar Tag */}
+          <Box
+            ref={subtitleRef}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              userSelect: "none",
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: { xs: "0.6rem", sm: "0.68rem", md: "0.74rem" },
+                fontWeight: 600,
+                letterSpacing: { xs: "0.2em", sm: "0.26em" },
+                color: "rgba(244, 247, 252, 0.65)",
+                textTransform: "uppercase",
+              }}
+            >
+              QUANTITATIVE SYSTEMS · HIGH PERFORMANCE R&D
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Bottom Minimalist Progress Bar, Kinetic Counter & Diagnostics */}
+        <Box
+          ref={counterWrapRef}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 1.2,
+            userSelect: "none",
+            width: "100%",
+            maxWidth: 240,
+          }}
+        >
+          {/* Hairline Progress Rail */}
+          <Box
+            sx={{
+              width: "100%",
+              height: "1.5px",
+              bgcolor: "rgba(255, 255, 255, 0.08)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              ref={progressFillRef}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: `${progressPercent}%`,
+                bgcolor: NOIR.gold,
+                boxShadow: `0 0 8px ${NOIR.gold}`,
               }}
             />
           </Box>
 
-          {/* Clean Oversized Kinetic Counter */}
+          {/* Minimal Tabular Counter */}
           <Typography
             sx={{
               fontFamily: MONO,
-              fontSize: { xs: "3rem", sm: "4.2rem", md: "5.5rem" },
-              fontWeight: 800,
-              lineHeight: 1,
-              letterSpacing: "-0.04em",
+              fontSize: { xs: "0.85rem", md: "0.95rem" },
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: NOIR.gold,
               fontVariantNumeric: "tabular-nums",
-              color: isComplete ? "#FFFFFF" : "#F4F7FC",
-              textShadow: isComplete ? "0 0 25px rgba(255, 255, 255, 0.8)" : "none",
-              transition: "text-shadow 0.3s ease, color 0.3s ease",
             }}
           >
             {String(progressPercent).padStart(2, "0")}%
           </Typography>
 
-          {/* Minimalist Split Wordmark */}
-          <Box
-            sx={{
-              display: "flex",
-              perspective: 1000,
-              gap: "0.06em",
-              zIndex: 2,
-            }}
-          >
-            {"PHITOPOLIS".split("").map((char, idx) => (
-              <Typography
-                key={`intro-char-${idx}`}
-                component="span"
-                sx={{
-                  fontFamily: "Inter, sans-serif",
-                  fontWeight: 800,
-                  fontSize: { xs: "1.3rem", sm: "1.8rem", md: "2.4rem" },
-                  letterSpacing: "0.14em",
-                  color: char === "I" || char === "T" ? NOIR.gold : "#F4F7FC",
-                  display: "inline-block",
-                }}
-              >
-                {char}
-              </Typography>
-            ))}
-          </Box>
-
-          {/* Subtitle / Scramble Tagline */}
+          {/* Accessible System Status Label */}
           <Typography
             sx={{
               fontFamily: MONO,
-              fontSize: { xs: 9, md: 10.5 },
-              letterSpacing: "0.24em",
-              color: "rgba(244, 247, 252, 0.6)",
-              textTransform: "uppercase",
-              mt: 0.5,
-              zIndex: 2,
-              textAlign: "center",
-            }}
-          >
-            <ScrambleText text="MAKING TOMORROW'S TECHNOLOGY AVAILABLE TODAY" step={40} />
-          </Typography>
-
-          {/* Ticking State Label */}
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              color: NOIR.gold,
-              fontSize: "0.75rem",
+              fontSize: "0.62rem",
               letterSpacing: "0.18em",
+              color: "rgba(244, 247, 252, 0.45)",
               textTransform: "uppercase",
-              mt: 0.5,
             }}
           >
             {isComplete ? "READY" : `WARMING — ${lastLabel}`}
           </Typography>
-        </Box>
-
-        {/* Bottom Diagnostics */}
-        <Box
-          ref={(el) => {
-            if (el) hudElementsRef.current[1] = el as unknown as HTMLDivElement;
-          }}
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            width: "100%",
-          }}
-        >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            <Typography sx={{ fontFamily: MONO, fontSize: { xs: 9, md: 11 }, letterSpacing: "0.18em", color: NOIR.gold }}>
-              SYS.STATUS // PIPELINE SYNCHRONIZED
-            </Typography>
-            <Typography sx={{ fontFamily: MONO, fontSize: { xs: 8, md: 10 }, letterSpacing: "0.14em", color: "rgba(244, 247, 252, 0.45)" }}>
-              INITIALIZING IMMERSIVE ENVIRONMENT...
-            </Typography>
-          </Box>
-
-          <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
-            <Typography sx={{ fontFamily: MONO, fontSize: { xs: 9, md: 10.5 }, letterSpacing: "0.18em", color: "rgba(244, 247, 252, 0.45)" }}>
-              [ ESC TO SKIP ]
-            </Typography>
-          </Box>
         </Box>
       </Box>
     </Box>
