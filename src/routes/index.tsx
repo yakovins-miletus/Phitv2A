@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { pageHead } from "@/shared/seo";
@@ -22,13 +23,15 @@ import { TestimonialsSection } from "@/features/home/components/TestimonialsSect
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
 import { PreHeaderSequence } from "@/features/home/components/PreHeaderSequence";
+import { PillarsEstablishingShot } from "@/features/home/components/establishing/PillarsEstablishingShot";
+import { ProcessEstablishingShot } from "@/features/home/components/establishing/ProcessEstablishingShot";
+import { SeamEstablishingShot } from "@/features/home/components/establishing/SeamEstablishingShot";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 
 // No gsap/lenis imports at route-module scope: this file stays in the eager
 // bundle even with autoCodeSplitting, so anything imported here ships to every
 // visitor. Scroll wiring lives in <SmoothScroll /> and inside the section
-// components, which ride the lazy home chunk. (The comment said this before
-// the sections were extracted, while the file imported gsap, ScrollTrigger and
-// useGSAP directly above it. Now it is true.)
+// components, which ride the lazy home chunk.
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -49,27 +52,9 @@ function HomePage() {
       <SmoothScroll />
       <GroundLayer />
       <EyeFlow />
-      {/* Two acts, one per variety the firm sells: SERVICES (what we build) then
-          PEOPLE (who builds it). The seam is between `reach-sequence` and
-          `daily-life-sequence`, where `ledes.dailyLife` carries the written
-          handover — "That is the work. These are the people who do it."
-
-          `data-act` is tagged per SECTION rather than on two wrapper divs, and
-          that is deliberate: `#compact-zone` spans process→blog, so the act
-          boundary falls *inside* it. Wrapper divs per act would have forced the
-          compact zone to shrink to process→reach, silently dropping the navbar's
-          compact behaviour over the whole People act. The ground layer unions the
-          rects of every element sharing an act, so it needs the tags, not a
-          container.
-
-          There are no <Divider />s here any more. A hairline at every seam
-          announces the cut instead of absorbing it, and it fought the ground
-          transitions directly. Separation is space and ground change now. */}
       <Box component="main" id="home-main" sx={{ position: "relative", overflowX: "clip" }}>
         <PreHeaderSequence />
-        {/* 01. Hero Sequence — stays GSAP-pinned (position: fixed) during
-            the scroll animation. The overlay sheet below uses negative margin
-            to slide up and cover it while it is still pinned. */}
+        {/* 01. Hero Sequence */}
         <Box
           component="section"
           id="hero-sequence"
@@ -80,9 +65,7 @@ function HomePage() {
           <SuperHeroSequence />
         </Box>
 
-        {/* 02-04. Parallax overlay sheet — negative margin pulls it up into
-            the last 100vh of the hero pin, so it slides over the still-fixed
-            hero content. Rounded corners + shadow = About-page card overlay. */}
+        {/* 02-04. Parallax overlay sheet */}
         <Box
           data-act="services"
           sx={{
@@ -95,21 +78,46 @@ function HomePage() {
           }}
         >
           <MissionStatement />
+
+          {/* Major Establishing Shot 1: Operating Pillars */}
+          <PillarsEstablishingShot />
           <OperatingPillars />
+
+          {/* Mini Establishing Shot 1: Market Position */}
+          <Container maxWidth="2xl" sx={{ pt: { xs: 4, md: 6 } }}>
+            <MiniEstablishingShot
+              indexTag="01.MINI"
+              category="MARKET POSITIONING"
+              title="Institutional Capital & Global Orderflow"
+              titleAccent="At Scale"
+              tracer="Decades of institutional Wall Street domain mastery paired with disciplined engineering execution."
+              status="ONLINE"
+            />
+          </Container>
           <MarketPosition />
         </Box>
 
-        {/* 05. Capabilities & Services */}
+        {/* Mini Establishing Shot 2: Capabilities */}
         <Box
           component="section"
           id="capabilities"
           aria-label="Capabilities and Services"
           data-act="services"
         >
+          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 10 } }}>
+            <MiniEstablishingShot
+              indexTag="02.MINI"
+              category="CORE DISCIPLINES"
+              title="Four Core Pillars of"
+              titleAccent="Quantitative R&D"
+              tracer="High-performance computing, systematic execution engines, and mathematical research frameworks."
+              status="04 DISCIPLINES"
+            />
+          </Container>
           <CapabilityRack />
         </Box>
 
-        {/* 03. Use Cases Narrative */}
+        {/* Mini Establishing Shot 3: Use Cases */}
         <Box
           ref={useCasesRef}
           component="section"
@@ -117,12 +125,23 @@ function HomePage() {
           aria-label="Real-World Applications"
           data-act="services"
         >
+          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+            <MiniEstablishingShot
+              indexTag="03.MINI"
+              category="APPLIED ARCHITECTURES"
+              title="Production Topologies & Real-World"
+              titleAccent="Case Studies"
+              tracer="End-to-end telemetry and architectural breakdowns of institutional deployments across global venues."
+              status="PROD_READY"
+            />
+          </Container>
           <UseCasesNarrative />
         </Box>
 
-        {/* 04. Compact & Sequential Sections Zone — spans process→blog and so
-            straddles the act seam. See the note above. */}
+        {/* 04. Compact & Sequential Sections Zone */}
         <Box ref={compactZoneRef} id="compact-zone">
+          {/* Major Establishing Shot 2: Process Pipeline */}
+          <ProcessEstablishingShot />
           <Box
             component="section"
             id="process-sequence"
@@ -132,7 +151,22 @@ function HomePage() {
             <ProcessSection />
           </Box>
 
-          {/* Global Footprint — closes Act I. */}
+          {/* Mini Establishing Shot 4: Global Footprint */}
+          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+            <MiniEstablishingShot
+              indexTag="04.MINI"
+              category="GLOBAL FABRIC"
+              title="Worldwide Low-Latency"
+              titleAccent="Interconnect"
+              tracer="Co-located execution presence spanning London, New York, Singapore, and Tokyo financial hubs."
+              status="SYNC: <1ms"
+            />
+          </Container>
+
+          {/* Major Establishing Shot 3: Before The Seam (Act I -> Act II) */}
+          <SeamEstablishingShot />
+
+          {/* Global Footprint — closes Act I */}
           <Box
             component="section"
             id="reach-sequence"
@@ -142,9 +176,7 @@ function HomePage() {
             <ReachSection />
           </Box>
 
-          {/* ── ACT II · PEOPLE ─────────────────────────────────────────────────
-              Daily Life opens the act; the ground layer plays its one directional
-              wipe at this boundary rather than a crossfade. */}
+          {/* ── ACT II · PEOPLE ───────────────────────────────────────────────── */}
           <Box
             component="section"
             id="daily-life-sequence"
@@ -163,6 +195,17 @@ function HomePage() {
             <TestimonialsSection />
           </Box>
 
+          {/* Mini Establishing Shot 5: Talent & Careers */}
+          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+            <MiniEstablishingShot
+              indexTag="05.MINI"
+              category="HUMAN CAPITAL"
+              title="Join a Global Cohort of"
+              titleAccent="Quantitative Engineers"
+              tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."
+              status="HIRING // GLOBAL"
+            />
+          </Container>
           <Box
             component="section"
             id="careers-sequence"
@@ -172,6 +215,18 @@ function HomePage() {
             <CandidatesAndCareersSection />
           </Box>
 
+          {/* Mini Establishing Shot 6: Intelligence Feed */}
+          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+            <MiniEstablishingShot
+              indexTag="06.MINI"
+              category="TECHNICAL DISPATCHES"
+              title="Research, Whitepapers &"
+              titleAccent="Engineering Signals"
+              tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
+              status="FEED: LIVE"
+              dark
+            />
+          </Container>
           <Box
             component="section"
             id="blog-sequence"
@@ -181,14 +236,20 @@ function HomePage() {
             <BlogSection />
           </Box>
 
-          {/* The close. `sections.ts` has carried a `closing` entry ("Horizon
-              Gateway") since the section list was written and nothing ever
-              rendered it — this is that slot, finally filled. It looks back over
-              both acts and resolves the hero's promise instead of repeating it. */}
+          {/* Mini Establishing Shot 7: Horizon Gateway */}
+          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+            <MiniEstablishingShot
+              indexTag="07.MINI"
+              category="GATEWAY TERMINAL"
+              title="Initialize Collaboration &"
+              titleAccent="Institutional Partnership"
+              tracer="Direct line to our technical leadership and quantitative engineering directors."
+              status="READY"
+            />
+          </Container>
           <ClosingShelf />
         </Box>
       </Box>
-      {/* No footer here: AppShell renders the site footer for every route */}
     </>
   );
 }

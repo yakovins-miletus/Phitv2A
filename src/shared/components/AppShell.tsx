@@ -22,7 +22,7 @@ import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
 import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
-import { TransitionCurtainProvider } from "./TransitionCurtain";
+import { TransitionCurtainProvider, useTransitionCurtain } from "./TransitionCurtain";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
 import { SiteFooter } from "./SiteFooter";
@@ -387,6 +387,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
 
   const headerReleased = phase === "header" || phase === "open";
+  const { navigateWithCurtain } = useTransitionCurtain();
   const { overrideMode, derivedIsCompact, isOverDarkSection, autohideEnabled, showMotto, toggleMotto } = useNavbar();
   const navHidden = useNavAutohide(autohideEnabled, pathname);
 
@@ -590,6 +591,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
               <RouterLink
                 to="/"
                 underline="none"
+                onClick={(e) => {
+                  if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                    e.preventDefault();
+                    navigateWithCurtain("/");
+                  }
+                }}
                 sx={{ 
                   textDecoration: "none", 
                   flexShrink: 0, 
@@ -660,6 +667,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
                         key={item.to}
                         to={item.to}
                         underline="none"
+                        onClick={(e) => {
+                          if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                            e.preventDefault();
+                            navigateWithCurtain(item.to);
+                          }
+                        }}
                         sx={{
                           fontFamily: MONO,
                           fontSize: "0.72rem",

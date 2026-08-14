@@ -24,6 +24,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { alpha } from "@mui/material/styles";
 
 import { RouterLink, RouterButton } from "@/shared/components/RouterLink";
+import { useTransitionCurtain } from "@/shared/components/TransitionCurtain";
 import { LogoParticleField } from "@/shared/components/LogoParticleField";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
@@ -88,6 +89,7 @@ const CHAPTER_VISUAL_MAP: Record<string, ChapterVisualMeta> = {
 };
 
 export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProps) {
+  const { navigateWithCurtain } = useTransitionCurtain();
   return (
     <Box
       component="footer"
@@ -153,6 +155,12 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                         component={RouterLink}
                         to={link.to}
                         underline="none"
+                        onClick={(e: React.MouseEvent) => {
+                          if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                            e.preventDefault();
+                            navigateWithCurtain(link.to);
+                          }
+                        }}
                         sx={{
                           position: "relative",
                           display: "flex",
