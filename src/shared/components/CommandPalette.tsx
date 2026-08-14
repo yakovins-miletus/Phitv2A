@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Box, InputBase, Modal, Typography } from "@mui/material";
-import { useNavigate } from "@tanstack/react-router";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
@@ -17,6 +16,8 @@ import {
   type Group,
 } from "./commandActions";
 
+import { useTransitionCurtain } from "./TransitionCurtain";
+
 const LISTBOX_ID = "cmdk-listbox";
 const optId = (id: string) => `cmdk-opt-${id}`;
 
@@ -26,7 +27,7 @@ const isEditableTarget = (t: EventTarget | null): boolean => {
 };
 
 export function CommandPalette() {
-  const navigate = useNavigate();
+  const { navigateWithCurtain } = useTransitionCurtain();
   const reducedMotion = useReducedMotion();
   const { mode: heroMode } = useHeroModeState();
   const { mode: heroBgMode } = useHeroBgModeState();
@@ -45,7 +46,10 @@ export function CommandPalette() {
   );
 
   const { execute, copiedId, signalChars, resetRuntime } = useCommandExecutor(
-    (opts) => void navigate(opts),
+    (opts) => {
+      setOpen(false);
+      navigateWithCurtain(opts.to);
+    },
   );
 
   const handleClose = useCallback(() => {

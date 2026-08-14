@@ -184,6 +184,18 @@ export function DriftWall({
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
 
+  const tileRefs = useRef<{ el: HTMLElement; vX: number; vY: number; posX: number; posY: number }[]>([]);
+  const mousePosRef = useRef({ x: -1000, y: -1000, tX: -1000, tY: -1000 });
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      mousePosRef.current.tX = e.clientX;
+      mousePosRef.current.tY = e.clientY;
+    };
+    window.addEventListener("mousemove", handleMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
+
   const reduced = useReducedMotion() === true;
 
   /** Measured container box. The initial 0s are never used to size anything — the
@@ -301,6 +313,9 @@ export function DriftWall({
     for (const col of runtimeRef.current) {
       if (col.el) col.el.style.transform = `translate3d(0, ${-col.offset}px, 0)`;
     }
+
+    const inners = el.querySelectorAll<HTMLElement>(".dw-inner");
+    tileRefs.current = Array.from(inners, (inner) => ({ el: inner, vX: 0, vY: 0, posX: 0, posY: 0 }));
   }, [columnItems, copies, tileHeight, gap, speed, variance, direction]);
 
   /**
@@ -338,6 +353,41 @@ export function DriftWall({
           // keeps the sign of the dividend.
           col.offset = ((next % col.copyHeight) + col.copyHeight) % col.copyHeight;
           if (col.el) col.el.style.transform = `translate3d(0, ${-col.offset}px, 0)`;
+        }
+
+        const mouse = mousePosRef.current;
+        mouse.x += (mouse.tX - mouse.x) * 0.12;
+        mouse.y += (mouse.tY - mouse.y) * 0.12;
+
+        for (const tile of tileRefs.current) {
+          if (!tile.el) continue;
+          const rect = tile.el.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const dx = cx - mouse.x;
+          const dy = cy - mouse.y;
+          const distSq = dx * dx + dy * dy;
+          const maxDist = 450;
+          let targetX = 0;
+          let targetY = 0;
+
+          if (distSq < maxDist * maxDist && distSq > 0) {
+            const dist = Math.sqrt(distSq);
+            const force = (maxDist - dist) / maxDist;
+            const push = force * force * 50; 
+            targetX = (dx / dist) * push;
+            targetY = (dy / dist) * push;
+          }
+
+          tile.vX += (targetX - tile.posX) * 0.15;
+          tile.vY += (targetY - tile.posY) * 0.15;
+          tile.vX *= 0.82; 
+          tile.vY *= 0.82;
+          tile.posX += tile.vX;
+          tile.posY += tile.vY;
+
+          const scale = 1 - Math.min(0.06, (Math.abs(tile.posX) + Math.abs(tile.posY)) * 0.0015);
+          tile.el.style.transform = `translate3d(${tile.posX}px, ${tile.posY}px, 0) scale(${scale})`;
         }
       }
       rafRef.current = requestAnimationFrame(frame);

@@ -34,14 +34,14 @@ export function OperatingPillars() {
     <StageSection section={homeSection("hero-pillars")}>
       <AppetizerReveal
         headerContent={
-          <Box sx={{ mb: { xs: 2, md: 4 } }}>
+          <Box>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 2 }}>
               <Box
                 sx={{
                   width: 24,
                   height: 2,
                   borderRadius: 1,
-                  background: `linear-gradient(90deg, ${NOIR.goldDark}, transparent)`,
+                  background: `linear-gradient(90deg, ${NOIR.navyField}, transparent)`,
                 }}
               />
               <Typography
@@ -49,10 +49,10 @@ export function OperatingPillars() {
                 variant="overline"
                 sx={{
                   fontFamily: MONO,
-                  color: NOIR.goldDark,
+                  color: NOIR.navyField,
                   display: "block",
                   letterSpacing: "0.2em",
-                  fontWeight: 600,
+                  fontWeight: 700,
                 }}
               >
                 Organizational structure
@@ -63,7 +63,7 @@ export function OperatingPillars() {
               component="h2"
               sx={{
                 maxWidth: "20ch",
-                color: GROUND.fg,
+                color: NOIR.navyField,
                 fontSize: { xs: "2.25rem", sm: "3rem", md: "3.5rem" },
                 fontWeight: 700,
                 lineHeight: 1.1,
@@ -79,41 +79,40 @@ export function OperatingPillars() {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                gridTemplateColumns: { xs: "1fr", md: "repeat(12, 1fr)" },
                 gap: { xs: 4, md: 4 },
-                width: '100%',
+                width: "100%",
               }}
             >
               {pillars.map((pillar, i) => {
                 const Icon = PILLAR_ICONS[i] ?? PILLAR_ICONS[0]!;
+                const mdColSpan = i === 0 ? "span 7" : i === 1 ? "span 5" : "span 12";
 
             return (
               <Box
                 key={pillar.id}
                 sx={{
+                  gridColumn: { xs: "span 1", md: mdColSpan },
                   position: "relative",
                   borderRadius: "16px",
                   p: { xs: 3.5, md: 4.5 },
                   background: GROUND.dark
-                    ? "rgba(255, 255, 255, 0.03)"
-                    : "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 247, 252, 0.6) 100%)",
-                  border: `1px solid ${GROUND.dark ? "rgba(255, 255, 255, 0.08)" : "rgba(10, 42, 102, 0.12)"}`,
+                    ? "rgba(255, 255, 255, 0.04)"
+                    : "#FFFFFF",
+                  border: `1px solid ${GROUND.dark ? "rgba(255, 255, 255, 0.12)" : "rgba(10, 42, 102, 0.16)"}`,
                   boxShadow: GROUND.dark
-                    ? "0 4px 20px rgba(0, 0, 0, 0.2)"
-                    : "0 4px 20px rgba(10, 42, 102, 0.04)",
+                    ? "0 4px 20px rgba(0, 0, 0, 0.25)"
+                    : "0 8px 30px rgba(10, 42, 102, 0.08), 0 1px 3px rgba(10, 42, 102, 0.04)",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  // Strict adherence to anti-slop rules:
-                  // ZERO translateY elevation or lift on hover.
-                  // Micro-interactions rely entirely on border color, glow, and fill transitions.
-                  transition: "border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease",
+                  transition: "border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease",
                   "&:hover": {
                     borderColor: NOIR.goldDark,
                     boxShadow: GROUND.dark
                       ? "0 4px 20px rgba(229, 178, 40, 0.15)"
-                      : "0 4px 24px rgba(229, 178, 40, 0.12)",
+                      : "0 12px 36px rgba(10, 42, 102, 0.12)",
                     "& .pillar-accent-line": {
                       opacity: 1,
                       width: "100%",
@@ -141,12 +140,11 @@ export function OperatingPillars() {
                 />
 
                 <Box>
-                  {/* Icon & Pillar Index Header */}
+                  {/* Icon Header */}
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
                       mb: 3.5,
                     }}
                   >
@@ -168,24 +166,6 @@ export function OperatingPillars() {
                     >
                       {Icon}
                     </Box>
-
-                    <Typography
-                      component="span"
-                      sx={{
-                        fontFamily: MONO,
-                        fontSize: "0.85rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.15em",
-                        color: NOIR.goldDark,
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: "6px",
-                        background: "rgba(229, 178, 40, 0.1)",
-                        border: "1px solid rgba(229, 178, 40, 0.25)",
-                      }}
-                    >
-                      {pillar.id}
-                    </Typography>
                   </Box>
 
                   {/* POPPING PILLAR TITLE */}
@@ -196,7 +176,7 @@ export function OperatingPillars() {
                       fontWeight: 800,
                       color: GROUND.fg,
                       letterSpacing: "-0.02em",
-                      mb: 2,
+                      mb: 0,
                       fontSize: { xs: "1.5rem", md: "1.75rem" },
                       lineHeight: 1.25,
                       position: "relative",

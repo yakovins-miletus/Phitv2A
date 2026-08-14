@@ -5,6 +5,8 @@ import Button from "@mui/material/Button";
 import { alpha } from "@mui/material/styles";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CustomEase } from "gsap/CustomEase";
+import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { Magnetic } from "@/shared/components/Magnetic";
@@ -54,7 +56,7 @@ import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
 
 /** The hero holds for viewport height to give room for 3 logo phases,
  *  an empty dwell threshold, the gunshot transition, smoking drift, and AT PHITOPOLIS mini transformation. */
@@ -208,7 +210,6 @@ const LINK_PILL_SX = {
   },
   "@media (hover: hover)": {
     "&:hover": {
-      transform: "translateY(-2px)",
       backgroundColor: "rgba(10, 42, 102, 0.92)",
       outline: "1px solid rgba(255, 215, 0, 0.50)",
       boxShadow: "0 12px 32px rgba(10, 42, 102, 0.35), 0 0 16px rgba(255, 215, 0, 0.30)",
@@ -244,6 +245,8 @@ const HERO_GUTTER = { xs: 32, md: 72 } as const;
 export function HeroSignalCore() {
   const pinRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
+  const flankTopRef = useRef<HTMLDivElement>(null);
+  const flankBottomRef = useRef<HTMLDivElement>(null);
   // Stage 4: the scaled card's own element — the sky/disc parallax publisher
   // target. A distinct ref from `containerRef` (the outer #hero box) so the
   // vars are written on the same element the sky Box is a direct child of.
@@ -518,51 +521,37 @@ export function HeroSignalCore() {
       const el = containerRef.current;
       if (!el) return;
 
-      ScrollTrigger.create({
-        trigger: pinRef.current,
-        start: "top top",
-        end: HERO_PIN_DISTANCE,
-        scrub: 0.6,
-        pin: true,
-        onUpdate: (self) => {
-          // Clamp so animations complete at 1800/1900 of the pin.
-          // The final 100vh of pin time is dead air for the overlay transition.
-          const p = Math.min(1.1, self.progress / ANIM_LIMIT);
+      CustomEase.create("gunshotSnap", "M0,0 C0.1,0.9 0.2,1 1,1");
+      CustomEase.create("drift", "M0,0 C0.2,0 0.2,1 1,1");
 
-          // Per-frame: one batch of custom-property writes. No React render.
+      const yQuick = gsap.quickTo(el, "y", { duration: 0.8, ease: "power3.out" });
+      const proxy = { progress: 0 };
+      
+      let splitTop: SplitText | undefined;
+      let splitBottom: SplitText | undefined;
+      if (flankTopRef.current && flankBottomRef.current) {
+        splitTop = new SplitText(flankTopRef.current, { type: "lines,chars" });
+        splitBottom = new SplitText(flankBottomRef.current, { type: "lines,chars" });
+        gsap.set([splitTop.chars, splitBottom.chars], { yPercent: 100, opacity: 0 });
+      }
+
+      const master = gsap.timeline({
+        paused: true,
+        onUpdate: () => {
+          const p = proxy.progress;
+
           writeHeroVars(el, heroVars(p, false));
           if (pinRef.current) {
             writeHeroVars(pinRef.current, heroVars(p, false));
           }
           canvasHandleRef.current?.setProgress(p);
 
-          // Parallax drift: during the overlap phase (progress > ANIM_LIMIT),
-          // translate the hero content upward at ~30% of the scroll rate.
-          // This makes the hero appear to recede slowly while the overlay
-          // sheet slides over it at full scroll speed — true parallax.
-          if (self.progress > ANIM_LIMIT) {
-            const overlapT = (self.progress - ANIM_LIMIT) / (1 - ANIM_LIMIT);
-            const drift = overlapT * -30; // up to -30vh upward drift
-            el.style.transform = `translateY(${drift}vh)`;
-          } else {
-            el.style.transform = "";
-          }
+          if (p < 0.20) setActiveSection("hero-flatten");
+          else if (p < 0.35) setActiveSection("hero-align");
+          else if (p < 0.50) setActiveSection("hero-reveal");
+          else if (p < 0.60) setActiveSection("hero-dwell");
+          else setActiveSection("hero");
 
-          // Update active section ID dynamically to match the current phase
-          if (p < 0.20) {
-            setActiveSection("hero-flatten");
-          } else if (p < 0.35) {
-            setActiveSection("hero-align");
-          } else if (p < 0.50) {
-            setActiveSection("hero-reveal");
-          } else if (p < 0.60) {
-            setActiveSection("hero-dwell");
-          } else {
-            setActiveSection("hero");
-          }
-
-          // Coarse state: only commit when a boolean actually flips, which happens
-          // roughly four times across the whole 30-viewport pin.
           if (!wallWarmedRef.current && p > WALL_WARM_AT) {
             wallWarmedRef.current = true;
             void import("./HeroImageWall");
@@ -572,10 +561,52 @@ export function HeroSignalCore() {
           if (!sameStage(stageRef.current, next)) {
             stageRef.current = next;
             setStage(next);
-            // One-way latch for the drift wall. Rides the same commit rather than a
-            // separate effect, so crossing the gunshot boundary backwards leaves the
-            // wall mounted and its column offsets intact. See `wallMounted` above.
             if (next.gunshot) setWallMounted(true);
+          }
+        }
+      });
+
+      master.to(proxy, { progress: 1.1, duration: 1.1, ease: "none" });
+
+      if (splitTop && splitBottom) {
+        master.to(splitTop.chars, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.15,
+          stagger: 0.005,
+          ease: "gunshotSnap",
+        }, 0.60);
+        master.to(splitBottom.chars, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.15,
+          stagger: 0.005,
+          ease: "gunshotSnap",
+        }, 0.60);
+      }
+
+      ScrollTrigger.create({
+        trigger: pinRef.current,
+        start: "top top",
+        end: HERO_PIN_DISTANCE,
+        scrub: 0.6,
+        pin: true,
+        onUpdate: (self) => {
+          const p = Math.min(1.1, self.progress / ANIM_LIMIT);
+          gsap.to(proxy, {
+            progress: p,
+            duration: 0.4,
+            ease: "drift",
+            overwrite: "auto",
+            onUpdate: () => master.progress(proxy.progress / 1.1)
+          });
+          
+          if (self.progress > ANIM_LIMIT) {
+            const overlapT = (self.progress - ANIM_LIMIT) / (1 - ANIM_LIMIT);
+            const driftVal = overlapT * -30 * (window.innerHeight / 100);
+            yQuick(driftVal);
+          } else {
+            yQuick(0);
           }
         },
       });
@@ -587,7 +618,7 @@ export function HeroSignalCore() {
   // above (see heroVars.ts). Nothing below recomputes per frame.
 
   return (
-    <Box ref={pinRef} sx={{ position: "relative", height: "100vh" }}>
+    <Box ref={pinRef} sx={{ position: "relative", height: "100dvh" }}>
       <Box
         ref={containerRef}
         id="hero"
@@ -597,7 +628,7 @@ export function HeroSignalCore() {
         sx={{
           ...PLAYGROUND_FLIP_SX,
           position: "relative",
-          height: "100vh",
+          height: "100dvh",
           // `100%`, not `100vw`. `100vw` includes the scrollbar gutter, so this box
           // was ~10px wider than the header's container and everything positioned
           // against its right edge sat that far off the header's right edge. (It is
@@ -663,6 +694,7 @@ export function HeroSignalCore() {
           <>
             {/* Top Text: 7 YEARS OF EXCELLENCE — 2 rows fitting top 50vh, vertically centered */}
             <Box
+              ref={flankTopRef}
               sx={{
                 position: "absolute",
                 left: 0,
@@ -691,9 +723,7 @@ export function HeroSignalCore() {
                   lineHeight: 0.9,
                   letterSpacing: "-0.03em",
                   textTransform: "uppercase",
-                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  color: NOIR.gold,
                   filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
                   textAlign: "center",
                 }}
@@ -708,9 +738,7 @@ export function HeroSignalCore() {
                   lineHeight: 0.9,
                   letterSpacing: "-0.03em",
                   textTransform: "uppercase",
-                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  color: NOIR.gold,
                   filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
                   textAlign: "center",
                 }}
@@ -721,6 +749,7 @@ export function HeroSignalCore() {
 
             {/* Bottom Text: GENERATIONS OF COMPETITIVENESS — 2 rows fitting bottom 50vh, vertically centered */}
             <Box
+              ref={flankBottomRef}
               sx={{
                 position: "absolute",
                 left: 0,
@@ -1072,7 +1101,23 @@ export function HeroSignalCore() {
                     opacity: 0.95,
                   }}
                 >
-                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                  PH
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      width: { xs: 60, md: 110 },
+                      height: { xs: 32, md: 54 },
+                      borderRadius: "100px",
+                      mx: 1.5,
+                      verticalAlign: "middle",
+                      backgroundImage: "url(https://picsum.photos/seed/tech/600/300)",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      filter: "grayscale(0.2) contrast(1.2) mix-blend-mode(luminosity)",
+                    }}
+                  />
+                  <Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                 </Typography>
               </Box>
 
@@ -1241,7 +1286,23 @@ export function HeroSignalCore() {
                     transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
                   }}
                 >
-                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                  PH
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      width: { xs: 60, md: 120 },
+                      height: { xs: 36, md: 64 },
+                      borderRadius: "100px",
+                      mx: 1.5,
+                      verticalAlign: "middle",
+                      backgroundImage: "url(https://picsum.photos/seed/tech/600/300)",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      filter: "grayscale(0.2) contrast(1.2)",
+                    }}
+                  />
+                  <Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                 </Typography>
               </Box>
             </Box>
@@ -1338,94 +1399,100 @@ export function HeroSignalCore() {
             }}
           >
             {/* Link 1: ABOUT */}
-            <Box
-              component={RouterLink}
-              className="hero-pill"
-              to="/about"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.2,
-                px: 3,
-                py: 1.2,
-                ...LINK_PILL_SX,
-              }}
-            >
-              <Typography
-                className="btn-text"
+            <Magnetic>
+              <Box
+                component={RouterLink}
+                className="hero-pill"
+                to="/about"
                 sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  letterSpacing: "0.14em",
-                  color: NOIR.navyField,
-                  textTransform: "uppercase",
-                  transition: "color var(--dur) var(--ease-out)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  px: 3,
+                  py: 1.2,
+                  ...LINK_PILL_SX,
                 }}
               >
-                ABOUT PHITOPOLIS <Box component="span" sx={{ ml: 0.5 }}>→</Box>
-              </Typography>
-            </Box>
+                <Typography
+                  className="btn-text"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.78rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.14em",
+                    color: NOIR.navyField,
+                    textTransform: "uppercase",
+                    transition: "color var(--dur) var(--ease-out)",
+                  }}
+                >
+                  ABOUT PHITOPOLIS <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+                </Typography>
+              </Box>
+            </Magnetic>
 
             {/* Link 2: SERVICES */}
-            <Box
-              component={RouterLink}
-              className="hero-pill"
-              to="/services"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.2,
-                px: 3,
-                py: 1.2,
-                ...LINK_PILL_SX,
-              }}
-            >
-              <Typography
-                className="btn-text"
+            <Magnetic>
+              <Box
+                component={RouterLink}
+                className="hero-pill"
+                to="/services"
                 sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  letterSpacing: "0.14em",
-                  color: NOIR.navyField,
-                  textTransform: "uppercase",
-                  transition: "color var(--dur) var(--ease-out)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  px: 3,
+                  py: 1.2,
+                  ...LINK_PILL_SX,
                 }}
               >
-                WHAT WE DO <Box component="span" sx={{ ml: 0.5 }}>→</Box>
-              </Typography>
-            </Box>
+                <Typography
+                  className="btn-text"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.78rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.14em",
+                    color: NOIR.navyField,
+                    textTransform: "uppercase",
+                    transition: "color var(--dur) var(--ease-out)",
+                  }}
+                >
+                  WHAT WE DO <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+                </Typography>
+              </Box>
+            </Magnetic>
 
             {/* Link 3: BLOG */}
-            <Box
-              component={RouterLink}
-              className="hero-pill"
-              to="/blog"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.2,
-                px: 3,
-                py: 1.2,
-                ...LINK_PILL_SX,
-              }}
-            >
-              <Typography
-                className="btn-text"
+            <Magnetic>
+              <Box
+                component={RouterLink}
+                className="hero-pill"
+                to="/blog"
                 sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  letterSpacing: "0.14em",
-                  color: NOIR.navyField,
-                  textTransform: "uppercase",
-                  transition: "color var(--dur) var(--ease-out)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  px: 3,
+                  py: 1.2,
+                  ...LINK_PILL_SX,
                 }}
               >
-                EXPLORE COMMUNITY <Box component="span" sx={{ ml: 0.5 }}>→</Box>
-              </Typography>
-            </Box>
+                <Typography
+                  className="btn-text"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.78rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.14em",
+                    color: NOIR.navyField,
+                    textTransform: "uppercase",
+                    transition: "color var(--dur) var(--ease-out)",
+                  }}
+                >
+                  EXPLORE COMMUNITY <Box component="span" sx={{ ml: 0.5 }}>→</Box>
+                </Typography>
+              </Box>
+            </Magnetic>
           </Box>
         </Box>
 

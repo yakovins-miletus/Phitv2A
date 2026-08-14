@@ -54,7 +54,14 @@ export function MarketPosition() {
             <Typography
               component="p"
               variant="overline"
-              sx={{ fontFamily: MONO, color: NOIR.goldDark, display: "block", mb: { xs: 4, md: 6 } }}
+              sx={{
+                fontFamily: MONO,
+                color: NOIR.navyField,
+                display: "block",
+                mb: { xs: 3, md: 4 },
+                letterSpacing: "0.2em",
+                fontWeight: 700,
+              }}
             >
               Market position
             </Typography>
@@ -64,7 +71,7 @@ export function MarketPosition() {
               component="h2"
               sx={{
                 fontWeight: 700,
-                color: GROUND.fg,
+                color: NOIR.navyField,
                 fontSize: { xs: "2.25rem", md: "3rem" },
                 lineHeight: 1.1,
                 letterSpacing: "-0.02em",
@@ -93,6 +100,9 @@ export function MarketPosition() {
                   columnGap: 3,
                   py: { xs: 3, md: 3.5 },
                   borderTop: `1px solid ${GROUND.rule}`,
+                  "&:last-of-type": {
+                    borderBottom: `1px solid ${GROUND.rule}`,
+                  },
                 }}
               >
                 <Typography

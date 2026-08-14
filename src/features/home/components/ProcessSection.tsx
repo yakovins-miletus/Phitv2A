@@ -13,7 +13,7 @@ export function ProcessSection() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.PROCESS_IMMERSIVE, { dark: true });
 
   return (
-    <Box ref={anchorRef} sx={{ bgcolor: NOIR.navyField, color: NOIR.frost, position: "relative", zIndex: 1, overflow: "hidden" }}>
+    <Box id="process" ref={anchorRef} sx={{ bgcolor: NOIR.navyField, color: NOIR.frost, position: "relative", zIndex: 1, overflow: "hidden" }}>
       {/* Background Ambience */}
       <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.3, pointerEvents: "none" }}>
         <Box sx={{ position: "absolute", top: "10%", left: "20%", width: "60vw", height: "60vw", borderRadius: "50%", background: `radial-gradient(circle, rgba(${NOIR.goldRgb},0.08) 0%, rgba(${NOIR.navyFieldRgb},0) 70%)`, filter: "blur(60px)" }} />

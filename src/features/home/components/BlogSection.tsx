@@ -132,13 +132,9 @@ export function BlogSection() {
                         position: "relative",
                         overflow: "hidden",
                         "&:hover": {
-                          // Lift to the ground navy rather than a translucent
-                          // white wash — the card is opaque now, so a wash would
-                          // read as a different material on hover.
                           bgcolor: NOIR.navyField,
-                          borderColor: "rgba(255,255,255,0.15)",
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                          borderColor: "rgba(255,255,255,0.25)",
+                          boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
                         },
                       }}
                     >

@@ -140,9 +140,9 @@ export function ParallaxHeroBg({ ready }: { ready: boolean }) {
           zIndex: 2,
           willChange: "transform",
           pointerEvents: "none",
-          // Radial vignette — dark edges, warm glow from bottom-right
+          // Radial vignette — dark edges, minimal
           background:
-            "radial-gradient(ellipse 80% 70% at 70% 55%, transparent 20%, rgba(8, 12, 30, 0.45) 70%, rgba(4, 6, 18, 0.8) 100%)",
+            "radial-gradient(ellipse 80% 70% at 70% 55%, transparent 20%, rgba(0, 0, 0, 0.45) 70%, rgba(0, 0, 0, 0.8) 100%)",
         }}
       />
     </Box>

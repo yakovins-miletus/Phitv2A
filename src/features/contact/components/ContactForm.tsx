@@ -107,7 +107,7 @@ export function ContactForm() {
           Message received.
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Thank you — our partnerships team reads every inquiry and will reply within two
+          Thank you. Our partnerships team reads every inquiry and will reply within two
           business days.
         </Typography>
         <Button

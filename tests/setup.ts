@@ -43,6 +43,10 @@ class ObserverStub {
 stubMatchMedia(true);
 vi.stubGlobal("IntersectionObserver", ObserverStub);
 vi.stubGlobal("ResizeObserver", ObserverStub);
+if (typeof globalThis.requestAnimationFrame === "undefined") {
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(cb, 16));
+  vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
+}
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });

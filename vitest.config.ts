@@ -21,7 +21,10 @@ import { defineConfig } from "vitest/config";
 // Keep the split. Flipping `unit` to no-preference would race the existing
 // content assertions against animations; folding `motion` back in would hide
 // the scroll layer again, which is how it went untested in the first place.
-const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
+const alias = {
+  "@": fileURLToPath(new URL("./src", import.meta.url)),
+  "virtual:public-assets": fileURLToPath(new URL("./tests/mocks/public-assets.ts", import.meta.url)),
+};
 const env = { VITE_API_URL: "http://localhost:8000" };
 
 export default defineConfig({
@@ -40,7 +43,7 @@ export default defineConfig({
           // default they pass in isolation and flip to "timed out in 5000ms"
           // whenever the other files are running in parallel. Raised so a red
           // suite means a real failure rather than a busy machine.
-          testTimeout: 20_000,
+          testTimeout: 60_000,
           setupFiles: ["./tests/setup.ts"],
           include: ["tests/*.test.{ts,tsx}"],
         },
@@ -57,7 +60,7 @@ export default defineConfig({
           // default they pass in isolation and flip to "timed out in 5000ms"
           // whenever the other files are running in parallel. Raised so a red
           // suite means a real failure rather than a busy machine.
-          testTimeout: 20_000,
+          testTimeout: 60_000,
           setupFiles: ["./tests/setup.ts", "./tests/setup.motion.ts"],
           include: ["tests/motion/**/*.test.{ts,tsx}"],
         },

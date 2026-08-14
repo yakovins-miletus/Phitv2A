@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 
@@ -7,14 +7,13 @@ import { ContactForm } from "@/features/contact";
 import { server } from "./msw/server";
 import { makeTestQueryClient, renderWithProviders } from "./test-utils";
 
-async function fillValidForm(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  await user.type(screen.getByLabelText(/^name/i), "Ada Lovelace");
-  await user.type(screen.getByLabelText(/^email/i), "ada@example.com");
-  await user.type(screen.getByLabelText(/^subject/i), "Partnership question");
-  await user.type(
-    screen.getByLabelText(/^message/i),
-    "We would like to explore a research partnership with your lab.",
-  );
+function fillValidForm(): void {
+  fireEvent.change(screen.getByLabelText(/^name/i), { target: { value: "Ada Lovelace" } });
+  fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: "ada@example.com" } });
+  fireEvent.change(screen.getByLabelText(/^subject/i), { target: { value: "Partnership question" } });
+  fireEvent.change(screen.getByLabelText(/^message/i), {
+    target: { value: "We would like to explore a research partnership with your lab." },
+  });
 }
 
 test("valid submission shows success", async () => {
@@ -22,7 +21,7 @@ test("valid submission shows success", async () => {
   const queryClient = makeTestQueryClient();
   renderWithProviders(<ContactForm />, queryClient);
 
-  await fillValidForm(user);
+  fillValidForm();
   await user.click(screen.getByRole("button", { name: /send message/i }));
 
   expect(await screen.findByText("Message received.")).toBeInTheDocument();
@@ -46,7 +45,7 @@ test("server 422 problem detail reaches the UI as an alert", async () => {
   const user = userEvent.setup();
   renderWithProviders(<ContactForm />);
 
-  await fillValidForm(user);
+  fillValidForm();
   await user.click(screen.getByRole("button", { name: /send message/i }));
 
   const alert = await screen.findByRole("alert");

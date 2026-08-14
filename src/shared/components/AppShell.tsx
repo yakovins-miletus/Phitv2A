@@ -452,10 +452,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
         {showPreloader ? (
           <Preloader
             warmup={warmup}
-            onDone={() => {
-              setShowPreloader(false);
-              releaseEntrance();
-            }}
+            onStartExit={releaseEntrance}
+            onDone={() => setShowPreloader(false)}
           />
         ) : null}
         <TopNavMegaDrawer open={megaNavOpen} onClose={() => setMegaNavOpen(false)} />

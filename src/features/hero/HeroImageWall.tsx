@@ -53,7 +53,10 @@ export function HeroImageWall({ paused }: HeroImageWallProps) {
       aria-hidden
       sx={{
         position: "absolute",
-        inset: 0,
+        top: 0,
+        bottom: 0,
+        right: 0,
+        left: { xs: 0, md: "50%" },
         zIndex: 2,
         overflow: "hidden",
         pointerEvents: "none",

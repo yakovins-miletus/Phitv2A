@@ -11,7 +11,7 @@ import Slide from "@mui/material/Slide";
 import InputBase from "@mui/material/InputBase";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { useRouter, useLocation } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 
 import { MONO } from "@/shared/theme/theme";
 import {
@@ -91,13 +91,15 @@ interface TopNavMegaDrawerProps {
   onClose: () => void;
 }
 
+import { useTransitionCurtain } from "./TransitionCurtain";
+
 const LISTBOX_ID = "drawer-cmdk-listbox";
 const optId = (id: string) => `drawer-cmdk-opt-${id}`;
 
 export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
   const [activeItem, setActiveItem] = useState<NavSectionItem>(MEGA_NAV_ITEMS[0]!);
-  const router = useRouter();
   const location = useLocation();
+  const { navigateWithCurtain } = useTransitionCurtain();
   const { mode: heroMode } = useHeroModeState();
   const { mode: heroBgMode } = useHeroBgModeState();
 
@@ -107,12 +109,15 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const { execute, copiedId, signalChars, resetRuntime } = useCommandExecutor(
-    (opts) => void router.navigate(opts),
+    (opts) => {
+      onClose();
+      navigateWithCurtain(opts.to);
+    },
   );
 
   const handleNavigate = (to: string) => {
     onClose();
-    router.navigate({ to });
+    navigateWithCurtain(to);
   };
 
   useEffect(() => {

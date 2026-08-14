@@ -172,7 +172,9 @@ export function CandidatesAndCareersSection() {
               "&:hover": {
                 bgcolor: NOIR.goldLight,
                 boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
-                transform: "translateY(-1px)",
+              },
+              "&:active": {
+                transform: "scale(0.98)",
               },
               transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               whiteSpace: "nowrap",
@@ -228,7 +230,7 @@ export function CandidatesAndCareersSection() {
                 transition: `flex 0.5s ${EASE_OUT_EXPO_CSS}, height 0.5s ${EASE_OUT_EXPO_CSS}, border-color 0.3s ease`,
                 boxShadow: isActive ? "0 20px 45px rgba(10,42,102,0.22)" : "0 4px 10px rgba(0,0,0,0.03)",
                 "&:hover .arrow-icon": {
-                  transform: "translateY(-4px)",
+                  transform: "translateX(4px)",
                 },
               }}
             >

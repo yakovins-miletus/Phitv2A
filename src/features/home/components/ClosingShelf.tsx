@@ -164,7 +164,8 @@ export function ClosingShelf() {
                     transform: reduced === true ? "none" : `rotate(${layout.rotate})`,
                     transition: `transform 0.4s ${EASE_OUT_EXPO_CSS}`,
                     "&:hover, &:focus-within": {
-                      transform: reduced === true ? "none" : "rotate(0deg) translateY(-4px)",
+                      transform: reduced === true ? "none" : "rotate(0deg)",
+                      boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
                     },
                   }}
                 >

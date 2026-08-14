@@ -47,7 +47,7 @@ export function EyeFlow() {
       const limit = docH - winH;
       if (limit <= 0) return;
 
-      const heroHeight = 19 * winH; // 1900% total pin (1800% anim + 100% overlap)
+      const heroHeight = 9 * winH; // 900% total (800% pin scroll + 100% natural height)
 
       const useCasesEl = document.getElementById("use-cases");
       const reachEl = document.getElementById("reach");
@@ -114,7 +114,7 @@ export function EyeFlow() {
 
   const scrollToChapter = (index: ChapterIndex) => {
     const winH = window.innerHeight;
-    const heroHeight = 19 * winH; // 1900% total pin
+    const heroHeight = 9 * winH; // 900% total (800% pin scroll + 100% natural height)
 
     if (index < 5) {
       const targetY = [

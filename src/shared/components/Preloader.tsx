@@ -1,106 +1,52 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 
 import { MONO } from "@/shared/theme/theme";
-
+import { NOIR } from "@/shared/theme/palette";
 import { ScrambleText } from "./ScrambleText";
 
-import { NOIR } from "@/shared/theme/palette";
-import { EASE_IN_OUT_QUART } from "@/shared/motion/easing";
-
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
-const IS_JSDOM = typeof window !== "undefined" && window.navigator?.userAgent?.includes("jsdom") === true;
-/** The one deliberate hold: enough to read as an entrance, not enough to be a wait. */
-const ENTRY_SETTLE_MS = IS_JSDOM ? 5 : 180;
+const HARD_CAP_MS = 2400;
 
-/** The four quarter-turn arcs of the loader ring, and their stagger. */
-const PULSE_ARCS = [
-  { d: "M 140 0 L 140 44 A 96 96 0 0 1 236 140 A 96 96 0 1 1 140 44", delay: 0 },
-  { d: "M 280 140 L 236 140 A 96 96 0 0 1 140 236 A 96 96 0 1 1 236 140", delay: 0.55 },
-  { d: "M 140 280 L 140 236 A 96 96 0 0 1 44 140 A 96 96 0 1 1 140 236", delay: 1.1 },
-  { d: "M 0 140 L 44 140 A 96 96 0 0 1 140 44 A 96 96 0 1 1 44 140", delay: 1.65 },
-] as const;
-
-/**
- * One travelling gold pulse.
- *
- * These used to carry `filter="url(#preloader-glow)"` — an `feGaussianBlur` re-rasterised
- * on every frame of a `repeat: Infinity` animation, four times over, while eight warm-up
- * promises raced behind the overlay. It was the single most expensive thing on screen
- * during load. The glow is now a wide translucent stroke under a crisp core: two paint
- * ops instead of a filter pass, visually equivalent at this stroke width.
- */
-function PulseArc({ d, delay }: { d: string; delay: number }) {
-  const dash = { strokeDasharray: "70 600" } as const;
-  const anim = {
-    initial: { strokeDashoffset: 670 },
-    animate: { strokeDashoffset: 0 },
-    transition: { duration: 2.2, repeat: Infinity, ease: "linear" as const, delay },
-  };
-  return (
-    <>
-      <motion.path
-        d={d}
-        fill="none"
-        stroke={NOIR.gold}
-        strokeWidth="7"
-        strokeLinecap="round"
-        opacity={0.22}
-        style={dash}
-        {...anim}
-      />
-      <motion.path
-        d={d}
-        fill="none"
-        stroke={NOIR.gold}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        style={dash}
-        {...anim}
-      />
-    </>
-  );
-}
-
-/** One unit of real warm-up work surfaced by the progress bar. */
 export interface LoadSignal {
   label: string;
   promise: Promise<unknown>;
 }
 
-/** The REAL load signal (fonts only) — measured once at first render.
-    Deliberately NOT the window `load` event: that waits for every subresource
-    and would hold the overlay over the hero (LCP) for the whole cap. SSR-safe:
-    no document access outside the guard. jsdom has no document.fonts, so tests
-    exercise the zero-signal path. */
 function collectFontSignals(): LoadSignal[] {
-  // document.fonts.ready often hangs indefinitely in Chrome due to a long-standing Blink bug,
-  // causing the preloader to hit its 800ms hard cap and abort early, skipping the visual hold.
-  // We rely on the explicit warmup signals (images and routes) instead.
-  return [];
+  if (typeof document === "undefined") return [];
+  if (document.fonts === undefined) return [];
+  return [{ label: "FONTS", promise: document.fonts.ready }];
 }
 
 interface PreloaderProps {
   onDone: () => void;
-  /** Extra warm-up work (route chunks, data prefetches) counted by the bar.
-      Anything unfinished at the hard cap keeps running behind the wipe. */
+  onStartExit?: () => void;
   warmup?: LoadSignal[];
 }
 
-/** Entry overlay: wordmark decrypts, gold bar tracks real warm-up work (fonts
-    + route chunks + data), exit is a staggered five-column wipe. Skippable
-    (click/Esc), hard-capped at 1.2s, once per session. Under reduced motion
-    the AppShell gate never mounts this. */
-export function Preloader({ onDone, warmup }: PreloaderProps) {
+export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const [signals] = useState<LoadSignal[]>(() => [...collectFontSignals(), ...(warmup ?? [])]);
   const [resolved, setResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("ASSETS");
   const [forced, setForced] = useState(false);
-  const [phase, setPhase] = useState<"entry" | "loading" | "complete" | "dismissing" | "done">("entry");
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
+  const centerCardRef = useRef<HTMLDivElement>(null);
+  const innerRingRef = useRef<SVGSVGElement>(null);
+  const ringProgressRef = useRef<SVGCircleElement>(null);
+  const watermarkRef = useRef<HTMLDivElement>(null);
+  const hudElementsRef = useRef<HTMLDivElement[]>([]);
+
+  // The expanding white box ending ref
+  const whiteExpansionBoxRef = useRef<HTMLDivElement>(null);
 
   const total = Math.max(signals.length, 1);
+  const isDoneRef = useRef(false);
+  const exitFiredRef = useRef(false);
 
   // Monitor loading signals
   useEffect(() => {
@@ -113,8 +59,12 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
         }
       });
     }
+    const cap = window.setTimeout(() => {
+      if (!cancelled) setForced(true);
+    }, HARD_CAP_MS);
     return () => {
       cancelled = true;
+      window.clearTimeout(cap);
     };
   }, [signals]);
 
@@ -127,218 +77,391 @@ export function Preloader({ onDone, warmup }: PreloaderProps) {
     return () => window.removeEventListener("keydown", skip);
   }, []);
 
-  // Escape/Click overrides to skip straight to dismissing
+  const progressPercent = forced || signals.length === 0 || resolved >= total
+    ? 100
+    : Math.round((Math.min(resolved, total) / total) * 100);
+
+  const isComplete = progressPercent >= 100;
+  const RING_CIRCUMFERENCE = 389.5; // 2 * PI * 62
+
+  // Initial entrance animations for card and HUD
   useEffect(() => {
-    if (forced) {
-      setPhase("dismissing");
-    }
-  }, [forced]);
+    const centerCardEl = centerCardRef.current;
+    const innerRingEl = innerRingRef.current;
+    const watermarkEl = watermarkRef.current;
+    const huds = hudElementsRef.current.filter(Boolean);
 
-  // Phase transitions.
-  //
-  // These used to hold for 1200ms (entry) + 1000ms (complete) + 550ms (wipe) = 2,750ms
-  // of hardcoded setTimeout, regardless of how fast the page actually loaded — and the
-  // hero's own fades then ran on top, so nothing was fully present for ~7.5s. The
-  // buffers are gone: the overlay now tracks real signals and leaves as soon as they
-  // resolve. ENTRY_SETTLE_MS is the one deliberate hold left, just long enough for the
-  // wordmark to register as a considered entrance rather than a flash.
-  //
-  // 1. Entry: a single short settle, then straight to tracking real work.
+    gsap.set(centerCardEl, { opacity: 0, scale: 0.95, y: 15 });
+    gsap.set(innerRingEl, { scale: 0.9, opacity: 0, rotation: -45 });
+    gsap.set(watermarkEl, { opacity: 0, scale: 0.95 });
+    gsap.set(huds, { opacity: 0, y: -10 });
+
+    const tl = gsap.timeline();
+    tl.to(centerCardEl, { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "expo.out" }, 0.05);
+    tl.to(huds, { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }, 0.1);
+    tl.to(innerRingEl, { scale: 1, opacity: 0.9, rotation: 0, duration: 0.8, ease: "power3.out" }, 0.15);
+    tl.to(watermarkEl, { opacity: 0.03, scale: 1, duration: 1.0, ease: "power2.out" }, 0.2);
+
+    return () => {
+      tl.kill();
+    };
+  }, []);
+
+  // Update ring progress on change
   useEffect(() => {
-    if (phase === "entry") {
-      const timer = setTimeout(() => {
-        setPhase("loading");
-      }, ENTRY_SETTLE_MS);
-      return () => clearTimeout(timer);
+    if (ringProgressRef.current) {
+      const offset = RING_CIRCUMFERENCE - (progressPercent / 100) * RING_CIRCUMFERENCE;
+      gsap.to(ringProgressRef.current, {
+        strokeDashoffset: offset,
+        duration: 0.35,
+        ease: "power2.out",
+      });
     }
-  }, [phase]);
+  }, [progressPercent]);
 
-  // 2. Loading → complete, the moment the real signals resolve.
-  //
-  // There used to be a distinct "complete" phase in between, whose only job was to hold
-  // for 1000ms. With that buffer gone the phase had nothing left to do but immediately
-  // forward to "dismissing", so it is skipped entirely rather than kept as a state that
-  // exists for one render. The iris wipe is the outro.
+  // When 100% is reached: Trigger White Box Growing Expansion from Center to Screen Size in All Directions!
   useEffect(() => {
-    if (phase === "loading" && resolved >= total) {
-      setPhase("complete");
-    }
-  }, [phase, resolved, total]);
+    if (!isComplete || isDoneRef.current) return;
 
-  // 3. Complete → dismissing (buffer sequence)
-  // Holds the 100% state briefly before triggering the exit wipe.
-  useEffect(() => {
-    if (phase === "complete") {
-      const timer = setTimeout(() => {
-        setPhase("dismissing");
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [phase]);
+    const contentEl = contentWrapperRef.current;
+    const whiteBoxEl = whiteExpansionBoxRef.current;
+    const rootEl = rootRef.current;
 
-  // 4. Done Phase: Notify shell once dismissal completes
-  useEffect(() => {
-    if (phase === "done") {
-      sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-      onDone();
-    }
-  }, [phase, onDone]);
+    const tl = gsap.timeline({
+      delay: 0.15,
+      onComplete: () => {
+        if (!isDoneRef.current) {
+          isDoneRef.current = true;
+          sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
+          onDone();
+        }
+      },
+    });
 
-  const isCompleteOrLater = phase === "complete" || phase === "dismissing" || phase === "done" || forced || resolved >= total;
-  const percent = isCompleteOrLater ? 100 : Math.round((Math.min(resolved, total) / total) * 100);
+    // 1. Content Card softly fades and blurs
+    tl.to(contentEl, {
+      opacity: 0,
+      scale: 1.03,
+      filter: "blur(6px)",
+      duration: 0.3,
+      ease: "power2.in",
+    }, 0);
 
-  const showProgress = phase !== "entry" && phase !== "dismissing" && phase !== "done";
-  const progressOpacity = showProgress ? 1 : 0;
-  const contentOpacity = phase !== "dismissing" && phase !== "done" ? 1 : 0;
+    // 2. White Box starts at scale 0 at center, grows outward in all directions to fill the screen
+    tl.fromTo(
+      whiteBoxEl,
+      { scale: 0, opacity: 1, borderRadius: "16px" },
+      {
+        scale: 40,
+        borderRadius: "0px",
+        duration: 0.75,
+        ease: "expo.inOut",
+      },
+      0.15
+    );
+
+    // 3. Mid-expansion: notify AppShell to release hero stage behind full white coverage
+    tl.add(() => {
+      if (!exitFiredRef.current && onStartExit) {
+        exitFiredRef.current = true;
+        onStartExit();
+      }
+    }, 0.55);
+
+    // 4. White box dissolves smoothly into the clean hero section
+    tl.to(rootEl, {
+      opacity: 0,
+      duration: 0.4,
+      ease: "power2.out",
+    }, 0.85);
+
+    return () => {
+      tl.kill();
+    };
+  }, [isComplete, onDone, onStartExit]);
 
   return (
     <Box
+      ref={rootRef}
       data-testid="preloader"
       onClick={() => setForced(true)}
-      sx={{ position: "fixed", inset: 0, zIndex: 2000, cursor: "pointer" }}
+      sx={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        cursor: "pointer",
+        overflow: "hidden",
+        bgcolor: "#030712",
+        background: "radial-gradient(ellipse at center, #07152d 0%, #030712 75%)",
+      }}
     >
-      {/* White Camera-Iris Shutter Background */}
-      <motion.div
-        initial={{ clipPath: "circle(150% at 50% 50%)" }}
-        animate={(phase === "dismissing" || phase === "done") ? { clipPath: "circle(0% at 50% 50%)" } : { clipPath: "circle(150% at 50% 50%)" }}
-        transition={{ duration: 0.65, ease: EASE_IN_OUT_QUART }}
-        onAnimationComplete={() => {
-          if (phase === "dismissing" || forced) {
-            setPhase("done");
-          }
+      {/* Expanding White Box (Clean Center Expansion Transition) */}
+      <Box
+        ref={whiteExpansionBoxRef}
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%) scale(0)",
+          width: { xs: "80px", md: "110px" },
+          height: { xs: "80px", md: "110px" },
+          bgcolor: "#FFFFFF",
+          zIndex: 50,
+          pointerEvents: "none",
+          willChange: "transform, border-radius",
+          boxShadow: "0 0 80px rgba(255, 255, 255, 0.9)",
         }}
-        style={{
+      />
+
+      {/* Subtle Background Watermark */}
+      <Box
+        ref={watermarkRef}
+        sx={{
           position: "absolute",
           inset: 0,
-          // The base ground, matching index.html's pre-JS paint exactly, so the
-          // handoff from the static <style> to this overlay is invisible. Not glass:
-          // this covers the whole viewport with nothing behind it to blur, and it is
-          // the first thing painted — a backdrop-filter here would be pure cost.
-          background: "#F4F7FC",
-          backgroundColor: "#F4F7FC",
+          zIndex: 2,
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
+          pointerEvents: "none",
+          opacity: 0,
         }}
       >
-        <motion.div
-          animate={(phase === "dismissing" || phase === "done") ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          style={{
+        <Typography
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: "14vw", md: "18vw" },
+            letterSpacing: "0.15em",
+            color: "#FFFFFF",
+            fontFamily: "Inter, sans-serif",
+            whiteSpace: "nowrap",
+            userSelect: "none",
+          }}
+        >
+          PHITOPOLIS
+        </Typography>
+      </Box>
+
+      {/* Main Interactive Telemetry Content Layer */}
+      <Box
+        ref={contentWrapperRef}
+        sx={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 10,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          p: { xs: 3.5, md: 6 },
+          color: "#F4F7FC",
+        }}
+      >
+        {/* Top Header Telemetry */}
+        <Box
+          ref={(el) => {
+            if (el) hudElementsRef.current[0] = el as unknown as HTMLDivElement;
+          }}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                bgcolor: NOIR.gold,
+                boxShadow: `0 0 10px ${NOIR.gold}`,
+              }}
+            />
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: { xs: 9, md: 11 },
+                letterSpacing: "0.22em",
+                color: "rgba(244, 247, 252, 0.7)",
+                textTransform: "uppercase",
+              }}
+            >
+              SYS.LOC // MANILA [14.5995° N, 120.9842° E]
+            </Typography>
+          </Box>
+
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: { xs: 9, md: 11 },
+              letterSpacing: "0.22em",
+              color: NOIR.gold,
+              textTransform: "uppercase",
+            }}
+          >
+            ● QUANTITATIVE PLATFORM
+          </Typography>
+        </Box>
+
+        {/* Center Stage: Refined Frosted Glass Card */}
+        <Box
+          ref={centerCardRef}
+          sx={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 24,
-            opacity: contentOpacity,
+            gap: 2.2,
+            my: "auto",
+            mx: "auto",
+            position: "relative",
+            p: { xs: 4, md: 5.5 },
+            maxWidth: 640,
+            width: "100%",
+            borderRadius: "24px",
+            bgcolor: "rgba(8, 18, 38, 0.5)",
+            backdropFilter: "blur(24px) saturate(140%)",
+            WebkitBackdropFilter: "blur(24px) saturate(140%)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
           }}
         >
-          {/* Logo & Circular Loader Container */}
-          <Box sx={{ position: "relative", width: 280, height: 280, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-              {/* Background guide lines */}
-              {PULSE_ARCS.map((arc) => (
-                <path key={`guide-${arc.delay}`} d={arc.d} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="1.5" />
-              ))}
-
-              {/* Animated gold pulses */}
-              {PULSE_ARCS.map((arc) => (
-                <PulseArc key={`pulse-${arc.delay}`} d={arc.d} delay={arc.delay} />
-              ))}
-
-              {/* Progress Circle Ring */}
-              <circle cx="140" cy="140" r="76" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="3" style={{ opacity: progressOpacity, transition: "opacity 0.6s ease" }} />
-              <motion.circle
-                cx="140"
-                cy="140"
-                r="76"
+          {/* Central Logo & Circular Progress */}
+          <Box sx={{ position: "relative", width: 130, height: 130, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg ref={innerRingRef} width="130" height="130" viewBox="0 0 140 140" style={{ position: "absolute" }}>
+              <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="1.5" />
+              <circle
+                ref={ringProgressRef}
+                cx="70"
+                cy="70"
+                r="62"
                 fill="none"
                 stroke={NOIR.gold}
-                strokeWidth="3.5"
+                strokeWidth="2"
+                strokeDasharray="389.5"
+                strokeDashoffset="389.5"
                 strokeLinecap="round"
-                strokeDasharray="477.52" // 2 * Math.PI * 76
-                initial={{ strokeDashoffset: 477.52, rotate: -90, scale: 1, opacity: 1 }}
-                animate={{ 
-                  strokeDashoffset: 477.52 - (percent / 100) * 477.52,
-                  rotate: -90,
-                  scale: phase === "complete" ? 1.4 : 1,
-                  opacity: phase === "complete" ? 0 : progressOpacity,
-                  strokeWidth: phase === "complete" ? 10 : 3.5,
-                }}
-                transition={{ 
-                  strokeDashoffset: { duration: 0.35, ease: "easeOut" },
-                  scale: { duration: 0.6, ease: "easeOut" },
-                  opacity: { duration: 0.6, ease: "easeOut" },
-                  strokeWidth: { duration: 0.6, ease: "easeOut" },
-                }}
-                style={{
-                  transformOrigin: "140px 140px",
-                }}
+                style={{ transform: "rotate(-90deg)", transformOrigin: "70px 70px" }}
               />
             </svg>
-            
-            {/* P Logo at the center */}
-            <motion.div
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
-            >
-              <Box
-                component="img" decoding="async"
-                src="/phitopolis_logo_hero.svg"
-                alt="Phitopolis 2D Logo"
-                sx={{
-                  width: "100%",
-                  height: "auto",
-                  filter: `drop-shadow(0 0 20px rgba(var(--accent-rgb), 0.4))`,
-                }}
-              />
-            </motion.div>
+
+            <Box
+              component="img"
+              src="/phitopolis_logo_hero.svg"
+              alt="Phitopolis Logo"
+              sx={{
+                width: 50,
+                height: 50,
+                filter: `drop-shadow(0 0 20px rgba(255, 215, 0, 0.4))`,
+                zIndex: 2,
+              }}
+            />
           </Box>
 
-          {/* Staged visibility for details */}
+          {/* Clean Oversized Kinetic Counter */}
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: { xs: "3rem", sm: "4.2rem", md: "5.5rem" },
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: "-0.04em",
+              fontVariantNumeric: "tabular-nums",
+              color: isComplete ? "#FFFFFF" : "#F4F7FC",
+              textShadow: isComplete ? "0 0 25px rgba(255, 255, 255, 0.8)" : "none",
+              transition: "text-shadow 0.3s ease, color 0.3s ease",
+            }}
+          >
+            {String(progressPercent).padStart(2, "0")}%
+          </Typography>
+
+          {/* Minimalist Split Wordmark */}
           <Box
             sx={{
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 1.5,
-              opacity: progressOpacity,
-              transform: showProgress ? "translateY(0)" : "translateY(10px)",
-              transition: "opacity 0.6s ease, transform 0.6s ease",
+              perspective: 1000,
+              gap: "0.06em",
+              zIndex: 2,
             }}
           >
-            <Typography
-              component="span"
-              sx={{
-                fontFamily: MONO,
-                fontWeight: 700,
-                letterSpacing: "0.28em",
-                color: "primary.main",
-                fontSize: "1.1rem",
-              }}
-            >
-              <ScrambleText text="PHITOPOLIS" step={40} />
+            {"PHITOPOLIS".split("").map((char, idx) => (
+              <Typography
+                key={`intro-char-${idx}`}
+                component="span"
+                sx={{
+                  fontFamily: "Inter, sans-serif",
+                  fontWeight: 800,
+                  fontSize: { xs: "1.3rem", sm: "1.8rem", md: "2.4rem" },
+                  letterSpacing: "0.14em",
+                  color: char === "I" || char === "T" ? NOIR.gold : "#F4F7FC",
+                  display: "inline-block",
+                }}
+              >
+                {char}
+              </Typography>
+            ))}
+          </Box>
+
+          {/* Subtitle / Scramble Tagline */}
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: { xs: 9, md: 10.5 },
+              letterSpacing: "0.24em",
+              color: "rgba(244, 247, 252, 0.6)",
+              textTransform: "uppercase",
+              mt: 0.5,
+              zIndex: 2,
+              textAlign: "center",
+            }}
+          >
+            <ScrambleText text="MAKING TOMORROW'S TECHNOLOGY AVAILABLE TODAY" step={40} />
+          </Typography>
+
+          {/* Ticking State Label */}
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              color: NOIR.gold,
+              fontSize: "0.75rem",
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              mt: 0.5,
+            }}
+          >
+            {isComplete ? "READY" : `WARMING — ${lastLabel}`}
+          </Typography>
+        </Box>
+
+        {/* Bottom Diagnostics */}
+        <Box
+          ref={(el) => {
+            if (el) hudElementsRef.current[1] = el as unknown as HTMLDivElement;
+          }}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            width: "100%",
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Typography sx={{ fontFamily: MONO, fontSize: { xs: 9, md: 11 }, letterSpacing: "0.18em", color: NOIR.gold }}>
+              SYS.STATUS // PIPELINE SYNCHRONIZED
             </Typography>
-            <Typography sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.8rem" }}>
-              {String(percent).padStart(2, "0")}%
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                color: "text.secondary",
-                fontSize: "0.65rem",
-                letterSpacing: "0.2em",
-              }}
-            >
-              {isCompleteOrLater ? "READY" : `WARMING — ${lastLabel}`}
+            <Typography sx={{ fontFamily: MONO, fontSize: { xs: 8, md: 10 }, letterSpacing: "0.14em", color: "rgba(244, 247, 252, 0.45)" }}>
+              INITIALIZING IMMERSIVE ENVIRONMENT...
             </Typography>
           </Box>
-        </motion.div>
-      </motion.div>
+
+          <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
+            <Typography sx={{ fontFamily: MONO, fontSize: { xs: 9, md: 10.5 }, letterSpacing: "0.18em", color: "rgba(244, 247, 252, 0.45)" }}>
+              [ ESC TO SKIP ]
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 }
-
