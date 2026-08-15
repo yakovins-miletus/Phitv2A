@@ -8,7 +8,6 @@ import { CONTENT } from "@/shared/content";
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
-import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { AppetizerReveal } from "@/shared/components/AppetizerReveal";
@@ -31,49 +30,9 @@ export function OperatingPillars() {
   const { pillars } = CONTENT.hero.salesPitch as { pillars: readonly Pillar[] };
 
   return (
-    <StageSection section={homeSection("hero-pillars")}>
+    <StageSection section={homeSection("hero-pillars")} sx={{ minHeight: "auto", pt: 0, pb: { xs: 6, md: 10 } }}>
       <AppetizerReveal
-        headerContent={
-          <Box>
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-              <Box
-                sx={{
-                  width: 24,
-                  height: 2,
-                  borderRadius: 1,
-                  background: `linear-gradient(90deg, ${NOIR.navyField}, transparent)`,
-                }}
-              />
-              <Typography
-                component="p"
-                variant="overline"
-                sx={{
-                  fontFamily: MONO,
-                  color: NOIR.navyField,
-                  display: "block",
-                  letterSpacing: "0.2em",
-                  fontWeight: 700,
-                }}
-              >
-                Organizational structure
-              </Typography>
-            </Box>
-            <Typography
-              variant="h2"
-              component="h2"
-              sx={{
-                maxWidth: "20ch",
-                color: NOIR.navyField,
-                fontSize: { xs: "2.25rem", sm: "3rem", md: "3.5rem" },
-                fontWeight: 700,
-                lineHeight: 1.1,
-                letterSpacing: "-0.025em",
-              }}
-            >
-              Three integrated operating pillars
-            </Typography>
-          </Box>
-        }
+        headerContent={null}
         mainContent={
           <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
             <Box

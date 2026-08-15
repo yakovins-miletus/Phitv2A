@@ -6,9 +6,9 @@ import { CONTENT } from "@/shared/content";
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
-import { MONO } from "@/shared/theme/theme";
-import { NOIR } from "@/shared/theme/palette";
 import { AppetizerReveal } from "@/shared/components/AppetizerReveal";
+import { NOIR } from "@/shared/theme/palette";
+import { MONO } from "@/shared/theme/theme";
 
 const GROUND = GROUNDS[homeSection("hero-position").ground ?? "panel"];
 
@@ -49,46 +49,7 @@ export function MarketPosition() {
   return (
     <StageSection section={homeSection("hero-position")}>
       <AppetizerReveal
-        headerContent={
-          <Box sx={{ width: "100%", maxWidth: "600px", textAlign: "center" }}>
-            <Typography
-              component="p"
-              variant="overline"
-              sx={{
-                fontFamily: MONO,
-                color: NOIR.navyField,
-                display: "block",
-                mb: { xs: 3, md: 4 },
-                letterSpacing: "0.2em",
-                fontWeight: 700,
-              }}
-            >
-              Market position
-            </Typography>
-
-            <Typography
-              variant="h2"
-              component="h2"
-              sx={{
-                fontWeight: 700,
-                color: NOIR.navyField,
-                fontSize: { xs: "2.25rem", md: "3rem" },
-                lineHeight: 1.1,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Professional
-              <Box component="span" sx={{ display: "block", color: NOIR.goldDark }}>
-                Leadership
-              </Box>
-            </Typography>
-            <Typography
-              sx={{ mt: 3, color: GROUND.muted, fontSize: "1.0625rem", maxWidth: "28ch", mx: "auto" }}
-            >
-              Decades of Wall St. Experience and a Competitive Edge of Development
-            </Typography>
-          </Box>
-        }
+        headerContent={null}
         mainContent={
           <Box sx={{ width: "100%", maxWidth: "800px" }}>
             {differentiators.map((diff, i) => (

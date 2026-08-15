@@ -56,9 +56,7 @@ export function MissionStatement() {
   const { heroLine, execSummary, cta } = CONTENT.hero.salesPitch;
 
   return (
-    <StageSection section={homeSection("hero-mission")}>
-      <ServiceGlobe />
-
+    <StageSection section={homeSection("hero-mission")} background={<ServiceGlobe />}>
       {/* Foreground Content.
        *
        * Narrower than the old 62% at desktop: the orbit ring's left extreme

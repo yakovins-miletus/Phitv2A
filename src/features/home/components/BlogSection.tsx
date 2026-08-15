@@ -221,49 +221,12 @@ export function BlogSection() {
             sx={{
               mb: { xs: 5, md: 7 },
               display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              justifyContent: "space-between",
-              alignItems: { xs: "flex-start", sm: "flex-end" },
-              gap: 2,
+              justifyContent: "flex-end",
+              alignItems: "center",
               borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
               pb: 3,
             }}
           >
-            <Box>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
-                <Box sx={{ width: 8, height: 8, bgcolor: NOIR.gold }} />
-                <Typography
-                  component="span"
-                  sx={{
-                    fontFamily: MONO,
-                    color: NOIR.gold,
-                    letterSpacing: "0.22em",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  INTELLIGENCE FEED // R&D DISPATCHES
-                </Typography>
-              </Stack>
-
-              <Typography
-                variant="h2"
-                component="h2"
-                sx={{
-                  fontFamily: DISPLAY_FONT,
-                  fontWeight: 800,
-                  fontSize: { xs: "2.25rem", sm: "3rem", md: "3.75rem" },
-                  lineHeight: 1.05,
-                  letterSpacing: "-0.035em",
-                  color: NOIR.frost,
-                  textTransform: "uppercase",
-                }}
-              >
-                Inside Phitopolis
-              </Typography>
-            </Box>
-
             <Button
               onClick={() => void navigate({ to: "/blog" })}
               sx={{

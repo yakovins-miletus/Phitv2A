@@ -14,11 +14,11 @@ gsap.registerPlugin(ScrollTrigger);
 
 export interface MajorEstablishingShotProps {
   id: string;
-  phaseCode: string;
-  category: string;
+  phaseCode?: string;
+  category?: string;
   title: string;
   titleAccent?: string;
-  description: string;
+  description?: string;
   tagline?: string;
   dark?: boolean;
 }
@@ -115,65 +115,71 @@ export function MajorEstablishingShot({
     >
       <Container maxWidth="2xl" sx={{ position: "relative", zIndex: 1, width: "100%" }}>
         {/* Minimal Kicker Metadata Bar */}
-        <Box
-          ref={metaRef}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            mb: 2,
-          }}
-        >
+        {(phaseCode || category || tagline) && (
           <Box
+            ref={metaRef}
             sx={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: 1.5,
-              px: 1.75,
-              py: 0.5,
-              borderRadius: "100px",
-              backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "rgba(10, 42, 102, 0.05)",
-              border: `1px solid ${dark ? "rgba(255, 255, 255, 0.15)" : "rgba(10, 42, 102, 0.14)"}`,
+              justifyContent: "space-between",
+              gap: 2,
+              mb: 2,
             }}
           >
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                backgroundColor: NOIR.goldDark,
-                boxShadow: `0 0 6px ${NOIR.goldDark}`,
-              }}
-            />
-            <Typography
-              variant="overline"
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.7rem",
-                fontWeight: 800,
-                letterSpacing: "0.2em",
-                color: dark ? NOIR.frost : NOIR.navyField,
-              }}
-            >
-              {phaseCode} // {category}
-            </Typography>
-          </Box>
+            {(phaseCode || category) && (
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 1.75,
+                  py: 0.5,
+                  borderRadius: "100px",
+                  backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "rgba(10, 42, 102, 0.05)",
+                  border: `1px solid ${dark ? "rgba(255, 255, 255, 0.15)" : "rgba(10, 42, 102, 0.14)"}`,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    backgroundColor: NOIR.goldDark,
+                    boxShadow: `0 0 6px ${NOIR.goldDark}`,
+                  }}
+                />
+                <Typography
+                  variant="overline"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.7rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.2em",
+                    color: dark ? NOIR.frost : NOIR.navyField,
+                  }}
+                >
+                  {phaseCode && `${phaseCode} `}{phaseCode && category && "// "}{category}
+                </Typography>
+              </Box>
+            )}
 
-          <Typography
-            variant="overline"
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              letterSpacing: "0.18em",
-              color: dark ? "rgba(255, 255, 255, 0.7)" : "rgba(10, 42, 102, 0.75)",
-              display: { xs: "none", sm: "block" },
-            }}
-          >
-            {tagline ?? "SYSTEM SEQUENCE"}
-          </Typography>
-        </Box>
+            {tagline && (
+              <Typography
+                variant="overline"
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.18em",
+                  color: dark ? "rgba(255, 255, 255, 0.7)" : "rgba(10, 42, 102, 0.75)",
+                  display: { xs: "none", sm: "block" },
+                }}
+              >
+                {tagline}
+              </Typography>
+            )}
+          </Box>
+        )}
 
         {/* Kinetic Caliper Measurement Hairline */}
         <Box
@@ -248,20 +254,22 @@ export function MajorEstablishingShot({
             </Typography>
 
             {/* Direct 1-Line Value Pitch */}
-            <Typography
-              sx={{
-                fontFamily: DISPLAY_FONT,
-                fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.4rem" },
-                lineHeight: 1.45,
-                letterSpacing: "-0.015em",
-                color: dark ? "rgba(255, 255, 255, 0.82)" : NOIR.navyField,
-                opacity: dark ? 1 : 0.88,
-                maxWidth: { xs: "100%", md: "78ch" },
-                fontWeight: 500,
-              }}
-            >
-              {description}
-            </Typography>
+            {description && (
+              <Typography
+                sx={{
+                  fontFamily: DISPLAY_FONT,
+                  fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.4rem" },
+                  lineHeight: 1.45,
+                  letterSpacing: "-0.015em",
+                  color: dark ? "rgba(255, 255, 255, 0.82)" : NOIR.navyField,
+                  opacity: dark ? 1 : 0.88,
+                  maxWidth: { xs: "100%", md: "78ch" },
+                  fontWeight: 500,
+                }}
+              >
+                {description}
+              </Typography>
+            )}
           </Box>
         </Box>
       </Container>

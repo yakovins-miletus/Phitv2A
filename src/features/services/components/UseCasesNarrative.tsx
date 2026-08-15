@@ -25,26 +25,7 @@ const DIAGRAMS: Record<string, ComponentType> = {
   "uc-3": FollowTheSunDiagram,
 };
 
-/** Intro slide fade wrapper */
-function IntroFade({ children, disabled }: { children: ReactNode; disabled: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.3 });
 
-  return (
-    <motion.div
-      ref={ref}
-      initial={disabled ? false : { opacity: 0.35, y: 30 }}
-      animate={{
-        opacity: disabled || inView ? 1 : 0.35,
-        y: disabled || inView ? 0 : 30,
-      }}
-      transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-      style={{ display: "flex", flexGrow: 1, width: "100%", flexDirection: "column", justifyContent: "center" }}
-    >
-      {children}
-    </motion.div>
-  );
-}
 
 /** Card emerge & center focus wrapper: emerges from bottom and scales up when centered */
 function CardEmerge({ children, disabled }: { children: ReactNode; disabled: boolean }) {
@@ -147,24 +128,7 @@ export function UseCasesNarrative() {
           alignItems="stretch"
           sx={{ position: "relative", maxWidth: vertical ? 760 : "none", mx: vertical ? "auto" : 0 }}
         >
-          {/* Intro Slide */}
-          <Box className="snap-slide" sx={{ width: vertical ? 1 : { xs: "80vw", md: "34vw" }, display: "flex" }}>
-            <IntroFade disabled={vertical}>
-              <Typography variant="overline" color="primary" sx={{ letterSpacing: "0.14em", fontWeight: 700 }}>
-                In Practice
-              </Typography>
-              <Typography variant="h2" sx={{ mt: 2, fontFamily: DISPLAY_FONT, fontWeight: 800, letterSpacing: "-0.02em", color: NOIR.navyField }}>
-                Real-World
-                <br />
-                <Box component="span" sx={{ color: NOIR.goldDark }}>
-                  Applications
-                </Box>
-              </Typography>
-              <Typography variant="body1" sx={{ mt: 3, color: "rgba(10, 42, 102, 0.78)", fontSize: "1.05rem" }}>
-                R&D, translated to impact across global markets.
-              </Typography>
-            </IntroFade>
-          </Box>
+
 
           {/* Use Case Slides */}
           {CONTENT.useCases.map((uc, index) => {

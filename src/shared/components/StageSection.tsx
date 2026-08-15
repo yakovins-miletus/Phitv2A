@@ -70,11 +70,17 @@ export function StageKicker({ index: _index, label }: { index?: string; label: s
   );
 }
 
+import type { SxProps, Theme } from "@mui/material/styles";
+
 interface StageSectionProps {
   section: SectionDef;
   /** Paper band with hairline borders — used to alternate page rhythm. */
   muted?: boolean;
+  /** Background content rendered outside the GSAP-animated .stage-inner wrapper,
+   *  so it does not inherit scroll-driven scale/opacity/y transforms. */
+  background?: ReactNode;
   children: ReactNode;
+  sx?: SxProps<Theme>;
 }
 
 /** Full-viewport "stage" for a home-page section: snap target (via
@@ -82,7 +88,7 @@ interface StageSectionProps {
  *  into center stage, holds fully lit, then dims as it exits. Content is
  *  visible by default; all tweens are from-side only so reduced motion and
  *  no-JS render the final state. */
-export function StageSection({ section, muted = false, children }: StageSectionProps) {
+export function StageSection({ section, muted = false, background, children, sx }: StageSectionProps) {
   // The ground comes from the section registry, not a prop, so the scroll-driven
   // ground layer reads exactly what this paints. See SectionDef.ground.
   const surface = section.ground ? GROUNDS[section.ground] : null;
@@ -156,9 +162,11 @@ export function StageSection({ section, muted = false, children }: StageSectionP
         borderBottom: surface ? 0 : muted ? 1 : 0,
         borderColor: "divider",
         overflow: "visible",
+        ...sx,
       }}
     >
       <Container maxWidth="2xl" sx={{ position: "relative", height: "100%", overflow: "visible" }}>
+        {background}
         <div className="stage-inner" style={{ position: "relative", zIndex: 1, overflow: "visible" }}>
           <Stack spacing={4}>
             {section.kicker ? <StageKicker index={section.kicker} label={section.label} /> : null}

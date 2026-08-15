@@ -12,10 +12,8 @@ import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
-import { CONTENT } from "@/shared/content";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
-import { SectionLede } from "@/shared/components/SectionLede";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { useStagePresence } from "@/shared/components/StageSection";
 import {
@@ -187,18 +185,7 @@ export function DailyLifeSection() {
             p: { xs: 3, sm: 5, md: 7 },
           }}
         >
-          {/* The page's voice turns here: everything above addresses the
-              client, everything below addresses the recruit. The video was
-              already that pivot — this line says so. */}
-          <Box sx={{ mt: { xs: 1, sm: 2, md: 3 }, maxWidth: 720 }}>
-            <SectionLede
-              gunshot={CONTENT.ledes.dailyLife.gunshot}
-              tracer={CONTENT.ledes.dailyLife.tracer}
-              eyebrow="Daily Life"
-              component="h3"
-              tone="dark"
-            />
-          </Box>
+
 
           <Stack spacing={2} sx={{ width: "100%" }}>
             {/* Control Bar */}

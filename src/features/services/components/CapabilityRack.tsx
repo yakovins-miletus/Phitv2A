@@ -6,7 +6,6 @@ import Grid from "@mui/material/Grid";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { SectionLede } from "@/shared/components/SectionLede";
 import { StageSection } from "@/shared/components/StageSection";
 import { homeSection } from "@/shared/sections";
 import { Reveal } from "@/shared/components/Reveal";
@@ -15,13 +14,7 @@ import { ServiceVector } from "./ServiceDrawer";
 export function CapabilityRack() {
   return (
     <StageSection section={homeSection("services")}>
-      <SectionLede
-        gunshot={CONTENT.ledes.services.gunshot}
-        tracer={CONTENT.ledes.services.tracer}
-        eyebrow="Capabilities"
-      />
-
-      <Stack spacing={0} sx={{ mt: { xs: 6, md: 8 } }}>
+      <Stack spacing={0} sx={{ mt: 0 }}>
         {CONTENT.services.map((service) => {
           return (
             <Box

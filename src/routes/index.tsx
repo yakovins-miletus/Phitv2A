@@ -88,8 +88,8 @@ function HomePage() {
             <MiniEstablishingShot
               indexTag="01.MINI"
               category="MARKET POSITIONING"
-              title="Institutional Capital & Global Orderflow"
-              titleAccent="At Scale"
+              title="Professional"
+              titleAccent="Leadership"
               tracer="Decades of institutional Wall Street domain mastery paired with disciplined engineering execution."
               status="ONLINE"
             />
@@ -108,8 +108,8 @@ function HomePage() {
             <MiniEstablishingShot
               indexTag="02.MINI"
               category="CORE DISCIPLINES"
-              title="Four Core Pillars of"
-              titleAccent="Quantitative R&D"
+              title="Four disciplines."
+              titleAccent="One delivery contract."
               tracer="High-performance computing, systematic execution engines, and mathematical research frameworks."
               status="04 DISCIPLINES"
             />
@@ -129,8 +129,8 @@ function HomePage() {
             <MiniEstablishingShot
               indexTag="03.MINI"
               category="APPLIED ARCHITECTURES"
-              title="Production Topologies & Real-World"
-              titleAccent="Case Studies"
+              title="Real-World"
+              titleAccent="Applications"
               tracer="End-to-end telemetry and architectural breakdowns of institutional deployments across global venues."
               status="PROD_READY"
             />
@@ -191,8 +191,8 @@ function HomePage() {
             <MiniEstablishingShot
               indexTag="05.MINI"
               category="HUMAN CAPITAL"
-              title="Join a Global Cohort of"
-              titleAccent="Quantitative Engineers"
+              title="For talents that outgrow"
+              titleAccent="large institutions"
               tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."
               status="HIRING // GLOBAL"
             />
@@ -225,8 +225,8 @@ function HomePage() {
               <MiniEstablishingShot
                 indexTag="06.MINI"
                 category="TECHNICAL DISPATCHES"
-                title="Research, Whitepapers &"
-                titleAccent="Engineering Signals"
+                title="Inside"
+                titleAccent="Phitopolis"
                 tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
                 status="FEED: LIVE"
                 dark
@@ -246,8 +246,8 @@ function HomePage() {
               <MiniEstablishingShot
                 indexTag="07.MINI"
                 category="GATEWAY TERMINAL"
-                title="Initialize Collaboration &"
-                titleAccent="Institutional Partnership"
+                title="In"
+                titleAccent="closing"
                 tracer="Direct line to our technical leadership and quantitative engineering directors."
                 status="READY"
                 dark

@@ -109,6 +109,7 @@ export function ProcessPayload({ stage, lastIndex, reduced }: ProcessPayloadProp
         borderRadius: "50%",
         bgcolor: NOIR.navyDeep,
         border: `1px solid rgba(${NOIR.frostRgb}, 0.18)`,
+        boxSizing: "border-box",
       }}
     >
       {/* Gold rim + glow — the Phitopolis chrome, earned at the last stage. */}

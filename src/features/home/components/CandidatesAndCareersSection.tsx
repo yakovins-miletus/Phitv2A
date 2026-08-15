@@ -85,67 +85,7 @@ export function CandidatesAndCareersSection() {
   return (
     <StageSection section={homeSection("candidates")} muted>
       {/* 1. Header Information Block */}
-      <Grid container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end">
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Stack spacing={2}>
-            {/* Section Eyebrow / Sub-kicker */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.78rem",
-                  color: "var(--accent-fg)",
-                  letterSpacing: "0.2em",
-                  fontWeight: 700,
-                }}
-              >
-                TALENT & CAREERS
-              </Typography>
-              <Box sx={{ width: 16, height: "1px", bgcolor: NOIR.gold }} />
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.78rem",
-                  color: "text.secondary",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                }}
-              >
-                {CONTENT.targetCandidates.sub}
-              </Typography>
-            </Box>
-
-            {/* Who We Look For Title */}
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                fontSize: { xs: "1.8rem", sm: "2.4rem", md: "3.2rem" },
-                lineHeight: 1.2,
-                letterSpacing: "-0.02em",
-                color: "text.primary",
-              }}
-            >
-              {CONTENT.targetCandidates.line}
-            </Typography>
-
-            {/* Description Paragraph */}
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                fontSize: "1.08rem",
-                lineHeight: 1.65,
-                maxWidth: 820,
-              }}
-            >
-              {CONTENT.targetCandidates.description}
-            </Typography>
-
-          </Stack>
-        </Grid>
-
+      <Grid container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end" justifyContent="flex-end">
         {/* Brochure Download Button */}
         <Grid
           size={{ xs: 12, md: 4 }}

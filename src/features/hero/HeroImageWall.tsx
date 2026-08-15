@@ -56,7 +56,7 @@ export function HeroImageWall({ paused }: HeroImageWallProps) {
         top: 0,
         bottom: 0,
         right: 0,
-        left: { xs: 0, md: "50%" },
+        left: 0,
         zIndex: 2,
         overflow: "hidden",
         pointerEvents: "none",

@@ -698,117 +698,71 @@ export function HeroSignalCore() {
         {/* Flanking Text Elements (Appear during Smoking — vertical movement) */}
         {stage.flank && (
           <>
-            {/* Top Text: 7 YEARS OF EXCELLENCE — 2 rows fitting top 50vh, vertically centered */}
+            {/* Top Text: 7 YEARS OF EXCELLENCE */}
             <Box
               ref={flankTopRef}
               sx={{
                 position: "absolute",
-                left: 0,
-                right: 0,
-                top: 0,
-                height: "50vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                // Translate using a tighter drift parameter to keep it centered on its half
-                transform: "translateY(calc(var(--hp-lefty, 0) * 0.45vh))",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, calc(-50% + var(--hp-lefty, 0) * 1vh))",
                 opacity: "var(--hp-flank, 0)",
                 pointerEvents: "none",
                 zIndex: 4,
-                overflow: "hidden",
-                px: { xs: 2, md: 4 },
-                mixBlendMode: "difference",
+                whiteSpace: "nowrap",
+                textAlign: "center",
               }}
             >
               <Typography
                 sx={{
                   fontFamily: MONO,
-                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
-                  fontWeight: 950,
-                  lineHeight: 0.9,
-                  letterSpacing: "-0.03em",
+                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  color: NOIR.gold,
-                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
-                  textAlign: "center",
+                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
+                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  transition: "color 0.15s ease-out",
                 }}
               >
-                7 YEARS OF
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
-                  fontWeight: 950,
-                  lineHeight: 0.9,
-                  letterSpacing: "-0.03em",
-                  textTransform: "uppercase",
-                  color: NOIR.gold,
-                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
-                  textAlign: "center",
-                }}
-              >
-                EXCELLENCE
+                7 YEARS OF EXCELLENCE
               </Typography>
             </Box>
 
-            {/* Bottom Text: GENERATIONS OF COMPETITIVENESS — 2 rows fitting bottom 50vh, vertically centered */}
+            {/* Bottom Text: GENERATIONS OF COMPETITIVENESS */}
             <Box
               ref={flankBottomRef}
               sx={{
                 position: "absolute",
-                left: 0,
-                right: 0,
-                top: "50vh",
-                height: "50vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                // Translate using a tighter drift parameter to keep it centered on its half
-                transform: "translateY(calc(var(--hp-righty, 0) * 0.45vh))",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, calc(-50% + var(--hp-righty, 0) * 1vh))",
                 opacity: "var(--hp-flank, 0)",
                 pointerEvents: "none",
                 zIndex: 4,
-                overflow: "hidden",
-                px: { xs: 2, md: 4 },
-                mixBlendMode: "difference",
+                whiteSpace: "nowrap",
+                textAlign: "center",
               }}
             >
               <Typography
                 sx={{
                   fontFamily: MONO,
-                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
-                  fontWeight: 950,
-                  lineHeight: 0.9,
-                  letterSpacing: "-0.03em",
+                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
+                  fontWeight: 800,
+                  letterSpacing: "0.16em",
                   textTransform: "uppercase",
-                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
-                  textAlign: "center",
+                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
+                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  transition: "color 0.15s ease-out",
                 }}
               >
-                GENERATIONS OF
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: { xs: "clamp(1.8rem, 6.2vw, 5.0rem)", md: "clamp(4.2rem, 7.8vw, 7.5rem)" },
-                  fontWeight: 950,
-                  lineHeight: 0.9,
-                  letterSpacing: "-0.03em",
-                  textTransform: "uppercase",
-                  background: `linear-gradient(90deg, ${NOIR.gold} calc(var(--hp-border, 0) * 100%), rgba(255, 255, 255, 0.98) calc(var(--hp-border, 0) * 100%))`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 6px 24px rgba(6, 24, 59, 0.85))",
-                  textAlign: "center",
-                }}
-              >
-                COMPETITIVENESS
+                GENERATIONS OF COMPETITIVENESS
               </Typography>
             </Box>
           </>
@@ -1187,23 +1141,7 @@ export function HeroSignalCore() {
                     opacity: 0.95,
                   }}
                 >
-                  PH
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "inline-block",
-                      width: { xs: 60, md: 110 },
-                      height: { xs: 32, md: 54 },
-                      borderRadius: "100px",
-                      mx: 1.5,
-                      verticalAlign: "middle",
-                      backgroundImage: "url(https://picsum.photos/seed/tech/600/300)",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      filter: "grayscale(0.2) contrast(1.2) mix-blend-mode(luminosity)",
-                    }}
-                  />
-                  <Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                 </Typography>
               </Box>
 
@@ -1372,23 +1310,7 @@ export function HeroSignalCore() {
                     transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
                   }}
                 >
-                  PH
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "inline-block",
-                      width: { xs: 60, md: 120 },
-                      height: { xs: 36, md: 64 },
-                      borderRadius: "100px",
-                      mx: 1.5,
-                      verticalAlign: "middle",
-                      backgroundImage: "url(https://picsum.photos/seed/tech/600/300)",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      filter: "grayscale(0.2) contrast(1.2)",
-                    }}
-                  />
-                  <Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
+                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                 </Typography>
               </Box>
             </Box>

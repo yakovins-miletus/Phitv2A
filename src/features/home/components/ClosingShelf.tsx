@@ -120,19 +120,7 @@ export function ClosingShelf() {
             flexDirection: "column",
           }}
         >
-          <Typography
-            component="p"
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.72rem",
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: NOIR.navyField,
-              mb: { xs: 4, md: 6 },
-            }}
-          >
-            In closing
-          </Typography>
+
 
           <Box
             sx={{

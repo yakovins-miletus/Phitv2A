@@ -74,12 +74,14 @@ export function AppetizerReveal({
         );
 
         // 2. Glide the header into its resting position
-        tl.fromTo(
-          headerRef.current,
-          { y: 60, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, ease: 'none', duration: 0.5 },
-          0.1
-        );
+        if (headerRef.current) {
+          tl.fromTo(
+            headerRef.current,
+            { y: 60, autoAlpha: 0 },
+            { y: 0, autoAlpha: 1, ease: 'none', duration: 0.5 },
+            0.1
+          );
+        }
 
         // 3. Reveal the main content with a subtle upward shift
         tl.fromTo(
@@ -93,7 +95,9 @@ export function AppetizerReveal({
       // Reduced Motion Fallback — show everything immediately
       mm.add('(prefers-reduced-motion: reduce)', () => {
         gsap.set(maskRef.current, { clipPath: 'inset(0% 0% 0% 0%)' });
-        gsap.set(headerRef.current, { y: 0, autoAlpha: 1 });
+        if (headerRef.current) {
+          gsap.set(headerRef.current, { y: 0, autoAlpha: 1 });
+        }
         gsap.set(mainContentRef.current, { y: 0, autoAlpha: 1 });
       });
 
@@ -120,17 +124,19 @@ export function AppetizerReveal({
         }}
       >
         {/* Header Content */}
-        <Box
-          ref={headerRef}
-          sx={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            mb: { xs: 4, md: 6 },
-          }}
-        >
-          {headerContent}
-        </Box>
+        {headerContent && (
+          <Box
+            ref={headerRef}
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              mb: { xs: 4, md: 6 },
+            }}
+          >
+            {headerContent}
+          </Box>
+        )}
 
         {/* Main Content */}
         <Box

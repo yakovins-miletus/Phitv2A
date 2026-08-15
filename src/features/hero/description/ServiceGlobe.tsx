@@ -130,7 +130,7 @@ function StationaryCentralMonogram({ reduced }: { reduced: boolean }) {
       </group>
 
       {/* Stationary Vector Monogram */}
-      <Html center transform distanceFactor={5.2} style={{ pointerEvents: "none" }}>
+      <Html center style={{ pointerEvents: "none" }}>
         <Box
           sx={{
             display: "flex",
