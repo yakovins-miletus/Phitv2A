@@ -31,6 +31,14 @@ function useIsMobile(): boolean {
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────
+// Most `images` entries below are hotlinked straight from the legacy WordPress
+// blog (https://phitopolis.com/blog/wp-content/uploads/...) rather than served
+// from this app's own /public. If that WordPress install is ever decommissioned,
+// every one of those URLs starts 404ing and the About page's centerpiece timeline
+// goes blank. These MUST be downloaded and mirrored into public/ (e.g. alongside
+// the already-local /2020/1.webp, /2020/2.jpg) before that happens — see the
+// content-audit report for the full URL list (~26 images across 2019, 2021-2026;
+// 2020 is already local).
 interface Chapter {
   num: string;
   id: string;
@@ -217,10 +225,18 @@ const CHAPTER_SCATTER: Record<string, ScatterPos[]> = {
   ],
 };
 
-// ── Fallback for failed images: swap a .jpg to .svg (matches UAT behavior) ──
+// ── Fallback for failed images ──────────────────────────────────────────────
+// Used to rewrite a failed ".jpg" to ".svg" on the *same* external WordPress
+// host — which is still unreachable if that host is gone, so it just traded
+// one dead request for a second one — and did nothing at all for the ".png"
+// URLs above, which stayed visibly broken. Now any failed extension degrades
+// once to a hidden element (an empty polaroid frame) instead of firing a
+// second network request against a host that may no longer exist.
 function handleImgError(event: SyntheticEvent<HTMLImageElement>): void {
   const el = event.currentTarget;
-  el.src = el.src.replace(".jpg", ".svg");
+  if (el.dataset.brokenImage === "1") return; // already handled — don't loop
+  el.dataset.brokenImage = "1";
+  el.style.display = "none";
 }
 
 // ── FLOATING STRING — cursor-following gold string + traveling year dots ────

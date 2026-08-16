@@ -103,7 +103,13 @@ export function AppetizerReveal({
 
       return () => mm.revert();
     },
-    { scope: containerRef }
+    // Explicit (and empty): the callback only touches refs, which are stable
+    // identities, and no prop. Without this key, `useGSAP` defaulted to the
+    // same empty array implicitly — declaring it removes the ambiguity that
+    // let the other two sites in this pass (`SuperHeroSequence.tsx`,
+    // `FillText.tsx`) silently never re-run when a real reactive value
+    // (`reduced`, `onComplete`) changed after mount.
+    { scope: containerRef, dependencies: [] }
   );
 
   return (

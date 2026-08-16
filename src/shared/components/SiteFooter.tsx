@@ -4,20 +4,15 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { SpecularIconButton as IconButton } from "@/shared/components/ui/specular";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MailIcon from "@mui/icons-material/Mail";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import TwitterIcon from "@mui/icons-material/Twitter";
 import ExploreIcon from "@mui/icons-material/Explore";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import CorporateFareIcon from "@mui/icons-material/CorporateFare";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import ArticleIcon from "@mui/icons-material/Article";
-import ScienceIcon from "@mui/icons-material/Science";
 import SendIcon from "@mui/icons-material/Send";
 import HomeIcon from "@mui/icons-material/Home";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -68,12 +63,6 @@ const CHAPTER_VISUAL_MAP: Record<string, ChapterVisualMeta> = {
     icon: <ArticleIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
     tags: ["Research", "Insights"],
   },
-  "/innovation-hub": {
-    chapterNum: "LAB DEMOS",
-    subtitle: "Live prototypes and benchmarks.",
-    icon: <ScienceIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["Benchmarks", "Prototypes"],
-  },
   "/contact": {
     chapterNum: "DISCOVERY",
     subtitle: "Connect with our engineering team.",
@@ -90,6 +79,7 @@ const CHAPTER_VISUAL_MAP: Record<string, ChapterVisualMeta> = {
 
 export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProps) {
   const { navigateWithCurtain } = useTransitionCurtain();
+  const currentYear = new Date().getFullYear();
   return (
     <Box
       component="footer"
@@ -147,7 +137,6 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                     { label: "Services", to: "/services", icon: <TerminalIcon sx={{ fontSize: 18 }} /> },
                     { label: "Careers", to: "/careers", badge: "HIRING", icon: <RocketLaunchIcon sx={{ fontSize: 18 }} /> },
                     { label: "Blog", to: "/blog", icon: <ArticleIcon sx={{ fontSize: 18 }} /> },
-                    { label: "Innovation Lab", to: "/innovation-hub", badge: "DEMO", icon: <ScienceIcon sx={{ fontSize: 18 }} /> },
                     { label: "Contact", to: "/contact", icon: <SendIcon sx={{ fontSize: 18 }} /> },
                   ].map((link) => (
                     <Grid size={{ xs: 12, sm: 6 }} key={link.to}>
@@ -268,7 +257,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
         >
           <Grid container spacing={3} alignItems="center">
             {/* Contact Header & Action */}
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Stack spacing={1.2}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <ContactMailIcon sx={{ fontSize: 20, color: NOIR.gold }} />
@@ -312,7 +301,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
             </Grid>
 
             {/* Location */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.55)", display: "block", mb: 0.5, fontSize: "0.7rem" }}>
                 LOCATION
               </Typography>
@@ -330,7 +319,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
             </Grid>
 
             {/* Emails */}
-            <Grid size={{ xs: 12, sm: 6, md: 3.5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Stack spacing={0.6}>
                 <Box>
                   <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.55)", display: "block", fontSize: "0.68rem" }}>
@@ -360,7 +349,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                   </Typography>
                   <Typography
                     component="a"
-                    href="mailto:careers@phitopolis.com"
+                    href="mailto:jobs@phitopolis.com"
                     sx={{
                       color: "common.white",
                       textDecoration: "none !important",
@@ -373,27 +362,9 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
                     }}
                   >
                     <MailIcon sx={{ fontSize: 15, color: NOIR.gold }} />
-                    careers@phitopolis.com
+                    jobs@phitopolis.com
                   </Typography>
                 </Box>
-              </Stack>
-            </Grid>
-
-            {/* Social Links */}
-            <Grid size={{ xs: 12, md: 2.5 }}>
-              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.55)", display: "block", mb: 0.5, fontSize: "0.7rem" }}>
-                CONNECT
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <IconButton component="a" href="#" aria-label="GitHub" sx={{ color: "common.white", "&:hover": { color: NOIR.gold } }}>
-                  <GitHubIcon fontSize="small" />
-                </IconButton>
-                <IconButton component="a" href="#" aria-label="LinkedIn" sx={{ color: "common.white", "&:hover": { color: NOIR.gold } }}>
-                  <LinkedInIcon fontSize="small" />
-                </IconButton>
-                <IconButton component="a" href="#" aria-label="Twitter" sx={{ color: "common.white", "&:hover": { color: NOIR.gold } }}>
-                  <TwitterIcon fontSize="small" />
-                </IconButton>
               </Stack>
             </Grid>
           </Grid>
@@ -411,9 +382,38 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
             color: "rgba(255, 255, 255, 0.6)",
           }}
         >
-          <Typography variant="caption" sx={{ fontFamily: MONO, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.8)" }}>
-            © 2026 Phitopolis International Corp. All rights reserved.
-          </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 0.5, sm: 2 }}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+          >
+            <Typography variant="caption" sx={{ fontFamily: MONO, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.8)" }}>
+              © {currentYear} Phitopolis International Corp. All rights reserved.
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              {[
+                { label: "Privacy Policy", to: "/privacy" },
+                { label: "Terms of Service", to: "/terms" },
+              ].map((link) => (
+                <Box
+                  key={link.to}
+                  component={RouterLink}
+                  to={link.to}
+                  underline="none"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: "0.72rem",
+                    color: "rgba(255, 255, 255, 0.6)",
+                    textDecoration: "none !important",
+                    transition: "color 0.2s ease",
+                    "&:hover, &:focus-visible": { color: NOIR.gold },
+                  }}
+                >
+                  {link.label}
+                </Box>
+              ))}
+            </Stack>
+          </Stack>
 
           {/* Overhauled Next Page Element at Bottom Right */}
           {currentNarration && (() => {

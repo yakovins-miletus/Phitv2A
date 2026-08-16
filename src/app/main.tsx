@@ -3,6 +3,12 @@ import "@/shared/theme/fonts.css";
 // custom property resolves before the first Emotion insertion and before
 // Preloader or GroundLayer paint their first frame. See glass.css's docblock.
 import "@/shared/theme/glass.css";
+// Lenis's own stylesheet (its README recommends importing it) — this was
+// never wired in, which is why Preloader.tsx, SmoothScroll.tsx, and
+// AppShell.tsx each hand-roll `document.body.style.overflow` toggling
+// instead. A pure CSS import, so it costs nothing on routes where the lazy
+// home chunk never loads the `lenis` JS package itself.
+import "lenis/dist/lenis.css";
 
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";

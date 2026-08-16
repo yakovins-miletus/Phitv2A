@@ -289,6 +289,11 @@ export function CareersIndexPage() {
             </Reveal>
 
             {/* ── Positions List (Divider-free, clean spacing and hover states) ── */}
+            {filteredPositions.length === 0 ? (
+              <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.7)", py: 6, textAlign: "center" }}>
+                No positions match this search or filter.
+              </Typography>
+            ) : (
             <StaggerGroup key={selectedCategory + searchQuery}>
               <Stack spacing={1.5}>
                 {filteredPositions.map((position) => (
@@ -436,6 +441,7 @@ export function CareersIndexPage() {
                 ))}
               </Stack>
             </StaggerGroup>
+            )}
           </Box>
         </Stack>
       </Section>

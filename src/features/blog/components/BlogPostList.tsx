@@ -5,7 +5,8 @@ import Chip from "@mui/material/Chip";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useNavigate } from "@tanstack/react-router";
+
+import { RouterLink } from "@/shared/components/RouterLink";
 
 import type { BlogPostPage, BlogPostSummary } from "../api";
 
@@ -23,18 +24,8 @@ interface BlogPostCardProps {
 }
 
 function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }: BlogPostCardProps) {
-  const navigate = useNavigate();
-
   return (
-    <Box
-      onClick={() => {
-        void navigate({ to: "/blog/$slug", params: { slug: post.slug } });
-      }}
-      sx={{
-        cursor: "pointer",
-        display: "block",
-      }}
-    >
+    <Box sx={{ position: "relative" }}>
       <Box sx={{ position: "relative" }}>
         <Card
           sx={{
@@ -92,13 +83,24 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
             />
           )}
           
-          <CardContent 
-            sx={{ 
+          {/*
+            The whole tile is a genuine link via the stretched-link anchor
+            below (after this block). This content layer sits visually above
+            it but is `pointer-events: none`, so clicks anywhere in here fall
+            through to the anchor — except the category Chip, which opts
+            itself back in with `pointer-events: auto`. That keeps the Chip's
+            own onClick independently reachable without ever nesting an
+            interactive element inside the anchor (nesting is what the
+            original onClick-div version effectively did).
+          */}
+          <CardContent
+            sx={{
               position: "relative",
-              zIndex: 1,
-              p: { xs: 4, md: 5 }, 
-              flexGrow: 1, 
-              display: "flex", 
+              zIndex: 2,
+              pointerEvents: "none",
+              p: { xs: 4, md: 5 },
+              flexGrow: 1,
+              display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               width: { xs: "100%", md: "70%", lg: "60%" }
@@ -109,17 +111,18 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                 <Chip
                   label={post.category}
                   size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     onCategoryChange(post.category === activeCategory ? null : post.category);
                   }}
                   sx={post.category === activeCategory ? {
+                    pointerEvents: "auto",
                     bgcolor: "secondary.main",
                     color: "secondary.contrastText",
                     border: "none",
                     "& .MuiChip-label": { color: "inherit", fontWeight: 700 },
                     "&:hover": { bgcolor: "#E5B327" },
                   } : {
+                    pointerEvents: "auto",
                     bgcolor: "rgba(255, 255, 255, 0.15)",
                     color: "#FFFFFF",
                     border: "1px solid rgba(255, 255, 255, 0.3)",
@@ -184,6 +187,28 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
               </Typography>
             </Box>
           </CardContent>
+
+          {/* Stretched-link overlay: the tile's real, focusable, crawlable
+              <a>. It sits below the content layer above (z-index 1 vs. 2)
+              so the Chip can win the hit-test there, but above the
+              background image/gradient (z-index 0) everywhere else — which
+              is how a click anywhere else on the card still navigates. */}
+          <RouterLink
+            to="/blog/$slug"
+            params={{ slug: post.slug }}
+            aria-label={post.title}
+            underline="none"
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 1,
+              borderRadius: "inherit",
+              "&:focus-visible": {
+                outline: "3px solid var(--accent)",
+                outlineOffset: "-3px",
+              },
+            }}
+          />
         </Card>
       </Box>
     </Box>

@@ -7,7 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import { messageFromError } from "@/shared/api/errors";
@@ -57,6 +57,10 @@ const EMPTY_FORM: FormValues = {
 type FieldName = keyof FormValues;
 type FieldErrors = Partial<Record<FieldName, string>>;
 
+/** Visual + focus order of the validated fields (excludes the honeypot). */
+const FIELD_ORDER = ["name", "email", "subject", "message"] as const;
+type ValidatedField = (typeof FIELD_ORDER)[number];
+
 function validate(values: FormValues): FieldErrors {
   const errors: FieldErrors = {};
   for (const field of ["name", "subject", "message"] as const) {
@@ -79,6 +83,24 @@ export function ContactForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const mutation = useSubmitContactMessage();
 
+  // Stable id prefix (survives remounts, unique per instance) so each
+  // field's helper text can be wired to it via aria-describedby — MUI only
+  // generates that link when the field has an `id`.
+  const formId = useId();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const messageRef = useRef<HTMLInputElement>(null);
+  const fieldRefs: Record<ValidatedField, React.RefObject<HTMLInputElement | null>> = {
+    name: nameRef,
+    email: emailRef,
+    subject: subjectRef,
+    message: messageRef,
+  };
+  const errorSummary = FIELD_ORDER.map((field) => errors[field]).filter(
+    (message): message is string => Boolean(message),
+  );
+
   const setField = (field: FieldName) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setValues((current) => ({ ...current, [field]: event.target.value }));
   };
@@ -88,6 +110,14 @@ export function ContactForm() {
     const nextErrors = validate(values);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
+      // This form is `noValidate`, so the browser's own "focus the first
+      // invalid field" behaviour never fires — reproduce it here so a
+      // failed submit both announces (the alert below) and lands focus
+      // on something a keyboard/screen-reader user can act on.
+      const firstInvalidField = FIELD_ORDER.find((field) => nextErrors[field]);
+      if (firstInvalidField) {
+        fieldRefs[firstInvalidField].current?.focus();
+      }
       return;
     }
     mutation.mutate({
@@ -141,11 +171,20 @@ export function ContactForm() {
     >
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit} noValidate sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         <Box>
+          {/* Client-side validation summary — a role="alert" region (MUI's
+              Alert default) so a failed submit is announced even though
+              nothing here uses native HTML5 validation (`noValidate` above). */}
+          {errorSummary.length > 0 ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorSummary.join(" ")}
+            </Alert>
+          ) : null}
           {mutation.isError ? (
             <Alert severity="error" sx={{ mb: 2 }}>{messageFromError(mutation.error)}</Alert>
           ) : null}
           <Stack spacing={2.5}>
             <TextField
+              id={`${formId}-name`}
               label="Name"
               value={values.name}
               onChange={setField("name")}
@@ -153,9 +192,11 @@ export function ContactForm() {
               helperText={errors.name ?? " "}
               required
               fullWidth
+              inputRef={nameRef}
               sx={lightTextFieldSx}
             />
             <TextField
+              id={`${formId}-email`}
               label="Email"
               type="email"
               value={values.email}
@@ -164,9 +205,11 @@ export function ContactForm() {
               helperText={errors.email ?? " "}
               required
               fullWidth
+              inputRef={emailRef}
               sx={lightTextFieldSx}
             />
             <TextField
+              id={`${formId}-subject`}
               label="Subject"
               value={values.subject}
               onChange={setField("subject")}
@@ -174,9 +217,11 @@ export function ContactForm() {
               helperText={errors.subject ?? " "}
               required
               fullWidth
+              inputRef={subjectRef}
               sx={lightTextFieldSx}
             />
             <TextField
+              id={`${formId}-message`}
               label="Message"
               value={values.message}
               onChange={setField("message")}
@@ -186,6 +231,7 @@ export function ContactForm() {
               minRows={6}
               required
               fullWidth
+              inputRef={messageRef}
               sx={lightTextFieldSx}
             />
           </Stack>
@@ -200,8 +246,13 @@ export function ContactForm() {
             label="Company website"
             value={values.company_website}
             onChange={setField("company_website")}
-            tabIndex={-1}
             autoComplete="off"
+            // `tabIndex` as a top-level TextField prop lands on the
+            // MuiFormControl-root wrapper div, not the actual <input> — which
+            // stays in the normal tab order. Routing it through
+            // slotProps.htmlInput is what actually keeps a keyboard user from
+            // tabbing into this invisible field.
+            slotProps={{ htmlInput: { tabIndex: -1 } }}
           />
         </Box>
 

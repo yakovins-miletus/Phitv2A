@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
@@ -14,10 +15,17 @@ import {
   type ChapterIndex,
 } from "@/shared/sections";
 import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
+import { useReducedMotion } from "@/shared/motion";
 import { getLenis } from "./SmoothScroll";
 import { useNavbar } from "./NavbarContext";
 
+gsap.registerPlugin(ScrollTrigger);
+
 const RAIL_HEIGHT = 300;
+
+/** Resize work is debounced by this much before the five section anchors are
+ *  re-measured — matches `HeroCanvas.tsx`'s own resize debounce. */
+const RESIZE_DEBOUNCE_MS = 150;
 
 const ACT_GROUPS: readonly { act: Act; chapters: readonly (typeof CHAPTERS)[number][] }[] = (
   Object.keys(ACT_LABELS) as Act[]
@@ -39,13 +47,36 @@ export function EyeFlow() {
   const [activeChapter, setActiveChapter] = useState<ChapterIndex>(0);
   const activeAct = actOfChapter(activeChapter);
   const indicatorTop = useTransform(normalizedProgress, [0, 1], [0, RAIL_HEIGHT]);
+  const reduced = useReducedMotion();
 
+  /**
+   * Chapter/progress tracking — cached offsets, not per-frame layout.
+   *
+   * The five section anchors (`use-cases`, `reach`, `daily-life`, `candidates`,
+   * `blog`) only need their *document-relative* Y offset. `window.scrollY +
+   * rect.top` is scroll-position-invariant — the two terms cancel — so that
+   * number only changes when the layout above the anchor changes: a resize, a
+   * pin's spacer being sized, lazy content mounting. It never changes just
+   * because the reader scrolled. The previous version re-read all five
+   * `getBoundingClientRect()`s (plus `scrollHeight`) inside `gsap.ticker`,
+   * i.e. a forced synchronous layout on every single frame, permanently, on
+   * the home route.
+   *
+   * `measure()` now does that work only when something could have moved the
+   * anchors: once at mount, on `ScrollTrigger.refresh` (fires once GSAP has
+   * finished building every pin and inserting its spacers — the only point at
+   * which offsets downstream of a pin are final), and on a debounced
+   * `resize`. The per-frame `updateProgress` reads only `window.scrollY` (no
+   * layout) and does arithmetic against the cached `offsets`.
+   */
   useEffect(() => {
-    const updateProgress = () => {
-      const docH = document.documentElement.scrollHeight;
+    let limit = 0;
+    let offsets: number[] = new Array(11).fill(0);
+
+    const measure = () => {
       const winH = window.innerHeight;
-      const limit = docH - winH;
-      if (limit <= 0) return;
+      const docH = document.documentElement.scrollHeight;
+      limit = docH - winH;
 
       const heroHeight = 9 * winH; // 900% total (800% pin scroll + 100% natural height)
 
@@ -61,9 +92,7 @@ export function EyeFlow() {
       const y_candidates = candidatesEl ? window.scrollY + candidatesEl.getBoundingClientRect().top : y_dailyLife + winH;
       const y_blog = blogEl ? window.scrollY + blogEl.getBoundingClientRect().top : y_candidates + winH;
 
-      const y = Math.max(0, Math.min(window.scrollY, limit));
-
-      const offsets = [
+      offsets = [
         0,                        // Ch 0: FLATTEN
         0.20 * heroHeight,        // Ch 1: ALIGN
         0.35 * heroHeight,        // Ch 2: REVEAL
@@ -76,6 +105,12 @@ export function EyeFlow() {
         y_blog,                   // Ch 9: SIGNAL
         limit,                    // End
       ];
+    };
+
+    const updateProgress = () => {
+      if (limit <= 0) return;
+
+      const y = Math.max(0, Math.min(window.scrollY, limit));
 
       let intervalIdx = 0;
       for (let i = 0; i < offsets.length - 1; i++) {
@@ -99,18 +134,47 @@ export function EyeFlow() {
       setActiveChapter(intervalIdx as ChapterIndex);
     };
 
-    window.addEventListener("scroll", updateProgress, { passive: true });
-    window.addEventListener("resize", updateProgress, { passive: true });
+    measure();
     updateProgress();
 
+    // Reduced motion: one static readout at the current scroll position, then
+    // no loop and no listeners — mirrors `GroundLayer.tsx`'s degradation
+    // ladder ("rung 1: prefers-reduced-motion → static, no loop at all").
+    // The continuous per-frame tracking is treated as motion work to drop,
+    // not just the visual smoothing on top of it.
+    if (reduced === true) {
+      return;
+    }
+
+    let resizeTimer = 0;
+    const handleResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        measure();
+        updateProgress();
+      }, RESIZE_DEBOUNCE_MS);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    const handleRefresh = () => {
+      measure();
+      updateProgress();
+    };
+    ScrollTrigger.addEventListener("refresh", handleRefresh);
+
+    // The ticker is the sole per-frame driver — it already rides the same
+    // clock Lenis feeds into (see `SmoothScroll.tsx`), so a dedicated
+    // `scroll` listener calling this identical function was redundant, not
+    // additive.
     gsap.ticker.add(updateProgress);
 
     return () => {
-      window.removeEventListener("scroll", updateProgress);
-      window.removeEventListener("resize", updateProgress);
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+      ScrollTrigger.removeEventListener("refresh", handleRefresh);
       gsap.ticker.remove(updateProgress);
     };
-  }, [normalizedProgress]);
+  }, [normalizedProgress, reduced]);
 
   const scrollToChapter = (index: ChapterIndex) => {
     const winH = window.innerHeight;

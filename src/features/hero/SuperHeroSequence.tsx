@@ -532,7 +532,7 @@ export function HeroSignalCore() {
 
       const yQuick = gsap.quickTo(el, "y", { duration: 0.8, ease: "power3.out" });
       const proxy = { progress: 0 };
-      
+
       let splitTop: SplitText | undefined;
       let splitBottom: SplitText | undefined;
       if (flankTopRef.current && flankBottomRef.current) {
@@ -591,22 +591,47 @@ export function HeroSignalCore() {
         }, 0.60);
       }
 
+      /**
+       * `quickTo`, not a fresh `gsap.to(proxy, …)` per scroll tick.
+       *
+       * The pin's `onUpdate` below fires on every scroll tick across an 800%
+       * pin — hundreds of times per scroll pass. The old code built and
+       * discarded a whole Tween each time; `overwrite: "auto"` kept them from
+       * stacking, but every tick still paid for construction. `quickTo`
+       * builds the tween once and `resetTo`s its target on each call, which
+       * is exactly what it exists for (the same pattern `yQuick` above
+       * already uses for the drift's `y`). Same duration, same "drift" ease,
+       * same `onUpdate` bridge into `master` — the eased chase toward each
+       * new progress value looks identical, just without the per-tick
+       * allocation.
+       */
+      const progressQuick = gsap.quickTo(proxy, "progress", {
+        duration: 0.4,
+        ease: "drift",
+        onUpdate: () => master.progress(proxy.progress / 1.1),
+      });
+
       ScrollTrigger.create({
         trigger: pinRef.current,
         start: "top top",
         end: HERO_PIN_DISTANCE,
         scrub: 0.6,
         pin: true,
+        // Under Lenis smoothing, an 800%-tall pin with no `anticipatePin`
+        // produces a one-frame jump at pin-start — ScrollTrigger has to wait
+        // for the scroll position to actually reach the pin before it can
+        // measure and apply it, and Lenis's smoothing makes that arrival
+        // visible as a snap. `invalidateOnRefresh` recomputes start/end (and
+        // re-runs this tween's setup) on resize, since the drift math below
+        // reads `window.innerHeight` and a stale viewport height would drift
+        // out of sync with the actual one. Mirrors
+        // `DailyLifeSection.tsx`'s own pin config.
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
         onUpdate: (self) => {
           const p = Math.min(1.1, self.progress / ANIM_LIMIT);
-          gsap.to(proxy, {
-            progress: p,
-            duration: 0.4,
-            ease: "drift",
-            overwrite: "auto",
-            onUpdate: () => master.progress(proxy.progress / 1.1)
-          });
-          
+          progressQuick(p);
+
           if (self.progress > ANIM_LIMIT) {
             const overlapT = (self.progress - ANIM_LIMIT) / (1 - ANIM_LIMIT);
             const driftVal = overlapT * -30 * (window.innerHeight / 100);
@@ -617,7 +642,7 @@ export function HeroSignalCore() {
         },
       });
     },
-    { scope: pinRef }
+    { scope: pinRef, dependencies: [reduced] }
   );
 
   // Every continuous value now lives in a CSS custom property written by the driver

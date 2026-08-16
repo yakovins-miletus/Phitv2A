@@ -19,14 +19,15 @@ import { homeSection } from "@/shared/sections";
  * `<ReachMap />` — a paper card on a paper band, which is why it read as bland
  * from a section whose own copy claims global scale.
  *
- * Three changes, and no ReachMap rewrite:
+ * Two changes, and no ReachMap rewrite:
  *  - The box and the band are gone. The map sits directly on the act ground, which
  *    the ground layer is already interpolating, so nothing draws a seam around it.
  *  - The map bleeds past the container gutters at desktop, so the footprint reads
- *    as wide as the claim.
- *  - The two figures the lede asserts — "TEstablished International Presence" — now
- *    appear as figures beneath it. `CONTENT.stats` already held them and had no
- *    consumer anywhere in the app.
+ *    as wide as the claim ("Established International Presence").
+ *
+ * `CONTENT.stats` does not render here or anywhere else — it was removed as dead
+ * content (zero render sites) rather than wired up as the figures this section's
+ * lede implies.
  */
 export function ReachSection() {
   return (

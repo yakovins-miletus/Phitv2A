@@ -10,7 +10,7 @@ import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import CloseIcon from "@mui/icons-material/Close";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
@@ -18,10 +18,11 @@ import { MONO } from "@/shared/theme/theme";
 import { motion } from "motion/react";
 
 import { CommandPalette } from "./CommandPalette";
+import { CookieNotice } from "./CookieNotice";
 import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
 import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
-import { Preloader } from "./Preloader";
+import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
 import { TransitionCurtainProvider, useTransitionCurtain } from "./TransitionCurtain";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
@@ -33,13 +34,24 @@ import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS, EASE_OUT_EXPO } from "@/shared/motion/easing";
 import { useNavAutohide } from "./useNavAutohide";
 
+// Held in an untyped variable (not inlined) so the extra `data-lenis-prevent`
+// attribute doesn't trip MUI's strict slotProps excess-property check — MUI's
+// DrawerPaperSlotPropsOverrides doesn't know about it, but Paper forwards any
+// unrecognized prop straight to the DOM element. MUI's Drawer paper is
+// overflowY: auto by default (this panel can exceed viewport height), so it
+// needs the same lenis exemption as ServiceDrawer/CommandPalette/
+// TopNavMegaDrawer for when Lenis is eventually hoisted off the home route.
+const MOBILE_NAV_PAPER_SLOT_PROPS = {
+  "data-lenis-prevent": true,
+  sx: { width: "min(320px, 82vw)", bgcolor: "background.default", p: 3 },
+};
+
 const NAV_ITEMS = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
   { to: "/services", label: "Services" },
   { to: "/careers", label: "Careers" },
   { to: "/blog", label: "Blog" },
-  { to: "/innovation-hub", label: "Innovation Lab" },
 ] as const;
 
 const NARRATION_FLOW: Record<string, { next: string; label: string }> = {
@@ -47,14 +59,30 @@ const NARRATION_FLOW: Record<string, { next: string; label: string }> = {
   "/about": { next: "/services", label: "CAPABILITIES & SERVICES" },
   "/services": { next: "/careers", label: "CAREERS & POSITIONS" },
   "/careers": { next: "/blog", label: "RESEARCH & ARTICLES" },
-  "/blog": { next: "/innovation-hub", label: "INNOVATION LAB" },
-  "/innovation-hub": { next: "/contact", label: "GET IN TOUCH" },
+  "/blog": { next: "/contact", label: "GET IN TOUCH" },
   "/contact": { next: "/", label: "HOME" },
 };
 
+/** Gates the full ~5s choreographed intro to a visitor's genuine first load of a
+ *  session — Preloader writes PRELOADER_SESSION_KEY to sessionStorage once its exit
+ *  finishes (see Preloader.tsx), but nothing previously read it back, so the intro
+ *  (and the ~5.4s of opaque, pointer-blocking overlay that comes with it) replayed
+ *  on every hard refresh and every hard navigation, not just a visitor's first one.
+ *
+ *  Called from a useState lazy initializer, which runs during render — `sessionStorage`
+ *  access must be guarded here rather than left to bubble, since it throws in Safari
+ *  private browsing and some sandboxed/embedded contexts, and an uncaught throw during
+ *  a lazy initializer would take the whole render down with it. Failing open (treat the
+ *  read as "no key yet" and show the intro) is the safe default: worst case a returning
+ *  visitor sees the intro again, which is what today's behavior already is for everyone,
+ *  never a broken page. */
 function shouldShowPreloader(reduced: boolean): boolean {
   if (reduced) return false;
-  return true;
+  try {
+    return typeof window !== "undefined" && window.sessionStorage.getItem(PRELOADER_SESSION_KEY) !== "1";
+  } catch {
+    return true;
+  }
 }
 
 /** Routes warmed while the preloader plays: preloadRoute downloads + compiles
@@ -65,7 +93,6 @@ const WARM_ROUTES = [
   { to: "/about", label: "ABOUT" },
   { to: "/services", label: "SERVICES" },
   { to: "/blog", label: "BLOG" },
-  { to: "/innovation-hub", label: "INNOVATION" },
   { to: "/contact", label: "CONTACT" },
 ] as const;
 
@@ -343,6 +370,29 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<EntrancePhase>(() => (reduced === true ? "open" : "covered"));
   const releasedRef = useRef(reduced === true);
   const hadPreloaderRef = useRef(showPreloader);
+
+  // useReducedMotion() can resolve asynchronously — its type is
+  // `boolean | null`, and it is null until the media-query listener has run.
+  // The lazy initializers above only see whatever value was available at
+  // mount, so a preference that resolves to `true` on a later render would
+  // otherwise be missed entirely: showPreloader and phase already committed
+  // to their "reduced === true" branch, and useState's lazy initializer never
+  // re-runs. A reduced-motion visitor could get the full bounce-timeline
+  // preloader and staged entrance regardless of their OS setting.
+  //
+  // This corrects course the instant the preference resolves. It's a
+  // useLayoutEffect (not useEffect) specifically so the correction lands
+  // before the browser paints the frame — a reduced-motion user never sees
+  // the preloader flash on before it's dismissed, and a non-reduced user sees
+  // no change at all (this effect is a no-op for them).
+  useLayoutEffect(() => {
+    if (reduced !== true) return;
+    if (releasedRef.current) return; // already correct — the common case
+    releasedRef.current = true;
+    hadPreloaderRef.current = false;
+    setShowPreloader(false);
+    setPhase("open");
+  }, [reduced]);
   const entranceTimersRef = useRef<number[]>([]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [megaNavOpen, setMegaNavOpen] = useState(false);
@@ -394,7 +444,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
     if (typeof document !== "undefined") {
       document.body.style.overflow = "";
     }
-    // The GSAP overlay curtain (TransitionCurtain.tsx) now handles stopLenis() and refreshScrollTriggers().
+    // TransitionCurtain.tsx owns stopLenis()/startLenis() and refreshScrollTriggers()
+    // around every in-app navigation — on both its full curtain-sweep path and its
+    // prefers-reduced-motion fast path, which skips the sweep but keeps the same
+    // scroll-freeze/refresh sequencing. gsap is loaded on demand there, not eagerly.
 
     // Trigger staggered entrance animations for the new route
     if (hadPreloaderRef.current && phase === "open") {
@@ -464,6 +517,30 @@ function AppShellInner({ children }: { children: ReactNode }) {
   return (
     <EntrancePhaseContext.Provider value={phase}>
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        {showPreloader ? (
+          <Preloader
+            warmup={warmup}
+            onStartExit={releaseEntrance}
+            onDone={handlePreloaderDone}
+          />
+        ) : null}
+        {/* `inert` while the preloader is up locks focus, pointer interaction, and
+            AT visibility for everything it visually covers — skip link, header, both
+            nav drawers, page content, footer — for exactly as long as `showPreloader`
+            is true. It goes on this wrapper, not on <Preloader> itself: Preloader owns
+            no focusable elements, so marking *it* inert would do nothing about the gap
+            a runtime audit found — z-index blocks the mouse, but not Tab order, so a
+            keyboard user could tab past the opaque overlay and Enter-activate a header
+            link hidden behind it, something a mouse user physically cannot do. Scoping
+            inert to "everything behind the curtain" instead fixes both input modalities
+            with one primitive, and it clears in the same render as the overlay's own
+            unmount (both keyed off `showPreloader`), so keyboard access returns exactly
+            when the header becomes visible and interactive — never before, never after.
+            `display: "contents"` keeps this Box out of the flex layout box model, so
+            AppBar/main/footer still participate in the parent flex column exactly as if
+            this wrapper weren't here; only the `inert` attribute (which propagates
+            through the DOM regardless of the rendering box) does anything. */}
+        <Box sx={{ display: "contents" }} inert={showPreloader || undefined}>
         {/* First tab stop on every page. There was no skip link, so a keyboard user
             had to tab through the whole header — logo, six nav items, contact button,
             menu trigger — on every single navigation before reaching content.
@@ -472,13 +549,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <Box component="a" href="#main-content" className="skip-to-content">
           Skip to content
         </Box>
-        {showPreloader ? (
-          <Preloader
-            warmup={warmup}
-            onStartExit={releaseEntrance}
-            onDone={handlePreloaderDone}
-          />
-        ) : null}
         <TopNavMegaDrawer open={megaNavOpen} onClose={() => setMegaNavOpen(false)} />
         <AppBar
           position="fixed"
@@ -786,7 +856,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           anchor="right"
           open={mobileNavOpen}
           onClose={closeMobileNav}
-          slotProps={{ paper: { sx: { width: "min(320px, 82vw)", bgcolor: "background.default", p: 3 } } }}
+          slotProps={{ paper: MOBILE_NAV_PAPER_SLOT_PROPS }}
         >
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
             <Typography sx={{ fontFamily: MONO, fontSize: "0.72rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "text.secondary" }}>
@@ -847,6 +917,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
         />
         <CommandPalette />
         <FloatingIdOverlay />
+        <CookieNotice />
+        </Box>
 
       </Box>
     </EntrancePhaseContext.Provider>

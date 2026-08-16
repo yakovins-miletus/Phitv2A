@@ -203,6 +203,7 @@ export function DailyLifeSection() {
               <IconButton
                 onClick={togglePlay}
                 size="small"
+                aria-label={isPlaying ? "Pause video" : "Play video"}
                 sx={{
                   color: "white",
                   bgcolor: "rgba(255,255,255,0.1)",
@@ -219,16 +220,36 @@ export function DailyLifeSection() {
                 min={0}
                 max={duration || 100}
                 onChange={handleSeek}
+                aria-label="Seek video"
+                getAriaValueText={formatTime}
                 sx={{
                   color: NOIR.gold,
                   flexGrow: 1,
                   mx: { xs: 0.5, md: 1 },
                   py: 1,
                   "& .MuiSlider-thumb": {
-                    width: 8,
-                    height: 8,
-                    backgroundColor: NOIR.gold,
-                    "&:hover, &.Mui-focusVisible": {
+                    // Visually an 8x8 dot, but the actual thumb box (what a
+                    // pointer/touch hit-tests and what a11y tooling measures)
+                    // is grown to the WCAG 2.5.8 minimum of 24x24 via this
+                    // transparent box; the dot itself moves to a `::before`
+                    // so it keeps its original size and position.
+                    width: 24,
+                    height: 24,
+                    backgroundColor: "transparent",
+                    boxShadow: "none",
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: NOIR.gold,
+                      transform: "translate(-50%, -50%)",
+                      boxShadow: "none",
+                    },
+                    "&:hover::before, &.Mui-focusVisible::before": {
                       boxShadow: "0px 0px 0px 6px rgba(var(--accent-rgb), 0.12)",
                     },
                   },
@@ -294,13 +315,30 @@ export function DailyLifeSection() {
                     max={1}
                     step={0.01}
                     onChange={handleVolumeChange}
+                    aria-label="Volume"
+                    getAriaValueText={(value) => `${Math.round(value * 100)}%`}
                     sx={{
                       color: "white",
                       height: 60,
                       "& .MuiSlider-thumb": {
-                        width: 8,
-                        height: 8,
-                        backgroundColor: "white",
+                        // Same touch-target enlargement as the seek slider:
+                        // grow the real hit box to 24x24, keep the visible
+                        // dot at its original 8x8 via `::before`.
+                        width: 24,
+                        height: 24,
+                        backgroundColor: "transparent",
+                        boxShadow: "none",
+                        "&::before": {
+                          content: '""',
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          backgroundColor: "white",
+                          transform: "translate(-50%, -50%)",
+                        },
                       },
                       "& .MuiSlider-rail": {
                         opacity: 0.3,
@@ -317,6 +355,7 @@ export function DailyLifeSection() {
                 <IconButton
                   onClick={toggleMute}
                   size="small"
+                  aria-label={isMuted ? "Unmute video" : "Mute video"}
                   sx={{
                     color: "white",
                     bgcolor: "rgba(255,255,255,0.1)",

@@ -29,7 +29,6 @@ export const COMMANDS = [
   { id: "nav-about", group: "NAVIGATE", label: "About", keywords: "firm team story who we are", run: { kind: "nav", to: "/about" } },
   { id: "nav-services", group: "NAVIGATE", label: "Services", keywords: "offering consulting engineering what we do", run: { kind: "nav", to: "/services" } },
   { id: "nav-blog", group: "NAVIGATE", label: "Blog", keywords: "posts articles writing news", run: { kind: "nav", to: "/blog" } },
-  { id: "nav-innovation-hub", group: "NAVIGATE", label: "Innovation Lab", keywords: "labs experiment innovation data science", run: { kind: "nav", to: "/innovation-hub" } },
   { id: "nav-contact", group: "NAVIGATE", label: "Contact", keywords: "reach email talk address", run: { kind: "nav", to: "/contact" } },
   { id: "act-conversation", group: "ACTION", label: "Start a conversation", keywords: "contact talk hire enquiry inquiry", run: { kind: "nav", to: "/contact" } },
   { id: "act-careers", group: "ACTION", label: "Copy careers email", keywords: "jobs hiring recruiting jobs@phitopolis.com", run: { kind: "copy", address: "jobs@phitopolis.com" } },

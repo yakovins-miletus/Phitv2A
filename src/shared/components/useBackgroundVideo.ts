@@ -93,9 +93,9 @@ export const BACKGROUND_LOOP = {
 
 /**
  * The Monolith hero's "video" background mode: an 8s night→dawn transition
- * baked into the footage itself (`public/_source/night-to-dawn-source.mp4`,
- * transcoded down from 1280x720/1.3MB to a 960-wide loop — mp4 ~300KB, webm
- * ~170KB, poster ~35KB — small enough that this hook's IntersectionObserver
+ * baked into the footage itself (originally sourced from a 1280x720/1.3MB
+ * master, transcoded down to a 960-wide loop — mp4 ~300KB, webm ~170KB,
+ * poster ~35KB — small enough that this hook's IntersectionObserver
  * gate is a courtesy here rather than the load-bearing fix `BACKGROUND_LOOP`
  * needed). Same shape as `BACKGROUND_LOOP` so both plug into
  * `useBackgroundVideo()` identically; kept separate rather than folded into

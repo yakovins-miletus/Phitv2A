@@ -17,9 +17,10 @@ const GSAP_LAG_ADJUSTED_MS = 33;
 // module is only ever imported by the lazy home chunk, so on every route other
 // than "/" it is null for the entire visit. That is by design (Lenis smoothing
 // is a home-page treatment), but it means the three accessors below are silent
-// no-ops elsewhere: CapabilityRack's stopLenis/startLenis pairs around its
-// drawer do nothing on /services. Documented rather than "fixed", because
-// hoisting SmoothScroll to the root would turn smoothing on site-wide.
+// no-ops elsewhere: CandidatesAndCareersSection's stopLenis/startLenis pairs
+// around its drawer do nothing off the home page. Documented rather than
+// "fixed", because hoisting SmoothScroll to the root would turn smoothing on
+// site-wide.
 let activeLenis: Lenis | null = null;
 
 /** The live Lenis instance, or null when smoothing is off (reduced motion,

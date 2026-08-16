@@ -9,7 +9,13 @@ import { isImageParagraph, preferWebp } from "@/shared/bodyImages";
 /** Post bodies are plain text; blank lines separate paragraphs.
  *  React escapes everything — no HTML, no markdown, no XSS surface. The one
  *  extension: a paragraph that is entirely an image path renders as <img decoding="async">. */
-function BodyParagraphs({ text }: { text: string }) {
+function BodyParagraphs({ text, postTitle }: { text: string; postTitle: string }) {
+  // InnovationPostOut carries no per-image caption/alt field (see schema.d.ts), so
+  // the only honest, non-invented text available for an in-body image is the
+  // post's own title. A running figure count disambiguates when an article
+  // embeds more than one image, rather than repeating an identical alt on every
+  // figure.
+  let figureCount = 0;
   return (
     <Stack spacing={1.5}>
       {text
@@ -31,7 +37,7 @@ function BodyParagraphs({ text }: { text: string }) {
                 const img = event.currentTarget as HTMLImageElement;
                 if (img.src !== paragraph) img.src = paragraph;
               }}
-              alt=""
+              alt={`${postTitle} — figure ${++figureCount}`}
               loading="lazy"
               sx={{
                 width: "100%",
@@ -85,7 +91,9 @@ export function InnovationPostArticle({ post }: { post: InnovationPost }) {
         <Box
           component="img" decoding="async"
           src={post.image_url}
-          alt=""
+          // InnovationPostOut has no dedicated cover-image caption/alt field, so
+          // the post title — real, sourced data — is the only honest alt available.
+          alt={post.title}
           sx={{
             width: "100%",
             aspectRatio: "21/9",
@@ -98,7 +106,7 @@ export function InnovationPostArticle({ post }: { post: InnovationPost }) {
         />
       )}
       <Box sx={{ maxWidth: 760, mx: "auto", width: "100%" }}>
-        <BodyParagraphs text={post.body} />
+        <BodyParagraphs text={post.body} postTitle={post.title} />
       </Box>
     </Stack>
   );

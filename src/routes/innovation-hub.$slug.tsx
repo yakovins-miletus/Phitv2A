@@ -5,18 +5,30 @@ import { createFileRoute } from "@tanstack/react-router";
 
 // api + component imported directly (not the barrel) so the eager loader
 // doesn't pull the component into the main bundle.
+import { queryClient } from "@/app/queryClient";
 import { innovationPostQuery } from "@/features/innovation/api";
 import { InnovationPostArticle } from "@/features/innovation/components/InnovationPostArticle";
 import { RouterButton } from "@/shared/components/RouterLink";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 
+const FALLBACK_DESCRIPTION =
+  "R&D notes from the Phitopolis Innovation Lab — quantitative research, tooling, and emerging platform work.";
+
 export const Route = createFileRoute("/innovation-hub/$slug")({
-  head: () =>
-    pageHead(
-      "Innovation Lab · Phitopolis",
-      "Logs from the Phitopolis team — engineering, platforms, design, operations, and culture.",
-    ),
+  // `head()` gets no query-client context of its own (unlike `loader`), so it
+  // reads the same singleton the router hands loaders elsewhere. The loader
+  // below — and router-preload-on-hover from the hub list — often warms this
+  // exact cache entry before this runs, so a real slug usually gets its own
+  // title/excerpt/image rather than the generic fallback below.
+  head: ({ params }) => {
+    const post = queryClient.getQueryData(innovationPostQuery(params.slug).queryKey);
+    return pageHead(
+      post ? `${post.title} · Phitopolis Innovation Lab` : "Innovation Lab · Phitopolis",
+      post?.excerpt ?? FALLBACK_DESCRIPTION,
+      post?.image_url,
+    );
+  },
   // Warm the cache without blocking or failing the route.
   loader: ({ context, params }) => {
     void context.queryClient.ensureQueryData(innovationPostQuery(params.slug)).catch(() => undefined);

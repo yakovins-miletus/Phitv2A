@@ -36,8 +36,17 @@ export function FillText({ text, onComplete }: { text: string; onComplete?: (com
           },
         });
       });
+
+      // `mm.add`'s ScrollTrigger is rebuilt by `gsap.matchMedia()` itself on
+      // every media-query change after mount — e.g. the OS-level
+      // reduced-motion toggle flipping mid-session — and that rebuild happens
+      // outside `useGSAP`'s own context, which only reverts on unmount or a
+      // dependency change. Left unreverted, a trigger rebuilt after the last
+      // render survives this component's unmount. `mm.revert()` tears down
+      // whatever the media query last built, matching `AppetizerReveal.tsx`.
+      return () => mm.revert();
     },
-    { scope },
+    { scope, dependencies: [onComplete] },
   );
 
   return (

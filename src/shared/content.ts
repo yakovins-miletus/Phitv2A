@@ -12,6 +12,18 @@
  *    L2 the existing `details` / drawer copy — never rendered on first pass.
  *  `gunshot`/`tracer` are ADDITIVE: /services and /about still read `summary`
  *  and `details`, so their copy is unaffected by home-page edits. */
+import { CAREER_POSITIONS } from "./careersData";
+
+// Small-number-to-word helper so copy can read "Seven open roles" instead of
+// "7 open roles" (matching the spelled-out style used elsewhere in `ledes`,
+// e.g. "Four disciplines") while still being computed from CAREER_POSITIONS —
+// the actual list rendered on /careers — instead of hand-typed and driftable.
+const COUNT_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+function countWord(n: number): string {
+  return COUNT_WORDS[n] ?? String(n);
+}
+const OPEN_ROLES_COUNT = CAREER_POSITIONS.length;
+
 export const CONTENT = {
   hero: {
     tagline: "Making tomorrow's technology available today",
@@ -113,7 +125,10 @@ export const CONTENT = {
         "Our culture, our R&D floor, and the ordinary days that produce the things above.",
     },
     careers: {
-      gunshot: "Six open roles. One intake a year.",
+      // Derived from CAREER_POSITIONS.length (careersData.ts), the actual list
+      // rendered on /careers, so this can never drift out of sync again the
+      // way the old hardcoded "Six" did against the real count of seven.
+      gunshot: `${countWord(OPEN_ROLES_COUNT)} open roles. One intake a year.`,
       tracer:
         "The Technical Graduate Program takes engineers straight into production systems: not a rotation, not a shadowing track.",
     },
@@ -122,12 +137,6 @@ export const CONTENT = {
       tracer:
         "Community work, onboarding weeks, and the occasional office tournament, written by the people who were there.",
     },
-  },
-  /** Above-the-fold trust signals — investor backing and named partners. */
-  trust: {
-    backing: "Backed by investors across the USA · Europe · Hong Kong",
-    partnersLabel: "In partnership with",
-    partners: ["Quantbot Technologies", "CodeWilling"],
   },
   about: {
     title: "About Us",
@@ -169,20 +178,19 @@ export const CONTENT = {
       },
     ],
   },
-  /** Proven-impact figures — credibility through outcomes. */
-  impact: [
-    { value: 100, suffix: "x", label: "Latency improvement", caption: "High-performance pipeline optimization" },
-    { value: 8, suffix: "x", label: "Analyst throughput", caption: "Data processing & analytics" },
-    { value: 99.4, suffix: "%", label: "Detection accuracy", caption: "Automated QA & monitoring" },
-    { value: 10, suffix: "M+", label: "Documents indexed", caption: "Search & knowledge base" },
-  ],
   /** Where our people come from — education and disciplines, as insight. */
   talent: {
+    // "Equal-opportunity employer" used to sit here as a third "100%" figure —
+    // that is a policy statement, not a metric, and placed beside two real
+    // percentages it read as a manufactured stat. Removed rather than padded
+    // back out to three.
     highlights: [
       { value: 37, suffix: "%", label: "QS Top 1000 educated" },
       { value: 15, suffix: "%", label: "Advanced or international degree" },
-      { value: 100, suffix: "%", label: "Equal-opportunity employer" },
     ],
+    // Named disciplines summed to 95%, not 100% — an "Other" row closes the
+    // distribution honestly instead of presenting a partial breakdown as
+    // exhaustive.
     disciplines: [
       { label: "Computer Science", pct: 45 },
       { label: "Sciences", pct: 12 },
@@ -191,6 +199,7 @@ export const CONTENT = {
       { label: "Business & Management", pct: 8 },
       { label: "Finance & Economics", pct: 5 },
       { label: "Accountancy", pct: 5 },
+      { label: "Other", pct: 5 },
     ],
     schools: [
       { name: "U. of the Philippines", abbr: "UP", logo: "/logos/schools/up.png" },
@@ -213,7 +222,6 @@ export const CONTENT = {
     groups: [
       {
         provider: "Amazon Web Services",
-        count: 14,
         items: [
           { name: "Solutions Architect - Professional", logo: "/logos/certs/aws-certs/solutions-architect-pro.webp" },
           { name: "Machine Learning - Specialty", logo: "/logos/certs/aws-certs/machine-learning.webp" },
@@ -224,7 +232,6 @@ export const CONTENT = {
       },
       {
         provider: "Google Cloud",
-        count: 3,
         items: [
           { name: "Cloud Architect - Professional", logo: "/logos/certs/more-certs/google-cloud-architect.webp" },
           { name: "Cloud Engineer - Associate", logo: "/logos/certs/more-certs/google-cloud-engineer.webp" },
@@ -233,7 +240,6 @@ export const CONTENT = {
       },
       {
         provider: "Microsoft Azure",
-        count: 4,
         items: [
           { name: "Solutions Architect - Expert", logo: "/logos/certs/more-certs/ms-azure-solutions-architect.webp" },
           { name: "Cybersecurity Architect - Expert", logo: "/logos/certs/more-certs/ms-cybersecurity-architect.webp" },
@@ -242,7 +248,6 @@ export const CONTENT = {
       },
       {
         provider: "Standards & Governance",
-        count: 5,
         items: [
           { name: "ISO 27001 Lead Implementer & Auditor", logo: "/logos/certs/iso27001.webp" },
           { name: "PMP - Project Management", logo: "/logos/certs/pmp.webp" },
@@ -299,28 +304,6 @@ export const CONTENT = {
       techStack: ["Linux", "UNIX Shell", "Prometheus", "Grafana", "AWS/GCP/Azure"]
     }
   ],
-  partnerships: [
-    {
-      name: "Quantbot Technologies",
-      // Was: "elite infrastructure, data science pipelines, and cutting-edge software
-      // engineering, so math-driven strategies deploy seamlessly". Strip the three
-      // adjectives and the residue was "we give them infrastructure, pipelines and
-      // software" — true of every vendor. What is actually specific is WHO they are
-      // and WHO inside the firm we build for, so the sentence keeps only that.
-      // [VERIFY] A number would make this land — scale of the data, or deploy frequency.
-      description:
-        "A global quantitative investment adviser. We build the infrastructure, data pipelines, and software their researchers and portfolio managers use to deploy math-driven strategies across global markets"
-    },
-    {
-      name: "CodeWilling",
-      // Was: "supercharge our quant pipelines … maximum efficiency and minimal friction",
-      // which says the partner's computers make our computers faster. Kept the one
-      // concrete thing: what they provide and what it runs.
-      // [VERIFY] Scale of the data lakes would replace the deleted adjectives.
-      description:
-        "Specialists in financial data management and high-performance computing. Their data lakes and compute environments run our quant pipelines over complex financial datasets"
-    }
-  ],
   /**
    * Rendered on /about as five labelled cards under "Core Competencies".
    *
@@ -367,12 +350,16 @@ export const CONTENT = {
       }
     ]
   },
-  targetCandidates: {
-    line: "For talents that outgrow large institutions",
-    sub: "Academic rigor. Global stakes",
-    description: "We are seeking highly talented individuals who find themselves restricted when working for large institutions and are interested in joining a fast-paced, internationally backed, dynamic team.",
-    brochureUrl: "https://phitopolis.com/pdfs/2026%20Technical%20Graduate%20Program.pdf",
-  },
+  // Rendered by CandidatesAndCareersSection on the home page. This used to list
+  // only 6 of the 7 real positions in CAREER_POSITIONS (careersData.ts) — missing
+  // "Technical Graduate Program" — while the /careers route (which reads
+  // CAREER_POSITIONS directly) showed all 7. Added the missing entry below so the
+  // two counts agree; the other six are left as hand-tuned home-page copy since
+  // their text already matches JOB_DETAILS (JobDetailsDrawer.tsx) verbatim.
+  // NOTE: JobDetailsDrawer's JOB_DETAILS map (not owned by this fix) still has no
+  // "Technical Graduate Program" entry, so clicking that new card currently falls
+  // through to its "Full Stack Developer" fallback — flagged for whoever owns
+  // that drawer to add the matching entry.
   careers: [
     {
       title: "Quantitative Researcher",
@@ -400,6 +387,11 @@ export const CONTENT = {
       stack: ["Kubernetes", "CI/CD", "Prometheus", "AWS / GCP / Azure"]
     },
     {
+      title: "Technical Graduate Program",
+      role: "Our premier 12-month paid fellowship for outstanding computer science, engineering, and mathematics graduates",
+      stack: ["C++", "Python", "TypeScript", "Linux", "Docker", "AWS"]
+    },
+    {
       title: "R&D Internship Program",
       role: "Immersive paid engineering internship for top undergraduate students, working directly on production systems with senior mentorship",
       stack: ["React", "TypeScript", "Node.js", "Python", "Git"]
@@ -413,23 +405,12 @@ export const CONTENT = {
     { number: "04", label: "Operate", caption: "Run and support them around the clock" },
     { number: "05", label: "Products", caption: "Materialized ideas shaping the market" }
   ],
-  stats: [
-    { value: 1, label: "R&D offices" },
-    { value: 2, label: "Client regions" },
-    { value: 4, label: "Core disciplines" },
-    { value: 6, label: "Open roles" }
-  ],
   contact: {
     address: "27/F Ecotower Building, 32nd St. cor. 9th Avenue, Bonifacio Global City, Taguig, Philippines, 1634",
     offices: ["Bonifacio Global City, PH"],
     clients: ["United States", "United Kingdom"],
     careersEmail: "jobs@phitopolis.com",
     generalInquiries: "info@phitopolis.com"
-  },
-  story: {
-    title: "Born from the ultimate intellectual puzzle",
-    body:
-      "Phitopolis began where deep mathematics met modern engineering and cloud. We chose finance not as a legacy sector but as the hardest problem available, and we have been solving it ever since",
   },
   /** Insight teasers drawn from the flagship projects in the source of truth. */
   blog: [
@@ -510,11 +491,11 @@ export const CONTENT = {
    * to resolve the opening, not repeat it: the hero promises tomorrow's technology
    * *today*, and this answers where it is and where it runs.
    *
-   * [VERIFY — the number was changed] The brief said "four time zones". The reach map
-   * has Manila (HQ), Hong Kong, London, New York and Miami — but Manila and Hong Kong
-   * are both UTC+8, and New York and Miami are both US Eastern, so those five cities
-   * span THREE zones, not four. Say "four markets" or name the cities if you want a
-   * four in the line; "four time zones" is checkable and wrong.
+   * Resolved: the brief's original "four time zones" claim was checkable and wrong
+   * — Manila (HQ) and Hong Kong are both UTC+8, and New York and Miami are both US
+   * Eastern, so those five reach-map cities span THREE zones, not four. The shelf's
+   * `people` line below says "global markets" instead, which makes no zone-count
+   * claim at all.
    */
   closing: {
     statement: "A Competitive R&D Firm Always Striving for Excellence",

@@ -1,11 +1,33 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import { animate, stagger } from "motion/react";
 
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { useReducedMotion } from "@/shared/motion";
+import { EASE_OUT_EXPO, EASE_IN_OUT_QUART, EASE_SPRING_SOFT } from "@/shared/motion/easing";
 import PhitopolisLogo from "./PhitopolisLogo";
+
+/**
+ * This component used to run its entrance/exit choreography on gsap. gsap is
+ * removed here on purpose, not just deferred: Preloader is the first thing a
+ * first-time visitor sees (AppShell renders it before anything else has
+ * painted), so it has to stay in the eager bundle and be instant — there's no
+ * good moment to lazy-load it without risking a blank flash while its chunk
+ * fetches. `motion` is already eager (it drives header/nav micro-interactions
+ * elsewhere in AppShell), so porting this choreography onto it removes a
+ * dependency from the bundle rather than relocating it.
+ *
+ * The easings below intentionally collapse gsap's power2.out/power3.out/
+ * expo.out distinctions onto this repo's one shared "reveal" curve
+ * (EASE_OUT_EXPO — see easing.ts, which already names the preloader wipe as
+ * one of its two intended call sites) rather than hand-picking a new
+ * cubic-bezier per step. That is a deliberate simplification made while
+ * porting engines, not a fidelity loss anyone will see: the buffered,
+ * one-at-a-time pacing is what reads as "choreographed," not which flavour of
+ * ease-out each reveal uses.
+ */
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
 const HARD_CAP_MS = 5000;
@@ -61,11 +83,20 @@ function Crosshair({ position, refCallback }: { position: "tl" | "tr" | "bl" | "
 }
 
 export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
+  const reduced = useReducedMotion();
   const [signals] = useState<LoadSignal[]>(() => [...collectFontSignals(), ...(warmup ?? [])]);
   const [resolved, setResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("ASSETS");
   const [forced, setForced] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
+  // Drives the root's `pointerEvents`. This has to be React state, not a plain ref
+  // flipped inside the exit effect below: a ref mutation doesn't trigger a re-render,
+  // so `pointerEvents` would only ever pick up the new value whenever some *other*
+  // state change happened to re-render this component next — in practice, whatever
+  // AppShell's entrance-phase timers did next, several hundred ms later, not the
+  // moment the overlay actually started clearing. Making it state means the DOM
+  // attribute updates in the same render the curtain starts opening.
+  const [exiting, setExiting] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const topShutterRef = useRef<HTMLDivElement>(null);
@@ -80,8 +111,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const counterWrapRef = useRef<HTMLDivElement>(null);
   const progressFillRef = useRef<HTMLDivElement>(null);
 
-  const entranceTlRef = useRef<gsap.core.Timeline | null>(null);
-  const exitTlRef = useRef<gsap.core.Timeline | null>(null);
+  const entranceControlsRef = useRef<ReturnType<typeof animate> | null>(null);
 
   const total = Math.max(signals.length, 1);
   const isDoneRef = useRef(false);
@@ -147,74 +177,101 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     const coordsEl = coordsRef.current;
     const stageEl = centerStageRef.current;
     const frameEl = frameBoxRef.current;
-    const crosshairs = crosshairRefs.current.filter(Boolean);
+    const crosshairs = crosshairRefs.current.filter((el): el is HTMLDivElement => el !== null);
     const logoEl = logoMarkRef.current;
     const headEl = headlineRef.current;
     const subEl = subtitleRef.current;
     const countEl = counterWrapRef.current;
 
-    // Reset initial states
-    gsap.set(coordsEl, { opacity: 0, y: -8 });
-    gsap.set(stageEl, { opacity: 0 });
-    gsap.set(frameEl, { scale: 0.93, opacity: 0 });
-    gsap.set(crosshairs, { opacity: 0, scale: 0.6 });
-    gsap.set(logoEl, { scale: 0.88, opacity: 0, y: 10 });
-    gsap.set(headEl, { opacity: 0, y: 12 });
-    gsap.set(subEl, { opacity: 0, y: 8 });
-    gsap.set(countEl, { opacity: 0, y: 8 });
+    if (reduced) {
+      // AppShell's reduced-motion gate resolves asynchronously, so this
+      // component still has to degrade on its own: snap straight to the
+      // resting state instead of playing the bounce entrance, and let the
+      // rest of the lifecycle (progress, exit) proceed immediately.
+      for (const el of [stageEl, frameEl, logoEl, headEl, subEl, countEl]) {
+        if (el) el.style.opacity = "1";
+      }
+      if (coordsEl) coordsEl.style.opacity = "0.5";
+      for (const el of crosshairs) el.style.opacity = "1";
+      // Deferred a tick (as the non-reduced path's controls.then() also is)
+      // rather than called synchronously in the effect body.
+      queueMicrotask(() => setEntranceDone(true));
+      return;
+    }
 
-    // Step-by-step buffered timeline (Strictly ONE AT A TIME with explicit pause buffers)
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setEntranceDone(true);
-      },
-    });
-
-    entranceTlRef.current = tl;
+    // Each step's [from, to] keyframe pair replaces the old gsap.set()
+    // reset + tl.to() pair — motion animates between the two keyframes
+    // directly, so there's no separate "reset initial state" pass.
+    const CROSSHAIR_STAGGER = 0.06;
+    const D1 = 0.35; // stage ground & coordinates
+    const D2 = 0.5; // center frame
+    const D3 = 0.35; // crosshairs (before stagger overlap)
+    const D4 = 0.55; // logo mark
+    const D5 = 0.55; // headline
+    const D6 = 0.45; // subtitle
+    const D7 = 0.4; // counter & diagnostics
+    const B1 = 0.15;
+    const B2 = 0.15;
+    const B3 = 0.18;
+    const B4 = 0.18;
+    const B5 = 0.15;
+    const B6 = 0.15;
 
     // 1. Stage ground & coordinates fade in -> buffer
-    tl.to(coordsEl, { opacity: 0.5, y: 0, duration: 0.35, ease: "power2.out" }, 0);
-    tl.to(stageEl, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
-    tl.to({}, { duration: 0.15 }); // Buffer
-
+    const t1 = 0;
     // 2. Center frame emerges -> buffer
-    tl.to(frameEl, { scale: 1, opacity: 1, duration: 0.5, ease: "expo.out" });
-    tl.to({}, { duration: 0.15 }); // Buffer
-
+    const t2 = t1 + D1 + B1;
     // 3. Corner crosshairs lock into place one-by-one -> buffer
-    tl.to(crosshairs, { opacity: 1, scale: 1, duration: 0.35, stagger: 0.06, ease: "back.out(1.8)" });
-    tl.to({}, { duration: 0.18 }); // Buffer
-
+    const t3 = t2 + D2 + B2;
+    const crosshairSpan = D3 + CROSSHAIR_STAGGER * Math.max(crosshairs.length - 1, 0);
     // 4. Logo mark reveals inside frame -> buffer
-    tl.to(logoEl, { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" });
-    tl.to({}, { duration: 0.18 }); // Buffer
-
+    const t4 = t3 + crosshairSpan + B3;
     // 5. Headline "Welcome to Phitopolis" reveals -> buffer
-    tl.to(headEl, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" });
-    tl.to({}, { duration: 0.15 }); // Buffer
-
+    const t5 = t4 + D4 + B4;
     // 6. Subtitle brand pillar tag reveals -> buffer
-    tl.to(subEl, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" });
-    tl.to({}, { duration: 0.15 }); // Buffer
-
+    const t6 = t5 + D5 + B5;
     // 7. Counter & diagnostics reveal at bottom
-    tl.to(countEl, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" });
+    const t7 = t6 + D6 + B6;
+
+    const controls = animate([
+      [coordsEl, { opacity: [0, 0.5], y: [-8, 0] }, { duration: D1, ease: EASE_OUT_EXPO, at: t1 }],
+      [stageEl, { opacity: [0, 1] }, { duration: D1, ease: EASE_OUT_EXPO, at: t1 }],
+      [frameEl, { scale: [0.93, 1], opacity: [0, 1] }, { duration: D2, ease: EASE_OUT_EXPO, at: t2 }],
+      [
+        crosshairs,
+        { opacity: [0, 1], scale: [0.6, 1] },
+        { duration: D3, delay: stagger(CROSSHAIR_STAGGER), ease: EASE_SPRING_SOFT, at: t3 },
+      ],
+      [logoEl, { scale: [0.88, 1], opacity: [0, 1], y: [10, 0] }, { duration: D4, ease: EASE_OUT_EXPO, at: t4 }],
+      [headEl, { opacity: [0, 1], y: [12, 0] }, { duration: D5, ease: EASE_OUT_EXPO, at: t5 }],
+      [subEl, { opacity: [0, 1], y: [8, 0] }, { duration: D6, ease: EASE_OUT_EXPO, at: t6 }],
+      [countEl, { opacity: [0, 1], y: [8, 0] }, { duration: D7, ease: EASE_OUT_EXPO, at: t7 }],
+    ]);
+
+    entranceControlsRef.current = controls;
+    void controls.then(() => setEntranceDone(true));
 
     return () => {
-      tl.kill();
+      controls.stop();
     };
-  }, []);
+  }, [reduced]);
 
-  // Update progress hairline width
+  // Update progress hairline. Animates `scaleX` (compositor-only) against a
+  // fixed-width, left-anchored element rather than tweening `width` (a layout
+  // property) on every tick. The fill's transform is never bound to React
+  // state directly in JSX (see the render below) — only this effect touches
+  // it — so each animate() call picks up from wherever the previous one left
+  // off instead of racing a React-applied snap to the same value.
   useEffect(() => {
-    if (progressFillRef.current) {
-      gsap.to(progressFillRef.current, {
-        width: `${progressPercent}%`,
-        duration: forced ? 0.1 : 0.3,
-        ease: "power2.out",
-      });
-    }
-  }, [progressPercent, forced]);
+    const fillEl = progressFillRef.current;
+    if (!fillEl) return;
+    const controls = animate(
+      fillEl,
+      { scaleX: progressPercent / 100 },
+      { duration: forced || reduced ? 0.1 : 0.3, ease: EASE_OUT_EXPO }
+    );
+    return () => controls.stop();
+  }, [progressPercent, forced, reduced]);
 
   // Master Synchronized Exit Choreography with center-to-outward split black curtain
   useEffect(() => {
@@ -222,8 +279,46 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     if (!shouldExit || isDoneRef.current || hasStartedExitRef.current) return;
     hasStartedExitRef.current = true;
 
-    if (forced && entranceTlRef.current) {
-      entranceTlRef.current.progress(1);
+    if (forced) {
+      entranceControlsRef.current?.complete();
+    }
+
+    const finish = () => {
+      if (!isDoneRef.current) {
+        isDoneRef.current = true;
+        // Same private-browsing/sandboxed-context risk as the session-gate read in
+        // AppShell's shouldShowPreloader — but unguarded here it's worse than a stale
+        // gate: an uncaught throw would abort this callback before reaching
+        // onDoneRef.current?.() below, leaving showPreloader stuck `true` in AppShell
+        // forever (the overlay would never unmount). Losing the "don't replay the
+        // intro" bookkeeping for this one session is a fine trade against that.
+        try {
+          sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
+        } catch {
+          // ignore — see above
+        }
+        onDoneRef.current?.();
+      }
+    };
+
+    const fireStartExit = () => {
+      if (!exitFiredRef.current && onStartExitRef.current) {
+        exitFiredRef.current = true;
+        onStartExitRef.current();
+      }
+    };
+
+    if (reduced) {
+      // WCAG 2.3.3 fast path, mirroring TransitionCurtain's reduced-motion
+      // branch: no shutter sweep, no content retreat — the overlay is about
+      // to unmount, so just fire the callbacks AppShell is waiting on.
+      // setExiting is deferred a tick (matching the entrance effect's own
+      // queueMicrotask above) rather than called synchronously here, which
+      // react-hooks/set-state-in-effect flags as a cascading-render risk.
+      queueMicrotask(() => setExiting(true));
+      fireStartExit();
+      finish();
+      return;
     }
 
     const topShutter = topShutterRef.current;
@@ -234,74 +329,32 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
 
     const delay = forced ? 0 : 0.25;
 
-    const tl = gsap.timeline({
-      delay,
-      onComplete: () => {
-        if (!isDoneRef.current) {
-          isDoneRef.current = true;
-          sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-          onDoneRef.current?.();
-        }
-      },
-    });
-
-    exitTlRef.current = tl;
-
-    // Step 1: Bottom counter, coordinates and diagnostics gently draw back
-    tl.to(
-      [countEl, coordsEl],
-      {
-        opacity: 0,
-        y: 8,
-        duration: 0.3,
-        ease: "power2.in",
-      },
-      0
+    animate(
+      [
+        // Step 1: Bottom counter, coordinates and diagnostics gently draw back
+        [[countEl, coordsEl], { opacity: 0, y: 8 }, { duration: 0.3, ease: EASE_OUT_EXPO, at: 0 }],
+        // Step 2: Center stage content softly scales and fades
+        [stageEl, { opacity: 0, scale: 0.96, y: -10 }, { duration: 0.38, ease: EASE_OUT_EXPO, at: 0.12 }],
+        // Step 3: Center-to-outward split black curtain — top shutter moves
+        // up to -100%, bottom shutter moves down to 100%.
+        [topShutter, { y: "-100%" }, { duration: 0.85, ease: EASE_IN_OUT_QUART, at: 0.35 }],
+        [bottomShutter, { y: "100%" }, { duration: 0.85, ease: EASE_IN_OUT_QUART, at: 0.35 }],
+        // Release pointer-events the instant the curtain physically starts moving
+        // apart (same `at: 0.35` mark as the shutter tweens above), not before and
+        // not several hundred ms after. Any earlier and the overlay is still 100%
+        // opaque — releasing then would let a click fall through to page content
+        // the visitor cannot yet see, exactly the "click things you can't see"
+        // failure mode this is guarding against. Any later (the old behavior:
+        // effectively "whenever AppShell's next unrelated re-render happens to
+        // land") and the overlay keeps swallowing input long after the curtain has
+        // visibly started clearing.
+        [() => setExiting(true), { at: 0.35 }],
+        // Mid-curtain release: notify AppShell at 50% curtain split
+        [fireStartExit, { at: 0.7 }],
+      ],
+      { delay, onComplete: finish }
     );
-
-    // Step 2: Center stage content softly scales and fades
-    tl.to(
-      stageEl,
-      {
-        opacity: 0,
-        scale: 0.96,
-        y: -10,
-        duration: 0.38,
-        ease: "power2.inOut",
-      },
-      0.12
-    );
-
-    // Step 3: Reverted Center-to-Outward Black Curtain Split Reveal!
-    // Top shutter moves up to -100%, bottom shutter moves down to 100%
-    tl.to(
-      topShutter,
-      {
-        yPercent: -100,
-        duration: 0.85,
-        ease: "expo.inOut",
-      },
-      0.35
-    );
-
-    tl.to(
-      bottomShutter,
-      {
-        yPercent: 100,
-        duration: 0.85,
-        ease: "expo.inOut",
-      },
-      0.35
-    );
-
-    // Mid-curtain release: notify AppShell at 50% curtain split
-    tl.add(() => {
-      if (!exitFiredRef.current && onStartExitRef.current) {
-        exitFiredRef.current = true;
-        onStartExitRef.current();
-      }
-    }, 0.7);
-  }, [entranceDone, isComplete, forced]);
+  }, [entranceDone, isComplete, forced, reduced]);
 
   return (
     <Box
@@ -312,7 +365,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
         inset: 0,
         zIndex: 99999,
         overflow: "hidden",
-        pointerEvents: hasStartedExitRef.current ? "none" : "auto",
+        pointerEvents: exiting ? "none" : "auto",
       }}
     >
       {/* Top Half Black/Navy Shutter Curtain (Moves upward to -100%) */}
@@ -349,7 +402,18 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
         }}
       />
 
-      {/* Center Interactive Foreground Layer */}
+      {/* Center Foreground Layer. Despite the name, nothing inside it is actually
+          interactive — it's the coordinates tag, logo/headline stage, and progress
+          counter, none of them a button or link. Left at the pointer-events default
+          (auto), this `inset: 0` flex container was a full-viewport, mostly-transparent
+          click-catcher sitting *above* the shutters (zIndex 10 vs. their 2): a runtime
+          audit found it swallowing clicks meant for the header (e.g. `a[href="/about"]`)
+          at every sample through the whole entrance *and* well into the exit, because it
+          intercepted hits over its own empty padding/gap regions regardless of whether a
+          shutter was still visually covering that pixel. Since it truly has nothing to
+          click, it doesn't need to intercept anything — the shutters themselves (opaque,
+          and correctly hit-tested at wherever their transform has actually moved them to)
+          are what should be, and already are, the thing standing in the way. */}
       <Box
         sx={{
           position: "absolute",
@@ -361,6 +425,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
           justifyContent: "space-between",
           py: { xs: 5, md: 7 },
           px: 3,
+          pointerEvents: "none",
         }}
       >
         {/* Top Subtle Coordinates Tag */}
@@ -445,8 +510,14 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
               userSelect: "none",
             }}
           >
+            {/* Not an <h1>: this splash message isn't the page's heading — the route
+                being loaded underneath already has its own — and rendering it as one
+                gave every hard load a transient *second* <h1> for as long as the
+                overlay was mounted. `component="p"` keeps the identical visual
+                treatment (the styling below is all this element ever relied on) while
+                leaving the document outline to the actual page content. */}
             <Typography
-              component="h1"
+              component="p"
               sx={{
                 fontFamily: "Inter, sans-serif",
                 fontSize: { xs: "1.25rem", sm: "1.6rem", md: "1.95rem" },
@@ -455,6 +526,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
                 color: NOIR.frost,
                 lineHeight: 1.2,
                 textTransform: "none",
+                m: 0,
               }}
             >
               Welcome to{" "}
@@ -518,7 +590,9 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
                 top: 0,
                 left: 0,
                 bottom: 0,
-                width: `${progressPercent}%`,
+                width: "100%",
+                transformOrigin: "left center",
+                transform: "scaleX(0)",
                 bgcolor: NOIR.gold,
                 boxShadow: `0 0 8px ${NOIR.gold}`,
               }}

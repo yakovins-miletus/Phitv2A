@@ -23,6 +23,7 @@ import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
+import { CAREER_POSITIONS } from "@/shared/careersData";
 
 const MODAL_TRANSITION_MS = Math.round(SCROLL_SPEED * 1000);
 
@@ -37,7 +38,8 @@ export interface JobDetail {
   applyUrl: string;
   responsibilities: string[];
   requirements: string[];
-  desirable: string[];
+  // Not every position has curated "desirable skills" copy — omit rather than invent.
+  desirable?: string[];
 }
 
 export const JOB_DETAILS: Record<string, JobDetail> = {
@@ -202,6 +204,32 @@ export const JOB_DETAILS: Record<string, JobDetail> = {
       "Root cause analysis skills and ability to suggest software improvements",
     ],
   },
+  // Sourced from CAREER_POSITIONS["technical-graduate-program"] in careersData.ts.
+  // That entry has no "desirable skills" list (only benefits/compensation, which
+  // isn't the same thing) — desirable is left unset rather than invented.
+  "Technical Graduate Program": {
+    id: "technical-graduate-program",
+    title: "Technical Graduate Program",
+    role: "Our premier 12-month paid fellowship for outstanding computer science, engineering, and mathematics graduates",
+    overview:
+      "The Phitopolis Technical Graduate Program is designed to transition exceptional university graduates into software engineers and quantitative researchers. Through hands-on production engineering, 1-on-1 mentorship, and deep architectural exposure, fellows gain experience shipped directly into enterprise platforms globally.",
+    stack: ["C++", "Python", "TypeScript", "Linux", "Docker", "AWS"],
+    location: "BGC Office, Manila (Hybrid Schedule)",
+    type: "Full-Time Fellowship",
+    applyUrl: "https://forms.gle/niyMK6Wkc4v5yfLm7",
+    responsibilities: [
+      "Design, implement, and maintain high-performance software modules and quantitative data pipelines",
+      "Collaborate directly with principal staff engineers on C++, Rust, Python, and TypeScript production stacks",
+      "Participate in daily code reviews, technical architecture spikes, and automated testing rigor",
+      "Deploy cloud infrastructure and event-driven microservices on AWS and GCP",
+    ],
+    requirements: [
+      "Recent graduate or final-year student in Computer Science, Computer Engineering, Mathematics, Physics, or related STEM fields",
+      "Solid proficiency in at least one modern language: C++, Python, TypeScript, Rust, or Go",
+      "Strong grasp of data structures, algorithms, object-oriented design, and memory management",
+      "Passionate about quantitative finance, distributed systems, or artificial intelligence",
+    ],
+  },
   "R&D Internship Program": {
     id: "rd-internship-program",
     title: "R&D Internship Program",
@@ -334,6 +362,31 @@ function RoleVisualAid({ roleId }: { roleId: string }) {
       </Box>
     );
   }
+  if (roleId === "technical-graduate-program") {
+    return (
+      <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+        <Stack spacing={2}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CodeIcon sx={{ color: NOIR.gold }} />
+            <Typography variant="subtitle2" sx={{ fontFamily: MONO, fontWeight: 700, letterSpacing: "0.12em", color: NOIR.gold, fontSize: "0.78rem" }}>
+              GRADUATE FELLOWSHIP PATHWAY
+            </Typography>
+          </Stack>
+          <Grid container spacing={2} textAlign="center">
+            <Grid size={{ xs: 4 }}>
+              <PaperBox label="1-on-1 Mentorship" sub="Principal Staff Engineers" />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <PaperBox label="Production Stacks" sub="C++ / Python / TypeScript" highlight />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <PaperBox label="12-Month Fellowship" sub="AWS / GCP Deployment" />
+            </Grid>
+          </Grid>
+        </Stack>
+      </Box>
+    );
+  }
   if (roleId === "rd-internship-program") {
     return (
       <Box sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(6, 24, 59, 0.7)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
@@ -412,8 +465,30 @@ interface JobDetailsDrawerProps {
   onClose: () => void;
 }
 
+// A JOB_DETAILS miss must never silently show a different role's details.
+// Fall back to the position's own real copy from careersData.ts instead —
+// only the fields that exist there are populated; the rest stay unset so the
+// drawer renders honestly instead of padding with someone else's content.
+function buildFallbackDetail(title: string): JobDetail | null {
+  const position = CAREER_POSITIONS.find((candidate) => candidate.title === title);
+  if (!position) return null;
+
+  return {
+    id: position.id,
+    title: position.title,
+    role: position.summary,
+    overview: position.description,
+    stack: position.stack,
+    location: position.location,
+    type: position.type,
+    applyUrl: "https://forms.gle/niyMK6Wkc4v5yfLm7",
+    responsibilities: position.responsibilities,
+    requirements: position.requirements,
+  };
+}
+
 export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerProps) {
-  const detail = jobTitle ? (JOB_DETAILS[jobTitle] ?? JOB_DETAILS["Full Stack Developer"]) : null;
+  const detail = jobTitle ? (JOB_DETAILS[jobTitle] ?? buildFallbackDetail(jobTitle)) : null;
 
   if (!detail) return null;
 
@@ -645,7 +720,8 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                   </Stack>
                 </Box>
 
-                {/* Desirable Skills */}
+                {/* Desirable Skills — only rendered when the source data has this list */}
+                {detail.desirable && detail.desirable.length > 0 && (
                 <Box>
                   <Typography variant="h5" sx={{ fontWeight: 800, mb: 2.5, color: NOIR.frost, fontSize: "1.3rem" }}>
                     Desirable Skills & Experience
@@ -661,6 +737,7 @@ export function JobDetailsDrawer({ open, jobTitle, onClose }: JobDetailsDrawerPr
                     ))}
                   </Stack>
                 </Box>
+                )}
 
                 {/* Bottom Apply CTA Card */}
                 <Box

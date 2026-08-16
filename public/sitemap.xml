@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Static top-level routes only.
+
+  Dynamic detail routes (/blog/$slug, /careers/$jobId) are content-driven at
+  runtime (blog via Heimdall CMS; careers job IDs can change independently of
+  a deploy) and are deliberately left out rather than guessed or copied from
+  whatever happens to exist right now — a static file has no way to keep pace
+  with either, and a stale or invented URL is worse than an absent one.
+
+  /innovation-hub and /innovation-hub/$slug are omitted on purpose: the
+  Innovation Hub is being de-promoted from navigation and its detail route is
+  becoming orphaned (see W3 in the site audit) — it should not be advertised
+  to crawlers as a canonical destination.
+
+  Regenerate this list by hand if the static route table in
+  src/routeTree.gen.ts changes.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://phitopolis.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://phitopolis.com/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phitopolis.com/services</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://phitopolis.com/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phitopolis.com/careers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phitopolis.com/contact</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>

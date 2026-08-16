@@ -208,6 +208,7 @@ export function CommandPalette() {
             role="listbox"
             id={LISTBOX_ID}
             aria-label="Commands"
+            data-lenis-prevent
             sx={{ listStyle: "none", m: 0, p: 0, py: 0.5, maxHeight: 320, overflowY: "auto" }}
           >
             {filtered.length === 0 && (

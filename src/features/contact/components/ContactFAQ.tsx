@@ -83,11 +83,7 @@ const FAQ_ITEMS: FAQItem[] = [
     question: "Can external researchers or universities collaborate on R&D projects?",
     answer: (
       <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7, fontSize: "0.98rem" }}>
-        We actively welcome research partnerships! We frequently collaborate with academic institutions, independent researchers, and open-source contributors through our{" "}
-        <Link component={RouterLink} to="/innovation-hub" underline="hover" color="primary" sx={{ fontWeight: 700 }}>
-          Innovation Lab
-        </Link>{" "}
-        initiatives.
+        We actively welcome research partnerships! We frequently collaborate with academic institutions, independent researchers, and open-source contributors on our R&D initiatives.
       </Typography>
     ),
   },
@@ -203,6 +199,11 @@ export function ContactFAQ() {
         </Stack>
 
         {/* Minimalist Accordion List */}
+        {filteredItems.length === 0 ? (
+          <Typography variant="body1" color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+            No questions match this search or filter.
+          </Typography>
+        ) : (
         <Stack spacing={0} sx={{ borderTop: "1px solid rgba(10, 42, 102, 0.12)" }}>
           {filteredItems.map((item) => {
             const isOpen = expanded === item.id;
@@ -280,6 +281,7 @@ export function ContactFAQ() {
             );
           })}
         </Stack>
+        )}
       </Stack>
     </Box>
   );

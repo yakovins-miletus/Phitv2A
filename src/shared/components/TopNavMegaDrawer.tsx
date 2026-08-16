@@ -71,18 +71,11 @@ export const MEGA_NAV_ITEMS: NavSectionItem[] = [
     tag: "05",
   },
   {
-    to: "/innovation-hub",
-    label: "Innovation Lab",
-    sub: "Autonomous AI Agents & Signal Engines",
-    preview: "/images/data-science-banner.webp",
-    tag: "06",
-  },
-  {
     to: "/contact",
     label: "Contact",
     sub: "BGC Manila R&D Office",
     preview: "/images/bgc-2.jpg",
-    tag: "07",
+    tag: "06",
   },
 ];
 
@@ -323,7 +316,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
             >
               {/* Left Column: Full-Height Interactive Navigation Menu */}
               <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex", flexDirection: "column" }}>
-                <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ overflowY: "auto", pr: 2, flex: 1 }}>
+                <Stack data-lenis-prevent spacing={{ xs: 1.5, md: 2 }} sx={{ overflowY: "auto", pr: 2, flex: 1 }}>
                   {MEGA_NAV_ITEMS.map((item) => {
                     const isActiveRoute = location.pathname === item.to;
                     const isSelected = activeItem.to === item.to;
@@ -431,6 +424,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                       role="listbox"
                       id={LISTBOX_ID}
                       aria-label="Commands"
+                      data-lenis-prevent
                       sx={{ listStyle: "none", m: 0, p: 0, py: 1, flex: 1, overflowY: "auto" }}
                     >
                       {filtered.length === 0 && (

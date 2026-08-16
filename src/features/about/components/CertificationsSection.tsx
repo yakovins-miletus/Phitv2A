@@ -18,7 +18,9 @@ export function CertificationsSection() {
   const { headline, note, groups } = CONTENT.certifications;
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
 
-  const totalCerts = groups.reduce((acc, g) => acc + g.count, 0);
+  // Derived from each group's actual item list — never a hand-maintained count
+  // that can drift from what is actually rendered (see content.ts certifications).
+  const totalCerts = groups.reduce((acc, g) => acc + g.items.length, 0);
 
   const displayedGroups = selectedProvider === "all"
     ? groups
@@ -95,7 +97,7 @@ export function CertificationsSection() {
                 return (
                   <Chip
                     key={group.provider}
-                    label={`${group.provider.toUpperCase()} (${group.count})`}
+                    label={`${group.provider.toUpperCase()} (${group.items.length})`}
                     onClick={() => setSelectedProvider(group.provider)}
                     sx={{
                       fontFamily: MONO,
@@ -137,7 +139,7 @@ export function CertificationsSection() {
                         {group.provider}
                       </Typography>
                       <Typography variant="caption" sx={{ fontFamily: MONO, fontWeight: 800, color: "text.secondary" }}>
-                        {group.count} CERTIFIED FELLOWS
+                        {group.items.length} CERTIFIED FELLOWS
                       </Typography>
                     </Box>
 

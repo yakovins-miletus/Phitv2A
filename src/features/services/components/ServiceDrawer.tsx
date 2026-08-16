@@ -297,7 +297,7 @@ export function ServiceDrawer({ open, onClose, service }: ServiceDrawerProps) {
       </Box>
 
       {/* Drawer Content */}
-      <Box sx={{ p: { xs: 3, sm: 4 }, overflowY: "auto", flexGrow: 1 }}>
+      <Box data-lenis-prevent sx={{ p: { xs: 3, sm: 4 }, overflowY: "auto", flexGrow: 1 }}>
         <Stack spacing={3.5}>
 
           {/* Description */}
