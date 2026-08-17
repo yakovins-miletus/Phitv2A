@@ -339,6 +339,23 @@ export function SectionBeat({
             ...(from.clipPath !== undefined ? { clipPath: STAGE_LIT_CLIP } : {}),
             duration: CONTENT_ENTER_DURATION,
             ease: CONTENT_ENTER_EASE,
+            // Load-bearing, and the thing that makes the INVARIANT above true
+            // rather than aspirational. `Timeline.fromTo()` forces
+            // `immediateRender: true` unless told otherwise (gsap-core: the
+            // fromTo path sets it from `_isNotFalse(vars.immediateRender)`), so
+            // GSAP writes the from-vars the instant this tween is CREATED —
+            // long before the `once: true` entrance trigger fires.
+            //
+            // That inverts the invariant: instead of "content renders lit and
+            // the trigger animates it", it became "content renders dimmed,
+            // offset and possibly clipped, and only the trigger can rescue it."
+            // A trigger that never fires — hard refresh below the section, a
+            // refresh that re-measures against a not-yet-settled layout — then
+            // strands the body permanently. Observed live as `.stage-inner`
+            // stuck at opacity 0.3 / scale 0.92 with the heading fully lit
+            // beside it, because the shot's own from-state is near-identity and
+            // reads as fine while the body's reads as missing.
+            immediateRender: false,
           },
           "content",
         );

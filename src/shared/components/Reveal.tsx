@@ -42,6 +42,27 @@ const ENTRANCE_FAILSAFE_MS = 1200;
  *  fail-open answer. */
 const NO_IO = typeof IntersectionObserver === "undefined";
 
+/** MUST stay 0 / "some" — a positive `amount` deadlocks this component.
+ *
+ *  `amount` becomes the IntersectionObserver threshold, and the hidden state
+ *  here is `clip-path: inset(100%)`. Chromium folds clip-path into the
+ *  intersection computation, so a clipped element reports intersectionRatio
+ *  EXACTLY 0 while still being inside the viewport. Measured on this site:
+ *  an unclipped 300x300 div reports ratio 1; the identical div with
+ *  `inset(100% 0% 0%)` reports 0.
+ *
+ *  So any threshold > 0 is unsatisfiable the moment the element hides itself:
+ *  hidden -> ratio 0 -> inView never true -> never unhides. The hidden state
+ *  suppresses the very measurement that would end it. At threshold 0,
+ *  isIntersecting still flips true on a clipped element, which is what breaks
+ *  the cycle.
+ *
+ *  This was latent from the start (Alpha 0.6 used amount 0.3) and presented as
+ *  a race: if the observer's first callback happened to land before motion
+ *  painted the hidden state, it caught a real ratio and revealed — otherwise
+ *  the section stayed blank for the life of the page. */
+const REVEAL_AMOUNT = "some" as const;
+
 /** Shared scroll-into-view reveal.
  *
  *  Fails open: content becomes visible if the entrance gate stalls, if
@@ -52,7 +73,7 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: 0.05 });
+  const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: REVEAL_AMOUNT });
   const gateExpired = useEntranceFailsafe(ready);
 
   // `reduced` must be honoured here and not only in `initial`: with
@@ -105,7 +126,7 @@ export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; del
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: 0.05 });
+  const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: REVEAL_AMOUNT });
   const gateExpired = useEntranceFailsafe(ready);
 
   const shouldAnimate = reduced || NO_IO || ((ready || gateExpired) && inView);
