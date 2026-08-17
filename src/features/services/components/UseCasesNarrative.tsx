@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
+import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
@@ -80,6 +81,16 @@ export function UseCasesNarrative() {
           pin: true,
           scrub: SCROLL_SPEED,
           invalidateOnRefresh: true,
+          // Page-order refresh priority. ScrollTrigger refreshes the HIGHEST
+          // `refreshPriority` first (see beatThresholds.ts for the sort math),
+          // and `refreshPriorityFor` maps page order onto a descending positive
+          // scale — so a smaller `order` refreshes earlier. This pin sits at
+          // page position 5 (Capabilities=4, Process=6 — this is the gap
+          // between them) and its spacer shifts everything below it, so it
+          // must resolve before those sections measure. Matches the `order`
+          // passed to the `SectionBeat` that now wraps this component in
+          // `bare` mode — see routes/index.tsx.
+          refreshPriority: refreshPriorityFor(5),
         },
       });
 

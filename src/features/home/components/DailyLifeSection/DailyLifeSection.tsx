@@ -14,6 +14,7 @@ import { useGSAP } from "@gsap/react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
+import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { useStagePresence } from "@/shared/components/StageSection";
 import {
@@ -74,6 +75,13 @@ export function DailyLifeSection() {
           scrub: SCROLL_SPEED,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          // Page-order refresh priority. ScrollTrigger refreshes the HIGHEST
+          // `refreshPriority` first (see beatThresholds.ts for the sort math),
+          // and `refreshPriorityFor` maps page order onto a descending positive
+          // scale — so a smaller `order` refreshes earlier. This pin sits at
+          // page position 10; its +=140% spacer shifts careers/testimonials/
+          // blog/closing below it, so it must resolve before they measure.
+          refreshPriority: refreshPriorityFor(10),
         },
       });
 
@@ -127,7 +135,17 @@ export function DailyLifeSection() {
     // RawStage is transparent by default now: GroundLayer paints `navyDeep` here,
     // one step deeper than the card's `primary.main`, so the film card reads as a
     // lifted surface instead of a same-navy rectangle with a 1px border.
-    <RawStage id="daily-life" ref={sectionRef}>
+    //
+    // id is "daily-life-stage", NOT "daily-life": Phase 6 wraps this component
+    // in a `SectionBeat` (`bare`, `order={10}`) whose own root element now
+    // carries `id="daily-life"` — the real anchor target (`EyeFlow.tsx`'s
+    // `getElementById("daily-life")`, `#daily-life` scroll-to). Keeping the
+    // same id here too would have put two elements with the same id in the
+    // DOM, which `getElementById` resolves ambiguously.
+    // `useStagePresence(sectionRef, "daily-life")` above still uses "daily-life"
+    // as the section-id *key* for `setActiveSection` — that's just a string
+    // label for the dot rail, unrelated to this DOM id attribute.
+    <RawStage id="daily-life-stage" ref={sectionRef}>
       <Box ref={videoAnchorRef} sx={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
       <Box
         ref={cardRef}

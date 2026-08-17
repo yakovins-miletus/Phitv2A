@@ -3,14 +3,28 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
-import { motion, useInView } from "motion/react";
 import { useRef, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { homeSection } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
-import { EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { BEAT_START, refreshPriorityFor } from "@/shared/motion/beatThresholds";
+import { useReducedMotion } from "@/shared/motion";
+
+gsap.registerPlugin(ScrollTrigger);
+
+/** Same page order as the `SectionBeat` wrapper below (order={12}) — kept in
+ *  sync manually because the card stagger runs on its own ScrollTrigger,
+ *  scoped to this component's own ref rather than SectionBeat's (SectionBeat
+ *  does not forward its internal ref). */
+const TESTIMONIALS_ORDER = 12;
+
+/** Card entrance stagger, in seconds. */
+const CARD_STAGGER = 0.08;
 
 interface Testimonial {
   id: string;
@@ -63,15 +77,7 @@ const TESTIMONIALS: readonly Testimonial[] = [
   },
 ];
 
-function TestimonialCard({
-  testimonial,
-  index,
-}: {
-  testimonial: Testimonial;
-  index: number;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(cardRef, { once: true, amount: 0.15 });
+function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -80,15 +86,7 @@ function TestimonialCard({
       sx={{ display: "flex" }}
     >
       <Box
-        ref={cardRef}
-        component={motion.div}
-        initial={{ opacity: 0, y: 36 }}
-        animate={inView ? { opacity: 1, y: 0 } : false}
-        transition={{
-          duration: 0.6,
-          delay: index * 0.1,
-          ease: EASE_OUT_EXPO,
-        }}
+        className="testimonial-card"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         sx={{
@@ -183,9 +181,35 @@ function TestimonialCard({
 }
 
 export function TestimonialsSection() {
+  const scopeRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+
+  useGSAP(
+    () => {
+      if (reduced === true || !scopeRef.current) return;
+      const root = scopeRef.current;
+
+      gsap.from(".testimonial-card", {
+        opacity: 0,
+        y: 36,
+        stagger: CARD_STAGGER,
+        duration: 0.6,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: root,
+          start: BEAT_START,
+          once: true,
+          refreshPriority: refreshPriorityFor(TESTIMONIALS_ORDER),
+          invalidateOnRefresh: true,
+        },
+      });
+    },
+    { scope: scopeRef, dependencies: [reduced] },
+  );
+
   return (
-    <StageSection section={homeSection("testimonials")} muted>
-      <Box sx={{ width: "100%", py: { xs: 4, md: 8 } }}>
+    <SectionBeat section={homeSection("testimonials")} order={12} muted>
+      <Box ref={scopeRef} sx={{ width: "100%", py: { xs: 4, md: 8 } }}>
         <Grid container spacing={{ xs: 5, md: 8 }} sx={{ width: "100%" }}>
           {/* Left Column (Sticky Overview) */}
           <Grid
@@ -244,17 +268,13 @@ export function TestimonialsSection() {
           {/* Right Column (Editorial Testimonial Bento Grid) */}
           <Grid size={{ xs: 12, lg: 8 }}>
             <Grid container spacing={3.5}>
-              {TESTIMONIALS.map((testimonial, idx) => (
-                <TestimonialCard
-                  key={testimonial.id}
-                  testimonial={testimonial}
-                  index={idx}
-                />
+              {TESTIMONIALS.map((testimonial) => (
+                <TestimonialCard key={testimonial.id} testimonial={testimonial} />
               ))}
             </Grid>
           </Grid>
         </Grid>
       </Box>
-    </StageSection>
+    </SectionBeat>
   );
 }

@@ -40,6 +40,13 @@ const MARKERS = [
   "#daily-life",
   "footer",
   "[data-eyeflow]",
+  // Sections touched by the reveal-choreography refactor. Without these the
+  // pillars/position pair and the two orphan sections are unsampled, so a
+  // threshold change there would not surface in the diff at all.
+  "#hero-pillars",
+  "#hero-position",
+  "#process",
+  "#closing",
 ];
 
 /** 2dp, so sub-pixel jitter doesn't produce a diff on every line. */

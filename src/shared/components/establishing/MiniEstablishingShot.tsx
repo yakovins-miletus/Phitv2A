@@ -8,6 +8,12 @@ import { useGSAP } from "@gsap/react";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
+import { BEAT_START } from "@/shared/motion/beatThresholds";
+import {
+  MINI_ESTABLISH,
+  laserSweepX,
+  rulerTransformOrigin,
+} from "@/shared/components/stage/establishChoreo";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,6 +26,14 @@ export interface MiniEstablishingShotProps {
   status?: string;
   dark?: boolean;
   align?: "left" | "center";
+  /**
+   * When `true` (the default, i.e. every call site today) the shot owns its own
+   * ScrollTrigger and timeline and behaves exactly as it always has. When
+   * `false` it renders markup only — no trigger, no timeline — and a parent
+   * (`SectionBeat`) drives the same steps off the `.est-*` class hooks so the
+   * shot and the section it announces share one clock.
+   */
+  selfDriven?: boolean;
 }
 
 export function MiniEstablishingShot({
@@ -31,6 +45,7 @@ export function MiniEstablishingShot({
   status = "ACTIVE",
   dark = false,
   align = "left",
+  selfDriven = true,
 }: MiniEstablishingShotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
@@ -42,11 +57,15 @@ export function MiniEstablishingShot({
   useGSAP(
     () => {
       if (reduced || !containerRef.current) return;
+      // Presentational mode: a parent owns the beat. Build nothing at all.
+      if (!selfDriven) return;
+
+      const c = MINI_ESTABLISH;
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
-          start: "top 85%",
+          start: BEAT_START,
           once: true,
         },
       });
@@ -54,40 +73,47 @@ export function MiniEstablishingShot({
       if (metaRef.current) {
         tl.fromTo(
           metaRef.current,
-          { autoAlpha: 0, y: -6 },
-          { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" },
-          0,
+          c.meta.from,
+          { ...c.meta.to, duration: c.meta.duration, ease: c.meta.ease },
+          c.meta.at,
         );
       }
 
       if (rulerRef.current) {
         tl.fromTo(
           rulerRef.current,
-          { scaleX: 0, transformOrigin: align === "center" ? "center" : "left center" },
-          { scaleX: 1, duration: 0.8, ease: "expo.out" },
-          0.05,
+          { ...c.ruler.from, transformOrigin: rulerTransformOrigin(align) },
+          { ...c.ruler.to, duration: c.ruler.duration, ease: c.ruler.ease },
+          c.ruler.at,
         );
       }
 
       if (maskWrapRef.current) {
         tl.fromTo(
           maskWrapRef.current,
-          { clipPath: "inset(0% 100% 0% 0%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.85, ease: "power3.inOut" },
-          0.1,
+          c.mask.from,
+          { ...c.mask.to, duration: c.mask.duration, ease: c.mask.ease },
+          c.mask.at,
         );
       }
 
+      // A transform, not `left` — the sweep composites instead of forcing layout.
       if (laserBarRef.current) {
+        const bar = laserBarRef.current;
         tl.fromTo(
-          laserBarRef.current,
-          { left: "0%", autoAlpha: 1 },
-          { left: "100%", duration: 0.85, ease: "power3.inOut" },
-          0.1,
-        ).to(laserBarRef.current, { autoAlpha: 0, duration: 0.2 }, "-=0.1");
+          bar,
+          c.laser.from,
+          {
+            ...c.laser.to,
+            x: () => laserSweepX(bar),
+            duration: c.laser.duration,
+            ease: c.laser.ease,
+          },
+          c.laser.at,
+        ).to(bar, { ...c.laserOut.to, duration: c.laserOut.duration }, c.laserOut.at);
       }
     },
-    { scope: containerRef, dependencies: [reduced, align, dark] },
+    { scope: containerRef, dependencies: [reduced, align, dark, selfDriven] },
   );
 
   return (
@@ -103,6 +129,7 @@ export function MiniEstablishingShot({
       {/* Top Coordinate Kicker Bar */}
       <Box
         ref={metaRef}
+        className="est-meta"
         sx={{
           display: "flex",
           alignItems: "center",
@@ -180,6 +207,7 @@ export function MiniEstablishingShot({
       {/* Kinetic Caliper Hairline Ruler */}
       <Box
         ref={rulerRef}
+        className="est-ruler"
         sx={{
           height: "1px",
           width: "100%",
@@ -195,11 +223,15 @@ export function MiniEstablishingShot({
         {!reduced && (
           <Box
             ref={laserBarRef}
+            className="est-laser"
             aria-hidden="true"
             sx={{
               position: "absolute",
               top: 0,
               bottom: 0,
+              // Anchored at the left edge; the sweep is a transform (see
+              // `laserSweepX`), never an animated `left`.
+              left: 0,
               width: "2px",
               backgroundColor: dark ? NOIR.gold : NOIR.goldDark,
               boxShadow: dark
@@ -213,6 +245,7 @@ export function MiniEstablishingShot({
 
         <Box
           ref={maskWrapRef}
+          className="est-mask"
           sx={{
             position: "relative",
             zIndex: 1,

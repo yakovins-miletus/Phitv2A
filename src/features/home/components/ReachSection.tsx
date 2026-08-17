@@ -4,7 +4,8 @@ import { CONTENT } from "@/shared/content";
 import { Reveal } from "@/shared/components/Reveal";
 import { ReachMap } from "@/shared/components/ReachMap";
 import { SectionLede } from "@/shared/components/SectionLede";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
 
 /**
@@ -31,7 +32,23 @@ import { homeSection } from "@/shared/sections";
  */
 export function ReachSection() {
   return (
-    <StageSection section={homeSection("reach")}>
+    <SectionBeat
+      section={homeSection("reach")}
+      order={8}
+      // Was "Mini Establishing Shot 4" in routes/index.tsx; see CapabilityRack.
+      establishing={
+        <MiniEstablishingShot
+          selfDriven={false}
+          indexTag="04.MINI"
+          category="GLOBAL FABRIC"
+          title="Worldwide Low-Latency"
+          titleAccent="Interconnect"
+          tracer="Co-located execution presence spanning London, New York, Singapore, and Tokyo financial hubs."
+          status="SYNC: <1ms"
+        />
+      }
+      establishScale="mini"
+    >
       <Box sx={{ mb: { xs: 5, md: 7 } }}>
         <SectionLede
           gunshot={CONTENT.ledes.reach.gunshot}
@@ -53,6 +70,6 @@ export function ReachSection() {
           <ReachMap />
         </Box>
       </Reveal>
-    </StageSection>
+    </SectionBeat>
   );
 }

@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "@phosphor-icons/react";
 
 import { CONTENT } from "@/shared/content";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
@@ -56,7 +56,7 @@ export function MissionStatement() {
   const { heroLine, execSummary, cta } = CONTENT.hero.salesPitch;
 
   return (
-    <StageSection section={homeSection("hero-mission")} background={<ServiceGlobe />}>
+    <SectionBeat section={homeSection("hero-mission")} order={1} background={<ServiceGlobe />}>
       {/* Foreground Content.
        *
        * Narrower than the old 62% at desktop: the orbit ring's left extreme
@@ -93,7 +93,7 @@ export function MissionStatement() {
           <PrimaryAction label={cta.label} to={cta.to} />
         </Box>
       </Box>
-    </StageSection>
+    </SectionBeat>
   );
 }
 

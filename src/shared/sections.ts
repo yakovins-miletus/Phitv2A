@@ -133,7 +133,8 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     ground: "panel",
   },
   { id: "blog", label: "Intelligence Feed", chapter: 9, choreo: "grow-right", ground: "field" },
-  // Never rendered; carries a ground only so the stop list needs no special case.
+  // Rendered as ClosingShelf's own SectionBeat (the page's final beat, no exit
+  // dim — see ClosingShelf.tsx).
   { id: "closing", label: "Horizon Gateway", chapter: 9, choreo: "zoom-center", ground: "panel" },
 ];
 

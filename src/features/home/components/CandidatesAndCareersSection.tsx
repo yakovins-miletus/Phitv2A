@@ -14,7 +14,8 @@ import { motion } from "motion/react";
 import { CONTENT } from "@/shared/content";
 import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
 import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { NOIR } from "@/shared/theme/palette";
@@ -83,7 +84,24 @@ export function CandidatesAndCareersSection() {
   }, []);
 
   return (
-    <StageSection section={homeSection("candidates")} muted>
+    <SectionBeat
+      section={homeSection("candidates")}
+      order={11}
+      muted
+      // Was "Mini Establishing Shot 5" in routes/index.tsx; see CapabilityRack.
+      establishing={
+        <MiniEstablishingShot
+          selfDriven={false}
+          indexTag="05.MINI"
+          category="HUMAN CAPITAL"
+          title="For talents that outgrow"
+          titleAccent="large institutions"
+          tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."
+          status="HIRING // GLOBAL"
+        />
+      }
+      establishScale="mini"
+    >
       {/* 1. Header Information Block */}
       <Grid container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end" justifyContent="flex-end">
         {/* Brochure Download Button */}
@@ -383,6 +401,6 @@ export function CandidatesAndCareersSection() {
         jobTitle={selectedJobTitle}
         onClose={closeJobDetails}
       />
-    </StageSection>
+    </SectionBeat>
   );
 }

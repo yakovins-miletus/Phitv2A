@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { usePreloaderReady, useReducedMotion } from "@/shared/motion";
-import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
+import { LENIS_SMOOTH_DURATION, scrollEase } from "@/shared/motion/scrollSpeed";
 import { publishScrollTriggerRefresh } from "@/shared/motion/scrollTriggerBridge";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -61,7 +61,11 @@ export function SmoothScroll() {
 
   useEffect(() => {
     if (reduced === true || !ready) return;
-    const lenis = new Lenis({ duration: SCROLL_SPEED, easing: scrollEase });
+    // Touch is deliberately left unsmoothed: Lenis only applies `duration`/
+    // `easing` smoothing to wheel input by default (`syncTouch` is off unless
+    // explicitly enabled), so mobile momentum scroll already rides the
+    // browser's native handling — no extra config needed there.
+    const lenis = new Lenis({ duration: LENIS_SMOOTH_DURATION, easing: scrollEase });
     activeLenis = lenis;
     // Dev-only handle for the parity ladder in tests/e2e/. The probe must
     // drive Lenis rather than fight its rAF loop, or every recorded scroll
@@ -84,7 +88,17 @@ export function SmoothScroll() {
     // the preloader overlay was up (fonts, lazy content).
     const refreshId = requestAnimationFrame(() => ScrollTrigger.refresh());
 
+    // Fonts can still be swapping in after that first paint (FOUT -> webfont),
+    // which reflows text and drifts every trigger below the fold. A second,
+    // one-shot refresh once the font face set has actually settled catches
+    // that drift without polling.
+    let fontsRefreshCancelled = false;
+    void document.fonts.ready.then(() => {
+      if (!fontsRefreshCancelled) ScrollTrigger.refresh();
+    });
+
     return () => {
+      fontsRefreshCancelled = true;
       cancelAnimationFrame(refreshId);
       if (import.meta.env.DEV) {
         delete (window as unknown as { __lenis?: Lenis }).__lenis;

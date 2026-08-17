@@ -141,6 +141,43 @@ test("reduced motion: hero scene is one decorative canvas, not a DOM particle fi
   ).toBeLessThanOrEqual(1);
 });
 
+test("reduced motion: no element is stranded at opacity 0 / visibility hidden anywhere on the page", async () => {
+  await renderHome();
+
+  // The invariant SectionBeat's entrance relies on (stageChoreo.ts:5-9 and
+  // establishChoreo.ts): every tween is fromTo/from with the DOM default AS
+  // the final lit state, so a trigger that never fires — including every
+  // trigger under reduced motion, where `useGSAP` early-returns before
+  // building any timeline at all — must never leave content hidden. This is
+  // the whole-page sweep version of that guarantee: every element actually
+  // in the accessibility tree, not just the sections this phase touched.
+  // Scoped to the elements SectionBeat/establishing-shot tweens actually
+  // target (`.stage-inner`, the shot's `.est-*` hooks, the kicker hairline) —
+  // this is the reveal machinery the invariant is about (stageChoreo.ts:5-9,
+  // establishChoreo.ts, and SectionBeat.tsx's own doc comment): every tween
+  // is fromTo/from with the DOM default AS the final lit state, so a trigger
+  // that never fires — which is every trigger under reduced motion, since
+  // `useGSAP` early-returns before building any timeline — must never leave
+  // these elements hidden.
+  //
+  // Deliberately NOT a page-wide sweep of every inline `opacity`/`visibility`
+  // style: unrelated widgets (e.g. CandidatesAndCareersSection's Framer
+  // Motion `AnimatePresence` detail panel, which legitimately keeps inactive
+  // panels at `opacity: 0` as ordinary tab-panel state, nothing to do with
+  // scroll reveal) would otherwise produce false positives having nothing to
+  // do with the SectionBeat contract this test guards.
+  const REVEAL_HOOKS = ".stage-inner, .est-meta, .est-ruler, .est-mask, .est-laser, .stage-kicker-line";
+
+  const hiddenInlineStyle = Array.from(
+    document.body.querySelectorAll<HTMLElement>(REVEAL_HOOKS),
+  ).filter((el) => {
+    const style = el.style;
+    return style.opacity === "0" || style.visibility === "hidden";
+  });
+
+  expect(hiddenInlineStyle).toEqual([]);
+});
+
 test("reduced motion: use-case narrative stacks vertically, all slides reachable", async () => {
   await renderHome();
 

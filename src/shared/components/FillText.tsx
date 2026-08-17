@@ -43,7 +43,8 @@ export function FillText({ text, onComplete }: { text: string; onComplete?: (com
       // outside `useGSAP`'s own context, which only reverts on unmount or a
       // dependency change. Left unreverted, a trigger rebuilt after the last
       // render survives this component's unmount. `mm.revert()` tears down
-      // whatever the media query last built, matching `AppetizerReveal.tsx`.
+      // whatever the media query last built (the same pattern the deleted
+      // `AppetizerReveal.tsx` used before it was folded into `SectionBeat`).
       return () => mm.revert();
     },
     { scope, dependencies: [onComplete] },

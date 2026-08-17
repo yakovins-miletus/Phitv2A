@@ -6,14 +6,33 @@ import Grid from "@mui/material/Grid";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
 import { Reveal } from "@/shared/components/Reveal";
 import { ServiceVector } from "./ServiceDrawer";
 
 export function CapabilityRack() {
   return (
-    <StageSection section={homeSection("services")}>
+    <SectionBeat
+      section={homeSection("services")}
+      order={4}
+      // Was "Mini Establishing Shot 2" in routes/index.tsx, inside an ad-hoc
+      // <Container sx={{ pt: … }}>. Both the shot and its padding moved here:
+      // the beat now owns the pair's spacing and its single timeline.
+      establishing={
+        <MiniEstablishingShot
+          selfDriven={false}
+          indexTag="02.MINI"
+          category="CORE DISCIPLINES"
+          title="Four disciplines."
+          titleAccent="One delivery contract."
+          tracer="High-performance computing, systematic execution engines, and mathematical research frameworks."
+          status="04 DISCIPLINES"
+        />
+      }
+      establishScale="mini"
+    >
       <Stack spacing={0} sx={{ mt: 0 }}>
         {CONTENT.services.map((service) => {
           return (
@@ -104,6 +123,6 @@ export function CapabilityRack() {
           );
         })}
       </Stack>
-    </StageSection>
+    </SectionBeat>
   );
 }

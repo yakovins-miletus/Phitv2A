@@ -1,14 +1,15 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
-import { useStagePresence } from "@/shared/components/StageSection";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { homeSection } from "@/shared/sections";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
 import { MissionStatement } from "@/features/hero/description/MissionStatement";
 import { OperatingPillars } from "@/features/hero/description/OperatingPillars";
@@ -22,8 +23,6 @@ import { DailyLifeSection } from "@/features/home/components/DailyLifeSection/Da
 import { TestimonialsSection } from "@/features/home/components/TestimonialsSection";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
-import { PillarsEstablishingShot } from "@/features/home/components/establishing/PillarsEstablishingShot";
-import { ProcessEstablishingShot } from "@/features/home/components/establishing/ProcessEstablishingShot";
 import { SeamEstablishingShot } from "@/features/home/components/establishing/SeamEstablishingShot";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { CurtainTransition } from "@/shared/components/CurtainTransition";
@@ -43,17 +42,48 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+// Debounce for the home-page ResizeObserver refresh below. Long enough that a
+// burst of layout changes (e.g. several lazy images settling in quick
+// succession) collapses into one ScrollTrigger.refresh() instead of many.
+const HOME_RESIZE_REFRESH_DEBOUNCE_MS = 150;
+
 function HomePage() {
-  const useCasesRef = useRef<HTMLElement>(null);
+  const homeMainRef = useRef<HTMLElement>(null);
   const compactZoneRef = useNavbarAnchor(NAV_ANCHORS.HOME_COMPACT);
-  useStagePresence(useCasesRef, "use-cases");
+
+  // General staleness fix for issues 1+2 (mistimed establishing shots, hero/
+  // mission overlap): any height change on the home page during this visit —
+  // HeroImageWall mounting mid-scroll, a MiniEstablishingShot reveal, future
+  // lazy content — recomputes every ScrollTrigger's start/end. Scoped to the
+  // home route only (this effect never runs on other routes, since this
+  // component only mounts here) and goes through the gsap-free bridge module
+  // rather than importing ScrollTrigger directly, since this route file stays
+  // in the eager bundle.
+  useEffect(() => {
+    const el = homeMainRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const observer = new ResizeObserver(() => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        refreshScrollTriggers();
+      }, HOME_RESIZE_REFRESH_DEBOUNCE_MS);
+    });
+    observer.observe(el);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <>
       <SmoothScroll />
       <GroundLayer />
       <EyeFlow />
-      <Box component="main" id="home-main" sx={{ position: "relative", overflowX: "clip" }}>
+      <Box component="main" id="home-main" ref={homeMainRef} sx={{ position: "relative", overflowX: "clip" }}>
         {/* 01. Hero Sequence */}
         <Box
           component="section"
@@ -79,53 +109,36 @@ function HomePage() {
         >
           <MissionStatement />
 
-          {/* Major Establishing Shot 1: Operating Pillars */}
-          <PillarsEstablishingShot />
+          {/* Operating Pillars — establishing shot now lives inside its own
+              SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
           <OperatingPillars />
 
-          {/* Mini Establishing Shot 1: Market Position */}
-          <Container maxWidth="2xl" sx={{ pt: { xs: 4, md: 6 } }}>
-            <MiniEstablishingShot
-              indexTag="01.MINI"
-              category="MARKET POSITIONING"
-              title="Professional"
-              titleAccent="Leadership"
-              tracer="Decades of institutional Wall Street domain mastery paired with disciplined engineering execution."
-              status="ONLINE"
-            />
-          </Container>
+          {/* Market Position — establishing shot now lives inside its own
+              SectionBeat, driven on one timeline. See MarketPosition.tsx. */}
           <MarketPosition />
         </Box>
 
-        {/* Mini Establishing Shot 2: Capabilities */}
+        {/* Mini Establishing Shot 2: Capabilities — the shot now lives inside
+            CapabilityRack's own SectionBeat, which drives it on one timeline. */}
         <Box
           component="section"
           id="capabilities"
           aria-label="Capabilities and Services"
           data-act="services"
         >
-          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 10 } }}>
-            <MiniEstablishingShot
-              indexTag="02.MINI"
-              category="CORE DISCIPLINES"
-              title="Four disciplines."
-              titleAccent="One delivery contract."
-              tracer="High-performance computing, systematic execution engines, and mathematical research frameworks."
-              status="04 DISCIPLINES"
-            />
-          </Container>
           <CapabilityRack />
         </Box>
 
-        {/* Mini Establishing Shot 3: Use Cases */}
-        <Box
-          ref={useCasesRef}
-          component="section"
-          id="use-cases"
-          aria-label="Real-World Applications"
-          data-act="services"
-        >
-          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
+        {/* Mini Establishing Shot 3: Use Cases — paired with UseCasesNarrative
+            via SectionBeat in `bare` mode. The pin is UseCasesNarrative's own
+            (`trigger: wrap.current`, refreshPriorityFor(5) — see
+            UseCasesNarrative.tsx); `bare` guarantees it is never a descendant
+            of anything SectionBeat transforms, so the pin geometry is
+            unaffected by the shot/beat wrapper around it. order=5 is the gap
+            between Capabilities (4) and Process (6). */}
+        <SectionBeat
+          section={homeSection("use-cases")}
+          establishing={
             <MiniEstablishingShot
               indexTag="03.MINI"
               category="APPLIED ARCHITECTURES"
@@ -133,37 +146,25 @@ function HomePage() {
               titleAccent="Applications"
               tracer="End-to-end telemetry and architectural breakdowns of institutional deployments across global venues."
               status="PROD_READY"
+              selfDriven={false}
             />
-          </Container>
+          }
+          establishScale="mini"
+          order={5}
+          bare
+          noExitDim
+        >
           <UseCasesNarrative />
-        </Box>
+        </SectionBeat>
 
         {/* 04. Compact & Sequential Sections Zone */}
         <Box ref={compactZoneRef} id="compact-zone">
-          {/* Major Establishing Shot 2: Process Pipeline */}
-          <ProcessEstablishingShot />
-          <Box
-            component="section"
-            id="process-sequence"
-            aria-label="Engineering Process"
-            data-act="services"
-          >
-            <ProcessSection />
-          </Box>
+          {/* Major Establishing Shot 2: Process Pipeline — the shot now lives
+              inside ProcessSection's own SectionBeat, driven on one timeline. */}
+          <ProcessSection />
 
-          {/* Mini Establishing Shot 4: Global Footprint */}
-          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
-            <MiniEstablishingShot
-              indexTag="04.MINI"
-              category="GLOBAL FABRIC"
-              title="Worldwide Low-Latency"
-              titleAccent="Interconnect"
-              tracer="Co-located execution presence spanning London, New York, Singapore, and Tokyo financial hubs."
-              status="SYNC: <1ms"
-            />
-          </Container>
-
-          {/* Global Footprint — closes Act I */}
+          {/* Global Footprint — closes Act I. Mini Establishing Shot 4 now
+              lives inside ReachSection's own SectionBeat. */}
           <Box
             component="section"
             id="reach-sequence"
@@ -173,30 +174,28 @@ function HomePage() {
             <ReachSection />
           </Box>
 
-          {/* Major Establishing Shot 3: The Seam / Handover between Act I (Services) and Act II (People) */}
-          <SeamEstablishingShot />
-
           {/* ── ACT II · PEOPLE ───────────────────────────────────────────────── */}
-          <Box
-            component="section"
-            id="daily-life-sequence"
-            aria-label="Daily Life Behind the Code"
-            data-act="people"
+          {/* Major Establishing Shot 3 (the Seam / Act I → Act II handover) is
+              paired with DailyLifeSection via SectionBeat in `bare` mode. The
+              pin is DailyLifeSection's own (`trigger: sectionRef.current`,
+              refreshPriorityFor(10) — see DailyLifeSection.tsx); `bare`
+              guarantees it is never a descendant of anything SectionBeat
+              transforms, so the pin geometry is unaffected. order=10 matches
+              the refreshPriority DailyLifeSection already declared for its
+              own pin (page position 10, between Reach=8 and Careers=11). */}
+          <SectionBeat
+            section={homeSection("daily-life")}
+            establishing={<SeamEstablishingShot selfDriven={false} />}
+            establishScale="major"
+            order={10}
+            bare
+            noExitDim
           >
             <DailyLifeSection />
-          </Box>
+          </SectionBeat>
 
-          {/* Mini Establishing Shot 5: Talent & Careers */}
-          <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
-            <MiniEstablishingShot
-              indexTag="05.MINI"
-              category="HUMAN CAPITAL"
-              title="For talents that outgrow"
-              titleAccent="large institutions"
-              tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."
-              status="HIRING // GLOBAL"
-            />
-          </Container>
+          {/* Mini Establishing Shot 5 now lives inside
+              CandidatesAndCareersSection's own SectionBeat. */}
           <Box
             component="section"
             id="careers-sequence"
@@ -220,18 +219,8 @@ function HomePage() {
 
           {/* Deep Navy Dark Zone for Intelligence Feed & Horizon Gateway */}
           <Box sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>
-            {/* Mini Establishing Shot 6: Intelligence Feed */}
-            <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
-              <MiniEstablishingShot
-                indexTag="06.MINI"
-                category="TECHNICAL DISPATCHES"
-                title="Inside"
-                titleAccent="Phitopolis"
-                tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
-                status="FEED: LIVE"
-                dark
-              />
-            </Container>
+            {/* Mini Establishing Shot 6 now lives inside BlogSection's own
+                SectionBeat. */}
             <Box
               component="section"
               id="blog-sequence"
@@ -241,18 +230,8 @@ function HomePage() {
               <BlogSection />
             </Box>
 
-            {/* Mini Establishing Shot 7: Horizon Gateway */}
-            <Container maxWidth="2xl" sx={{ pt: { xs: 6, md: 8 } }}>
-              <MiniEstablishingShot
-                indexTag="07.MINI"
-                category="GATEWAY TERMINAL"
-                title="In"
-                titleAccent="closing"
-                tracer="Direct line to our technical leadership and quantitative engineering directors."
-                status="READY"
-                dark
-              />
-            </Container>
+            {/* Mini Establishing Shot 7: Horizon Gateway — now lives inside
+                ClosingShelf's own SectionBeat, which drives it on one timeline. */}
             <ClosingShelf />
           </Box>
         </Box>

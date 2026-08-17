@@ -10,7 +10,8 @@ import { useState } from "react";
 import { blogPostsQuery, type BlogPostSummary } from "@/features/blog/api";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
 import { Reveal } from "@/shared/components/Reveal";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
@@ -203,7 +204,24 @@ export function BlogSection() {
   if (!featuredPost) return null;
 
   return (
-    <StageSection section={homeSection("blog")}>
+    <SectionBeat
+      section={homeSection("blog")}
+      order={13}
+      // Was "Mini Establishing Shot 6" in routes/index.tsx; see CapabilityRack.
+      establishing={
+        <MiniEstablishingShot
+          selfDriven={false}
+          indexTag="06.MINI"
+          category="TECHNICAL DISPATCHES"
+          title="Inside"
+          titleAccent="Phitopolis"
+          tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
+          status="FEED: LIVE"
+          dark
+        />
+      }
+      establishScale="mini"
+    >
       <Box
         ref={anchorRef}
         sx={{
@@ -420,6 +438,6 @@ export function BlogSection() {
           </Grid>
         </Grid>
       </Box>
-    </StageSection>
+    </SectionBeat>
   );
 }

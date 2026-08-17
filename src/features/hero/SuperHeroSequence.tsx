@@ -63,6 +63,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 
 gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
 
@@ -445,6 +446,9 @@ export function HeroSignalCore() {
    * `gunshot` is false by construction.
    */
   const [wallMounted, setWallMounted] = useState(false);
+  // Guards the one-shot ScrollTrigger.refresh() below so it fires at most once
+  // per mount even though `onUpdate` runs on every scroll tick across the pin.
+  const wallMountRefreshedRef = useRef(false);
 
   /**
    * One-shot warm-up for the wall's chunk, fired from the pin driver below.
@@ -567,7 +571,19 @@ export function HeroSignalCore() {
           if (!sameStage(stageRef.current, next)) {
             stageRef.current = next;
             setStage(next);
-            if (next.gunshot) setWallMounted(true);
+            if (next.gunshot) {
+              setWallMounted(true);
+              // The wall's own layout (and the pin-spacer's measured height,
+              // via `invalidateOnRefresh`) settles only after this commits and
+              // paints. Belt-and-suspenders with the home page's ResizeObserver
+              // refresh (routes/index.tsx): fired once, post-paint, so triggers
+              // below the hero stop reading stale positions from before the
+              // wall existed.
+              if (!wallMountRefreshedRef.current) {
+                wallMountRefreshedRef.current = true;
+                requestAnimationFrame(() => ScrollTrigger.refresh());
+              }
+            }
           }
         }
       });
@@ -628,6 +644,15 @@ export function HeroSignalCore() {
         // `DailyLifeSection.tsx`'s own pin config.
         anticipatePin: 1,
         invalidateOnRefresh: true,
+        // First thing on the page, so first to refresh. This pin's spacer sets
+        // the document offset every trigger below it measures against, and
+        // ScrollTrigger refreshes the HIGHEST `refreshPriority` first (see
+        // beatThresholds.ts) — `order: 0` is therefore the top of the scale,
+        // ahead of every downstream beat and every un-migrated trigger.
+        // Affects refresh ordering only — no phase constant, easing, ANIM_LIMIT
+        // or HERO_PIN_DISTANCE value is touched, and the ladder probe confirms
+        // the hero's resolved geometry is byte-identical at 375/768/1440.
+        refreshPriority: refreshPriorityFor(0),
         onUpdate: (self) => {
           const p = Math.min(1.1, self.progress / ANIM_LIMIT);
           progressQuick(p);

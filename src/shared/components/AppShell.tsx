@@ -109,6 +109,54 @@ const ALL_ASSETS = [...publicAssets, ...srcAssets].filter((url) => {
   return !['mp4', 'webm', 'pdf', 'txt', 'map'].includes(ext);
 });
 
+/**
+ * The assets actually on the home hero's default-render critical path.
+ *
+ * This used to be `ALL_ASSETS.slice(0, 15)` — the first 15 entries of a
+ * filesystem-walk-ordered glob, which is arbitrary: nothing guaranteed a
+ * hero-relevant file landed in that slice, and on most builds none did.
+ *
+ * Traced from `SuperHeroSequence.tsx` (the default, non-toggled hero — mode
+ * defaults to "legacy" per `heroModeStore.ts`):
+ *   - `HeroCanvas.tsx` (the legacy 2D canvas, mounted whenever the "monolith"
+ *     3D toggle is off, which is the default) eagerly fetches exactly one
+ *     network image on mount — `/phitopolis_logo_hero.svg`, the P-mark logo
+ *     mask (`loadLogoMask(LOGO_SRC)`) — non-blocking for first paint by its
+ *     own design (`paintStill()` runs before the fetch even starts), but it
+ *     is still the one real eager image request the default hero makes, so
+ *     it deserves to win the warmup race rather than lose it to an arbitrary
+ *     glob slice.
+ *   - The hero's 25-photo drift wall (`HeroImageWall.tsx` / `heroWallTiles.ts`)
+ *     is deliberately NOT here. Its own header comment states it is "fetched
+ *     at fetchPriority='low' after the hero's LCP" and it does not mount at
+ *     all until the reader scrolls ~60% through the pin
+ *     (`SuperHeroSequence.tsx`'s `stage.gunshot`/`wallMounted`) — it is
+ *     below-the-fold-in-time, not hero-critical-on-load, and forcing it into
+ *     the preloader would regress every route's warmup for imagery most
+ *     visitors won't reach before the preloader has long since released.
+ *   - Monolith-mode-only imagery (`ParallaxHeroBg.tsx`'s `/images/hero-sky-bg.jpg`,
+ *     the R3F gallery's textures, the hero background video) is excluded for
+ *     the same reason as the drift wall, plus one more: monolith is an
+ *     opt-in mode a visitor switches into via the command palette, off by
+ *     default, so none of it is on the default page-load path at all. See
+ *     the `useBackgroundVideo`/`R3FHeroCanvas` scoping note on
+ *     `useWarmupSignals` below.
+ *
+ * This list is intentionally tiny — the whole point is that hero-critical
+ * assets get preloaded in *full*, not capped, so it must stay short enough
+ * that "in full" is cheap. It also runs on every route (`useWarmupSignals`
+ * is called from `AppShellInner`, not gated to `/`), so anything added here
+ * is paid for by every first-time visitor, including ones landing on
+ * `/about` or `/blog` who will never see the hero at all.
+ */
+const HERO_CRITICAL_ASSETS: readonly string[] = ["/phitopolis_logo_hero.svg"];
+
+/** Background/lower-priority warmup cap. Keeps the glob-derived, unordered
+ *  remainder of ALL_ASSETS bounded so the preloader's overall completion
+ *  time doesn't regress on routes with no hero at all — this is the same
+ *  budget the old code applied (15), just no longer the *only* tier. */
+const BACKGROUND_ASSET_CAP = 15;
+
 function preloadAsset(url: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   return new Promise((resolve) => {
@@ -160,7 +208,11 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
       promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
     }));
 
-    const assetSignals = ALL_ASSETS.slice(0, 15).map((url) => {
+    // High priority: hero-critical assets, preloaded in full (never capped —
+    // see HERO_CRITICAL_ASSETS' own comment for why the list stays short
+    // enough that "in full" is safe). Listed first so their preloadAsset()
+    // calls fire before the background tier's.
+    const heroSignals = HERO_CRITICAL_ASSETS.map((url) => {
       const filename = url.split('/').pop() || 'ASSET';
       return {
         label: filename.toUpperCase().substring(0, 15),
@@ -168,7 +220,21 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
       };
     });
 
-    return [...routeSignals, ...assetSignals];
+    // Low priority: everything else, glob-ordered and arbitrary — capped so
+    // it stays a background warmup rather than a second render-blocking tier,
+    // and de-duped against the hero-critical list above so nothing double-fetches.
+    const heroSet = new Set(HERO_CRITICAL_ASSETS);
+    const assetSignals = ALL_ASSETS.filter((url) => !heroSet.has(url))
+      .slice(0, BACKGROUND_ASSET_CAP)
+      .map((url) => {
+        const filename = url.split('/').pop() || 'ASSET';
+        return {
+          label: filename.toUpperCase().substring(0, 15),
+          promise: preloadAsset(url),
+        };
+      });
+
+    return [...routeSignals, ...heroSignals, ...assetSignals];
   });
   return signals;
 }

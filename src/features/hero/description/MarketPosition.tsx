@@ -3,10 +3,10 @@ import Typography from "@mui/material/Typography";
 
 
 import { CONTENT } from "@/shared/content";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
-import { AppetizerReveal } from "@/shared/components/AppetizerReveal";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 
@@ -47,12 +47,24 @@ export function MarketPosition() {
   };
 
   return (
-    <StageSection section={homeSection("hero-position")}>
-      <AppetizerReveal
-        headerContent={null}
-        mainContent={
-          <Box sx={{ width: "100%", maxWidth: "800px" }}>
-            {differentiators.map((diff, i) => (
+    <SectionBeat
+      section={homeSection("hero-position")}
+      order={3}
+      establishing={
+        <MiniEstablishingShot
+          selfDriven={false}
+          indexTag="01.MINI"
+          category="MARKET POSITIONING"
+          title="Professional"
+          titleAccent="Leadership"
+          tracer="Decades of institutional Wall Street domain mastery paired with disciplined engineering execution."
+          status="ONLINE"
+        />
+      }
+      establishScale="mini"
+    >
+      <Box sx={{ width: "100%", maxWidth: "800px" }}>
+        {differentiators.map((diff, i) => (
               <Box
                 key={diff.heading}
                 sx={{
@@ -104,10 +116,8 @@ export function MarketPosition() {
                   </Typography>
                 </Box>
               </Box>
-            ))}
-          </Box>
-        }
-      />
-    </StageSection>
+        ))}
+      </Box>
+    </SectionBeat>
   );
 }

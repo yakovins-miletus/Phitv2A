@@ -1,11 +1,15 @@
 import { MajorEstablishingShot } from "@/shared/components/establishing/MajorEstablishingShot";
 
-export function SeamEstablishingShot() {
+/** `selfDriven` is forwarded so a parent `SectionBeat` can render this shot
+ *  presentationally (markup only) and drive its steps on the beat's own
+ *  timeline. Defaults to the shot's own default (`true`) when omitted. */
+export function SeamEstablishingShot({ selfDriven }: { selfDriven?: boolean }) {
   return (
     <MajorEstablishingShot
       id="shot-seam"
       title="That is the work."
       titleAccent="These are the people who do it."
+      {...(selfDriven === undefined ? {} : { selfDriven })}
     />
   );
 }

@@ -5,12 +5,12 @@ import Container from "@mui/material/Container";
 import { MagnifyingGlass, TerminalWindow, GlobeHemisphereWest } from "@phosphor-icons/react";
 
 import { CONTENT } from "@/shared/content";
-import { StageSection } from "@/shared/components/StageSection";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { PillarsEstablishingShot } from "@/features/home/components/establishing/PillarsEstablishingShot";
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
-import { AppetizerReveal } from "@/shared/components/AppetizerReveal";
 
 const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "void"];
 
@@ -30,11 +30,14 @@ export function OperatingPillars() {
   const { pillars } = CONTENT.hero.salesPitch as { pillars: readonly Pillar[] };
 
   return (
-    <StageSection section={homeSection("hero-pillars")} sx={{ minHeight: "auto", pt: 0, pb: { xs: 6, md: 10 } }}>
-      <AppetizerReveal
-        headerContent={null}
-        mainContent={
-          <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
+    <SectionBeat
+      section={homeSection("hero-pillars")}
+      order={2}
+      establishing={<PillarsEstablishingShot selfDriven={false} />}
+      establishScale="major"
+      sx={{ minHeight: "auto", pt: 0, pb: { xs: 6, md: 10 } }}
+    >
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
             <Box
               sx={{
                 display: "grid",
@@ -170,11 +173,9 @@ export function OperatingPillars() {
               </Box>
             );
           })}
-            </Box>
-          </Container>
-        }
-      />
-    </StageSection>
+        </Box>
+      </Container>
+    </SectionBeat>
   );
 }
 

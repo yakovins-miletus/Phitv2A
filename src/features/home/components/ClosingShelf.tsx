@@ -1,5 +1,4 @@
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { Link } from "@tanstack/react-router";
 
@@ -9,6 +8,9 @@ import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { homeSection } from "@/shared/sections";
+import { SectionBeat } from "@/shared/components/stage/SectionBeat";
+import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 
 /**
  * ── WHY PICTURE FRAMES, AND WHY THEY CAME BACK ───────────────────────────────
@@ -76,33 +78,48 @@ export function ClosingShelf() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_CLOSING, { dark: true });
 
   return (
-    <Box
-      ref={anchorRef}
-      component="section"
-      id="closing"
-      aria-labelledby="closing-heading"
+    <SectionBeat
+      section={homeSection("closing")}
+      order={16}
+      noExitDim
+      // Was "Mini Establishing Shot 7: Horizon Gateway" in routes/index.tsx.
+      establishing={
+        <MiniEstablishingShot
+          selfDriven={false}
+          indexTag="07.MINI"
+          category="GATEWAY TERMINAL"
+          title="In"
+          titleAccent="closing"
+          tracer="Direct line to our technical leadership and quantitative engineering directors."
+          status="READY"
+          dark
+        />
+      }
+      establishScale="mini"
+      establishAlign="left"
       sx={{
         position: "relative",
         zIndex: 1,
         bgcolor: NOIR.navyField,
         color: NOIR.frost,
         overflow: "hidden",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
       }}
     >
-      <Container 
-        maxWidth="xl" 
-        sx={{ 
-          py: { xs: 8, md: 10 }, 
-          position: "relative", 
+      <Box
+        ref={anchorRef}
+        aria-labelledby="closing-heading"
+        sx={{
+          position: "relative",
           zIndex: 2,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          flexGrow: 1,
+          width: "100%",
+          // Was Container maxWidth="xl" — narrower than SectionBeat's own
+          // maxWidth="2xl" Container, so the constraint moves here rather than
+          // widening the shelf to match every other migrated beat.
+          maxWidth: (theme) => theme.breakpoints.values.xl,
+          mx: "auto",
         }}
       >
         <Box
@@ -341,7 +358,7 @@ export function ClosingShelf() {
             </Box>
           </Box>
         </Box>
-      </Container>
-    </Box>
+      </Box>
+    </SectionBeat>
   );
 }
