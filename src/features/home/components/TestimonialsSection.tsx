@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -14,6 +14,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { BEAT_START, refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { useReducedMotion } from "@/shared/motion";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -78,17 +79,14 @@ const TESTIMONIALS: readonly Testimonial[] = [
 ];
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
-  const [hovered, setHovered] = useState(false);
-
   return (
     <Grid
+      className="testimonial-card-item"
       size={{ xs: testimonial.colSpan.xs, md: testimonial.colSpan.md }}
       sx={{ display: "flex" }}
     >
       <Box
         className="testimonial-card"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         sx={{
           position: "relative",
           width: "100%",
@@ -97,14 +95,16 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
           justifyContent: "space-between",
           bgcolor: "rgba(255, 255, 255, 0.92)",
           border: "1px solid",
-          borderColor: hovered ? "rgba(255, 199, 44, 0.5)" : "rgba(10, 42, 102, 0.1)",
-          boxShadow: hovered
-            ? "0 24px 48px -12px rgba(10, 42, 102, 0.12)"
-            : "0 12px 32px -8px rgba(10, 42, 102, 0.05)",
+          borderColor: "rgba(10, 42, 102, 0.1)",
+          boxShadow: "0 12px 32px -8px rgba(10, 42, 102, 0.05)",
           borderRadius: 4,
           p: { xs: 3.5, md: 4.5 },
           transition: "border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease",
-          transform: hovered ? "translateY(-4px)" : "translateY(0)",
+          "&:hover": {
+            borderColor: "rgba(255, 199, 44, 0.5)",
+            boxShadow: "0 24px 48px -12px rgba(10, 42, 102, 0.12)",
+            transform: "translateY(-4px)",
+          },
         }}
       >
         {/* Testimonial Quote */}
@@ -183,13 +183,14 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 export function TestimonialsSection() {
   const scopeRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_TESTIMONIALS, { dark: false });
 
   useGSAP(
     () => {
       if (reduced === true || !scopeRef.current) return;
       const root = scopeRef.current;
 
-      gsap.from(".testimonial-card", {
+      gsap.from(".testimonial-card-item", {
         opacity: 0,
         y: 36,
         stagger: CARD_STAGGER,
@@ -209,7 +210,13 @@ export function TestimonialsSection() {
 
   return (
     <SectionBeat section={homeSection("testimonials")} order={12} muted>
-      <Box ref={scopeRef} sx={{ width: "100%", py: { xs: 4, md: 8 } }}>
+      <Box
+        ref={(el: HTMLDivElement | null) => {
+          scopeRef.current = el;
+          if (anchorRef) anchorRef.current = el;
+        }}
+        sx={{ width: "100%", py: { xs: 4, md: 8 } }}
+      >
         <Grid container spacing={{ xs: 5, md: 8 }} sx={{ width: "100%" }}>
           {/* Left Column (Sticky Overview) */}
           <Grid

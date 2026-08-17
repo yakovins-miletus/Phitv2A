@@ -304,52 +304,6 @@ export const CONTENT = {
       techStack: ["Linux", "UNIX Shell", "Prometheus", "Grafana", "AWS/GCP/Azure"]
     }
   ],
-  /**
-   * Rendered on /about as five labelled cards under "Core Competencies".
-   *
-   * The intensifiers are gone — "Bold", "Proactive", "Seamless". No company would
-   * claim the opposite ("Timid Innovation", "Reactive Communication"), so a word
-   * nobody would disclaim carries no information and only makes the line read as
-   * filler. What is left is at least honest about being a category label.
-   *
-   * [VERIFY — needs your call, not mine] These are still five abstractions, and
-   * stripping adjectives cannot fix that. Each one becomes real only when it names
-   * a practice a candidate could observe. The file already asserts one such
-   * practice — 24/7 follow-the-sun continuity (see `services` gunshot ":288" and
-   * the reach line ":457") — which is the honest replacement for "Teamwork". The
-   * others need a fact I do not have, so I have not invented one.
-   */
-  coreCompetencies: {
-    headline: "Core Competencies",
-    bridge: "Our principles dictate our behavior. Our competencies define our output. Here is how our values translate into measurable business impact.",
-    items: [
-      {
-        label: "Architectural Foresight",
-        rootedIn: "Forward Thinking",
-        businessValue: "We engineer cloud infrastructure designed for future scale, ensuring platforms handle massive data loads without breaking."
-      },
-      {
-        label: "Algorithmic Precision",
-        rootedIn: "Excellence",
-        businessValue: "We convert noisy, high-dimensional datasets into structured models, providing research teams with reliable signals."
-      },
-      {
-        label: "Direct Integration",
-        rootedIn: "Integrity",
-        businessValue: "Our engineers embed directly with your internal teams, maintaining tight context and velocity on complex deployments."
-      },
-      {
-        label: "High-Performance Engineering",
-        rootedIn: "Excellence",
-        businessValue: "We ship highly optimized code that satisfies extreme latency requirements, delivering faster execution for critical systems."
-      },
-      {
-        label: "Operational Continuity",
-        rootedIn: "Accountability",
-        businessValue: "A distributed operational matrix monitors and supports infrastructure around the clock, guaranteeing constant availability."
-      }
-    ]
-  },
   // Rendered by CandidatesAndCareersSection on the home page. This used to list
   // only 6 of the 7 real positions in CAREER_POSITIONS (careersData.ts) — missing
   // "Technical Graduate Program" — while the /careers route (which reads
@@ -465,22 +419,22 @@ export const CONTENT = {
       id: "uc-1",
       title: "Algorithmic Signal Generation",
       tag: "Quantitative Finance",
-      line: "Deep learning over petabytes of ticks and alternative data, distilled into trading signals for global funds",
-      stats: ["US HEDGE FUNDS", "DEEP LEARNING"]
+      line: "Statistical models and machine learning applied to noisy market data, built to find signal that holds up out of sample",
+      stats: ["STATISTICAL MODELING", "APPLIED ML"]
     },
     {
       id: "uc-2",
       title: "Cloud-Native Infrastructure",
       tag: "Full-Stack & Data",
-      line: "Event-driven ingestion and processing architectures for petabyte-scale systems",
-      stats: ["UK CLIENTS", "RAPID ANALYTICS"]
+      line: "Event-driven pipelines and cloud systems built to ingest, process, and serve high-volume market and operational data",
+      stats: ["CLOUD-NATIVE", "DATA PIPELINES"]
     },
     {
       id: "uc-3",
-      title: "High-Frequency Trading Support",
+      title: "Global Technical Operations",
       tag: "DevOps & Support",
-      line: "Continuous 24/7 global operational matrix maintains zero-downtime performance across every major trading session",
-      stats: ["24/7 GLOBAL CONTINUITY", "ZERO DOWNTIME"]
+      line: "Technical teams working alongside clients across time zones, keeping systems monitored and supported around the clock",
+      stats: ["24/7 COVERAGE", "SYSTEM MONITORING"]
     }
   ],
   /**

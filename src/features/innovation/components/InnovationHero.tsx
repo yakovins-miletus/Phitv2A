@@ -18,7 +18,7 @@ import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext"
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 export function InnovationHero() {
-  const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
+  const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.INNOVATION_HERO, { dark: true });
   const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
 
   return (

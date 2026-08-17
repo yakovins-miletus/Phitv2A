@@ -9,6 +9,10 @@ export function ProcessEstablishingShot({ selfDriven }: { selfDriven?: boolean }
       id="shot-process"
       title="From Problem"
       titleAccent="To Production."
+      // `process`'s ground is `deep` (navy) — see sections.ts. Without this,
+      // the title renders in `MajorEstablishingShot`'s light-mode default
+      // (navy text) on a navy backdrop.
+      dark
       {...(selfDriven === undefined ? {} : { selfDriven })}
     />
   );

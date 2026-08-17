@@ -11,8 +11,10 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 import { homeSection } from "@/shared/sections";
 import { Reveal } from "@/shared/components/Reveal";
 import { ServiceVector } from "./ServiceDrawer";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 export function CapabilityRack() {
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_SERVICES, { dark: false });
   return (
     <SectionBeat
       section={homeSection("services")}
@@ -23,17 +25,15 @@ export function CapabilityRack() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          indexTag="02.MINI"
           category="CORE DISCIPLINES"
           title="Four disciplines."
           titleAccent="One delivery contract."
           tracer="High-performance computing, systematic execution engines, and mathematical research frameworks."
-          status="04 DISCIPLINES"
         />
       }
       establishScale="mini"
     >
-      <Stack spacing={0} sx={{ mt: 0 }}>
+      <Stack ref={anchorRef} spacing={0} sx={{ mt: 0 }}>
         {CONTENT.services.map((service) => {
           return (
             <Box

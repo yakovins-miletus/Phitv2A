@@ -21,6 +21,7 @@ import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { MONO } from "@/shared/theme/theme";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 /**
  * Card backgrounds, served from 1200px derivatives rather than the originals.
@@ -62,6 +63,7 @@ export function CandidatesAndCareersSection() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [brochureOpen, setBrochureOpen] = useState(false);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_CANDIDATES, { dark: false });
 
   const openBrochure = useCallback(() => {
     stopLenis();
@@ -92,18 +94,16 @@ export function CandidatesAndCareersSection() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          indexTag="05.MINI"
           category="HUMAN CAPITAL"
           title="For talents that outgrow"
           titleAccent="large institutions"
           tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."
-          status="HIRING // GLOBAL"
         />
       }
       establishScale="mini"
     >
       {/* 1. Header Information Block */}
-      <Grid container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end" justifyContent="flex-end">
+      <Grid ref={anchorRef} container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end" justifyContent="flex-end">
         {/* Brochure Download Button */}
         <Grid
           size={{ xs: 12, md: 4 }}

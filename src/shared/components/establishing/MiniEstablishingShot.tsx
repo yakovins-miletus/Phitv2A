@@ -18,12 +18,10 @@ import {
 gsap.registerPlugin(ScrollTrigger);
 
 export interface MiniEstablishingShotProps {
-  indexTag?: string;
   category: string;
   title: string;
   titleAccent?: string;
   tracer?: string;
-  status?: string;
   dark?: boolean;
   align?: "left" | "center";
   /**
@@ -37,12 +35,10 @@ export interface MiniEstablishingShotProps {
 }
 
 export function MiniEstablishingShot({
-  indexTag,
   category,
   title,
   titleAccent,
   tracer,
-  status = "ACTIVE",
   dark = false,
   align = "left",
   selfDriven = true,
@@ -139,21 +135,6 @@ export function MiniEstablishingShot({
           flexWrap: "wrap",
         }}
       >
-        {indexTag && (
-          <Typography
-            variant="overline"
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.18em",
-              color: dark ? NOIR.gold : NOIR.goldDark,
-            }}
-          >
-            {indexTag}
-          </Typography>
-        )}
-
         <Typography
           variant="overline"
           sx={{
@@ -166,42 +147,6 @@ export function MiniEstablishingShot({
         >
           // {category}
         </Typography>
-
-        {status && (
-          <Box
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 1,
-              ml: align === "center" ? 0 : "auto",
-              px: 1.25,
-              py: 0.25,
-              borderRadius: "4px",
-              backgroundColor: dark ? "rgba(255, 255, 255, 0.05)" : "rgba(10, 42, 102, 0.05)",
-              border: `1px solid ${dark ? "rgba(255, 255, 255, 0.12)" : "rgba(10, 42, 102, 0.12)"}`,
-            }}
-          >
-            <Box
-              sx={{
-                width: 5,
-                height: 5,
-                borderRadius: "50%",
-                backgroundColor: NOIR.live,
-              }}
-            />
-            <Typography
-              variant="overline"
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.625rem",
-                letterSpacing: "0.12em",
-                color: dark ? "rgba(255, 255, 255, 0.7)" : "rgba(10, 42, 102, 0.7)",
-              }}
-            >
-              {status}
-            </Typography>
-          </Box>
-        )}
       </Box>
 
       {/* Kinetic Caliper Hairline Ruler */}

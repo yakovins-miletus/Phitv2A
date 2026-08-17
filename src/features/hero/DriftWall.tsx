@@ -99,14 +99,19 @@ function columnFactor(index: number, variance: number): number {
  *  `for..of` — no index access, no fallbacks. */
 interface ColumnRuntime {
   el: HTMLDivElement | null;
-  /** Current scroll offset within one copy, always in [0, copyHeight). */
+  /** Current scroll offset, clamped to [0, copyHeight] — see the bounce note below. */
   offset: number;
-  /** Current px/s, eased toward `targetSpeed`. */
+  /** Current px/s, eased toward `baseSpeed * bounceSign`. */
   velocity: number;
-  /** Height of one full item cycle. The wrap modulus. */
+  /** Height of one full item cycle. Also the bounce's upper bound. */
   copyHeight: number;
-  /** Signed px/s this column settles at. */
-  targetSpeed: number;
+  /** Signed px/s this column settles at before the bounce flips it. Carries the
+   *  column's original direction (`direction` prop x per-column alternation). */
+  baseSpeed: number;
+  /** ±1, flipped whenever `offset` reaches either bound. Multiplied against
+   *  `baseSpeed` to get the column's current target velocity — see the bounce
+   *  note on the frame loop below. */
+  bounceSign: number;
 }
 
 /** CSS custom properties are not in `CSSProperties`. Declaring the pattern keeps the
@@ -184,18 +189,6 @@ export function DriftWall({
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
 
-  const tileRefs = useRef<{ el: HTMLElement; vX: number; vY: number; posX: number; posY: number }[]>([]);
-  const mousePosRef = useRef({ x: -1000, y: -1000, tX: -1000, tY: -1000 });
-
-  useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      mousePosRef.current.tX = e.clientX;
-      mousePosRef.current.tY = e.clientY;
-    };
-    window.addEventListener("mousemove", handleMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMove);
-  }, []);
-
   const reduced = useReducedMotion() === true;
 
   /** Measured container box. The initial 0s are never used to size anything — the
@@ -244,10 +237,13 @@ export function DriftWall({
   /**
    * How many times each column's item list repeats.
    *
-   * The seam is invisible only when the track is at least one full copy taller than
-   * the plane, so a copy can slide entirely off the top while the next is already
-   * covering the bottom. Once `copyHeight >= planeHeight` that is satisfied by two
-   * copies, which is the whole reason the tiles are sized the way they are.
+   * The wall bounces rather than wraps (see the frame loop below), but the sizing
+   * requirement is the same one that used to serve the wrap: the track has to stay
+   * at least one full copy taller than the plane, so that even at the bounce's own
+   * extremes — `offset` at 0 or at `copyHeight` — the visible window is still
+   * covered by real tiles rather than running off the end of the track. Once
+   * `copyHeight >= planeHeight` that is satisfied by two copies, which is the whole
+   * reason the tiles are sized the way they are.
    *
    * Solved against the **shortest** column, not the longest. One repeat count is
    * shared by every column, but each column wraps on its own cycle, so the column
@@ -304,7 +300,8 @@ export function DriftWall({
         offset: copyHeight * ((c * 0.37) % 1),
         velocity: 0,
         copyHeight,
-        targetSpeed: speed * columnFactor(c, variance) * dirSign * altSign,
+        baseSpeed: speed * columnFactor(c, variance) * dirSign * altSign,
+        bounceSign: 1,
       };
     });
 
@@ -313,9 +310,6 @@ export function DriftWall({
     for (const col of runtimeRef.current) {
       if (col.el) col.el.style.transform = `translate3d(0, ${-col.offset}px, 0)`;
     }
-
-    const inners = el.querySelectorAll<HTMLElement>(".dw-inner");
-    tileRefs.current = Array.from(inners, (inner) => ({ el: inner, vX: 0, vY: 0, posX: 0, posY: 0 }));
   }, [columnItems, copies, tileHeight, gap, speed, variance, direction]);
 
   /**
@@ -347,47 +341,26 @@ export function DriftWall({
         const dt = Math.min(MAX_FRAME_DT, Math.max(0, ts - last) / 1000);
         const ease = 1 - Math.exp(-dt / VELOCITY_TAU);
         for (const col of runtimeRef.current) {
-          col.velocity += (col.targetSpeed - col.velocity) * ease;
-          const next = col.offset + col.velocity * dt;
-          // Double modulo: a negative velocity drives `next` below 0, and JS `%`
-          // keeps the sign of the dividend.
-          col.offset = ((next % col.copyHeight) + col.copyHeight) % col.copyHeight;
-          if (col.el) col.el.style.transform = `translate3d(0, ${-col.offset}px, 0)`;
-        }
-
-        const mouse = mousePosRef.current;
-        mouse.x += (mouse.tX - mouse.x) * 0.12;
-        mouse.y += (mouse.tY - mouse.y) * 0.12;
-
-        for (const tile of tileRefs.current) {
-          if (!tile.el) continue;
-          const rect = tile.el.getBoundingClientRect();
-          const cx = rect.left + rect.width / 2;
-          const cy = rect.top + rect.height / 2;
-          const dx = cx - mouse.x;
-          const dy = cy - mouse.y;
-          const distSq = dx * dx + dy * dy;
-          const maxDist = 450;
-          let targetX = 0;
-          let targetY = 0;
-
-          if (distSq < maxDist * maxDist && distSq > 0) {
-            const dist = Math.sqrt(distSq);
-            const force = (maxDist - dist) / maxDist;
-            const push = force * force * 50; 
-            targetX = (dx / dist) * push;
-            targetY = (dy / dist) * push;
+          col.velocity += (col.baseSpeed * col.bounceSign - col.velocity) * ease;
+          let next = col.offset + col.velocity * dt;
+          // Ping-pong instead of wrap: reflect at both bounds rather than modulo
+          // back to 0. A wrap reads as an infinite belt of new material — which is
+          // what made the wall feel like it kept "loading new images" even once
+          // every tile had decoded. A column repeats after one `copyHeight`, so
+          // reflecting inside [0, copyHeight] never needs a fresh, still-decoding
+          // copy to slide into view: the wall settles into a fixed, composed set
+          // that drifts back and forth rather than an unbounded stream.
+          if (next <= 0) {
+            next = 0;
+            col.bounceSign = 1;
+            col.velocity = -col.velocity;
+          } else if (next >= col.copyHeight) {
+            next = col.copyHeight;
+            col.bounceSign = -1;
+            col.velocity = -col.velocity;
           }
-
-          tile.vX += (targetX - tile.posX) * 0.15;
-          tile.vY += (targetY - tile.posY) * 0.15;
-          tile.vX *= 0.82; 
-          tile.vY *= 0.82;
-          tile.posX += tile.vX;
-          tile.posY += tile.vY;
-
-          const scale = 1 - Math.min(0.06, (Math.abs(tile.posX) + Math.abs(tile.posY)) * 0.0015);
-          tile.el.style.transform = `translate3d(${tile.posX}px, ${tile.posY}px, 0) scale(${scale})`;
+          col.offset = next;
+          if (col.el) col.el.style.transform = `translate3d(0, ${-col.offset}px, 0)`;
         }
       }
       rafRef.current = requestAnimationFrame(frame);

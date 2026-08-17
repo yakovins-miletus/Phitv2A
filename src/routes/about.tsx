@@ -1,14 +1,11 @@
-import { useState } from "react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { Lightbulb, Target, UsersThree, Lightning, ShieldCheck } from "@phosphor-icons/react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CONTENT } from "@/shared/content";
-import { EASE_OUT_EXPO_CSS, EASE_SPRING_SOFT_CSS } from "@/shared/motion/easing";
-import { FillText } from "@/shared/components/FillText";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
 import { Section } from "@/shared/components/Section";
 import { StatStrip } from "@/shared/components/StatStrip";
@@ -35,93 +32,6 @@ export const Route = createFileRoute("/about")({
     ),
   component: AboutPage,
 });
-
-
-// Section 2: Core Competencies — Rooted in our values, delivering business impact.
-const COMPETENCY_ICONS = [
-  Lightbulb,
-  Target,
-  UsersThree,
-  Lightning,
-  ShieldCheck,
-];
-function CoreCompetenciesSection() {
-  const [isFilled, setIsFilled] = useState(false);
-  const { headline, bridge, items } = CONTENT.coreCompetencies;
-
-  return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", py: { xs: 8, md: 12 } }}>
-      <Section>
-        <Box sx={{ mb: { xs: 6, md: 10 }, maxWidth: 720 }}>
-          <FillText text={headline} onComplete={setIsFilled} />
-          <Typography variant="subtitle1" sx={{ mt: 3, color: "text.secondary", fontSize: "1.15rem", lineHeight: 1.6 }}>
-            {bridge}
-          </Typography>
-        </Box>
-        <StaggerGroup>
-          <Stack spacing={{ xs: 3, md: 4 }}>
-            {items.map((item, i) => {
-              const Icon = COMPETENCY_ICONS[i % COMPETENCY_ICONS.length] || Target;
-              return (
-                <StaggerItem key={item.label}>
-                  <Box sx={{
-                    p: { xs: 3, md: 5 },
-                    border: "1px solid rgba(10, 42, 102, 0.12)",
-                    borderRadius: "16px",
-                    bgcolor: "rgba(255, 255, 255, 0.75)",
-                    backdropFilter: "blur(8px)",
-                    transition: "all 0.4s ease",
-                    boxShadow: "0 4px 16px rgba(10, 42, 102, 0.04)",
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' },
-                    gap: { xs: 3, md: 6 },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    "&:hover": {
-                      bgcolor: "rgba(255, 255, 255, 0.95)",
-                      transform: "translateY(-3px)",
-                      borderColor: "rgba(10, 42, 102, 0.22)",
-                      boxShadow: "0 12px 32px rgba(10, 42, 102, 0.08)",
-                    }
-                  }}>
-                    {/* Left Column: Icon and Label */}
-                    <Box sx={{ flex: '0 0 auto', width: { md: '35%' }, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <Box sx={{
-                        opacity: isFilled ? 1 : 0.8,
-                        transform: isFilled ? 'scale(1) rotate(0deg)' : 'scale(0.9)',
-                        transition: `all 0.5s ${EASE_SPRING_SOFT_CSS}`,
-                        transitionDelay: `${i * 0.1}s`,
-                        color: 'primary.main',
-                      }}>
-                         <Icon size={40} weight="light" />
-                      </Box>
-                      <Box>
-                        <Typography variant="h4" color="primary.main" sx={{
-                           fontWeight: 700,
-                           transition: 'color 0.5s ease',
-                           transitionDelay: `${i * 0.1}s`,
-                        }}>
-                           {item.label}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    {/* Right Column: Business Value */}
-                    <Box sx={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', borderLeft: { md: '1px solid rgba(10, 42, 102, 0.08)' }, pl: { md: 6 } }}>
-                      <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem', lineHeight: 1.7 }}>
-                        {item.businessValue}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </StaggerItem>
-              );
-            })}
-          </Stack>
-        </StaggerGroup>
-      </Section>
-    </Box>
-  );
-}
 
 // Section 4: Talent credibility — education and disciplines as insight.
 function TalentSection() {
@@ -351,10 +261,6 @@ function AboutPage() {
         </SmoothSection>
         
         <PrinciplesValuesShowcase />
-        
-        <SmoothSection>
-          <CoreCompetenciesSection />
-        </SmoothSection>
         
         <SmoothSection>
           <Box ref={timelineAnchorRef}>

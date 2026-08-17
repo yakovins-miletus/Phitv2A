@@ -15,6 +15,7 @@ import { BlogVideoHero } from "@/features/blog/components/BlogVideoHero";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 const PAGE_SIZE = 9;
 const CATEGORY_PATTERN = /^[A-Za-z0-9 &-]{1,60}$/;
@@ -95,6 +96,8 @@ function BlogPage() {
   const heroPostIndex = isPageOne ? data.items.findIndex((p: any) => p.featured) : -1;
   const heroPost = heroPostIndex !== -1 ? data.items[heroPostIndex] : null;
 
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.BLOG_LISTING, { dark: false });
+
   // Every filter/sort change drops the offset — page 3 of the old result set
   // is meaningless against a new one. Only explicit paging sets it.
   const buildSearch = (overrides: Partial<BlogSearch>): BlogSearch => {
@@ -114,6 +117,7 @@ function BlogPage() {
 
       {/* ── Parallax Overlapping Article Sheet ── */}
       <Box
+        ref={anchorRef}
         sx={{
           position: "relative",
           zIndex: 2,

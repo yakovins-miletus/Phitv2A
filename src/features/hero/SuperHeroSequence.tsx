@@ -59,6 +59,7 @@ const HeroImageWall = lazy(() =>
 );
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import { DWELL_END } from "./heroPhases";
+import { HERO_WALL_TILES } from "./heroWallTiles";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
@@ -82,9 +83,11 @@ gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
  */
 const HERO_PIN_DISTANCE = "+=800%";
 
-/** Pin progress at which the drift wall's chunk is fetched. The gunshot starts at
- *  0.60, so this buys roughly four viewports of scroll to cover the request. */
-const WALL_WARM_AT = 0.2;
+/** How long to wait after the preloader clears before warming the drift wall, ms.
+ *  Long enough that the warm-up never competes with the preloader's own critical-path
+ *  work or the first paint of the hero itself; short enough that it is done long
+ *  before a reader can reach the gunshot at progress 0.60. */
+const WALL_WARM_DELAY_MS = 1200;
 
 /**
  * The dark-room flip.
@@ -451,24 +454,68 @@ export function HeroSignalCore() {
   const wallMountRefreshedRef = useRef(false);
 
   /**
-   * One-shot warm-up for the wall's chunk, fired from the pin driver below.
+   * One-shot warm-up for the wall's chunk and its 25 images, fired at mount.
    *
-   * Without it the lazy import starts at progress 0.601 — the same instant the wall
-   * is supposed to appear — and the Suspense boundary shows its `null` fallback for
-   * however long the fetch takes. Verified: seeking straight to p = 0.65 renders the
-   * navy wash with no wall behind it.
+   * Used to be gated on scroll progress crossing 0.20 — four viewports ahead of the
+   * gunshot at 0.60. That margin is a distance, not a time: under Lenis's smoothed
+   * scroll and the pin's own `progressQuick` chase, a fast flick can cover four
+   * viewports before the fetch it triggered at 0.20 has resolved. Verified: seeking
+   * straight to p = 0.65 renders the navy wash with no wall behind it, and a quick
+   * real flick from the top can reproduce the same gap on a cold cache.
    *
-   * Hung off scroll rather than off an idle callback at mount, for two reasons. It
-   * cannot compete with the preloader's own warmup, because nothing scrolls while the
-   * overlay is up. And it does not depend on `usePreloaderReady()`, which never
-   * resolves if the entrance warmup stalls — an idle prefetch gated on it silently
-   * never runs, which is exactly the case that needs the prefetch most.
-   *
-   * `WALL_WARM_AT` is four viewports of scroll ahead of the gunshot: far enough to
-   * hide the fetch, late enough that a reader who bounces off the first screen never
-   * pays for it.
+   * Fired on a timer instead, not gated on `usePreloaderReady()` — that flag never
+   * resolves if the entrance warmup stalls, and an idle prefetch gated on it would
+   * silently never run, which is exactly the case that needs the prefetch most.
+   * `requestIdleCallback`'s own `timeout` option is the mechanism: it runs during
+   * idle time if the browser has any inside `WALL_WARM_DELAY_MS`, and is forced to
+   * run at that deadline regardless — so it never competes with the preloader's
+   * critical-path work, and never misses its deadline either. Safari has no
+   * `requestIdleCallback`, hence the `setTimeout` fallback.
    */
   const wallWarmedRef = useRef(false);
+  const wallPrefetchLinksRef = useRef<HTMLLinkElement[]>([]);
+
+  useEffect(() => {
+    if (wallWarmedRef.current) return;
+
+    const warm = () => {
+      if (wallWarmedRef.current) return;
+      wallWarmedRef.current = true;
+      void import("./HeroImageWall");
+
+      // The chunk gets the wall's *code*; these prefetch the 25 image bytes it
+      // will request the moment it mounts. `prefetch`, not `preload` — this must
+      // never contend with the hero's own LCP element for bandwidth.
+      const links: HTMLLinkElement[] = [];
+      for (const tile of HERO_WALL_TILES) {
+        if (document.querySelector(`link[rel="prefetch"][href="${tile.src}"]`)) continue;
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.as = "image";
+        link.href = tile.src;
+        document.head.appendChild(link);
+        links.push(link);
+      }
+      wallPrefetchLinksRef.current = links;
+    };
+
+    let idleHandle: number | undefined;
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    if (typeof window.requestIdleCallback === "function") {
+      idleHandle = window.requestIdleCallback(warm, { timeout: WALL_WARM_DELAY_MS });
+    } else {
+      timeoutHandle = setTimeout(warm, WALL_WARM_DELAY_MS);
+    }
+
+    return () => {
+      if (idleHandle !== undefined && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
+      for (const link of wallPrefetchLinksRef.current) link.remove();
+      wallPrefetchLinksRef.current = [];
+    };
+  }, []);
 
   useStagePresence(containerRef, "hero");
   const { registerAnchor } = useNavbar();
@@ -500,7 +547,13 @@ export function HeroSignalCore() {
 
   useEffect(() => {
     if (navActive) {
-      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, navDark);
+      // Very negative `top`: this anchor is manually driven (not
+      // IntersectionObserver-based, see NavbarContext.tsx's `useNavbarAnchor` doc),
+      // so it never reports real geometry. A large negative sentinel means any
+      // concurrently-intersecting, freshly-entered real anchor (which by
+      // definition has a much larger/less-negative `top`) always wins the
+      // handoff, instead of this one blocking on an arbitrary default.
+      registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, true, navDark, -Infinity);
     } else {
       registerAnchor(NAV_ANCHORS.HERO_GUNSHOT, false, false);
     }
@@ -561,11 +614,6 @@ export function HeroSignalCore() {
           else if (p < 0.50) setActiveSection("hero-reveal");
           else if (p < 0.60) setActiveSection("hero-dwell");
           else setActiveSection("hero");
-
-          if (!wallWarmedRef.current && p > WALL_WARM_AT) {
-            wallWarmedRef.current = true;
-            void import("./HeroImageWall");
-          }
 
           const next = heroStage(p, false);
           if (!sameStage(stageRef.current, next)) {
@@ -745,7 +793,18 @@ export function HeroSignalCore() {
           />
         )}
 
-        {/* Flanking Text Elements (Appear during Smoking — vertical movement) */}
+        {/* Flanking Text Elements (Appear during Smoking — vertical movement)
+         *
+         * Gold, unconditionally, rather than the old `stage.borderDone ? gold :
+         * navyField` — `borderDone` doesn't flip true until progress 1.0
+         * (`borderAnimProgress`), while this text is on screen from 0.74 to 0.82.
+         * `navyField` on the navy gunshot wash is two near-identical hues, which is
+         * why it used to read as a flat pale rectangle instead of legible type. Gold
+         * is the one color in this composite guaranteed to clear the wash (see the
+         * contrast note in `HeroImageWall.tsx`), so it now carries the whole phase,
+         * not just the last 5% of it. A hairline rule above each line — the same
+         * kicker/label treatment `EyeFlow.tsx` uses for its chapter rail — gives the
+         * two lines a designed identity instead of floating text at flat weight. */}
         {stage.flank && (
           <>
             {/* Top Text: 7 YEARS OF EXCELLENCE */}
@@ -761,21 +820,22 @@ export function HeroSignalCore() {
                 zIndex: 4,
                 whiteSpace: "nowrap",
                 textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.75,
               }}
             >
+              <Box sx={{ width: 40, height: "1px", bgcolor: NOIR.gold, opacity: 0.85 }} />
               <Typography
                 sx={{
                   fontFamily: MONO,
-                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
+                  fontSize: { xs: "0.8rem", sm: "1.15rem", md: "1.5rem" },
                   fontWeight: 800,
-                  letterSpacing: "0.16em",
+                  letterSpacing: "0.22em",
                   textTransform: "uppercase",
-                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
-                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  transition: "color 0.15s ease-out",
+                  color: NOIR.gold,
+                  textShadow: "0 2px 14px rgba(6, 24, 59, 0.55)",
                 }}
               >
                 7 YEARS OF EXCELLENCE
@@ -795,25 +855,26 @@ export function HeroSignalCore() {
                 zIndex: 4,
                 whiteSpace: "nowrap",
                 textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.75,
               }}
             >
               <Typography
                 sx={{
                   fontFamily: MONO,
-                  fontSize: { xs: "0.75rem", sm: "1.05rem", md: "1.35rem" },
-                  fontWeight: 800,
-                  letterSpacing: "0.16em",
+                  fontSize: { xs: "0.72rem", sm: "0.95rem", md: "1.15rem" },
+                  fontWeight: 700,
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
-                  color: stage.borderDone ? NOIR.gold : NOIR.navyField,
-                  textShadow: "0 2px 10px rgba(10, 42, 102, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  transition: "color 0.15s ease-out",
+                  color: NOIR.gold,
+                  textShadow: "0 2px 14px rgba(6, 24, 59, 0.55)",
                 }}
               >
                 GENERATIONS OF COMPETITIVENESS
               </Typography>
+              <Box sx={{ width: 40, height: "1px", bgcolor: NOIR.gold, opacity: 0.85 }} />
             </Box>
           </>
         )}

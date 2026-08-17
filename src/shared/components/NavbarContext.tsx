@@ -23,8 +23,6 @@ export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch
  * Anchor ids now live here and useNavbarAnchor only accepts one of them.
  */
 export const NAV_ANCHORS = {
-  /** The home page's post-hero content zone. */
-  HOME_COMPACT: 'home-compact',
   /** The hero page's gunshot & smoking dark image sequence. */
   HERO_GUNSHOT: 'hero-gunshot',
   /** The daily-life film, which the navbar must go light over. */
@@ -49,6 +47,36 @@ export const NAV_ANCHORS = {
   SITE_FOOTER: 'site-footer',
   /** The Innovation Lab coming soon page. */
   INNOVATION_LAB: 'innovation-lab',
+  /** The Innovation Hub page's hero section. Was incorrectly reusing ABOUT_HERO —
+   *  two unrelated routes sharing one anchor id meant scrolling either page's
+   *  hero could leave the OTHER route's last-registered dark/light state behind
+   *  on navigation, since they are never both mounted but the id collision made
+   *  them indistinguishable to anything inspecting the anchor set. */
+  INNOVATION_HERO: 'innovation-hero',
+  /** Home page: services/capabilities section. Light ground — previously had no
+   *  anchor, so the navbar held whatever the last real anchor above it said for
+   *  the entire scroll through it. */
+  HOME_SERVICES: 'home-services',
+  /** Home page: the use-cases horizontal-scroll narrative. Light ground. */
+  HOME_USE_CASES: 'home-use-cases',
+  /** Home page: global footprint / reach section. Light ground — sits directly
+   *  between two now-dark sections (process, daily-life), so this anchor is
+   *  what corrects the navbar back to light between them. */
+  HOME_REACH: 'home-reach',
+  /** Home page: talent & careers section. Light ground. */
+  HOME_CANDIDATES: 'home-candidates',
+  /** Home page: testimonials section. Light ground. */
+  HOME_TESTIMONIALS: 'home-testimonials',
+  /** The /services route. One anchor for the whole page — it's a single uniform
+   *  light ground throughout, not a SectionBeat/ground-per-section page. */
+  SERVICES_PAGE: 'services-page',
+  /** The /careers route. Same rationale as SERVICES_PAGE. */
+  CAREERS_PAGE: 'careers-page',
+  /** The /blog listing page's content area (sidebar + toolbar + post grid),
+   *  below BLOG_HERO. Light ground. */
+  BLOG_LISTING: 'blog-listing',
+  /** The /contact route. One anchor for the whole page, light ground throughout. */
+  CONTACT_PAGE: 'contact-page',
 } as const;
 
 export type NavAnchorId = (typeof NAV_ANCHORS)[keyof typeof NAV_ANCHORS];
@@ -59,7 +87,7 @@ interface NavbarContextValue {
   autohideEnabled: boolean;
   setAutohideEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   toggleAutohide: () => void;
-  registerAnchor: (id: NavAnchorId, isIntersecting: boolean, dark?: boolean) => void;
+  registerAnchor: (id: NavAnchorId, isIntersecting: boolean, dark?: boolean, top?: number) => void;
   isAutoCompact: boolean;
   derivedIsCompact: boolean;
   isOverDarkSection: boolean;
@@ -75,8 +103,30 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
   const [overrideMode, setOverrideMode] = useState<NavbarMode>('glassmorphism');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
-  const [activeAnchors, setActiveAnchors] = useState<Set<string>>(new Set());
-  const [darkAnchors, setDarkAnchors] = useState<Set<string>>(new Set());
+
+  /**
+   * One anchor can be "current" at a time, but the old model (two parallel
+   * `Set<string>`, `isOverDarkSection = darkAnchors.size > 0`) had no notion of
+   * WHICH intersecting anchor is actually under the navbar right now — it was a
+   * plain boolean OR, so any dark anchor anywhere in the detection band forced
+   * dark chrome even while a light section's anchor was ALSO intersecting (this
+   * happens at every section boundary, briefly, by design of the shared
+   * rootMargin band both anchors sit inside during the handoff).
+   *
+   * Fix: track each currently-intersecting anchor's own `dark` flag AND its
+   * IntersectionObserver entry's `boundingClientRect.top` (free — every observer
+   * callback already computes it). The anchor with the LARGEST `top` among
+   * current entries is the one that most recently crossed into the detection
+   * band from below — i.e. the section that's actually current, in normal
+   * scrollspy semantics. An anchor that's been intersecting for a while (most of
+   * its height already scrolled past) has a much more negative `top` and loses
+   * to a freshly-entered neighbor, instead of an unconditional dark-wins OR.
+   */
+  interface AnchorEntry {
+    dark: boolean;
+    top: number;
+  }
+  const [anchors, setAnchors] = useState<Map<NavAnchorId, AnchorEntry>>(new Map());
 
   const toggleAutohide = useCallback(() => {
     setAutohideEnabled((prev) => !prev);
@@ -86,20 +136,11 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
     setShowMotto((prev) => !prev);
   }, []);
 
-  const registerAnchor = useCallback((id: NavAnchorId, isIntersecting: boolean, dark = false) => {
-    setActiveAnchors((prev) => {
-      const next = new Set(prev);
+  const registerAnchor = useCallback((id: NavAnchorId, isIntersecting: boolean, dark = false, top = 0) => {
+    setAnchors((prev) => {
+      const next = new Map(prev);
       if (isIntersecting) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-    setDarkAnchors((prev) => {
-      const next = new Set(prev);
-      if (isIntersecting && dark) {
-        next.add(id);
+        next.set(id, { dark, top });
       } else {
         next.delete(id);
       }
@@ -107,8 +148,15 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const isAutoCompact = activeAnchors.size > 0;
-  const isOverDarkSection = darkAnchors.size > 0;
+  const isAutoCompact = anchors.size > 0;
+
+  const isOverDarkSection = useMemo(() => {
+    let winner: AnchorEntry | null = null;
+    for (const entry of anchors.values()) {
+      if (winner === null || entry.top > winner.top) winner = entry;
+    }
+    return winner !== null && winner.dark;
+  }, [anchors]);
 
   const derivedIsCompact = useMemo(() => {
     if (overrideMode === 'immersive' || overrideMode === 'minimal') return false;
@@ -191,7 +239,7 @@ export function useNavbarAnchor(id: NavAnchorId, options?: { dark?: boolean; roo
       (entries) => {
         const entry = entries[0];
         if (entry) {
-          registerAnchor(id, entry.isIntersecting, darkRef.current);
+          registerAnchor(id, entry.isIntersecting, darkRef.current, entry.boundingClientRect.top);
         }
       },
       {

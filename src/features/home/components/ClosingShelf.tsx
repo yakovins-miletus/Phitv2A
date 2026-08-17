@@ -86,12 +86,10 @@ export function ClosingShelf() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          indexTag="07.MINI"
           category="GATEWAY TERMINAL"
           title="In"
           titleAccent="closing"
           tracer="Direct line to our technical leadership and quantitative engineering directors."
-          status="READY"
           dark
         />
       }

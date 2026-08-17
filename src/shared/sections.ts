@@ -107,7 +107,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   },
   { id: "services", label: "Capabilities", chapter: 4, ground: "void" },
   { id: "use-cases", label: "Architectural Use-Cases", chapter: 5, ground: "panel" },
-  { id: "process", label: "Process Pipeline", chapter: 5, ground: "void" },
+  { id: "process", label: "Process Pipeline", chapter: 5, ground: "deep" },
   {
     id: "reach",
     label: "Global Footprint",
@@ -122,7 +122,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     label: "Behind The Code",
     chapter: 7,
     choreo: "zoom-center",
-    ground: "void",
+    ground: "deep",
   },
   { id: "candidates", label: "Talent & Careers", chapter: 8, choreo: "zoom-center", ground: "panel" },
   {
@@ -135,7 +135,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   { id: "blog", label: "Intelligence Feed", chapter: 9, choreo: "grow-right", ground: "field" },
   // Rendered as ClosingShelf's own SectionBeat (the page's final beat, no exit
   // dim — see ClosingShelf.tsx).
-  { id: "closing", label: "Horizon Gateway", chapter: 9, choreo: "zoom-center", ground: "panel" },
+  { id: "closing", label: "Horizon Gateway", chapter: 9, choreo: "zoom-center", ground: "field" },
 ];
 
 export function homeSection(id: string): SectionDef {

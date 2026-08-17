@@ -9,6 +9,10 @@ export function SeamEstablishingShot({ selfDriven }: { selfDriven?: boolean }) {
       id="shot-seam"
       title="That is the work."
       titleAccent="These are the people who do it."
+      // `daily-life`'s ground is `deep` (navy) — see sections.ts. Without this,
+      // the title renders in `MajorEstablishingShot`'s light-mode default
+      // (navy text) on a navy backdrop.
+      dark
       {...(selfDriven === undefined ? {} : { selfDriven })}
     />
   );

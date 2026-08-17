@@ -211,12 +211,10 @@ export function BlogSection() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          indexTag="06.MINI"
           category="TECHNICAL DISPATCHES"
           title="Inside"
           titleAccent="Phitopolis"
           tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."
-          status="FEED: LIVE"
           dark
         />
       }

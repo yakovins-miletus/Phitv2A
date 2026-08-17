@@ -11,6 +11,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 import { MONO } from "@/shared/theme/theme";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 const NEXT_STEPS = [
   { line: "Your message lands directly with our engineering & partnerships leadership team." },
@@ -69,8 +70,10 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.CONTACT_PAGE, { dark: false });
+
   return (
-    <Section>
+    <Section ref={anchorRef}>
       <PageHeader
         overline="Contact & Partnerships"
         title="Direct Inquiries"

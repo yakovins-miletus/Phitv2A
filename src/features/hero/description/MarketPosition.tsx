@@ -53,12 +53,10 @@ export function MarketPosition() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          indexTag="01.MINI"
           category="MARKET POSITIONING"
           title="Professional"
           titleAccent="Leadership"
           tracer="Decades of institutional Wall Street domain mastery paired with disciplined engineering execution."
-          status="ONLINE"
         />
       }
       establishScale="mini"

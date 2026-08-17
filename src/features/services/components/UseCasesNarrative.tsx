@@ -17,6 +17,7 @@ import { SignalDiagram } from "@/shared/components/diagrams/SignalDiagram";
 import { PipelineDiagram } from "@/shared/components/diagrams/PipelineDiagram";
 import { FollowTheSunDiagram } from "@/shared/components/diagrams/FollowTheSunDiagram";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -65,19 +66,68 @@ export function UseCasesNarrative() {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_USE_CASES, { dark: false });
 
   useGSAP(
     () => {
       if (reduce === true || !track.current || !wrap.current) return;
 
-      const distance = () => (track.current?.scrollWidth ?? 0) - window.innerWidth;
-      if (distance() <= 0) return;
+      /**
+       * The two `x` values that put the FIRST card's centre on the viewport's
+       * centre at the start of the pin, and the LAST card's centre there at the
+       * end — measured from the DOM rather than assumed from vw math.
+       *
+       * The travel used to be `scrollWidth - innerWidth`, which moves the track
+       * until its own right edge (including the `pr` trailing pad) is flush with
+       * the viewport's right edge. That only centres the last card if `pr`
+       * happens to equal exactly half the viewport width minus half the card
+       * width, which silently drifted true whenever the cards' width, count, or
+       * the `Stack` gap changed. Measuring `.snap-slide` positions directly
+       * makes both ends self-correct for any future width/gap/count change, and
+       * removes the need for `px`/`pr` to be load-bearing — they now only have
+       * to be "wide enough," not exact.
+       *
+       * Deliberately expressed as a tween on `x`, NOT as leading padding: a
+       * measured `paddingLeft` changes the track's own layout, so the very
+       * measurement that produced it shifts on the next read and the correction
+       * compounds — that inflated the pin's `end` (and with it the pin-spacer)
+       * by ~2000px, leaving a long blank stretch after the cards had scrolled
+       * past. `x` moves the track without touching layout, so every measurement
+       * below is taken against a geometry that never moves.
+       *
+       * `getBoundingClientRect`, not `offsetLeft`: MUI's `Stack` and `Box` don't
+       * reliably share an `offsetParent` with `track.current` (that depends on
+       * which ancestor has `position` set). Taking BOTH rects in the same call
+       * and subtracting also cancels whatever `x` is currently applied, so these
+       * stay correct when ScrollTrigger re-measures mid-scroll on refresh —
+       * which a viewport-relative read would not.
+       */
+      const centres = () => {
+        const trackEl = track.current;
+        if (!trackEl) return { start: 0, end: 0, travel: 0 };
+        const slides = trackEl.querySelectorAll<HTMLElement>(".snap-slide");
+        const first = slides[0];
+        const last = slides[slides.length - 1];
+        if (!first || !last) return { start: 0, end: 0, travel: 0 };
+        const trackRect = trackEl.getBoundingClientRect();
+        const centreFromTrackLeft = (el: HTMLElement) => {
+          const r = el.getBoundingClientRect();
+          return r.left - trackRect.left + r.width / 2;
+        };
+        const half = window.innerWidth / 2;
+        const start = half - centreFromTrackLeft(first);
+        const end = half - centreFromTrackLeft(last);
+        // Travel reduces to `lastCentre - firstCentre` — the distance between
+        // the outer two cards, independent of viewport width and of both pads.
+        return { start, end, travel: start - end };
+      };
+      if (centres().travel <= 0) return;
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: wrap.current,
           start: "top top",
-          end: () => `+=${String(distance() * (1 + PAUSE))}`,
+          end: () => `+=${String(centres().travel * (1 + PAUSE))}`,
           pin: true,
           scrub: SCROLL_SPEED,
           invalidateOnRefresh: true,
@@ -94,11 +144,15 @@ export function UseCasesNarrative() {
         },
       });
 
-      tl.to(track.current, {
-        x: () => -distance(),
-        ease: "none",
-        duration: 1,
-      });
+      tl.fromTo(
+        track.current,
+        { x: () => centres().start },
+        {
+          x: () => centres().end,
+          ease: "none",
+          duration: 1,
+        },
+      );
 
       // Add a slight pause at the end
       tl.to({}, { duration: PAUSE });
@@ -110,7 +164,10 @@ export function UseCasesNarrative() {
 
   return (
     <Box
-      ref={wrap}
+      ref={(el: HTMLDivElement | null) => {
+        wrap.current = el;
+        if (anchorRef) anchorRef.current = el;
+      }}
       component="section"
       sx={{
         position: "relative",
@@ -127,15 +184,21 @@ export function UseCasesNarrative() {
           height: vertical ? "auto" : "100dvh",
           alignItems: vertical ? "stretch" : "center",
           width: vertical ? "auto" : "max-content",
+          // Purely cosmetic breathing room on both ends now — `centres()` above
+          // measures the first and last cards directly and drives the track
+          // with `x`, so neither pad is load-bearing for centring and neither
+          // has to be tuned to any card-width/gap arithmetic. Do NOT reintroduce
+          // a measured leading pad here: changing layout to centre a card makes
+          // the next measurement of that same card move (see `centres()`).
           px: { xs: 3, md: 10 },
-          pr: vertical ? undefined : { xs: "7.5vw", md: "20vw" },
+          pr: vertical ? undefined : { xs: 3, md: 10 },
           py: vertical ? { xs: 6, md: 10 } : 0,
           willChange: vertical ? undefined : "transform",
         }}
       >
         <Stack
           direction={vertical ? "column" : "row"}
-          spacing={vertical ? 6 : 10}
+          spacing={vertical ? 8 : { md: 12, lg: 16 }}
           alignItems="stretch"
           sx={{ position: "relative", maxWidth: vertical ? 760 : "none", mx: vertical ? "auto" : 0 }}
         >

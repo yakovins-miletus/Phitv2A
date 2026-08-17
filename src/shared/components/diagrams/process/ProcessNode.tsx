@@ -197,8 +197,8 @@ export function ProcessNode({
           position: "absolute",
           top: "50%",
           left: 0,
-          width: 1,
-          height: 1,
+          width: "1px",
+          height: "1px",
           pointerEvents: "none",
         }}
       />
@@ -209,7 +209,7 @@ export function ProcessNode({
           width: "100%",
           boxSizing: "border-box",
           padding: "32px 36px",
-          backgroundColor: `rgba(${NOIR.navyInkRgb}, 0.85)`,
+          backgroundColor: `rgba(${NOIR.navyInkRgb}, 0.3)`,
           border: "1px solid",
           borderColor: reduced ? `rgba(${NOIR.frostRgb}, 0.12)` : borderGlow,
           borderRadius: 0,

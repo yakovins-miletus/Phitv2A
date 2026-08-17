@@ -6,6 +6,7 @@ import GearIcon from "@mui/icons-material/Settings";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { Reveal } from "@/shared/components/Reveal";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 interface ServicesHeroHeaderProps {
   selectedCategory?: string;
@@ -24,8 +25,10 @@ export function ServicesHeroHeader({
   selectedCategory = "all",
   onSelectCategory,
 }: ServicesHeroHeaderProps) {
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.SERVICES_PAGE, { dark: false });
   return (
     <Box
+      ref={anchorRef}
       sx={{
         width: "100%",
         pt: { xs: 2, md: 4 },

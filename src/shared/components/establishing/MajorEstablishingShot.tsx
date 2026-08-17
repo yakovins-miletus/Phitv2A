@@ -20,12 +20,10 @@ gsap.registerPlugin(ScrollTrigger);
 
 export interface MajorEstablishingShotProps {
   id: string;
-  phaseCode?: string;
   category?: string;
   title: string;
   titleAccent?: string;
   description?: string;
-  tagline?: string;
   dark?: boolean;
   /**
    * When `true` (the default, i.e. every call site today) the shot owns its own
@@ -39,12 +37,10 @@ export interface MajorEstablishingShotProps {
 
 export function MajorEstablishingShot({
   id,
-  phaseCode,
   category,
   title,
   titleAccent,
   description,
-  tagline,
   dark = false,
   selfDriven = true,
 }: MajorEstablishingShotProps) {
@@ -140,70 +136,29 @@ export function MajorEstablishingShot({
     >
       <Container maxWidth="2xl" sx={{ position: "relative", zIndex: 1, width: "100%" }}>
         {/* Minimal Kicker Metadata Bar */}
-        {(phaseCode || category || tagline) && (
+        {category && (
           <Box
             ref={metaRef}
             className="est-meta"
             sx={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
               gap: 2,
               mb: 2,
             }}
           >
-            {(phaseCode || category) && (
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  px: 1.75,
-                  py: 0.5,
-                  borderRadius: "100px",
-                  backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "rgba(10, 42, 102, 0.05)",
-                  border: `1px solid ${dark ? "rgba(255, 255, 255, 0.15)" : "rgba(10, 42, 102, 0.14)"}`,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    backgroundColor: NOIR.goldDark,
-                    boxShadow: `0 0 6px ${NOIR.goldDark}`,
-                  }}
-                />
-                <Typography
-                  variant="overline"
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.7rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.2em",
-                    color: dark ? NOIR.frost : NOIR.navyField,
-                  }}
-                >
-                  {phaseCode && `${phaseCode} `}{phaseCode && category && "// "}{category}
-                </Typography>
-              </Box>
-            )}
-
-            {tagline && (
-              <Typography
-                variant="overline"
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.18em",
-                  color: dark ? "rgba(255, 255, 255, 0.7)" : "rgba(10, 42, 102, 0.75)",
-                  display: { xs: "none", sm: "block" },
-                }}
-              >
-                {tagline}
-              </Typography>
-            )}
+            <Typography
+              variant="overline"
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.7rem",
+                fontWeight: 800,
+                letterSpacing: "0.2em",
+                color: dark ? NOIR.frost : NOIR.navyField,
+              }}
+            >
+              // {category}
+            </Typography>
           </Box>
         )}
 

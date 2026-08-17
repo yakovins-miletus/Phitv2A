@@ -25,6 +25,7 @@ import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { pageHead } from "@/shared/seo";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 export const Route = createFileRoute("/careers/")({
   head: () =>
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/careers/")({
 });
 
 export function CareersIndexPage() {
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.CAREERS_PAGE, { dark: false });
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeJobTitle, setActiveJobTitle] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function CareersIndexPage() {
   }, [selectedCategory, searchQuery]);
 
   return (
-    <Box sx={{ width: "100%", bgcolor: NOIR.void, pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 }, position: "relative" }}>
+    <Box ref={anchorRef} sx={{ width: "100%", bgcolor: NOIR.void, pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 }, position: "relative" }}>
       {/* ── Background Hero Image with Gradial Mask ── */}
       <Box
         sx={{

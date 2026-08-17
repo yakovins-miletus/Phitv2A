@@ -25,21 +25,37 @@ export function ProcessSection() {
         sx={{
           bgcolor: NOIR.navyDeep,
           color: NOIR.frost,
-          position: "relative",
           zIndex: 1,
           overflow: "hidden",
           borderTop: "1px solid rgba(255, 199, 44, 0.2)",
           borderBottom: "1px solid rgba(255, 199, 44, 0.2)",
           py: { xs: 8, md: 14 },
-          // Break out of SectionBeat's Container maxWidth="2xl": before the
-          // beat migration this band was its own full-width top-level Box, not
-          // gutter-constrained. Same bleed technique used nowhere else yet in
-          // this refactor, but it's the standard "escape the parent container"
-          // pattern and doesn't fight the Container's own padding — it just
-          // repositions this Box independent of the ancestor's width.
+          /**
+           * Break out of SectionBeat's `Container maxWidth="2xl"`.
+           *
+           * The old `width: 100vw; ml/mr: calc(50% - 50vw)` version left a visible
+           * gutter down both sides instead of bleeding to the true viewport edge.
+           * `margin-left/right` percentages resolve against the CONTAINING BLOCK's
+           * width — here, the Container's own content-box width (maxWidth minus its
+           * padding), not the viewport — so `50%` was 50% of ~1280px, not of the
+           * 100vw the other half of the expression assumed. The residual offset was
+           * exactly the Container's own gutter, which is why it read as "almost"
+           * full-bleed rather than obviously broken.
+           *
+           * `left: 50%` + `transform: translateX(-50%)` is agnostic to that: `left`
+           * still resolves against the Container's width, landing this box's left
+           * edge on the CONTAINER's horizontal center — but `translateX(-50%)`
+           * resolves against this box's OWN width (100vw), shifting it left by
+           * exactly half the viewport. Since MUI's `Container` is itself centered
+           * in the viewport by default, the container's center IS the viewport's
+           * center, so the two offsets cancel to the true viewport edge regardless
+           * of the Container's maxWidth or padding — no ancestor-width assumption
+           * baked into the math this time.
+           */
+          position: "relative",
+          left: "50%",
+          transform: "translateX(-50%)",
           width: "100vw",
-          ml: "calc(50% - 50vw)",
-          mr: "calc(50% - 50vw)",
         }}
       >
         {/* Industrial Grid Background & Scanlines */}

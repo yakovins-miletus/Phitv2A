@@ -99,6 +99,14 @@ test("home page stops are light except the sections declared dark", () => {
   // punctuated by declared navy sections, and the thing worth gating is that those
   // two registries agree.
   //
+  // `process` and `daily-life` joined `blog` in the dark set later — both already
+  // rendered navy unconditionally (ProcessSection's own `bgcolor: NOIR.navyDeep`,
+  // DailyLifeSection's card comment describing a `navyDeep` ground the film card
+  // sits "one step deeper" than) and both already registered `useNavbarAnchor(...,
+  // { dark: true })`. Their `ground` field was the one place still claiming light
+  // (`void`) — this fixes that registry to match what every other signal already
+  // said, rather than changing what renders.
+  //
   // So: every stop's lightness must match the `dark` flag on the ground it names,
   // and the light ones must still dominate — a retune that quietly turns the page
   // navy again shows up as a count, not as a colour nobody looked at.
@@ -112,7 +120,11 @@ test("home page stops are light except the sections declared dark", () => {
   }
 
   const dark = GROUND_STOPS.filter((s) => GROUNDS[s.ground].dark);
-  expect(dark.map((s) => s.id), "the home page's declared dark grounds").toEqual(["blog"]);
+  expect(dark.map((s) => s.id), "the home page's declared dark grounds").toEqual([
+    "process",
+    "daily-life",
+    "blog",
+  ]);
 });
 
 test("GROUNDS contains both light and dark grounds", () => {

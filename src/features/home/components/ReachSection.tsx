@@ -7,6 +7,7 @@ import { SectionLede } from "@/shared/components/SectionLede";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
 /**
  * Global Reach — the closing beat of Act I.
@@ -31,6 +32,7 @@ import { homeSection } from "@/shared/sections";
  * lede implies.
  */
 export function ReachSection() {
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_REACH, { dark: false });
   return (
     <SectionBeat
       section={homeSection("reach")}
@@ -39,17 +41,15 @@ export function ReachSection() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          indexTag="04.MINI"
           category="GLOBAL FABRIC"
           title="Worldwide Low-Latency"
           titleAccent="Interconnect"
           tracer="Co-located execution presence spanning London, New York, Singapore, and Tokyo financial hubs."
-          status="SYNC: <1ms"
         />
       }
       establishScale="mini"
     >
-      <Box sx={{ mb: { xs: 5, md: 7 } }}>
+      <Box ref={anchorRef} sx={{ mb: { xs: 5, md: 7 } }}>
         <SectionLede
           gunshot={CONTENT.ledes.reach.gunshot}
           tracer={CONTENT.ledes.reach.tracer}

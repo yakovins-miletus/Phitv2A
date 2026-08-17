@@ -95,7 +95,7 @@ export function FollowTheSunDiagram() {
         width="100%"
         height="100%"
         role="img"
-        aria-label="Follow-the-sun coverage. Multi-region shift handover around a 24-hour dial centered on the Philippine hubs, while a flat line below shows constant millisecond-level latency."
+        aria-label="Follow-the-sun coverage. Three shift rotations handed off around a 24-hour dial, with a timeline below showing continuous, gap-free coverage."
         style={{ display: "block", overflow: "visible", maxHeight: 360 }}
       >
         <defs>
@@ -262,7 +262,7 @@ export function FollowTheSunDiagram() {
           letterSpacing="1.8"
           textAnchor="middle"
         >
-          CONTINUOUS OPERATIONS · &lt; 0.4MS AVERAGE TRANSIT JITTER
+          THREE SHIFTS · NO GAP IN COVERAGE
         </text>
       </svg>
     </Box>

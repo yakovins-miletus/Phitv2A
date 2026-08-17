@@ -6,7 +6,6 @@ import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { homeSection } from "@/shared/sections";
@@ -49,7 +48,6 @@ const HOME_RESIZE_REFRESH_DEBOUNCE_MS = 150;
 
 function HomePage() {
   const homeMainRef = useRef<HTMLElement>(null);
-  const compactZoneRef = useNavbarAnchor(NAV_ANCHORS.HOME_COMPACT);
 
   // General staleness fix for issues 1+2 (mistimed establishing shots, hero/
   // mission overlap): any height change on the home page during this visit —
@@ -140,12 +138,10 @@ function HomePage() {
           section={homeSection("use-cases")}
           establishing={
             <MiniEstablishingShot
-              indexTag="03.MINI"
               category="APPLIED ARCHITECTURES"
               title="Real-World"
               titleAccent="Applications"
               tracer="End-to-end telemetry and architectural breakdowns of institutional deployments across global venues."
-              status="PROD_READY"
               selfDriven={false}
             />
           }
@@ -157,8 +153,31 @@ function HomePage() {
           <UseCasesNarrative />
         </SectionBeat>
 
-        {/* 04. Compact & Sequential Sections Zone */}
-        <Box ref={compactZoneRef} id="compact-zone">
+        {/* 04. Compact & Sequential Sections Zone
+         *
+         * Used to carry the sole HOME_COMPACT navbar anchor, one giant
+         * IntersectionObserver target spanning from here through ClosingShelf.
+         * That's exactly the shape that broke NavbarContext's topmost-wins
+         * precedence rewrite: IntersectionObserver only re-fires on a
+         * threshold CROSSING, not on every scroll tick while an element stays
+         * continuously intersecting — so once this box entered the detection
+         * band near Process, its recorded geometry never updated again until
+         * it finally exited past ClosingShelf. Every properly-scoped anchor
+         * nested inside it (process, reach, daily-life, candidates,
+         * testimonials, blog, closing) kept losing to that frozen, stale
+         * entry the moment its own `top` drifted past whatever HOME_COMPACT
+         * had recorded on first entry — the navbar read light over Blog and
+         * Closing despite both being registered dark.
+         *
+         * Every section this box wraps now has its own dedicated anchor (see
+         * NavbarContext.tsx's NAV_ANCHORS and this file's per-section Boxes
+         * below), so the giant catch-all is redundant, not just buggy — it's
+         * been removed rather than resized. The one stretch it also used to
+         * cover — hero-mission/hero-pillars/hero-position, before this box
+         * even starts — needs no anchor at all: with nothing registered,
+         * `isOverDarkSection` resolves to false (see NavbarContext.tsx), which
+         * is exactly correct for those light-ground sections. */}
+        <Box id="compact-zone">
           {/* Major Establishing Shot 2: Process Pipeline — the shot now lives
               inside ProcessSection's own SectionBeat, driven on one timeline. */}
           <ProcessSection />
