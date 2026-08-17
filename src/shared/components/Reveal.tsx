@@ -1,6 +1,6 @@
 import { motion, useInView } from "motion/react";
 import type { MotionStyle } from "motion/react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { useEntranceSettled, useReducedMotion } from "@/shared/motion";
@@ -18,15 +18,48 @@ const CLIP_HIDDEN = "inset(100% 0% 0% 0%)";
 const CLIP_VISIBLE = "inset(0% 0% 0% 0%)";
 const LIFT = 16;
 
-/** Shared scroll-into-view reveal. Content is visible by default via CSS;
- *  the JS animation enhances. */
+/** Ceiling on how long the entrance gate may hold content clipped.
+ *
+ *  The gate (`useEntranceSettled`) is released by AppShell's phase machine,
+ *  which normally reaches "open" in SETTLE_MS + OPEN_AT_MS (~680ms) or, when
+ *  the intro preloader plays, after its own timeline. Anything that interrupts
+ *  that sequence used to leave EVERY Reveal on the page clipped permanently,
+ *  with no fallback and no timeout — a blank page with full layout height,
+ *  because clip-path is paint-only.
+ *
+ *  This is the same failsafe idea as Preloader's HARD_CAP_MS: the choreography
+ *  is an enhancement and is never allowed to be the thing that decides whether
+ *  content is readable. Set above the normal release so it never pre-empts the
+ *  staged entrance, and well below the preloader's 5s cap so a stalled gate is
+ *  invisible to the user rather than terminal.
+ *
+ *  Note this releases the *entrance* gate only, not `inView` — scroll reveals
+ *  still require the element to be in view, so the design is preserved. */
+const ENTRANCE_FAILSAFE_MS = 1200;
+
+/** True when IntersectionObserver cannot report visibility at all. `useInView`
+ *  would then never flip, so treating content as in-view is the only
+ *  fail-open answer. */
+const NO_IO = typeof IntersectionObserver === "undefined";
+
+/** Shared scroll-into-view reveal.
+ *
+ *  Fails open: content becomes visible if the entrance gate stalls, if
+ *  IntersectionObserver is unavailable, or if the visitor prefers reduced
+ *  motion. The clip animation is an enhancement on top of readable content —
+ *  it is never the sole thing standing between the user and the page. */
 export function Reveal({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: MotionStyle }) {
   const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: 0.05 });
+  const gateExpired = useEntranceFailsafe(ready);
 
-  const shouldAnimate = ready && inView;
+  // `reduced` must be honoured here and not only in `initial`: with
+  // `initial={false}` the element adopts whatever `animate` resolves to on the
+  // first frame, so a hidden `animate` value clipped reduced-motion visitors
+  // exactly as hard as everyone else. StaggerItem below always did honour it.
+  const shouldAnimate = reduced || NO_IO || ((ready || gateExpired) && inView);
   const styleProp = style ? { style } : {};
 
   return (
@@ -46,14 +79,36 @@ export function Reveal({ children, delay = 0, style }: { children: ReactNode; de
   );
 }
 
+/** Shared entrance-gate failsafe: true once the gate has had long enough to
+ *  release on its own. Stops running as soon as the gate opens normally, which
+ *  is the common case. */
+function useEntranceFailsafe(ready: boolean): boolean {
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    if (ready || expired) return;
+    const id = window.setTimeout(() => setExpired(true), ENTRANCE_FAILSAFE_MS);
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, [ready, expired]);
+
+  return expired;
+}
+
 /** Wraps a grid that should stagger its children on scroll-enter.
- *  Uses whileInView + staggerChildren for orchestration. */
+ *  Uses whileInView + staggerChildren for orchestration.
+ *
+ *  Fails open on the same terms as `Reveal` — see the note on
+ *  ENTRANCE_FAILSAFE_MS. */
 export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+  const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: 0.05 });
+  const gateExpired = useEntranceFailsafe(ready);
 
-  const shouldAnimate = ready && inView;
+  const shouldAnimate = reduced || NO_IO || ((ready || gateExpired) && inView);
 
   return (
     <motion.div
