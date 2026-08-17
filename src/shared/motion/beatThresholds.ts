@@ -29,6 +29,28 @@
 export const BEAT_START = "top 75%";
 
 /**
+ * Where a beat's ENTRANCE trigger arms — deliberately earlier than
+ * `BEAT_START`, and not interchangeable with it.
+ *
+ * The content tween runs `immediateRender: false`, so its from-vars are written
+ * when the trigger fires rather than when the tween is built. That is what
+ * guarantees the no-stranded-content invariant: a beat whose trigger never
+ * fires renders lit instead of blank. The cost is that the moment the trigger
+ * fires is now visible to the reader — and at `BEAT_START` the section is
+ * already a quarter of the way up the viewport, so correctly-placed content
+ * was seen snapping down ~90px and dimming to ~0.15 before re-animating.
+ *
+ * "top bottom" arms as the section's top edge reaches the bottom of the
+ * viewport — 0% visible — so the from-vars land unseen and the reveal plays as
+ * the section scrolls in.
+ *
+ * `BEAT_START` remains the threshold for everything else (the exit range is
+ * still expressed relative to it); this constant governs only when the
+ * entrance timeline is armed.
+ */
+export const BEAT_ENTER_START = "top bottom";
+
+/**
  * Exit-dim range, for the scrubbed recede that Phase 3+ will create as a
  * separate top-level trigger (GreenSock forbids `scrub` + `toggleActions` on
  * one trigger, but permits two triggers on one element with disjoint ranges).

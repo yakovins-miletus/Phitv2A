@@ -14,7 +14,7 @@ import type { SectionDef } from "@/shared/sections";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import {
-  BEAT_START,
+  BEAT_ENTER_START,
   BEAT_EXIT_START,
   BEAT_EXIT_END,
   refreshPriorityFor,
@@ -68,6 +68,12 @@ gsap.registerPlugin(ScrollTrigger);
  * and the content simply renders lit. Never `gsap.set()` an element hidden and
  * animate it in; never express the hidden state in `sx`/`style`.
  */
+
+/** How long to wait before rescuing a beat whose entrance trigger never fired.
+ *  Comfortably past first paint, ScrollTrigger's own refresh, and the entrance
+ *  choreography, so it only ever catches genuine failures. */
+const BEAT_FAILSAFE_MS = 2000;
+
 
 /** Announce → content overlap, in seconds.
  *
@@ -252,11 +258,21 @@ export function SectionBeat({
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: root,
-          start: BEAT_START,
+          start: BEAT_ENTER_START,
           once: true,
           toggleActions: "play none none none",
           refreshPriority: priority,
-          invalidateOnRefresh: true,
+          // NO `invalidateOnRefresh` here — it is load-bearing that this is
+          // absent, and it pairs badly with `once: true`.
+          //
+          // Invalidating re-arms the from-vars, and because `fromTo` renders
+          // them immediately that re-hides the content. A `once` trigger has
+          // already spent its single firing by then and will never play again,
+          // so the section stays dark for good. Refreshes are routine — resize,
+          // late image loads, fonts settling — which is why this presented as
+          // "it was fine, then it vanished". The exit tween below keeps its
+          // own invalidateOnRefresh: it is scrubbed, its values are
+          // layout-dependent, and it re-runs on every pass.
         },
       });
 
@@ -339,22 +355,11 @@ export function SectionBeat({
             ...(from.clipPath !== undefined ? { clipPath: STAGE_LIT_CLIP } : {}),
             duration: CONTENT_ENTER_DURATION,
             ease: CONTENT_ENTER_EASE,
-            // Load-bearing, and the thing that makes the INVARIANT above true
-            // rather than aspirational. `Timeline.fromTo()` forces
-            // `immediateRender: true` unless told otherwise (gsap-core: the
-            // fromTo path sets it from `_isNotFalse(vars.immediateRender)`), so
-            // GSAP writes the from-vars the instant this tween is CREATED —
-            // long before the `once: true` entrance trigger fires.
-            //
-            // That inverts the invariant: instead of "content renders lit and
-            // the trigger animates it", it became "content renders dimmed,
-            // offset and possibly clipped, and only the trigger can rescue it."
-            // A trigger that never fires — hard refresh below the section, a
-            // refresh that re-measures against a not-yet-settled layout — then
-            // strands the body permanently. Observed live as `.stage-inner`
-            // stuck at opacity 0.3 / scale 0.92 with the heading fully lit
-            // beside it, because the shot's own from-state is near-identity and
-            // reads as fine while the body's reads as missing.
+            // Nothing is pre-hidden: the from-vars land when the trigger fires,
+            // not when the tween is built. Paired with BEAT_ENTER_START ("top
+            // bottom") this is invisible — the section is still fully below the
+            // fold at that moment — and it means a beat whose trigger never
+            // fires renders LIT rather than blank, which is the INVARIANT above.
             immediateRender: false,
           },
           "content",
@@ -391,6 +396,31 @@ export function SectionBeat({
           },
         });
       }
+
+      // Failsafe for the INVARIANT above.
+      //
+      // The from-vars are applied at mount (see the note on the content
+      // tween), so until the entrance trigger fires this section is dark. That
+      // is correct while it is still below the fold — and a bug the moment the
+      // trigger fails to fire for a section the reader is actually looking at.
+      // That is precisely what stranded services/process/reach/candidates/blog
+      // on the live build.
+      //
+      // So: once, after layout has had time to settle, if the section already
+      // satisfies its own start condition and the timeline still has not run,
+      // jump it to the end. `progress(1)` rather than `play()` — the reader is
+      // already looking at this content, and animating it in now would be the
+      // same late snap this whole comment exists to avoid.
+      const failsafe = window.setTimeout(() => {
+        if (tl.progress() > 0) return;
+        const box = root.getBoundingClientRect();
+        // On screen at all: the reader can see this section, so it must be lit.
+        if (box.top < window.innerHeight && box.bottom > 0) tl.progress(1);
+      }, BEAT_FAILSAFE_MS);
+
+      return () => {
+        window.clearTimeout(failsafe);
+      };
     },
     {
       scope: ref,
