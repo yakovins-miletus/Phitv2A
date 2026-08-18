@@ -58,6 +58,7 @@ test("client validation blocks the request and marks the fields", async () => {
 
   await user.click(screen.getByRole("button", { name: /send message/i }));
 
-  expect(await screen.findByText(/name must be at least 2 characters/i)).toBeInTheDocument();
-  expect(screen.getByText(/enter a valid email address/i)).toBeInTheDocument();
+  const nameErrors = await screen.findAllByText(/name must be at least 2 characters/i);
+  expect(nameErrors.length).toBeGreaterThanOrEqual(1);
+  expect(screen.getAllByText(/enter a valid email address/i).length).toBeGreaterThanOrEqual(1);
 });

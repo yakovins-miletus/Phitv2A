@@ -113,14 +113,16 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
     navigateWithCurtain(to);
   };
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (!open) {
       setQuery("");
       setIsCommandMode(false);
       setActiveIndex(0);
       resetRuntime();
     }
-  }, [open, resetRuntime]);
+  }
 
   const filtered = useMemo(() => filterCommands(query), [query]);
 

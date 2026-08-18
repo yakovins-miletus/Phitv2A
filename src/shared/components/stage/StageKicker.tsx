@@ -6,7 +6,7 @@ import { NOIR } from "@/shared/theme/palette";
 
 /** Numbered kicker with a hairline that draws in as the stage reaches
  *  center stage (the `.stage-kicker-line` scaleX tween in StageSection). */
-export function StageKicker({ index: _index, label }: { index?: string; label: string }) {
+export function StageKicker({ label }: { index?: string; label: string }) {
   return (
     <Stack direction="row" spacing={2} alignItems="center">
       <Typography variant="overline" color="primary">

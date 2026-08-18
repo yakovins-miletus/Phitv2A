@@ -70,17 +70,11 @@ export function useNavAutohide(enabled: boolean, pathname: string): boolean {
   const stateRef = useRef<NavAutohideState>(initialNavAutohideState());
 
   useEffect(() => {
+    stateRef.current = initialNavAutohideState(typeof window !== "undefined" ? window.scrollY : 0);
+
     if (!enabled) {
-      setHidden(false);
       return;
     }
-
-    // Re-baseline on route change. Without this the first scroll event after a
-    // navigation computes `diff` against the previous page's offset — leaving a
-    // tall page for a short one produced a large positive diff and hid the nav
-    // for one frame before the next event corrected it.
-    stateRef.current = initialNavAutohideState(window.scrollY);
-    setHidden(false);
 
     const handleScroll = () => {
       const next = navAutohideReducer(stateRef.current, window.scrollY);
@@ -89,8 +83,10 @@ export function useNavAutohide(enabled: boolean, pathname: string): boolean {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [enabled, pathname]);
 
-  return hidden;
+  return enabled ? hidden : false;
 }

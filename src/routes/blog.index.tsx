@@ -93,7 +93,7 @@ function BlogPage() {
 
   const currentPage = Math.floor(data.offset / data.limit) + 1;
   const isPageOne = currentPage === 1;
-  const heroPostIndex = isPageOne ? data.items.findIndex((p: any) => p.featured) : -1;
+  const heroPostIndex = isPageOne ? data.items.findIndex((p) => p.featured) : -1;
   const heroPost = heroPostIndex !== -1 ? data.items[heroPostIndex] : null;
 
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.BLOG_LISTING, { dark: false });

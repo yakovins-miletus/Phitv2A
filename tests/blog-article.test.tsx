@@ -25,7 +25,7 @@ test("image paragraphs render as images, not text", () => {
   // raster in public/ has one, and `preferWebp` explains why the swap happens here
   // rather than as a content migration in Heimdall's post bodies. An onError on the
   // <img> falls back to the stored path if a twin is ever missing.
-  const images = screen.getAllByRole("presentation");
+  const images = screen.getAllByRole("img");
   expect(images.some((img) => img.getAttribute("src") === "/images/blog/csr-day/01.webp")).toBe(
     true,
   );
@@ -42,7 +42,7 @@ test("an https image paragraph is served as stored, never retargeted", () => {
       post={{ ...BASE_POST, body: "Intro.\n\nhttps://cdn.example.com/photo.jpg\n\nOutro." }}
     />,
   );
-  const images = screen.getAllByRole("presentation");
+  const images = screen.getAllByRole("img");
   expect(images.some((img) => img.getAttribute("src") === "https://cdn.example.com/photo.jpg")).toBe(
     true,
   );

@@ -32,7 +32,7 @@ export interface SectionLedeProps {
   /** Set false where StageKicker already draws a rule for this section. */
   rule?: boolean;
   /** Optional overrides for the main heading (gunshot). */
-  titleSx?: any;
+  titleSx?: object;
 }
 
 export function SectionLede({

@@ -60,7 +60,9 @@ export function useDailyLifeVideo(sectionRef: RefObject<HTMLElement | null>): Da
 
   // Read inside the observer callback without making it a dependency.
   const isPlayingRef = useRef(isPlaying);
-  isPlayingRef.current = isPlaying;
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   useEffect(() => {
     const el = sectionRef.current;

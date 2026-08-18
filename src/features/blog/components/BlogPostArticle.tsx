@@ -36,7 +36,7 @@ function BodyParagraphs({ text, postTitle }: { text: string; postTitle: string }
                 const img = event.currentTarget as HTMLImageElement;
                 if (img.src !== paragraph) img.src = paragraph;
               }}
-              alt={`${postTitle} — figure ${++figureCount}`}
+              alt={`${postTitle} - figure ${++figureCount}`}
               loading="lazy"
               sx={{
                 width: "100%",

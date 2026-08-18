@@ -44,6 +44,18 @@ const ROUTE_LABELS: Record<string, string> = {
   "/contact": "GET IN TOUCH",
 };
 
+// Route changes never move focus on their own — TanStack Router swaps DOM
+// content in place, it doesn't reset the caret the way a full page load
+// would. Without this, a keyboard user who triggers a curtain navigation is
+// left focused on whatever they clicked in the OLD page's tab order (often a
+// footer/drawer link that's no longer relevant, or has even unmounted out
+// from under them). AppShell already exposes `#main-content` as the skip-link
+// target (tabIndex={-1}, focusable but not in normal tab order) — reuse that
+// same landmark rather than inventing a second focus convention.
+function focusMainLandmark() {
+  document.getElementById("main-content")?.focus();
+}
+
 export function TransitionCurtainProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -124,15 +136,32 @@ export function TransitionCurtainProvider({ children }: { children: ReactNode })
       // scroll state comes back correct on this path exactly as it does on
       // the full one.
       void (async () => {
-        const { stopLenis, startLenis } = await import("@/shared/components/SmoothScroll");
-        stopLenis();
+        // The dynamic import itself used to sit OUTSIDE any try/finally: if
+        // the chunk fetch rejected (stale index.html after a redeploy
+        // pointing at content-hashed chunks a since-replaced build no longer
+        // ships, or any transient network failure) the whole IIFE rejected
+        // unhandled, `navigatingRef.current` never got reset, and the guard
+        // at the top of this function turned every later navigation into a
+        // silent no-op — the site was dead until a hard reload. Everything
+        // that can throw now lives inside this try, and `startLenis` is only
+        // ever called if the import actually resolved, so cleanup can't call
+        // an unbound function from a half-loaded module.
+        let startLenis: (() => void) | undefined;
         try {
+          const mod = await import("@/shared/components/SmoothScroll");
+          startLenis = mod.startLenis;
+          mod.stopLenis();
           await router.navigate({ to });
           refreshScrollTriggers();
+        } catch (err) {
+          // Keep this visible — a future debugging session staring at a
+          // "navigation just does nothing" report needs this in the console.
+          console.error("[TransitionCurtain] reduced-motion navigation failed", err);
         } finally {
-          startLenis();
+          startLenis?.();
           navigatingRef.current = false;
         }
+        focusMainLandmark();
       })();
       return;
     }
@@ -142,180 +171,253 @@ export function TransitionCurtainProvider({ children }: { children: ReactNode })
     setDestinationLabel(label);
 
     void (async () => {
-      const [{ gsap }, { stopLenis, startLenis }] = await Promise.all([
-        import("gsap"),
-        import("@/shared/components/SmoothScroll"),
-      ]);
-      stopLenis(); // Pause scroll during transition
+      // Mirrors the reduced-motion path's fix, but the stakes are higher
+      // here: `setIsTransitioning(true)` above has already mounted the
+      // full-viewport, z-index 9999 opaque overlay. If either import
+      // rejects (same redeploy/stale-chunk or network scenario as the
+      // reduced path) there is no gsap available to run the exit sweep that
+      // normally calls `setIsTransitioning(false)` — without this try/catch
+      // the curtain used to stay on screen covering the entire site forever,
+      // with navigatingRef stuck too. `importsLoaded` distinguishes "never
+      // got gsap/Lenis" (fall back to a plain, unanimated router.navigate —
+      // it doesn't need gsap, and a working navigation beats a black screen)
+      // from "something failed after the curtain animation had already
+      // started" (just tear the overlay down and restore scroll).
+      let importsLoaded = false;
+      let startLenis: (() => void) | undefined;
+      try {
+        const [{ gsap }, mod] = await Promise.all([
+          import("gsap"),
+          import("@/shared/components/SmoothScroll"),
+        ]);
+        importsLoaded = true;
+        startLenis = mod.startLenis;
+        mod.stopLenis(); // Pause scroll during transition
 
-      const tl = gsap.timeline();
-      const goldPanels = goldRef.current?.children ? Array.from(goldRef.current.children) : [];
-      const slatePanels = slateRef.current?.children ? Array.from(slateRef.current.children) : [];
-      const navyPanels = navyRef.current?.children ? Array.from(navyRef.current.children) : [];
+        const tl = gsap.timeline();
+        const goldPanels = goldRef.current?.children ? Array.from(goldRef.current.children) : [];
+        const slatePanels = slateRef.current?.children ? Array.from(slateRef.current.children) : [];
+        const navyPanels = navyRef.current?.children ? Array.from(navyRef.current.children) : [];
 
-      // Ensure content layer & wordmark are STRICTLY HIDDEN initially so there is zero early flash
-      tl.set(contentLayerRef.current, { opacity: 0, visibility: "hidden" });
-      tl.set(wordmarkBoxRef.current, { y: 60, opacity: 0, scale: 0.95 });
-      tl.set(watermarkRef.current, { scale: 0.85, opacity: 0, rotate: -3 });
+        // Ensure content layer & wordmark are STRICTLY HIDDEN initially so there is zero early flash
+        tl.set(contentLayerRef.current, { opacity: 0, visibility: "hidden" });
+        tl.set(wordmarkBoxRef.current, { y: 60, opacity: 0, scale: 0.95 });
+        tl.set(watermarkRef.current, { scale: 0.85, opacity: 0, rotate: -3 });
 
-      // Set 3-layer panel origins
-      tl.set(goldPanels, { transformOrigin: "bottom", scaleY: 0 });
-      tl.set(slatePanels, { transformOrigin: "top", scaleY: 0 });
-      tl.set(navyPanels, { transformOrigin: "bottom", scaleY: 0 });
-      tl.set([topBarRef.current, bottomBarRef.current], { scaleX: 0 });
-      tl.set(outerRingRef.current, { scale: 0.3, opacity: 0, rotation: 0 });
-      tl.set(innerRingRef.current, { scale: 0.3, opacity: 0, rotation: 0 });
-      tl.set(hudFrameRef.current, { opacity: 0 });
+        // Set 3-layer panel origins
+        tl.set(goldPanels, { transformOrigin: "bottom", scaleY: 0 });
+        tl.set(slatePanels, { transformOrigin: "top", scaleY: 0 });
+        tl.set(navyPanels, { transformOrigin: "bottom", scaleY: 0 });
+        tl.set([topBarRef.current, bottomBarRef.current], { scaleX: 0 });
+        tl.set(outerRingRef.current, { scale: 0.3, opacity: 0, rotation: 0 });
+        tl.set(innerRingRef.current, { scale: 0.3, opacity: 0, rotation: 0 });
+        tl.set(hudFrameRef.current, { opacity: 0 });
 
-      const counterObj = { val: 0 };
-      if (counterRef.current) counterRef.current.innerText = "000%";
+        const counterObj = { val: 0 };
+        if (counterRef.current) counterRef.current.innerText = "000%";
 
-      // PHASE 1: Tri-Layer Sweep (Gold -> Slate -> Navy)
-      // 1. Gold Accent Layer (Bottom -> Up)
-      tl.to(goldPanels, {
-        scaleY: 1,
-        duration: 0.5,
-        ease: "power4.inOut",
-        stagger: { each: 0.03, from: "center" },
-      });
-
-      // 2. Slate Layer (Top -> Down)
-      tl.to(slatePanels, {
-        scaleY: 1,
-        duration: 0.5,
-        ease: "power4.inOut",
-        stagger: { each: 0.03, from: "start" },
-      }, "-=0.4");
-
-      // 3. Deep Navy Core Layer (Bottom -> Up)
-      tl.to(navyPanels, {
-        scaleY: 1,
-        duration: 0.55,
-        ease: "power4.inOut",
-        stagger: { each: 0.03, from: "center" },
-      }, "-=0.4");
-
-      // 4. Horizontal Cyber Sweeper Bars
-      tl.to(topBarRef.current, { scaleX: 1, duration: 0.5, ease: "expo.out" }, "-=0.2");
-      tl.to(bottomBarRef.current, { scaleX: 1, duration: 0.5, ease: "expo.out" }, "<");
-
-      // PHASE 2: Reveal Wordmark & Telemetry NOW (Screen is 100% covered by Navy)
-      tl.to(contentLayerRef.current, { opacity: 1, visibility: "visible", duration: 0.01 });
-
-      // Background Watermark Pulse
-      tl.to(watermarkRef.current, {
-        scale: 1,
-        opacity: 0.05,
-        rotate: 0,
-        duration: 0.8,
-        ease: "power2.out",
-      }, "<");
-
-      // HUD Frame & Rings
-      tl.to(hudFrameRef.current, { opacity: 1, duration: 0.3 }, "-=0.1");
-      tl.to(outerRingRef.current, {
-        scale: 1,
-        opacity: 0.25,
-        rotation: 180,
-        duration: 0.8,
-        ease: "power3.out",
-      }, "<");
-      tl.to(innerRingRef.current, {
-        scale: 1,
-        opacity: 0.35,
-        rotation: -360,
-        duration: 0.8,
-        ease: "power3.out",
-      }, "<");
-
-      // Wordmark Box Rise & Scale
-      tl.to(wordmarkBoxRef.current, {
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        duration: 0.65,
-        ease: "expo.out",
-      }, "-=0.5");
-
-      // Percentage Counter 000% -> 100%
-      tl.to(counterObj, {
-        val: 100,
-        duration: 0.6,
-        ease: "power3.inOut",
-        onUpdate: () => {
-          if (counterRef.current) {
-            counterRef.current.innerText = `${Math.floor(counterObj.val).toString().padStart(3, "0")}%`;
-          }
-        },
-      }, "-=0.5");
-
-      // PHASE 3: Route Push
-      tl.add(() => {
-        void router.navigate({ to }).then(() => {
-          setTimeout(() => {
-            refreshScrollTriggers();
-
-            // PHASE 4: Exit Sequence (Everything hides BEFORE curtain uncovers)
-            const outTl = gsap.timeline({
-              onComplete: () => {
-                setIsTransitioning(false);
-                startLenis(); // Restore scroll
-                navigatingRef.current = false;
-              }
-            });
-
-            // 1. Hide Wordmark & Telemetry FIRST while screen is still covered
-            outTl.to(wordmarkBoxRef.current, {
-              y: -60,
-              opacity: 0,
-              scale: 0.95,
-              duration: 0.35,
-              ease: "expo.in",
-            });
-            outTl.to(hudFrameRef.current, { opacity: 0, duration: 0.25 }, "<");
-            outTl.to(watermarkRef.current, { scale: 1.1, opacity: 0, duration: 0.3 }, "<");
-            outTl.to([outerRingRef.current, innerRingRef.current], { scale: 0.3, opacity: 0, duration: 0.3 }, "<");
-            outTl.to(contentLayerRef.current, { opacity: 0, visibility: "hidden", duration: 0.01 });
-
-            // 2. Retract Horizontal Bars
-            outTl.to([topBarRef.current, bottomBarRef.current], { scaleX: 0, duration: 0.4, ease: "expo.in" }, "-=0.1");
-
-            // 3. Switch Panel Origins to Top & Sweep Out (Navy -> Slate -> Gold)
-            outTl.set(navyPanels, { transformOrigin: "top" });
-            outTl.set(slatePanels, { transformOrigin: "bottom" });
-            outTl.set(goldPanels, { transformOrigin: "top" });
-
-            outTl.to(navyPanels, {
-              scaleY: 0,
-              duration: 0.55,
-              ease: "power4.inOut",
-              stagger: { each: 0.03, from: "center" },
-            }, "-=0.2");
-
-            outTl.to(slatePanels, {
-              scaleY: 0,
-              duration: 0.5,
-              ease: "power4.inOut",
-              stagger: { each: 0.03, from: "start" },
-            }, "-=0.4");
-
-            outTl.to(goldPanels, {
-              scaleY: 0,
-              duration: 0.5,
-              ease: "power4.inOut",
-              stagger: { each: 0.03, from: "center" },
-            }, "-=0.4");
-
-          }, 100);
+        // PHASE 1: Tri-Layer Sweep (Gold -> Slate -> Navy)
+        // 1. Gold Accent Layer (Bottom -> Up)
+        tl.to(goldPanels, {
+          scaleY: 1,
+          duration: 0.5,
+          ease: "power4.inOut",
+          stagger: { each: 0.03, from: "center" },
         });
-      });
+
+        // 2. Slate Layer (Top -> Down)
+        tl.to(slatePanels, {
+          scaleY: 1,
+          duration: 0.5,
+          ease: "power4.inOut",
+          stagger: { each: 0.03, from: "start" },
+        }, "-=0.4");
+
+        // 3. Deep Navy Core Layer (Bottom -> Up)
+        tl.to(navyPanels, {
+          scaleY: 1,
+          duration: 0.55,
+          ease: "power4.inOut",
+          stagger: { each: 0.03, from: "center" },
+        }, "-=0.4");
+
+        // 4. Horizontal Cyber Sweeper Bars
+        tl.to(topBarRef.current, { scaleX: 1, duration: 0.5, ease: "expo.out" }, "-=0.2");
+        tl.to(bottomBarRef.current, { scaleX: 1, duration: 0.5, ease: "expo.out" }, "<");
+
+        // PHASE 2: Reveal Wordmark & Telemetry NOW (Screen is 100% covered by Navy)
+        tl.to(contentLayerRef.current, { opacity: 1, visibility: "visible", duration: 0.01 });
+
+        // Background Watermark Pulse
+        tl.to(watermarkRef.current, {
+          scale: 1,
+          opacity: 0.05,
+          rotate: 0,
+          duration: 0.8,
+          ease: "power2.out",
+        }, "<");
+
+        // HUD Frame & Rings
+        tl.to(hudFrameRef.current, { opacity: 1, duration: 0.3 }, "-=0.1");
+        tl.to(outerRingRef.current, {
+          scale: 1,
+          opacity: 0.25,
+          rotation: 180,
+          duration: 0.8,
+          ease: "power3.out",
+        }, "<");
+        tl.to(innerRingRef.current, {
+          scale: 1,
+          opacity: 0.35,
+          rotation: -360,
+          duration: 0.8,
+          ease: "power3.out",
+        }, "<");
+
+        // Wordmark Box Rise & Scale
+        tl.to(wordmarkBoxRef.current, {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.65,
+          ease: "expo.out",
+        }, "-=0.5");
+
+        // Percentage Counter 000% -> 100%
+        tl.to(counterObj, {
+          val: 100,
+          duration: 0.6,
+          ease: "power3.inOut",
+          onUpdate: () => {
+            if (counterRef.current) {
+              counterRef.current.innerText = `${Math.floor(counterObj.val).toString().padStart(3, "0")}%`;
+            }
+          },
+        }, "-=0.5");
+
+        // PHASE 3: Route Push
+        tl.add(() => {
+          // `.catch` before `.then` (rather than a second argument to `.then`,
+          // or leaving the rejection to propagate) so a failed navigate() —
+          // e.g. the destination loader throwing — still falls through to the
+          // exit sweep below. Without it, a rejection here skipped `onComplete`
+          // entirely and left the curtain covering the screen with no route
+          // change underneath it, same dead-end as the missing-import case
+          // this whole rewrite is fixing.
+          void router.navigate({ to })
+            .catch((err) => {
+              console.error("[TransitionCurtain] navigation during curtain failed", err);
+            })
+            .then(() => {
+              setTimeout(() => {
+                refreshScrollTriggers();
+
+                // PHASE 4: Exit Sequence (Everything hides BEFORE curtain uncovers)
+                const outTl = gsap.timeline({
+                  onComplete: () => {
+                    setIsTransitioning(false);
+                    startLenis?.(); // Restore scroll
+                    navigatingRef.current = false;
+                    focusMainLandmark();
+                  }
+                });
+
+                // 1. Hide Wordmark & Telemetry FIRST while screen is still covered
+                outTl.to(wordmarkBoxRef.current, {
+                  y: -60,
+                  opacity: 0,
+                  scale: 0.95,
+                  duration: 0.35,
+                  ease: "expo.in",
+                });
+                outTl.to(hudFrameRef.current, { opacity: 0, duration: 0.25 }, "<");
+                outTl.to(watermarkRef.current, { scale: 1.1, opacity: 0, duration: 0.3 }, "<");
+                outTl.to([outerRingRef.current, innerRingRef.current], { scale: 0.3, opacity: 0, duration: 0.3 }, "<");
+                outTl.to(contentLayerRef.current, { opacity: 0, visibility: "hidden", duration: 0.01 });
+
+                // 2. Retract Horizontal Bars
+                outTl.to([topBarRef.current, bottomBarRef.current], { scaleX: 0, duration: 0.4, ease: "expo.in" }, "-=0.1");
+
+                // 3. Switch Panel Origins to Top & Sweep Out (Navy -> Slate -> Gold)
+                outTl.set(navyPanels, { transformOrigin: "top" });
+                outTl.set(slatePanels, { transformOrigin: "bottom" });
+                outTl.set(goldPanels, { transformOrigin: "top" });
+
+                outTl.to(navyPanels, {
+                  scaleY: 0,
+                  duration: 0.55,
+                  ease: "power4.inOut",
+                  stagger: { each: 0.03, from: "center" },
+                }, "-=0.2");
+
+                outTl.to(slatePanels, {
+                  scaleY: 0,
+                  duration: 0.5,
+                  ease: "power4.inOut",
+                  stagger: { each: 0.03, from: "start" },
+                }, "-=0.4");
+
+                outTl.to(goldPanels, {
+                  scaleY: 0,
+                  duration: 0.5,
+                  ease: "power4.inOut",
+                  stagger: { each: 0.03, from: "center" },
+                }, "-=0.4");
+
+              }, 100);
+            });
+          });
+      } catch (err) {
+        console.error("[TransitionCurtain] curtain transition failed", err);
+        if (!importsLoaded) {
+          // gsap/Lenis chunk never arrived — there is no animated way out.
+          // Fall back to a plain router navigation rather than leaving the
+          // opaque overlay on screen forever; the router doesn't need gsap.
+          try {
+            await router.navigate({ to });
+            refreshScrollTriggers();
+          } catch (navErr) {
+            // Even the fallback failed (e.g. offline). Nothing left to do
+            // but restore state below and leave the user on the page they
+            // started from — better than a permanently black screen.
+            console.error("[TransitionCurtain] fallback navigation failed", navErr);
+          }
+        }
+        setIsTransitioning(false);
+        startLenis?.();
+        navigatingRef.current = false;
+        focusMainLandmark();
+      }
     })();
   };
 
   return (
     <TransitionCurtainContext.Provider value={{ navigateWithCurtain }}>
       {children}
+      {/* Screen-reader-only status line for the curtain below. The panels,
+          rings, wordmark and percentage counter are a purely decorative
+          sweep — see `aria-hidden` on the Box beneath — so without this a
+          screen reader either announces nothing while the sighted UI claims
+          a page change is happening, or (worse, since the overlay isn't
+          aria-hidden by default) reads the entire covered page underneath
+          it as if it were still the focus of attention. `aria-live="polite"`
+          only announces on content change, so it stays silent until
+          `destinationLabel` actually updates. */}
       <Box
+        aria-live="polite"
+        sx={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {isTransitioning ? `Navigating to ${destinationLabel}` : ""}
+      </Box>
+      <Box
+        aria-hidden="true"
         sx={{
           position: "fixed",
           inset: 0,

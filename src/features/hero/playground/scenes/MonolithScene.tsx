@@ -463,7 +463,7 @@ export default function MonolithScene({
   const gl = useThree((s) => s.gl);
 
   const groupRef = useRef<THREE.Group>(null);
-  const counterRef = useRef<any>(null);
+  const counterRef = useRef<React.ComponentRef<typeof MeshTransmissionMaterial> | null>(null);
   const bodyDropsRef = useRef<THREE.InstancedMesh>(null);
   const counterDropsRef = useRef<THREE.InstancedMesh>(null);
   const bodyMeshRef = useRef<THREE.Mesh>(null);
@@ -1183,7 +1183,7 @@ export default function MonolithScene({
           <mesh geometry={counter} ref={counterMeshRef} onClick={onMarkClick}>
             {lowPower ? (
               <meshPhysicalMaterial
-                ref={counterRef}
+                ref={counterRef as unknown as React.Ref<THREE.MeshPhysicalMaterial>}
                 color={PALETTE.gold}
                 emissive={PALETTE.goldLight}
                 emissiveIntensity={0.2}

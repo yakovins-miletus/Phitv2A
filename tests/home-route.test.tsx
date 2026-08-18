@@ -33,7 +33,7 @@ test("home route loads via the router: hero, services, new visual sections", asy
     screen.getByRole("heading", { name: /THE QUANTITATIVE R&D PARTNER FOR GLOBAL MARKETS/i }),
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("heading", { name: /three integrated operating pillars/i }),
+    screen.getByRole("heading", { name: /our three operating pillars/i }),
   ).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
   // Was "Elite Technical Talent". "Elite" was stripped in the 2026-08-09 copy pass:
@@ -60,6 +60,6 @@ test("home route loads via the router: hero, services, new visual sections", asy
   expect(screen.getByText(CONTENT.ledes.reach.gunshot)).toBeInTheDocument();
   // Careers panel 1 heading, now bound to CONTENT.targetCandidates.
   expect(
-    screen.getByText("For talents that outgrow large institutions"),
+    screen.getByRole("heading", { name: /For talents that outgrow large institutions/i }),
   ).toBeInTheDocument();
 });

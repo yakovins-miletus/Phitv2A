@@ -218,12 +218,12 @@ export function useNavbarAnchor(id: NavAnchorId, options?: { dark?: boolean; roo
   const ref = useRef<HTMLDivElement>(null);
   const dark = options?.dark ?? false;
   const darkRef = useRef(dark);
-  darkRef.current = dark;
 
   const customMargin = options?.rootMargin;
   const customThreshold = options?.threshold;
 
   useLayoutEffect(() => {
+    darkRef.current = dark;
     const el = ref.current;
     if (!el) return;
     if (!dark) return;

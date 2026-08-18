@@ -235,7 +235,7 @@ function AnimatedContactButton({
   variant = "default",
 }: {
   label: string;
-  sx?: any;
+  sx?: object;
   isActive?: boolean;
   variant?: "default" | "onDark";
 }) {
@@ -339,11 +339,9 @@ function ThreeBarMenuIcon({ isHovered, color }: { isHovered: boolean; color: str
 function AnimatedMenuButton({
   active,
   onClick,
-  isNotch: _isNotch,
   isImmersiveDark,
   ariaLabel,
   sx,
-  noBorder: _noBorder,
 }: {
   active: boolean;
   onClick: () => void;

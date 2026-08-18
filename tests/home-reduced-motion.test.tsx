@@ -172,7 +172,12 @@ test("reduced motion: no element is stranded at opacity 0 / visibility hidden an
     document.body.querySelectorAll<HTMLElement>(REVEAL_HOOKS),
   ).filter((el) => {
     const style = el.style;
-    return style.opacity === "0" || style.visibility === "hidden";
+    return (
+      style.opacity === "0" ||
+      style.visibility === "hidden" ||
+      style.clipPath === "inset(100%)" ||
+      style.clipPath === "inset(100% 100% 100% 100%)"
+    );
   });
 
   expect(hiddenInlineStyle).toEqual([]);

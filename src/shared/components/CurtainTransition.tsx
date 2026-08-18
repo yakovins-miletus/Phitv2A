@@ -7,6 +7,15 @@ import { useGSAP } from "@gsap/react";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 
+// Static gsap import + module-scope registerPlugin() are safe here BECAUSE
+// this module is only ever reached through the `lazy()` wrapper exported
+// below, never imported directly. `/` is the entry route, and this component
+// is decorative and below the fold on it — a static `import gsap` at this
+// file's top level used to mean every first-time visitor's entry chunk
+// carried gsap just to render nine flex boxes most of them never scroll to.
+// See the `lazy()` export at the bottom of this file, and its use in
+// routes/index.tsx (React.lazy + Suspense, same pattern as the hero's
+// R3FHeroCanvas/HeroImageWall).
 gsap.registerPlugin(ScrollTrigger);
 
 interface CurtainTransitionProps {

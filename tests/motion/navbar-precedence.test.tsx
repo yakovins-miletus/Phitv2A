@@ -23,7 +23,8 @@ function Probe() {
 function renderProbe() {
   let registerAnchor!: ReturnType<typeof useNavbar>["registerAnchor"];
   function Capture() {
-    ({ registerAnchor } = useNavbar());
+    const navbar = useNavbar();
+    registerAnchor = navbar.registerAnchor;
     return null;
   }
   const utils = render(
