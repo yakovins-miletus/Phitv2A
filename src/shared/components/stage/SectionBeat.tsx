@@ -74,6 +74,12 @@ gsap.registerPlugin(ScrollTrigger);
  *  choreography, so it only ever catches genuine failures. */
 const BEAT_FAILSAFE_MS = 2000;
 
+/** How far a beat's top may already be above the fold at fire time and still
+ *  earn the animated reveal. Wider than a scroll tick so an ordinary fast
+ *  scroll still animates; narrow enough that a pin-shifted or late-firing
+ *  trigger takes the no-animation path instead of snapping. */
+const ENTER_ANIMATE_TOLERANCE_PX = 24;
+
 
 /** Announce → content overlap, in seconds.
  *
@@ -260,8 +266,34 @@ export function SectionBeat({
           trigger: root,
           start: BEAT_ENTER_START,
           once: true,
-          toggleActions: "play none none none",
           refreshPriority: priority,
+          // Hands playback entirely to onEnter below. Left at the default
+          // ("play none none none") ScrollTrigger would start the timeline
+          // itself, painting the from-vars for a frame before onEnter could
+          // decide to skip them — which is the snap this is meant to remove.
+          toggleActions: "none none none none",
+          // Replaces `toggleActions: "play none none none"` so the "already on
+          // screen" case can be handled, which toggleActions cannot express.
+          //
+          // With `immediateRender: false` the from-vars are written the first
+          // time this timeline renders. If that happens while the reader is
+          // already looking at the section, they watch correctly-placed content
+          // drop ~90px and dim before re-animating. BEAT_ENTER_START ("top
+          // bottom") normally fires at 0% visible so this is unseen — but the
+          // home page pins several tracks, and a pinned section's box can be
+          // well inside the viewport by the time its trigger reports entry.
+          // Measured live: services fired at y=87, process at y=71,
+          // candidates at y=47 into view.
+          //
+          // So: decide at fire time. Genuinely entering from below (top still
+          // at the fold) plays the reveal. Anything already meaningfully on
+          // screen jumps straight to lit — no from-vars are ever painted, and
+          // there is nothing to snap.
+          onEnter: () => {
+            const top = root.getBoundingClientRect().top;
+            if (top < window.innerHeight - ENTER_ANIMATE_TOLERANCE_PX) tl.progress(1);
+            else tl.play();
+          },
           // NO `invalidateOnRefresh` here — it is load-bearing that this is
           // absent, and it pairs badly with `once: true`.
           //
