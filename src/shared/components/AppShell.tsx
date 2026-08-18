@@ -96,19 +96,6 @@ const WARM_ROUTES = [
   { to: "/contact", label: "CONTACT" },
 ] as const;
 
-import publicAssets from "virtual:public-assets";
-
-const srcAssetModules = import.meta.glob([
-  '/src/**/*.{png,jpg,jpeg,webp,svg,woff2}'
-], { eager: true, query: '?url', import: 'default' });
-const srcAssets = Object.values(srcAssetModules) as string[];
-
-// Filter out heavy videos/PDFs/unneeded files to keep warmup ultra-lightweight
-const ALL_ASSETS = [...publicAssets, ...srcAssets].filter((url) => {
-  const ext = url.split('.').pop()?.toLowerCase() || '';
-  return !['mp4', 'webm', 'pdf', 'txt', 'map'].includes(ext);
-});
-
 /**
  * The assets actually on the home hero's default-render critical path.
  *
@@ -149,13 +136,27 @@ const ALL_ASSETS = [...publicAssets, ...srcAssets].filter((url) => {
  * is paid for by every first-time visitor, including ones landing on
  * `/about` or `/blog` who will never see the hero at all.
  */
-const HERO_CRITICAL_ASSETS: readonly string[] = ["/phitopolis_logo_hero.svg"];
-
-/** Background/lower-priority warmup cap. Keeps the glob-derived, unordered
- *  remainder of ALL_ASSETS bounded so the preloader's overall completion
- *  time doesn't regress on routes with no hero at all — this is the same
- *  budget the old code applied (15), just no longer the *only* tier. */
-const BACKGROUND_ASSET_CAP = 15;
+/**
+ * Explicit Section-Based Asset Manifest for Lusion-style Preloader Warmup.
+ * Replaces arbitrary glob slicing with intentional tiering:
+ *  - Tier 1 (Hero Critical): Logo vector, key hero imagery.
+ *  - Tier 2 (Services & Capabilities): Core discipline banners.
+ *  - Tier 3 (About & Institutional Foundations): Key above-fold brand assets.
+ */
+const SECTION_MANIFEST: readonly string[] = [
+  "/phitopolis_logo_hero.svg",
+  "/images/botHalfHero.webp",
+  "/images/topHalfHero.webp",
+  "/images/quant-research-banner.webp",
+  "/images/software-engineer-banner.webp",
+  "/images/ops-support-banner.webp",
+  "/images/data-science-banner.webp",
+  "/images/AboutPageHero.webp",
+  "/images/ecotower-bgc.webp",
+  "/images/grads/FocusedProgramming.webp",
+  "/images/blog/ateneo-career-talk-2025/01.webp",
+  "/images/blog/csr-activity-repainting-community-spaces/01.webp",
+];
 
 function preloadAsset(url: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
@@ -169,16 +170,22 @@ function preloadAsset(url: string): Promise<void> {
       }
     };
 
-    // Safety timeout so no broken/slow asset ever hangs preloader
-    const timer = setTimeout(done, 800);
+    // Safety timeout so no broken or slow asset ever hangs the preloader
+    const timer = setTimeout(done, 1200);
 
     try {
       if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
         if (typeof Image !== "undefined") {
           const img = new Image();
-          img.onload = () => { clearTimeout(timer); done(); };
-          img.onerror = () => { clearTimeout(timer); done(); };
           img.src = url;
+          if (typeof img.decode === "function") {
+            img.decode()
+              .then(() => { clearTimeout(timer); done(); })
+              .catch(() => { clearTimeout(timer); done(); });
+          } else {
+            img.onload = () => { clearTimeout(timer); done(); };
+            img.onerror = () => { clearTimeout(timer); done(); };
+          }
         } else {
           clearTimeout(timer);
           done();
@@ -208,11 +215,7 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
       promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
     }));
 
-    // High priority: hero-critical assets, preloaded in full (never capped —
-    // see HERO_CRITICAL_ASSETS' own comment for why the list stays short
-    // enough that "in full" is safe). Listed first so their preloadAsset()
-    // calls fire before the background tier's.
-    const heroSignals = HERO_CRITICAL_ASSETS.map((url) => {
+    const manifestSignals = SECTION_MANIFEST.map((url) => {
       const filename = url.split('/').pop() || 'ASSET';
       return {
         label: filename.toUpperCase().substring(0, 15),
@@ -220,21 +223,7 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
       };
     });
 
-    // Low priority: everything else, glob-ordered and arbitrary — capped so
-    // it stays a background warmup rather than a second render-blocking tier,
-    // and de-duped against the hero-critical list above so nothing double-fetches.
-    const heroSet = new Set(HERO_CRITICAL_ASSETS);
-    const assetSignals = ALL_ASSETS.filter((url) => !heroSet.has(url))
-      .slice(0, BACKGROUND_ASSET_CAP)
-      .map((url) => {
-        const filename = url.split('/').pop() || 'ASSET';
-        return {
-          label: filename.toUpperCase().substring(0, 15),
-          promise: preloadAsset(url),
-        };
-      });
-
-    return [...routeSignals, ...heroSignals, ...assetSignals];
+    return [...routeSignals, ...manifestSignals];
   });
   return signals;
 }
