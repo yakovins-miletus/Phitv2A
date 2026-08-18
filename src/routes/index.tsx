@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, lazy, Suspense } from "react";
 import Box from "@mui/material/Box";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -24,13 +24,24 @@ import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
 import { SeamEstablishingShot } from "@/features/home/components/establishing/SeamEstablishingShot";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
-import { CurtainTransition } from "@/shared/components/CurtainTransition";
 import { NOIR } from "@/shared/theme/palette";
 
 // No gsap/lenis imports at route-module scope: this file stays in the eager
 // bundle even with autoCodeSplitting, so anything imported here ships to every
 // visitor. Scroll wiring lives in <SmoothScroll /> and inside the section
 // components, which ride the lazy home chunk.
+
+// CurtainTransition statically imports gsap + ScrollTrigger and registers the
+// plugin at module scope (see that file's own comment). It's a purely
+// decorative, below-the-fold row-slat reveal — nothing this route needs for
+// first paint — so it's lazy-loaded exactly like the hero's
+// R3FHeroCanvas/HeroImageWall rather than imported directly, keeping gsap out
+// of this eager route chunk. Fallback is `null`: the rendered Box below
+// reserves its own height ({xs:80, md:120}), so there's no layout shift while
+// the chunk fetches.
+const CurtainTransition = lazy(() =>
+  import("@/shared/components/CurtainTransition").then((m) => ({ default: m.CurtainTransition })),
+);
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -116,16 +127,9 @@ function HomePage() {
           <MarketPosition />
         </Box>
 
-        {/* Mini Establishing Shot 2: Capabilities — the shot now lives inside
+        {/* Mini Establishing Shot 2: Capabilities - the shot lives inside
             CapabilityRack's own SectionBeat, which drives it on one timeline. */}
-        <Box
-          component="section"
-          id="capabilities"
-          aria-label="Capabilities and Services"
-          data-act="services"
-        >
-          <CapabilityRack />
-        </Box>
+        <CapabilityRack />
 
         {/* Mini Establishing Shot 3: Use Cases — paired with UseCasesNarrative
             via SectionBeat in `bare` mode. The pin is UseCasesNarrative's own
@@ -234,7 +238,9 @@ function HomePage() {
           </Box>
 
           {/* Dynamic Row-by-Row Curtain Transition into Deep Navy Act II Finale */}
-          <CurtainTransition rows={6} />
+          <Suspense fallback={null}>
+            <CurtainTransition rows={6} />
+          </Suspense>
 
           {/* Deep Navy Dark Zone for Intelligence Feed & Horizon Gateway */}
           <Box sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>

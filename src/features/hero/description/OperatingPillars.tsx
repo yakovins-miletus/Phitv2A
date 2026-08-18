@@ -37,27 +37,25 @@ export function OperatingPillars() {
       establishScale="major"
       sx={{ minHeight: "auto", pt: 0, pb: { xs: 6, md: 10 } }}
     >
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, mt: { xs: 2, md: 3 } }}>
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "repeat(12, 1fr)" },
-                gap: { xs: 4, md: 4 },
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                gap: { xs: 3, md: 3.5 },
                 width: "100%",
               }}
             >
               {pillars.map((pillar, i) => {
                 const Icon = PILLAR_ICONS[i] ?? PILLAR_ICONS[0]!;
-                const mdColSpan = i === 0 ? "span 7" : i === 1 ? "span 5" : "span 12";
 
             return (
               <Box
                 key={pillar.id}
                 sx={{
-                  gridColumn: { xs: "span 1", md: mdColSpan },
                   position: "relative",
                   borderRadius: "16px",
-                  p: { xs: 3.5, md: 4.5 },
+                  p: { xs: 3.5, md: 4 },
                   background: GROUND.dark
                     ? "rgba(255, 255, 255, 0.04)"
                     : "#FFFFFF",
