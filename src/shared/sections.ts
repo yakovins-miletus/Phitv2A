@@ -19,8 +19,13 @@ export const ACT_LABELS: Record<Act, string> = {
   people: "PEOPLE",
 };
 
-/** Chapter index. Ten chapters, seven for services, three for people. */
-export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+/** Chapter index. Eight chapters, all "services" now that the PEOPLE act
+ *  (daily-life, candidates, testimonials, blog) has relocated to /about —
+ *  see PRD-home-client-focus §US-1/US-2. The `Act`/`ACT_LABELS` model is kept
+ *  (it is shared with /about's own chapter registry below) but on home it
+ *  now collapses to a single act: `ACT_GROUPS` in EyeFlow.tsx will render one
+ *  group instead of two, which is the correct rail for a one-act page. */
+export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export interface ChapterDef {
   index: ChapterIndex;
@@ -37,9 +42,10 @@ export const CHAPTERS: readonly ChapterDef[] = [
   { index: 4, label: "QUANTITATIVE R&D", act: "services" },
   { index: 5, label: "PRACTICE", act: "services" },
   { index: 6, label: "REACH", act: "services" },
-  { index: 7, label: "BEHIND THE CODE", act: "people" },
-  { index: 8, label: "TALENT", act: "people" },
-  { index: 9, label: "SIGNAL", act: "people" },
+  // Closing beat (operational footprint / horizon gateway) is now the page's
+  // final chapter — it used to share chapter 9 ("SIGNAL") with `blog`, which
+  // has relocated to /about.
+  { index: 7, label: "HORIZON", act: "services" },
 ];
 
 /** One home-page section: single source of truth for snap points, the left
@@ -65,26 +71,73 @@ export interface SectionDef {
    * the hard cut the layer exists to remove.
    */
   ground?: GroundName;
+  /**
+   * This section's `SectionBeat` owns a pinned ScrollTrigger of its own
+   * (`UseCasesNarrative`, `DailyLifeSection`) rather than being a normal
+   * scrolling beat.
+   *
+   * Previously this fact and "render children outside `.stage-inner`" were
+   * one overloaded prop (`bare`) passed at every call site — two unrelated
+   * questions collapsed into one boolean that had to be inferred correctly at
+   * each usage. `ownsPin` is the real, declared fact about the section;
+   * `SectionBeat` derives the "outside `.stage-inner`" rendering choice from
+   * it internally, because a trigger with a moving ancestor needs
+   * `containerAnimation` (which disables pinning/snapping) — so a pin-owning
+   * section can never be an ordinary descendant of the reveal transform.
+   */
+  ownsPin?: boolean;
+  /** Suppresses `SectionBeat`'s scrubbed exit-dim tween. Only for a beat with
+   *  nothing after it to recede toward (the page's closing section) or one
+   *  that owns its own pin and has nothing for the dim to target. */
+  noExitDim?: boolean;
+  /** Which tempo this section's establishing shot plays at, if it has one —
+   *  `MAJOR_ESTABLISH` (1.30s statement) or `MINI_ESTABLISH` (1.05s aside).
+   *  Absent when the section has no establishing shot. See `SectionBeat`'s
+   *  `establishScale` doc for what each scale implies about layout. */
+  establishScale?: "major" | "mini";
+  /** Caliper growth anchor for the establishing shot. Defaults to `"left"`
+   *  inside `SectionBeat` when `establishScale` is set and this is omitted. */
+  establishAlign?: "left" | "center";
+  /**
+   * Accessible name for the section landmark. Left unset on most sections —
+   * `SectionBeat` renders no `aria-label` in that case, exactly matching the
+   * sections that had no route-level wrapper Box supplying one before this
+   * moved. Set only on the sections that used to get one from that wrapper
+   * (`reach`, `candidates`, `testimonials`, `blog`), so behaviour is
+   * unchanged rather than newly added.
+   */
+  ariaLabel?: string;
+  /**
+   * `data-act` for the section's root element, for the small set of sections
+   * that used to get it from a route-level wrapper `<Box component="section">`
+   * that existed solely to carry `id`/`aria-label`/`data-act` — attributes
+   * `SectionBeat`'s own `<section id={section.id}>` had nowhere else to put
+   * them. Sections that need no such attribute (most of them) leave this
+   * unset and render no `data-act`.
+   */
+  act?: Act;
 }
 
 /** Attribute marking a snap-target stage element. */
 export const STAGE_ATTR = "data-stage-section";
 
-/** Two entries here are not what they look like, and both have bitten people:
+/** One entry here is not what it looks like, and has bitten people:
  *
- *  - `services` is rendered by CapabilityRack, not by routes/index.tsx.
- *  - `closing` is never rendered as a section at all. The old warning here said
- *    it had to stay because "EyeFlow draws one rail dot per entry" — that was
- *    stale (it described the retired ScrollRail; EyeFlow renders one label per
- *    *chapter*, not per section). It is kept only because it is harmless, and
- *    it shares chapter 5 with `blog`, which sorts first and so owns the
- *    chapter's scroll target either way.
+ *  - `services` is rendered by CapabilityRack, which no longer mounts on the
+ *    home page at all (PRD-home-client-focus §2b removed it from
+ *    routes/index.tsx to de-duplicate against /services) — but CapabilityRack
+ *    itself, and its `homeSection("services")` lookup, are untouched, so this
+ *    entry stays for it.
  *
  *  This list is also NOT the registry the navbar uses. NavbarContext keeps its
  *  own anchor ids in a separate namespace ("daily-life-video", "home-compact")
- *  that deliberately does not line up with these — see NavbarContext.tsx. */
+ *  that deliberately does not line up with these — see NavbarContext.tsx.
+ *
+ *  `daily-life`, `candidates`, `testimonials`, `blog` relocated to
+ *  `ABOUT_SECTIONS` below (PRD-home-client-focus §US-2) — the talent/culture
+ *  narrative now lives on /about instead of closing out the home page. */
 export const HOME_SECTIONS: readonly SectionDef[] = [
-  // ── ACT I · SERVICES ──────────────────────────────────────────────────────
+  // ── SERVICES ──────────────────────────────────────────────────────────────
   { id: "hero-flatten", label: "Logo Flatten", chapter: 0, ground: "void" },
   { id: "hero-align", label: "Logo Align", chapter: 1, ground: "void" },
   { id: "hero-reveal", label: "Wordmark Reveal", chapter: 2, ground: "void" },
@@ -97,6 +150,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     chapter: 4,
     choreo: "grow-left",
     ground: "void",
+    establishScale: "major",
   },
   {
     id: "hero-position",
@@ -104,38 +158,41 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     chapter: 4,
     choreo: "grow-right",
     ground: "panel",
+    establishScale: "mini",
   },
-  { id: "services", label: "Capabilities", chapter: 4, ground: "void" },
-  { id: "use-cases", label: "Architectural Use-Cases", chapter: 5, ground: "panel" },
-  { id: "process", label: "Process Pipeline", chapter: 5, ground: "deep" },
+  { id: "services", label: "Capabilities", chapter: 4, ground: "void", establishScale: "mini" },
+  {
+    id: "use-cases",
+    label: "Architectural Use-Cases",
+    chapter: 5,
+    ground: "panel",
+    ownsPin: true,
+    noExitDim: true,
+    establishScale: "mini",
+  },
+  { id: "process", label: "Process Pipeline", chapter: 5, ground: "deep", establishScale: "major" },
   {
     id: "reach",
     label: "Global Footprint",
     chapter: 6,
     choreo: "spotlight-clip",
     ground: "white",
+    establishScale: "mini",
+    ariaLabel: "Global Footprint",
+    act: "services",
   },
-
-  // ── ACT II · PEOPLE ───────────────────────────────────────────────────────
-  {
-    id: "daily-life",
-    label: "Behind The Code",
-    chapter: 7,
-    choreo: "zoom-center",
-    ground: "deep",
-  },
-  { id: "candidates", label: "Talent & Careers", chapter: 8, choreo: "zoom-center", ground: "panel" },
-  {
-    id: "testimonials",
-    label: "Hear From Our People",
-    chapter: 8,
-    choreo: "zoom-center",
-    ground: "panel",
-  },
-  { id: "blog", label: "Intelligence Feed", chapter: 9, choreo: "grow-right", ground: "field" },
   // Rendered as ClosingShelf's own SectionBeat (the page's final beat, no exit
   // dim — see ClosingShelf.tsx).
-  { id: "closing", label: "Horizon Gateway", chapter: 9, choreo: "zoom-center", ground: "field" },
+  {
+    id: "closing",
+    label: "Horizon Gateway",
+    chapter: 7,
+    choreo: "zoom-center",
+    ground: "field",
+    noExitDim: true,
+    establishScale: "mini",
+    establishAlign: "left",
+  },
 ];
 
 export function homeSection(id: string): SectionDef {
@@ -144,12 +201,107 @@ export function homeSection(id: string): SectionDef {
   return def;
 }
 
-/** The act a chapter belongs to. Throws on an unknown index rather than
- *  defaulting, so adding a chapter without an act is a loud failure. */
-export function actOfChapter(chapter: ChapterIndex): Act {
-  const def = CHAPTERS.find((c) => c.index === chapter);
+/**
+ * Page order for `refreshPriorityFor` (see beatThresholds.ts), derived from a
+ * section's position in the registry array that declares it rather than
+ * hand-written at each `SectionBeat` call site — PRD-home-client-focus §US-5
+ * AC-1's "one ordered registry" requirement. Reordering, inserting, or
+ * removing an entry in `HOME_SECTIONS`/`ABOUT_SECTIONS` changes every
+ * downstream `order` automatically; there is no second list that can drift
+ * out of sync with it.
+ *
+ * `refreshPriorityFor` only needs the *relative* top-to-bottom rank to stay
+ * correct and the result to stay positive (see its own doc for why) — it does
+ * not depend on any particular numbering scheme, so the raw array index
+ * satisfies it exactly.
+ *
+ * Searches `HOME_SECTIONS` first, then `ABOUT_SECTIONS`; the two registries
+ * share no ids, so there is exactly one match for any real section id.
+ */
+export function sectionOrder(id: string): number {
+  const home = HOME_SECTIONS.findIndex((section) => section.id === id);
+  if (home !== -1) return home;
+  const about = ABOUT_SECTIONS.findIndex((section) => section.id === id);
+  if (about !== -1) return about;
+  throw new Error(`Unknown section for order derivation: ${id}`);
+}
+
+/** /about's chapter registry — the four sections relocated from home
+ *  (PRD-home-client-focus §US-2) keep their own `Act`/ground metadata so
+ *  `groundStops.ts`'s ground-track builder stays a single generic function
+ *  shared by both pages rather than forking per page. /about does NOT render
+ *  `EyeFlow` (see about.tsx's top-of-file comment for why), so `chapter`
+ *  here only feeds the ground track's act-break math, never a rail UI. */
+export const ABOUT_CHAPTERS: readonly ChapterDef[] = [
+  { index: 0, label: "BEHIND THE CODE", act: "people" },
+  { index: 1, label: "TALENT", act: "people" },
+  { index: 2, label: "SIGNAL", act: "people" },
+];
+
+export const ABOUT_SECTIONS: readonly SectionDef[] = [
+  {
+    id: "daily-life",
+    label: "Behind The Code",
+    chapter: 0,
+    choreo: "zoom-center",
+    ground: "deep",
+    ownsPin: true,
+    noExitDim: true,
+    establishScale: "major",
+  },
+  {
+    id: "candidates",
+    label: "Talent & Careers",
+    chapter: 1,
+    choreo: "zoom-center",
+    ground: "panel",
+    establishScale: "mini",
+    ariaLabel: "Talent and Technical Careers",
+    act: "people",
+  },
+  {
+    id: "testimonials",
+    label: "Hear From Our People",
+    chapter: 1,
+    choreo: "zoom-center",
+    ground: "panel",
+    ariaLabel: "Hear From Our People",
+    act: "people",
+  },
+  {
+    id: "blog",
+    label: "Intelligence Feed",
+    chapter: 2,
+    choreo: "grow-right",
+    ground: "field",
+    establishScale: "mini",
+    ariaLabel: "Intelligence Feed and Blog",
+    act: "people",
+  },
+];
+
+export function aboutSection(id: string): SectionDef {
+  const def = ABOUT_SECTIONS.find((section) => section.id === id);
+  if (!def) throw new Error(`Unknown about section: ${id}`);
+  return def;
+}
+
+/** The act a chapter belongs to, resolved against an arbitrary chapter list.
+ *  Throws on an unknown index rather than defaulting, so adding a chapter
+ *  without an act is a loud failure. Generic so `groundStops.ts`'s ground-
+ *  track builder can serve both HOME_SECTIONS/CHAPTERS and
+ *  ABOUT_SECTIONS/ABOUT_CHAPTERS without forking. */
+export function actOfChapterIn(chapters: readonly ChapterDef[], chapter: ChapterIndex): Act {
+  const def = chapters.find((c) => c.index === chapter);
   if (!def) throw new Error(`Unknown chapter index: ${String(chapter)}`);
   return def.act;
+}
+
+/** The act a home-page chapter belongs to. Equivalent to
+ *  `actOfChapterIn(CHAPTERS, chapter)` — kept as the default export because
+ *  every existing home-page call site expects the one-argument form. */
+export function actOfChapter(chapter: ChapterIndex): Act {
+  return actOfChapterIn(CHAPTERS, chapter);
 }
 
 /** Scroll target for a chapter: the first section declared in it. */

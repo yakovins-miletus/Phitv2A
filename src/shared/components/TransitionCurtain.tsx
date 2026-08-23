@@ -407,8 +407,17 @@ export function TransitionCurtainProvider({ children }: { children: ReactNode })
         aria-live="polite"
         sx={{
           position: "absolute",
-          width: 1,
-          height: 1,
+          // "1px", NOT `1`. In MUI's system a unitless number is a *ratio*, so
+          // `width: 1` compiles to `width: 100%` — and because `#root` is
+          // `position: static`, this absolutely-positioned box resolved against
+          // the initial containing block (the viewport) and rendered a full
+          // 100vh tall, parked at `top: <body height>` — i.e. one entire
+          // viewport of empty scrollable space below the footer, on every
+          // route. `clip` hides it visually but contributes nothing to layout
+          // or scroll extent, which is why it was invisible yet scrollable.
+          // Guarded by tests/motion/no-dead-scroll.test.ts.
+          width: "1px",
+          height: "1px",
           overflow: "hidden",
           clip: "rect(0 0 0 0)",
           whiteSpace: "nowrap",

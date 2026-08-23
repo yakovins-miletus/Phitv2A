@@ -18,7 +18,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavbar, type NavbarMode } from "./NavbarContext";
 import { useReducedMotion } from "@/shared/motion";
-import { setHeroMode, type HeroMode } from "@/features/hero/heroModeStore";
 import { setHeroBgMode, type HeroBgMode } from "@/features/hero/heroBgModeStore";
 
 export const GROUP_ORDER = ["NAVIGATE", "ACTION", "HERO", "SYSTEM"] as const;
@@ -33,8 +32,6 @@ export const COMMANDS = [
   { id: "act-conversation", group: "ACTION", label: "Start a conversation", keywords: "contact talk hire enquiry inquiry", run: { kind: "nav", to: "/contact" } },
   { id: "act-careers", group: "ACTION", label: "Copy careers email", keywords: "jobs hiring recruiting jobs@phitopolis.com", run: { kind: "copy", address: "jobs@phitopolis.com" } },
   { id: "act-inquiries", group: "ACTION", label: "Copy general inquiries email", keywords: "info hello support info@phitopolis.com", run: { kind: "copy", address: "info@phitopolis.com" } },
-  { id: "hero-mode-monolith", group: "HERO", label: "Hero: Monolith", keywords: "hero mode monolith 3d room glass poc design", run: { kind: "hero-mode", mode: "monolith" } },
-  { id: "hero-mode-legacy", group: "HERO", label: "Hero: Legacy Grid", keywords: "hero mode legacy grid plane 2d classic", run: { kind: "hero-mode", mode: "legacy" } },
   { id: "hero-bg-static", group: "HERO", label: "Hero Background: Static", keywords: "hero background sky shader static day night cycle", run: { kind: "hero-bg-mode", mode: "static" } },
   { id: "hero-bg-video", group: "HERO", label: "Hero Background: Video", keywords: "hero background video night dawn film loop", run: { kind: "hero-bg-mode", mode: "video" } },
 
@@ -76,7 +73,7 @@ export function filterCommands(query: string): Cmd[] {
  */
 export function commandHint(
   cmd: Cmd,
-  ctx: { copied: boolean; heroMode: HeroMode; heroBgMode: HeroBgMode },
+  ctx: { copied: boolean; heroBgMode: HeroBgMode },
 ): { text: string; active: boolean } {
   if (ctx.copied) return { text: "copied ✓", active: false };
   switch (cmd.run.kind) {
@@ -84,10 +81,6 @@ export function commandHint(
       return { text: cmd.run.to, active: false };
     case "copy":
       return { text: cmd.run.address, active: false };
-    case "hero-mode": {
-      const active = ctx.heroMode === cmd.run.mode;
-      return { text: active ? "● active" : "run", active };
-    }
     case "hero-bg-mode": {
       const active = ctx.heroBgMode === cmd.run.mode;
       return { text: active ? "● active" : "run", active };
@@ -198,10 +191,6 @@ export function useCommandExecutor(navigate: (opts: { to: string }) => void) {
         case "toggle-id-overlay":
           close();
           window.dispatchEvent(new CustomEvent("phitopolis-toggle-id-overlay"));
-          break;
-        case "hero-mode":
-          close();
-          setHeroMode(cmd.run.mode as HeroMode);
           break;
         case "hero-bg-mode":
           close();

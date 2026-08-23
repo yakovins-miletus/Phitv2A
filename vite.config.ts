@@ -104,6 +104,13 @@ function publicAssetsPlugin(): Plugin {
 }
 
 export default defineConfig({
+  // `vite preview` does not read PORT on its own — it uses `preview.port` and
+  // walks upward when that port is busy. The Claude Code preview harness
+  // assigns a free port via PORT and then expects the server to actually bind
+  // it, so without this the harness proxies one port while vite listens on
+  // another and every request is refused. Falls back to vite's own default
+  // when PORT is unset, so a plain `yarn preview` is unchanged.
+  preview: process.env.PORT ? { port: Number(process.env.PORT), strictPort: true } : undefined,
   plugins: [
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
@@ -135,6 +142,18 @@ export default defineConfig({
             },
             { name: "motion", test: /node_modules\/(?:motion|framer-motion|motion-dom|motion-utils)\// },
             { name: "tanstack", test: /node_modules\/@tanstack\// },
+            // three.js and its React bindings. Unlike the groups above this one
+            // is NOT eager — every consumer (R3FHeroCanvas, PlaygroundCanvas,
+            // MonolithScene, ServiceGlobe) sits behind React.lazy, so this chunk
+            // is only fetched when a 3D surface actually mounts.
+            //
+            // Grouping is hygiene, not the fix: it keeps ~190KB brotli of engine
+            // in one cacheable chunk instead of duplicating slices of it across
+            // four lazy chunks. What actually keeps it OFF the home critical path
+            // is the source-level split in `features/hero/heroPalette.ts` —
+            // `advancedChunks` decides which chunk a module lands in, never what
+            // is reachable, so this line alone would not have helped.
+            { name: "three", test: /node_modules\/(?:three|@react-three\/(?:fiber|drei))\// },
           ],
         },
       },

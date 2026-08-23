@@ -9,7 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 import { GROUNDS } from "@/shared/theme/grounds";
-import { STAGE_ATTR } from "@/shared/sections";
+import { STAGE_ATTR, sectionOrder } from "@/shared/sections";
 import type { SectionDef } from "@/shared/sections";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
@@ -95,9 +95,14 @@ const ENTER_ANIMATE_TOLERANCE_PX = 24;
 const ANNOUNCE_OVERLAP = 0.55;
 
 /** Entrance duration for the content reveal. Time-based (the whole point of the
- *  refactor), and close to the shot tempos so neither half of the beat visibly
- *  outlasts the other. */
-const CONTENT_ENTER_DURATION = 0.9;
+ *  refactor). Deliberately shorter than the shot tempos (~0.85-1.30s): this is
+ *  a fixed-duration tween that keeps animating in real time regardless of
+ *  scroll speed, so on a normal-paced scroll the reader keeps moving while it
+ *  plays. At 0.9s that window was long enough to be visibly "still catching
+ *  up" well after the reader had scrolled past — see
+ *  docs/scroll-audit-2026-08-23.md. 0.45s resolves within a normal scroll
+ *  cadence instead of trailing behind it. */
+const CONTENT_ENTER_DURATION = 0.45;
 const CONTENT_ENTER_EASE = "power3.out";
 
 /** Kicker hairline draw, offset inside the content phase so it trails the rise
@@ -117,83 +122,54 @@ const KICKER_DURATION = 0.5;
  * `getComputedStyle` read forced a style recalculation at tween-build time.
  * The shot's identity is known at the call site; it is passed, not sniffed.
  *
- * Modelled as a union so the compiler enforces the pairing: pass a shot and you
- * MUST declare its scale; pass no shot and you may not declare one.
+ * `establishScale`/`establishAlign` used to be required alongside
+ * `establishing` at every call site (a union type enforced "pass a shot and
+ * you MUST declare its scale"). Both now live on the section's own
+ * `SectionDef` (PRD-home-client-focus §US-5 AC-1/AC-2 — per-section wrapper
+ * facts belong in the one registry, not repeated at each hand-written call
+ * site) — `establishing` is still a prop because a `ReactNode` cannot live in
+ * plain data, but its scale and alignment are read off `section` below. The
+ * compile-time pairing is gone with the union; a dev-only runtime check
+ * replaces it (see `useEstablishScaleAssertion`).
  */
-type EstablishProps =
-  | {
-      establishing?: undefined;
-      establishScale?: undefined;
-      establishAlign?: undefined;
-    }
-  | {
-      /**
-       * The establishing shot that announces this section, rendered *before*
-       * the content in DOM order (announce-then-content — natural reading
-       * order, no CSS `order`, no absolute positioning, no transform-faked
-       * ordering).
-       *
-       * MUST be passed `selfDriven={false}` so it renders markup only and this
-       * component drives it via the `.est-*` class hooks.
-       */
-      establishing: ReactNode;
-      /** Which tempo the shot plays at — `MAJOR_ESTABLISH` (1.30s statement)
-       *  or `MINI_ESTABLISH` (1.05s aside). Also decides layout: major shots
-       *  are self-contained full-width `<section>`s that bring their own
-       *  `<Container>`, so they render outside this beat's Container; mini
-       *  shots are inline blocks that share it. */
-      establishScale: "major" | "mini";
-      /** Caliper growth anchor. Mirrors `MiniEstablishingShot`'s `align` prop;
-       *  major shots are always left-anchored. Defaults to `"left"`. */
-      establishAlign?: "left" | "center";
-    };
-
 interface SectionBeatBaseProps {
   section: SectionDef;
   /**
    * Page order of this beat, low to high (hero = 0), mapped through
-   * `refreshPriorityFor(order)`. Required: React mounts these components in a
-   * different order than they appear on the page, and refresh must run
-   * top-to-bottom or the pin-spacers above a beat resolve after it and shift its
-   * start/end.
+   * `refreshPriorityFor(order)`. React mounts these components in a different
+   * order than they appear on the page, and refresh must run top-to-bottom or
+   * the pin-spacers above a beat resolve after it and shift its start/end.
+   *
+   * Defaults to `sectionOrder(section.id)` — the section's index in whichever
+   * registry array (`HOME_SECTIONS`/`ABOUT_SECTIONS`) declares it. This is
+   * the only thing call sites needed a hand-written `order` for, and it can
+   * never desync from the registry now: reordering, inserting, or removing an
+   * entry there changes this automatically, because it's read from that same
+   * array rather than copied out of it. Overriding is still possible (kept as
+   * an explicit prop, not removed outright) but no call site does.
    */
-  order: number;
+  order?: number;
   /** Rendered outside the animated `.stage-inner`, so it inherits none of the
    *  reveal's transforms. */
   background?: ReactNode;
   /** Paper band with hairline borders — used to alternate page rhythm. */
   muted?: boolean;
-  /** Suppresses the scrubbed exit-dim tween below. Default `false` (exit dim
-   *  plays), matching every beat migrated so far — this is additive and
-   *  changes nothing at any existing call site. Set `true` only for a beat
-   *  with nothing after it to recede toward, e.g. the page's closing section. */
-  noExitDim?: boolean;
   /**
-   * Escape hatch for the two pinned specials (`UseCasesNarrative`,
-   * `DailyLifeSection`). Default `false` — every existing call site is
-   * unaffected.
+   * The establishing shot that announces this section, rendered *before* the
+   * content in DOM order (announce-then-content — natural reading order, no
+   * CSS `order`, no absolute positioning, no transform-faked ordering).
    *
-   * When `true`, `children` render in a plain sibling `<div>` OUTSIDE the
-   * animated `Container`/`.stage-inner` instead of inside it. The shot still
-   * gets its own entrance timeline/ScrollTrigger (so the pair still announces
-   * as one beat) and `useStagePresence`/`refreshPriority` are still wired —
-   * only the content wrapping changes. This matters because `children` here
-   * is itself a pinned ScrollTrigger (`pin: true`): GreenSock requires
-   * `containerAnimation` for a trigger element with a moving ancestor, and
-   * `containerAnimation` disables pinning/snapping — never acceptable for
-   * these two sections. `.stage-inner`'s scale/opacity/y tween and the
-   * exit-dim tween both target `.stage-inner` only, so with `bare` there is
-   * nothing for either to find — `noExitDim` should also be passed `true`
-   * alongside `bare` for exactly that reason (kept as a separate prop rather
-   * than implied, so the two independent responsibilities the props already
-   * had before `bare` existed don't need to become one).
+   * MUST be passed `selfDriven={false}` so it renders markup only and this
+   * component drives it via the `.est-*` class hooks. Its tempo
+   * (`section.establishScale`) and caliper anchor (`section.establishAlign`)
+   * come from the registry — see the doc above.
    */
-  bare?: boolean;
+  establishing?: ReactNode;
   children: ReactNode;
   sx?: SxProps<Theme> | undefined;
 }
 
-export type SectionBeatProps = SectionBeatBaseProps & EstablishProps;
+export type SectionBeatProps = SectionBeatBaseProps;
 
 /** Token set for a declared scale. Data in, data out — no DOM query. */
 const ESTABLISH_CHOREO: Record<"major" | "mini", EstablishChoreo> = {
@@ -206,6 +182,27 @@ const ESTABLISH_CHOREO: Record<"major" | "mini", EstablishChoreo> = {
  *  them — silently reintroducing the arbitrary refresh order this prop exists to
  *  eliminate. */
 const mountedOrders = new Set<number>();
+
+/** Dev-only guard replacing the old compile-time union enforcement ("pass a
+ *  shot and you MUST declare its scale"): `establishScale` now lives on
+ *  `SectionDef` rather than being paired with `establishing` at the call
+ *  site, so a section with a shot but no declared scale is a registry bug,
+ *  not a type error — this makes it a loud one instead of a silent `"mini"`
+ *  default. */
+function useEstablishScaleAssertion(
+  hasEstablishing: boolean,
+  establishScale: "major" | "mini" | undefined,
+  id: string,
+): void {
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    if (hasEstablishing && !establishScale) {
+      console.error(
+        `[SectionBeat] section "${id}" passes \`establishing\` but its SectionDef has no \`establishScale\` — add one in sections.ts.`,
+      );
+    }
+  }, [hasEstablishing, establishScale, id]);
+}
 
 function useUniqueOrderAssertion(order: number, id: string): void {
   useEffect(() => {
@@ -225,13 +222,9 @@ function useUniqueOrderAssertion(order: number, id: string): void {
 export function SectionBeat({
   section,
   establishing,
-  establishScale,
-  establishAlign = "left",
   order,
   background,
   muted = false,
-  noExitDim = false,
-  bare = false,
   children,
   sx,
 }: SectionBeatProps) {
@@ -241,8 +234,17 @@ export function SectionBeat({
   const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
 
-  useUniqueOrderAssertion(order, section.id);
-  useStagePresence(ref, section.id, order);
+  const resolvedOrder = order ?? sectionOrder(section.id);
+  const establishScale = section.establishScale;
+  const establishAlign = section.establishAlign ?? "left";
+  const noExitDim = section.noExitDim ?? false;
+  // `bare` is derived, not declared here: see SectionDef.ownsPin for why the
+  // two used to be one overloaded flag.
+  const bare = section.ownsPin ?? false;
+
+  useEstablishScaleAssertion(Boolean(establishing), establishScale, section.id);
+  useUniqueOrderAssertion(resolvedOrder, section.id);
+  useStagePresence(ref, section.id, resolvedOrder);
 
   useGSAP(
     () => {
@@ -253,7 +255,7 @@ export function SectionBeat({
       const inner = root.querySelector(".stage-inner");
       if (!inner) return;
 
-      const priority = refreshPriorityFor(order);
+      const priority = refreshPriorityFor(resolvedOrder);
       const hasShot = Boolean(establishing) && root.querySelector(".est-mask") !== null;
 
       const variant = section.choreo ?? "rise";
@@ -456,7 +458,7 @@ export function SectionBeat({
     },
     {
       scope: ref,
-      dependencies: [reduced, section.choreo, order, establishScale, establishAlign, noExitDim, bare],
+      dependencies: [reduced, section.choreo, resolvedOrder, establishScale, establishAlign, noExitDim, bare],
     },
   );
 
@@ -465,6 +467,8 @@ export function SectionBeat({
       component="section"
       ref={ref}
       id={section.id}
+      {...(section.ariaLabel ? { "aria-label": section.ariaLabel } : {})}
+      {...(section.act ? { "data-act": section.act } : {})}
       {...{ [STAGE_ATTR]: "" }}
       sx={{
         // minHeight (not height) so tall stages (Careers, Blog) still grow;
@@ -501,7 +505,7 @@ export function SectionBeat({
           {establishing}
         </div>
       ) : null}
-      <Container maxWidth="2xl" sx={{ position: "relative", height: "100%", overflow: "visible" }}>
+      <Container maxWidth="xl" sx={{ position: "relative", height: "100%", overflow: "visible" }}>
         {background}
         {establishing && establishScale !== "major" ? (
           <div className="beat-shot" style={{ position: "relative", zIndex: 2 }}>

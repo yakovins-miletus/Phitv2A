@@ -49,7 +49,6 @@ export function MarketPosition() {
   return (
     <SectionBeat
       section={homeSection("hero-position")}
-      order={3}
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
@@ -59,7 +58,6 @@ export function MarketPosition() {
           tracer="Decades of institutional Wall Street domain mastery paired with disciplined engineering execution."
         />
       }
-      establishScale="mini"
     >
       <Box sx={{ width: "100%", maxWidth: "800px" }}>
         {differentiators.map((diff, i) => (

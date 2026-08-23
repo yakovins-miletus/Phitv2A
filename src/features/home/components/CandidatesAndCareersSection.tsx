@@ -16,7 +16,7 @@ import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
-import { homeSection } from "@/shared/sections";
+import { aboutSection } from "@/shared/sections";
 import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
@@ -63,7 +63,7 @@ export function CandidatesAndCareersSection() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [brochureOpen, setBrochureOpen] = useState(false);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
-  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_CANDIDATES, { dark: false });
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_CANDIDATES, { dark: false });
 
   const openBrochure = useCallback(() => {
     stopLenis();
@@ -87,8 +87,7 @@ export function CandidatesAndCareersSection() {
 
   return (
     <SectionBeat
-      section={homeSection("candidates")}
-      order={11}
+      section={aboutSection("candidates")}
       muted
       // Was "Mini Establishing Shot 5" in routes/index.tsx; see CapabilityRack.
       establishing={
@@ -100,7 +99,6 @@ export function CandidatesAndCareersSection() {
           tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."
         />
       }
-      establishScale="mini"
     >
       {/* 1. Header Information Block */}
       <Grid ref={anchorRef} container spacing={4} sx={{ mb: { xs: 4, md: 6 } }} alignItems="flex-end" justifyContent="flex-end">

@@ -1,4 +1,13 @@
-import { HOME_SECTIONS, actOfChapter, type Act } from "@/shared/sections";
+import {
+  ABOUT_CHAPTERS,
+  ABOUT_SECTIONS,
+  CHAPTERS,
+  HOME_SECTIONS,
+  actOfChapterIn,
+  type Act,
+  type ChapterDef,
+  type SectionDef,
+} from "@/shared/sections";
 import { GROUNDS, type GroundName } from "@/shared/theme/grounds";
 
 /**
@@ -19,25 +28,46 @@ export interface GroundStop {
   actBreak: boolean;
 }
 
-/** `closing` is in HOME_SECTIONS for the rails but is never rendered, so it has no
- *  element to anchor a stop to. */
-const UNRENDERED = new Set(["closing", "hero-flatten", "hero-align", "hero-reveal", "hero-dwell"]);
+/** `hero-flatten`/`hero-align`/`hero-reveal`/`hero-dwell` are in HOME_SECTIONS
+ *  for the rails but are never rendered, so they have no element to anchor a
+ *  stop to. */
+const UNRENDERED = new Set(["hero-flatten", "hero-align", "hero-reveal", "hero-dwell"]);
 
-export const GROUND_STOPS: readonly GroundStop[] = HOME_SECTIONS.filter(
-  (s) => !UNRENDERED.has(s.id),
-).map((section, i, list) => {
-  const act = actOfChapter(section.chapter);
-  const prev = i > 0 ? list[i - 1] : undefined;
-  return {
-    id: section.id,
-    // Sections without a declared ground inherit the page default rather than
-    // punching a hole in the track.
-    ground: section.ground ?? "deep",
-    act,
-    color: GROUNDS[section.ground ?? "deep"].bg,
-    actBreak: prev !== undefined && actOfChapter(prev.chapter) !== act,
-  };
-});
+/**
+ * Build a page's ground track from its section registry.
+ *
+ * Generic over the section/chapter list so both HOME_SECTIONS/CHAPTERS and
+ * ABOUT_SECTIONS/ABOUT_CHAPTERS produce a track through the same maths —
+ * `GroundLayer` accepts whichever track its page passes it (see
+ * `GroundLayer.tsx`'s `stops` prop), so /about's grounds paint without
+ * forking the sampler.
+ */
+export function buildGroundStops(
+  sections: readonly SectionDef[],
+  chapters: readonly ChapterDef[],
+): readonly GroundStop[] {
+  return sections
+    .filter((s) => !UNRENDERED.has(s.id))
+    .map((section, i, list) => {
+      const act = actOfChapterIn(chapters, section.chapter);
+      const prev = i > 0 ? list[i - 1] : undefined;
+      return {
+        id: section.id,
+        // Sections without a declared ground inherit the page default rather
+        // than punching a hole in the track.
+        ground: section.ground ?? "deep",
+        act,
+        color: GROUNDS[section.ground ?? "deep"].bg,
+        actBreak: prev !== undefined && actOfChapterIn(chapters, prev.chapter) !== act,
+      };
+    });
+}
+
+export const GROUND_STOPS: readonly GroundStop[] = buildGroundStops(HOME_SECTIONS, CHAPTERS);
+
+/** /about's ground track — see about.tsx for why /about now mounts
+ *  `<GroundLayer stops={ABOUT_GROUND_STOPS} />` alongside `<SmoothScroll />`. */
+export const ABOUT_GROUND_STOPS: readonly GroundStop[] = buildGroundStops(ABOUT_SECTIONS, ABOUT_CHAPTERS);
 
 /** Index of the single act break, or -1. Asserted to be unique by the unit tests. */
 export const ACT_BREAK_INDEX = GROUND_STOPS.findIndex((s) => s.actBreak);

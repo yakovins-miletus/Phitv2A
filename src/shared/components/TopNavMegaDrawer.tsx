@@ -23,7 +23,6 @@ import {
   type Cmd,
   type Group,
 } from "./commandActions";
-import { useHeroModeState } from "@/features/hero/heroModeStore";
 import { useHeroBgModeState } from "@/features/hero/heroBgModeStore";
 
 export interface NavSectionItem {
@@ -93,7 +92,6 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
   const [activeItem, setActiveItem] = useState<NavSectionItem>(MEGA_NAV_ITEMS[0]!);
   const location = useLocation();
   const { navigateWithCurtain } = useTransitionCurtain();
-  const { mode: heroMode } = useHeroModeState();
   const { mode: heroBgMode } = useHeroBgModeState();
 
   // Command Palette State
@@ -448,7 +446,6 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                 const selected = index === activeIndex;
                                 const hint = commandHint(cmd, {
                                   copied: copiedId === cmd.id,
-                                  heroMode,
                                   heroBgMode,
                                 });
                                 return (

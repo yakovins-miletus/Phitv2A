@@ -1,7 +1,6 @@
 import { Suspense, lazy, useRef, useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 import { alpha } from "@mui/material/styles";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,16 +8,12 @@ import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import { RouterLink } from "@/shared/components/RouterLink";
-import { Magnetic } from "@/shared/components/Magnetic";
 import { useStagePresence } from "@/shared/components/StageSection";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
-import { useHeroModeState, useHeroTrack, setHeroTrack } from "./heroModeStore";
-import { setSkyMode, useSkyModeState } from "./skyModeStore";
 import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
-import { ParallaxHeroBg } from "./ParallaxHeroBg";
 
 const SANS = "Inter, system-ui, -apple-system, sans-serif";
 
@@ -28,22 +23,6 @@ const ACTIVE_NODE_DATA = [
   { tag: "NODE 03 // TEAM", label: "Market Data & Data Fabrics Team" },
   { tag: "NODE 04 // TEAM", label: "Global Infrastructure & Trading Operations Team" },
 ] as const;
-/**
- * The 3D PoC gallery.
- *
- * `React.lazy` keeps `three` + `@react-three/fiber` + `drei` out of the route chunk
- * and behind a dynamic import that only runs when someone flips the toggle, so a
- * visitor who never opens it pays nothing. Each of the four *scenes* is then lazy
- * again inside `playground/variants.ts`, so switching a tab fetches only that scene.
- *
- * `docs/hero-upgrade/README.md` standing rule 1 ("the 3D playground variant is out
- * of scope; `PlaygroundScene.tsx` and `R3FHeroCanvas.tsx` internals must show no
- * diff") is **retired as of this change** — the gallery IS the work now, and
- * `PlaygroundScene.tsx` is deleted. That file records the retirement.
- */
-const R3FHeroCanvas = lazy(() =>
-  import("./R3FHeroCanvas").then((m) => ({ default: m.R3FHeroCanvas })),
-);
 /**
  * The gunshot's drift wall — 24 photographs from the blog library, drifting behind a
  * perspective tilt. Replaces the two 50vh split panes that auto-panned here.
@@ -64,6 +43,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
+import { HERO_PIN_DISTANCE } from "@/shared/motion/heroPin";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 
 gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
@@ -73,15 +53,17 @@ gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
 /** Pin distance: 1800% for the hero animation + 100% extra overlap window
  *  where the overlay sheet slides up over the still-pinned hero. */
 /**
- * How tall the pin is.
+ * How tall the pin is — now imported from `shared/motion/heroPin.ts`.
  *
  * Was `+=1900%` — nineteen viewport heights of scroll for nine phases, most of it
  * buffer. The phase boundaries in `heroPhases.ts` are all *fractions* of the pin's
  * 0..1 progress, so shortening the pin moves none of them and every assertion in
  * `tests/motion/hero-phases.test.ts` holds unchanged; only the amount of wheel
  * travel each fraction costs the reader changes. Eight is still generous.
+ *
+ * It lives in a shared module rather than here because `EyeFlow` and `AppShell`
+ * both need the same number and both had drifted from it — see that file.
  */
-const HERO_PIN_DISTANCE = "+=800%";
 
 /** How long to wait after the preloader clears before warming the drift wall, ms.
  *  Long enough that the warm-up never competes with the preloader's own critical-path
@@ -92,57 +74,14 @@ const WALL_WARM_DELAY_MS = 1200;
 /**
  * The dark-room flip.
  *
- * The Monolith room is near-black (`PALETTE.navyInk`), and the hero's own chrome
- * is designed for a near-white card — navy headline, navy motto, white pills. Left
- * alone, Monolith rendered navy text on black. These selectors invert the chrome
- * for exactly as long as the room under it is dark.
- *
- * **Two attributes, not one.** `data-hero-mode` is structural — which mode is
- * mounted — and gates the things that have no meaning in Monolith: the CSS dawn
- * sky, the wordmark lockup. `data-sky` is the *colour* question, and Monolith's
- * day cycle can answer it either way: at noon the room is a pale blue sky over a
- * lit floor, and frost-on-frost chrome would be as unreadable there as navy-on-black
- * is at midnight. Splitting them is what lets the same command that raises the sun
- * hand the page back its light-ground chrome.
- *
- * Static, and attached once to the container's `sx`: Emotion serialises this object
- * a single time at mount and each flip is then a lone attribute write, not a
- * restyle. Nothing here runs per frame.
- *
- * Contrast, both directions, measured against the tokens in `palette.ts`:
- * `frost` on `navyInk` is 17.43:1; the pills invert to `navyField` text on `frost`,
- * which is the same pair the site already ships at 12.73:1.
+ * This used to also invert the chrome for the 3D Monolith room
+ * (`[data-hero-mode="monolith"]`/`[data-sky="dark"]` selectors) — retired
+ * along with the gallery/mode-switching surface, since the hero renders the
+ * legacy 2D card only now and `data-hero-mode`/`data-sky` are permanently
+ * `"legacy"`/`"light"`. Kept as the home for the shared transition rules
+ * below, and as a landing spot if a future dark treatment needs it again.
  */
 const PLAYGROUND_FLIP_SX = {
-  '&[data-hero-mode="monolith"]': {
-    "& .hero-card": { backgroundColor: NOIR.navyInk },
-    "& .hero-sky": { opacity: 0 },
-    // Show wordmark frame in monolith mode (positioned on left lockup) and don't fade on scroll
-    "& .hero-wordmark-frame": { opacity: "1 !important" },
-    // Hide centered motto block in monolith mode (left lockup contains motto)
-    "& .hero-motto-block": { display: "none" },
-    "& .hero-directory": { display: "none" },
-  },
-  '&[data-sky="dark"]': {
-    // `.hero-wordmark` is deliberately absent here. It used to be flipped to
-    // frost alongside the motto; with the frame hidden that rule only recoloured
-    // something nobody can see.
-    "& .hero-motto": { color: NOIR.frost },
-    "& .hero-eyebrow": { color: `rgba(${NOIR.frostRgb}, 0.72)` },
-    // The scroll cue was missing from this list entirely, and it paints
-    // `text.secondary` — navy at 0.82 — so on the dark room it was not dim, it
-    // was gone. Its *position* is untouched; this is the contrast bug, not the
-    // alignment one.
-    "& .hero-scroll-cue": { color: `rgba(${NOIR.frostRgb}, 0.72)` },
-    // The unfilled part of the gunshot meter. Navy at 0.18 is invisible on a
-    // dark room, which would leave a gold fill floating on nothing.
-    "& .hero-gunshot-track": { backgroundColor: `rgba(${NOIR.frostRgb}, 0.22)` },
-    "& .hero-pill": {
-      backgroundColor: `rgba(${NOIR.frostRgb}, 0.08)`,
-      boxShadow: "none",
-      "& .btn-text": { color: NOIR.frost },
-    },
-  },
   "& .hero-card, & .hero-motto, & .hero-eyebrow, & .hero-scroll-cue, & .hero-gunshot-track, & .hero-pill":
     {
       transition: "background-color 0.32s ease, color 0.32s ease, border-color 0.32s ease",
@@ -267,32 +206,12 @@ export function HeroSignalCore() {
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
 
-  /**
-   * Hero mode ("legacy" the 2D dot plane, or "monolith" the R3F room) and the
-   * active time of day, read from `heroModeStore.ts`.
-   *
-   * Both used to be `useState` owned here. They moved out because the command
-   * palette — mounted in `AppShell`, a sibling subtree with nothing shared above
-   * it but `NavbarContext` — needs to both *set* these (running a command) and
-   * *read* them back (to mark the live one `● ACTIVE`), which a value owned
-   * inside this component cannot support without a new provider. See
-   * `heroModeStore.ts` for the full rationale.
-   *
-   * The page chrome outside the canvas — the navbar, the EyeFlow chapter rail,
-   * this hero's own mode badge — reads `dayPhase` through the same `isPhaseDark`
-   * every mode-aware surface uses, so none of them can disagree about the sky
-   * they are describing.
-   */
-  const { mode } = useHeroModeState();
-  const use3D = mode === "monolith";
-  const heroTrack = useHeroTrack();
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
 
   const handleNodeSelect = (index: number) => {
     setSelectedNodeIndex((prev) => (prev === index ? null : index));
   };
 
-  const { mode: skyMode } = useSkyModeState();
   /** Video is only meaningful over the Monolith room — the legacy 2D canvas
    *  has no notion of a background mode at all. */
   const useVideoBg = false; // Disabled to use ParallaxHeroBg instead
@@ -396,37 +315,6 @@ export function HeroSignalCore() {
     return () => cancelAnimationFrame(rafId);
   }, [useVideoBg, reduced, heroBgVideo.videoRef]);
 
-  /**
-   * Eager video preload.
-   *
-   * When monolith mode is active, preload the hero video sources via `<link
-   * rel="preload">` so they are already in the browser cache when the user
-   * switches to video background mode. The files are tiny (~300KB mp4,
-   * ~170KB webm) so this is effectively free.
-   */
-  useEffect(() => {
-    if (!use3D || heroBgVideo.posterOnly) return;
-
-    const links: HTMLLinkElement[] = [];
-    for (const [src, type] of [
-      [HERO_BG_VIDEO.mp4, "video/mp4"],
-      [HERO_BG_VIDEO.webm, "video/webm"],
-    ] as const) {
-      // Don't duplicate if already present
-      if (document.querySelector(`link[rel="preload"][href="${src}"]`)) continue;
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "video";
-      link.type = type;
-      link.href = src;
-      document.head.appendChild(link);
-      links.push(link);
-    }
-
-    return () => {
-      for (const link of links) link.remove();
-    };
-  }, [use3D, heroBgVideo.posterOnly]);
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -523,27 +411,15 @@ export function HeroSignalCore() {
   /**
    * Who owns the navbar's light/dark, and when.
    *
-   * Two things can put a dark ground under the header, and they take turns rather
-   * than fight. Before the pin's dwell ends, what is under the navbar is the hero
-   * card — so if the gallery is on, its *sky* decides, and dragging the slider to
-   * noon hands the navbar back its navy chrome. From the dwell onward the pin's
-   * own gunshot wash is what is up there, and `stage.navDark` decides as it always
-   * has.
-   *
-   * Without this the gallery shipped navy-on-near-black: the header, the EyeFlow
-   * chapter rail and the hero's own scroll cue all painted light-ground colours
-   * over a room that had gone black under them, because nothing ever told them.
+   * The 3D gallery mode that used to also drive this (its own sky toggle
+   * could put a dark ground under the header before the pin's dwell ended)
+   * was retired — the hero renders the legacy 2D card only now, so
+   * `stage.navDark` alone decides, exactly as it does from the dwell onward.
    */
-  /** Is the ground under the hero's chrome dark right now? Off, it is the pale
-   *  dawn card. On, it is Monolith's room in night mode — Monolith is the only
-   *  mode with a sky toggle, so this is `skyMode` gated on being in that mode.
-   *  Reads the user's own choice from `skyModeStore.ts` rather than
-   *  `isPhaseDark` (which the room's one-authored-look days answered on its
-   *  own); the toggle button below is what actually sets it. */
-  const roomIsDark = use3D && skyMode === "night";
+  const roomIsDark = false;
 
-  const navActive = stage.navActive || use3D;
-  const navDark = use3D && !stage.navActive ? roomIsDark : stage.navDark;
+  const navActive = stage.navActive;
+  const navDark = stage.navDark;
 
   useEffect(() => {
     if (navActive) {
@@ -679,6 +555,10 @@ export function HeroSignalCore() {
         trigger: pinRef.current,
         start: "top top",
         end: HERO_PIN_DISTANCE,
+        // SCRUB POLICY (beatThresholds.ts): legitimate here because this is a
+        // pin whose progress IS the timeline position, not an entrance/recede
+        // event. (Not `SCROLL_SPEED` — this pin's own tuned value predates
+        // that shared constant and has its own reasoning below.)
         scrub: 0.6,
         pin: true,
         // Under Lenis smoothing, an 800%-tall pin with no `anticipatePin`
@@ -727,7 +607,7 @@ export function HeroSignalCore() {
         ref={containerRef}
         id="hero"
         {...{ [STAGE_ATTR]: "" }}
-        data-hero-mode={mode}
+        data-hero-mode="legacy"
         data-sky={roomIsDark ? "dark" : "light"}
         sx={{
           ...PLAYGROUND_FLIP_SX,
@@ -962,9 +842,6 @@ export function HeroSignalCore() {
             }}
           />
 
-          {/* 3-layer Parallax Image Background (imagebg_renew.jpg) */}
-          {use3D && <ParallaxHeroBg ready={ready} />}
-
           {/* Video background mode: the baked night→dawn loop, filling the same
               area the R3F canvas fills but sitting behind it — the canvas below
               renders with a transparent clear colour and skips `SkyDome`/
@@ -1029,98 +906,13 @@ export function HeroSignalCore() {
                 descendants. `--hp-mx`/`--hp-my` moving up here too is a strict
                 widening (`.hero-sky` is still a descendant of `#hero`), not a
                 behaviour change. */}
-            {use3D ? (
-              <Suspense fallback={null}>
-                <R3FHeroCanvas
-                  handleRef={canvasHandleRef}
-                  varsHostRef={containerRef}
-                  bgMode="video" // Force transparent background for ParallaxHeroBg
-                  onNodeSelect={handleNodeSelect}
-                />
-              </Suspense>
-            ) : (
-              <LegacyHeroCanvas
-                handleRef={canvasHandleRef}
-                varsHostRef={containerRef}
-                activeNode={selectedNodeIndex}
-                onNodeSelect={handleNodeSelect}
-              />
-            )}
+            <LegacyHeroCanvas
+              handleRef={canvasHandleRef}
+              varsHostRef={containerRef}
+              activeNode={selectedNodeIndex}
+              onNodeSelect={handleNodeSelect}
+            />
           </Box>
-
-          {/* The sky toggle: Monolith only, top-right corner — the same corner
-              the (now command-palette-driven) mode badge used to take, per the
-              comment on `.hero-directory` below. `Magnetic` for the hover feel,
-              the glass token surface used elsewhere in the chrome rather than a
-              one-off treatment. Sun in night mode (press to bring up the day
-              sky), moon in day mode — the icon always names the mode a press
-              switches *to*, matching how a light-switch plate reads.
-
-              Hidden in video background mode: the baked night→dawn transition
-              in the footage isn't user-controlled, so there is no day/night
-              choice here for the button to make. */}
-          {use3D && !useVideoBg && (
-            <Magnetic
-              sx={{
-                position: "absolute",
-                // Clears the MUI AppBar's toolbar band (z-index 1100, fixed
-                // top-right in the same corner) — anything placed at the old
-                // top:16/24 was physically under the toolbar and ate every
-                // click regardless of this element's own z-index, since an
-                // AppBar always stacks above page content.
-                top: { xs: 72, md: 88 },
-                right: { xs: 16, md: 24 },
-                zIndex: 6,
-              }}
-            >
-              <Box
-                component="button"
-                type="button"
-                aria-label={skyMode === "night" ? "Switch to day sky" : "Switch to night sky"}
-                aria-pressed={skyMode === "day"}
-                onClick={() => setSkyMode(skyMode === "night" ? "day" : "night")}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  border: "var(--glass-border)",
-                  background: "var(--glass-fill-2)",
-                  backdropFilter: "var(--glass-filter)",
-                  WebkitBackdropFilter: "var(--glass-filter)",
-                  color: roomIsDark ? NOIR.frost : NOIR.navyField,
-                  cursor: "pointer",
-                  transition: "background-color 0.32s ease, color 0.32s ease, transform 0.2s ease",
-                  "&:active": { transform: "scale(0.94)" },
-                  "@media (prefers-reduced-motion: reduce)": {
-                    transition: "none",
-                    "&:active": { transform: "none" },
-                  },
-                }}
-              >
-                {skyMode === "night" ? (
-                  // Sun — pressing it brings up the day sky.
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="12" cy="12" r="4.5" fill="currentColor" />
-                    <g stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-                      <path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5" />
-                      <path d="M18.4 5.6l-1.85 1.85M7.45 16.55L5.6 18.4M18.4 18.4l-1.85-1.85M7.45 7.45L5.6 5.6" />
-                    </g>
-                  </svg>
-                ) : (
-                  // Moon — pressing it brings up the night sky.
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M20 14.2A8.4 8.4 0 1 1 9.8 4a6.6 6.6 0 0 0 10.2 10.2Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                )}
-              </Box>
-            </Magnetic>
-          )}
 
           {/* Active Node Telemetry HUD Chip (Single focused readout on click) */}
           {selectedNodeIndex !== null && (
@@ -1215,218 +1007,51 @@ export function HeroSignalCore() {
           */}
 
 
-          {/* PHITOPOLIS Word Transition & Motto Lockup — Mode-Aware */}
-          {use3D ? (
-            /* Left-Aligned Brand Lockup (Phitopolis + Motto + Subtitle) - Monolith Mode */
-            <Box
-              className="hero-wordmark-frame"
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: { xs: "5%", sm: "7%", md: "9%" },
-                transform: "translateY(-50%)",
-                zIndex: 7,
-                pointerEvents: "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: 1.5,
-                maxWidth: { xs: "90%", sm: "440px", md: "560px" },
-              }}
-            >
-              {/* H1 Brand Wordmark */}
-              <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
-                <Typography
-                  variant="h1"
-                  component="h1"
-                  aria-label="Phitopolis"
-                  className="hero-wordmark"
-                  sx={{
-                    fontSize: { xs: "2.5rem", sm: "3.6rem", md: "4.8rem" },
-                    fontWeight: 900,
-                    letterSpacing: "0.04em",
-                    lineHeight: 1,
-                    textTransform: "uppercase",
-                    userSelect: "none",
-                    color: NOIR.frost,
-                    textShadow: "0 2px 20px rgba(0,0,0,0.4)",
-                    opacity: 0.95,
-                  }}
-                >
-                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
-                </Typography>
-              </Box>
-
-              {/* Gold Hairline Divider */}
-              <Box
-                aria-hidden
-                sx={{
-                  width: 48,
-                  height: 2,
-                  backgroundColor: NOIR.gold,
-                  opacity: 0.75,
-                  borderRadius: 1,
-                }}
-              />
-
-              {/* Dual-Track Segment Control Toggle */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 1,
-                  mt: 0.5,
-                  p: 0.6,
-                  borderRadius: "8px",
-                  bgcolor: "rgba(6, 10, 22, 0.75)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255, 215, 0, 0.3)",
-                  width: "fit-content",
-                  pointerEvents: "auto",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-                }}
-              >
-                <Button
-                  size="small"
-                  onClick={() => setHeroTrack("enterprise")}
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: { xs: "0.65rem", sm: "0.72rem" },
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                    px: 1.6,
-                    py: 0.5,
-                    borderRadius: "5px",
-                    color: heroTrack === "enterprise" ? "#060A16" : "rgba(255,255,255,0.75)",
-                    bgcolor: heroTrack === "enterprise" ? "#FFD700" : "transparent",
-                    boxShadow: heroTrack === "enterprise" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
-                    "&:hover": {
-                      bgcolor: heroTrack === "enterprise" ? "#FFE44D" : "rgba(255,255,255,0.12)",
-                    },
-                  }}
-                >
-                  [DEVELOPING RELIABLE SYSTEMS]
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => setHeroTrack("talent")}
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: { xs: "0.65rem", sm: "0.72rem" },
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                    px: 1.6,
-                    py: 0.5,
-                    borderRadius: "5px",
-                    color: heroTrack === "talent" ? "#060A16" : "rgba(255,255,255,0.75)",
-                    bgcolor: heroTrack === "talent" ? "#FFD700" : "transparent",
-                    boxShadow: heroTrack === "talent" ? "0 0 15px rgba(255,215,0,0.35)" : "none",
-                    "&:hover": {
-                      bgcolor: heroTrack === "talent" ? "#FFE44D" : "rgba(255,255,255,0.12)",
-                    },
-                  }}
-                >
-                  [FAST-PACED CAREER GROWTH]
-                </Button>
-              </Box>
-
-              {/* Motto */}
+          {/* PHITOPOLIS Word Transition — Legacy 2D Hero Sequence Mode */}
+          <Box
+            className="hero-wordmark-frame"
+            sx={{
+              position: "absolute",
+              top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
+              left: {
+                xs: "50%",
+                sm: `calc(50% - ${WORDMARK_INSET_SM}px)`,
+                md: `calc(50% - ${WORDMARK_INSET_MD}px)`,
+              },
+              width: "auto",
+              textAlign: { xs: "center", sm: "left" },
+              zIndex: 7,
+              overflow: "hidden",
+              clipPath: "inset(0 0 0 0)",
+              opacity: "var(--hp-word, 0)",
+              pointerEvents: "none",
+              transform: {
+                xs: "translate(-50%, -50%)",
+                sm: "translate(0, -50%)",
+              },
+            }}
+          >
+            <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
               <Typography
+                variant="h1"
+                component="h1"
+                aria-label="Phitopolis"
+                className="hero-wordmark"
                 sx={{
-                  fontFamily: DISPLAY_FONT,
-                  fontWeight: 800,
+                  fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
+                  fontWeight: 900,
+                  letterSpacing: "0.02em",
+                  lineHeight: 1,
                   textTransform: "uppercase",
-                  fontSize: { xs: "0.75rem", sm: "0.88rem", md: "1.02rem" },
-                  letterSpacing: "0.18em",
-                  lineHeight: 1.4,
-                  color: NOIR.frost,
-                  opacity: 0.95,
-                  mt: 0.5,
+                  userSelect: "none",
+                  color: NOIR.navyField,
+                  transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
                 }}
               >
-                {heroTrack === "enterprise" ? (
-                  <>
-                    Engineering Reliable{" "}
-                    <Box component="span" sx={{ color: NOIR.gold }}>
-                      ·
-                    </Box>{" "}
-                    FinTech & Quant Systems
-                  </>
-                ) : (
-                  <>
-                    Fast-Paced Career Growth{" "}
-                    <Box component="span" sx={{ color: NOIR.gold }}>
-                      ·
-                    </Box>{" "}
-                    For Serious Engineers
-                  </>
-                )}
-              </Typography>
-
-              {/* Subtitle / Minor text */}
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontWeight: 600,
-                  fontSize: { xs: "0.68rem", sm: "0.76rem", md: "0.82rem" },
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: `rgba(${NOIR.frostRgb}, 0.78)`,
-                  lineHeight: 1.5,
-                }}
-              >
-                {heroTrack === "enterprise"
-                  ? "Building high-availability market infrastructure and R&D products from the Philippines."
-                  : "Accelerate your engineering impact on complex R&D products in Manila."}
+                PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
               </Typography>
             </Box>
-          ) : (
-            /* PHITOPOLIS Word Transition — Legacy 2D Hero Sequence Mode */
-            <Box
-              className="hero-wordmark-frame"
-              sx={{
-                position: "absolute",
-                top: { xs: "calc(50% + 90px)", sm: "50%", md: "50%" },
-                left: {
-                  xs: "50%",
-                  sm: `calc(50% - ${WORDMARK_INSET_SM}px)`,
-                  md: `calc(50% - ${WORDMARK_INSET_MD}px)`,
-                },
-                width: "auto",
-                textAlign: { xs: "center", sm: "left" },
-                zIndex: 7,
-                overflow: "hidden",
-                clipPath: "inset(0 0 0 0)",
-                opacity: "var(--hp-word, 0)",
-                pointerEvents: "none",
-                transform: {
-                  xs: "translate(-50%, -50%)",
-                  sm: "translate(0, -50%)",
-                },
-              }}
-            >
-              <Box sx={{ position: "relative", overflow: "hidden", py: 0.5 }}>
-                <Typography
-                  variant="h1"
-                  component="h1"
-                  aria-label="Phitopolis"
-                  className="hero-wordmark"
-                  sx={{
-                    fontSize: { xs: "2.6rem", sm: "4.0rem", md: "5.8rem" },
-                    fontWeight: 900,
-                    letterSpacing: "0.02em",
-                    lineHeight: 1,
-                    textTransform: "uppercase",
-                    userSelect: "none",
-                    color: NOIR.navyField,
-                    transform: "translateY(calc(var(--hp-wordlift, 0) * 1%))",
-                  }}
-                >
-                  PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
-                </Typography>
-              </Box>
-            </Box>
-          )}
-
+          </Box>
         </Box>
 
 

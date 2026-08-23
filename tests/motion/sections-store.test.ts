@@ -66,14 +66,13 @@ test("every section EyeFlow can land on resolves, including the rail-only one", 
   for (const section of HOME_SECTIONS) {
     expect(homeSection(section.id).id).toBe(section.id);
   }
-  // "closing" is never rendered as a section. It is kept because it is harmless
-  // and shares its chapter with `blog`, which sorts first and so owns that
-  // chapter's scroll target. (The old comment here claimed it had to stay
-  // because "EyeFlow draws one rail dot per entry" — that described the retired
-  // ScrollRail. EyeFlow renders one label per chapter, not per section.)
+  // "closing" (ClosingShelf) DOES render as a section — it mounts its own
+  // SectionBeat (`id={section.id}`) and is now home's final chapter (HORIZON)
+  // since `blog`, which it used to share a chapter with, relocated to /about
+  // (PRD-home-client-focus §US-2). It owns its own chapter's scroll target.
   expect(HOME_SECTIONS.map((s) => s.id)).toContain("closing");
-  expect(homeSection("closing").chapter).toBe(9);
-  expect(chapterTarget(homeSection("closing").chapter)).toBe("blog");
+  expect(homeSection("closing").chapter).toBe(7);
+  expect(chapterTarget(homeSection("closing").chapter)).toBe("closing");
 });
 
 test("homeSection throws loudly on an unknown id rather than returning undefined", () => {
@@ -87,7 +86,10 @@ test("chapters are contiguous and non-decreasing down the page", () => {
   for (let i = 1; i < chapters.length; i += 1) {
     expect(chapters[i]!).toBeGreaterThanOrEqual(chapters[i - 1]!);
   }
-  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+  // Eight chapters now (0-7), not ten — the PEOPLE-act chapters (7-9) were
+  // pruned along with their sections when they relocated to /about
+  // (PRD-home-client-focus §US-2); `closing` became chapter 7 (HORIZON).
+  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7]));
   // Every declared chapter is actually used by a section, so the rail never
   // renders a label you cannot scroll to.
   expect(new Set(CHAPTERS.map((c) => c.index))).toEqual(new Set(chapters));
@@ -106,22 +108,13 @@ test("every chapter belongs to exactly one act", () => {
   }
 });
 
-test("the acts partition the page in order: all of SERVICES, then all of PEOPLE", () => {
-  // Sections are declared in scroll order, so the act sequence must change
-  // exactly once. Two changes would mean the page cuts back to Services after
-  // introducing the people — which is the narrative the two-act split exists to
-  // prevent.
+test("home is a single SERVICES act front to back, now that PEOPLE relocated to /about", () => {
+  // PRD-home-client-focus §US-2 moved the whole PEOPLE act (daily-life,
+  // candidates, testimonials, blog) to /about, so home's act sequence no
+  // longer changes at all — this replaces the old "Services then People"
+  // two-act partition test, which is no longer true of the page.
   const acts = HOME_SECTIONS.map((s) => actOfChapter(s.chapter));
   const switches = acts.filter((act, i) => i > 0 && act !== acts[i - 1]).length;
-  expect(switches).toBe(1);
-  expect(acts[0]).toBe("services");
-  expect(acts.at(-1)).toBe("people");
-
-  // The seam is between `reach` and `daily-life` specifically. If someone moves
-  // a section across it, this is the test that should fail.
-  const ids = HOME_SECTIONS.map((s) => s.id);
-  const lastServices = ids[acts.lastIndexOf("services")];
-  const firstPeople = ids[acts.indexOf("people")];
-  expect(lastServices).toBe("reach");
-  expect(firstPeople).toBe("daily-life");
+  expect(switches).toBe(0);
+  expect(new Set(acts)).toEqual(new Set(["services"]));
 });

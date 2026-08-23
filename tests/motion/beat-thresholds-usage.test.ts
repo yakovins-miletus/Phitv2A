@@ -58,7 +58,25 @@ test("beat/reveal code uses only the beatThresholds constants for reveal thresho
 
 test("beatThresholds.ts itself still defines the three constants these files rely on", () => {
   const src = fs.readFileSync(path.join(SRC, "shared/motion/beatThresholds.ts"), "utf8");
-  expect(src).toMatch(/export const BEAT_START = "top 75%"/);
-  expect(src).toMatch(/export const BEAT_EXIT_START = "bottom 30%"/);
+  // Shape, not value. This test exists so the constants the files above import
+  // cannot quietly disappear; the thresholds themselves are tuning knobs and
+  // pinning their literals here only made this a change-detector that had to be
+  // edited every time the page's entrance feel was adjusted.
+  expect(src).toMatch(/export const BEAT_START = "top \d+%"/);
+  expect(src).toMatch(/export const BEAT_EXIT_START = "bottom \d+%"/);
   expect(src).toMatch(/export const BEAT_EXIT_END = "bottom top"/);
+});
+
+test("STAGE_EXIT animates opacity only — no transform in the scrubbed recede", () => {
+  // Regression guard for the "pillars and leadership move back and forth" bug.
+  // SectionBeat's exit dim is the page's one scrubbed non-pin tween, so it
+  // plays backwards on every scroll micro-reversal Lenis produces. Any x/y/
+  // scale in STAGE_EXIT turns that reversal into a visible slide. See the
+  // comment on STAGE_EXIT in stageChoreo.ts.
+  const src = fs.readFileSync(path.join(SRC, "shared/components/stageChoreo.ts"), "utf8");
+  const decl = /export const STAGE_EXIT = \{([^}]*)\}/.exec(src);
+  expect(decl).not.toBeNull();
+  const body = decl![1];
+  expect(body).toMatch(/autoAlpha:/);
+  expect(body).not.toMatch(/\b(x|y|scale|rotation|clipPath)\s*:/);
 });

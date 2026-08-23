@@ -36,7 +36,6 @@ export function ReachSection() {
   return (
     <SectionBeat
       section={homeSection("reach")}
-      order={8}
       // Was "Mini Establishing Shot 4" in routes/index.tsx; see CapabilityRack.
       establishing={
         <MiniEstablishingShot
@@ -47,7 +46,6 @@ export function ReachSection() {
           tracer="Co-located execution presence spanning London, New York, Singapore, and Tokyo financial hubs."
         />
       }
-      establishScale="mini"
     >
       <Box ref={anchorRef} sx={{ mb: { xs: 5, md: 7 } }}>
         <SectionLede

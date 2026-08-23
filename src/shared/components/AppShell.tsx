@@ -32,6 +32,7 @@ import PhitopolisLogo from "./PhitopolisLogo";
 
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS, EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { heroTotalHeight } from "@/shared/motion/heroPin";
 import { useNavAutohide } from "./useNavAutohide";
 
 // Held in an untyped variable (not inlined) so the extra `data-lenis-prevent`
@@ -538,14 +539,27 @@ function AppShellInner({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", handleMottoKey);
   }, [toggleMotto]);
 
+/** Scroll offset at which non-home routes leave the transparent navbar state.
+ *  Small on purpose: those routes have no pinned hero to sit over. */
+const NAV_SOLID_AFTER_PX = 50;
+
   const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
       if (pathname === '/') {
-        setIsAtTop(window.scrollY < window.innerHeight * 19);
+        // The navbar stays `minimal` for exactly as long as the pinned hero owns
+        // the viewport, and not one screen longer.
+        //
+        // This read `window.innerHeight * 19`, which was correct only while the
+        // hero pin was `+=1900%`. The pin was later shortened to `+=800%` and
+        // this literal was not updated, so the navbar stayed minimal for
+        // nineteen viewport heights of a ~26-screen page — the scrolled glass
+        // treatment was effectively unreachable. Derived from the pin itself
+        // now, so it cannot drift again. See shared/motion/heroPin.ts.
+        setIsAtTop(window.scrollY < heroTotalHeight(window.innerHeight));
       } else {
-        setIsAtTop(window.scrollY < 50);
+        setIsAtTop(window.scrollY < NAV_SOLID_AFTER_PX);
       }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -663,7 +677,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     ? "1536px" 
                     : (isNotch 
                       ? "100vw" 
-                      : (derivedIsCompact ? { xs: "1200px", "2xl": "1536px" } : "1536px"))),
+                      : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px"))),
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and

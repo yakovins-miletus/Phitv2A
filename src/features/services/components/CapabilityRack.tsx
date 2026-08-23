@@ -18,7 +18,6 @@ export function CapabilityRack() {
   return (
     <SectionBeat
       section={homeSection("services")}
-      order={4}
       // Was "Mini Establishing Shot 2" in routes/index.tsx, inside an ad-hoc
       // <Container sx={{ pt: … }}>. Both the shot and its padding moved here:
       // the beat now owns the pair's spacing and its single timeline.
@@ -31,7 +30,6 @@ export function CapabilityRack() {
           tracer="High-performance computing, systematic execution engines, and mathematical research frameworks."
         />
       }
-      establishScale="mini"
     >
       <Stack ref={anchorRef} spacing={0} sx={{ mt: 0 }}>
         {CONTENT.services.map((service) => {

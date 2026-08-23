@@ -1,5 +1,5 @@
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
-import { HOME_SECTIONS } from "@/shared/sections";
+import { ABOUT_SECTIONS, HOME_SECTIONS } from "@/shared/sections";
 
 // The page keeps two registries of "what is on screen", on purpose:
 //
@@ -11,7 +11,11 @@ import { HOME_SECTIONS } from "@/shared/sections";
 // "daily-life-video" — and until NAV_ANCHORS existed both APIs took a bare
 // string, so crossing them was a silent no-op rather than an error.
 
-const sectionIds = HOME_SECTIONS.map((s) => s.id);
+// PRD-home-client-focus §US-2 moved `daily-life` (and candidates/testimonials/
+// blog) out of HOME_SECTIONS into ABOUT_SECTIONS — both registries feed the
+// same "section ids" namespace the anchor namespace must stay disjoint from,
+// so this test now checks against their union.
+const sectionIds = [...HOME_SECTIONS, ...ABOUT_SECTIONS].map((s) => s.id);
 const anchorIds = Object.values(NAV_ANCHORS);
 
 test("no id belongs to both registries", () => {
@@ -23,6 +27,7 @@ test("the near-miss pair is still a near miss, not a collision", () => {
   // These two are the reason the confusion is easy to fall into: the section is
   // the whole 100vh stage, the anchor is the film inside it that the navbar has
   // to go light over. Same feature, different geometry, different registry.
+  // `daily-life` now lives on /about (ABOUT_SECTIONS) rather than home.
   expect(sectionIds).toContain("daily-life");
   expect(anchorIds).toContain("daily-life-video");
   expect(sectionIds).not.toContain("daily-life-video");

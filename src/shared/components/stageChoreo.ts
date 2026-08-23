@@ -52,8 +52,23 @@ export const STAGE_CHOREO: Record<StageChoreo, ChoreoVariant> = {
 export const STAGE_LIT = { autoAlpha: 1, x: 0, y: 0, scale: 1 } as const;
 export const STAGE_LIT_CLIP = "inset(0% 0% 0% 0% round 4px)";
 
-/** Shared exit for ALL variants: entrances vary, the recede stays coherent. */
-export const STAGE_EXIT = { autoAlpha: 0.15, y: -40, scale: 0.94 } as const;
+/** Shared exit for ALL variants: entrances vary, the recede stays coherent.
+ *
+ *  OPACITY ONLY — deliberately. This is consumed by the one *scrubbed* tween in
+ *  SectionBeat, and a scrubbed tween is bidirectional: it plays backwards the
+ *  instant scroll direction reverses. Lenis's eased momentum produces many such
+ *  micro-reversals per flick, so a positional exit (`y: -40, scale: 0.94`, as
+ *  this carried until 2026-08-23) made `.stage-inner` visibly slide up and back
+ *  down through 40px while the reader was still on the section — reported as
+ *  the pillars and market-position content "moving back and forth", and loudest
+ *  there because both sit inside the `mt: -100vh` overlay sheet in
+ *  routes/index.tsx, which opens their exit range earlier than it looks.
+ *
+ *  Opacity has no positional read, so the same reversal is imperceptible. Do
+ *  not reintroduce `y`, `x`, or `scale` here: the fix is the absence of a
+ *  transform, not the magnitude of one. A positional recede would need a
+ *  time-based tween on a `once` trigger, not this scrub. */
+export const STAGE_EXIT = { autoAlpha: 0.25 } as const;
 
 /** Timeline phase durations as fractions of the scrubbed section timeline. */
 export const STAGE_ENTER_DURATION = 0.35;

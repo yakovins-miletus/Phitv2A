@@ -9,6 +9,7 @@ import {
   parseGround,
   rgbCss,
   sampleGround,
+  type GroundStop,
   type Rgb,
 } from "./groundStops";
 import { createGlGround, type GlGround } from "./glGround";
@@ -46,7 +47,14 @@ const SEAM_BLEND_PX = 1400;
  * Decorative and behind everything: `aria-hidden`, `z-index: -1`, and never a
  * candidate for LCP.
  */
-export function GroundLayer() {
+export interface GroundLayerProps {
+  /** The ground track to paint. Defaults to the home page's `GROUND_STOPS`;
+   *  /about passes `ABOUT_GROUND_STOPS` so its own sections' grounds paint
+   *  instead of home's (see about.tsx). */
+  stops?: readonly GroundStop[];
+}
+
+export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
@@ -87,7 +95,7 @@ export function GroundLayer() {
     // Deliberately not "the ground you would have at your scroll position": under
     // reduce the page must not repaint as you move.
     if (reduced === true) {
-      host.style.backgroundColor = GROUND_STOPS[0]?.color ?? "";
+      host.style.backgroundColor = stops[0]?.color ?? "";
       return;
     }
     if (!ready) return;
@@ -110,7 +118,7 @@ export function GroundLayer() {
      */
     let positions: number[] = [];
     const measure = () => {
-      positions = GROUND_STOPS.map((stop) => {
+      positions = stops.map((stop) => {
         const el = document.getElementById(stop.id);
         if (!el) return Number.POSITIVE_INFINITY;
         return window.scrollY + el.getBoundingClientRect().top;
@@ -139,7 +147,7 @@ export function GroundLayer() {
         measure();
       }
 
-      const s = sampleGround(GROUND_STOPS, positions, window.scrollY, BLEND_PX, SEAM_BLEND_PX);
+      const s = sampleGround(stops, positions, window.scrollY, BLEND_PX, SEAM_BLEND_PX);
 
       // Dev-only probe. The GL path runs with `preserveDrawingBuffer: false`, so
       // `readPixels` returns an empty buffer outside the render callback and there
@@ -151,8 +159,8 @@ export function GroundLayer() {
           renderer: gl ? "webgl2" : "css",
           color: rgbCss(s.color),
           seam: s.seam,
-          stop: GROUND_STOPS[s.fromIndex]?.id,
-          act: GROUND_STOPS[s.fromIndex]?.act,
+          stop: stops[s.fromIndex]?.id,
+          act: stops[s.fromIndex]?.act,
           positions: positions.slice(),
         };
       }
@@ -163,7 +171,7 @@ export function GroundLayer() {
         const key = `${s.fromIndex}|${s.color.join()}|${s.seam.toFixed(3)}`;
         if (key === lastKey) return;
         lastKey = key;
-        const next = GROUND_STOPS[s.fromIndex + 1];
+        const next = stops[s.fromIndex + 1];
         const to: Rgb = next ? parseGround(next.color) : s.color;
         gl.render(s.color, to, 0, s.seam);
         return;
@@ -220,7 +228,7 @@ export function GroundLayer() {
         delete (window as unknown as { __ground?: unknown }).__ground;
       }
     };
-  }, [reduced, lowPower, ready]);
+  }, [reduced, lowPower, ready, stops]);
 
   return (
     <Box
@@ -234,7 +242,7 @@ export function GroundLayer() {
         zIndex: -1,
         pointerEvents: "none",
         // Painted before the effect runs, so there is never a flash of white.
-        backgroundColor: GROUND_STOPS[0]?.color,
+        backgroundColor: stops[0]?.color,
       }}
     >
       <canvas

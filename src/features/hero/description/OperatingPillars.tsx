@@ -32,9 +32,7 @@ export function OperatingPillars() {
   return (
     <SectionBeat
       section={homeSection("hero-pillars")}
-      order={2}
       establishing={<PillarsEstablishingShot selfDriven={false} />}
-      establishScale="major"
       sx={{ minHeight: "auto", pt: 0, pb: { xs: 6, md: 10 } }}
     >
       <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, mt: { xs: 2, md: 3 } }}>

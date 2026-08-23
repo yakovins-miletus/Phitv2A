@@ -110,11 +110,6 @@ export const CONTENT = {
       tracer:
         "We build resilient software and cloud infrastructure designed for complex, high-demand environments.",
     },
-    services: {
-      gunshot: "Four disciplines. One delivery contract.",
-      tracer:
-        "Research, platforms, pipelines, and operational support: click any discipline to explore capabilities.",
-    },
     reach: {
       gunshot: "Established International Presence",
       tracer: "Arcs denote clients and investors.",

@@ -4,7 +4,6 @@ import { Box, InputBase, Modal, Typography } from "@mui/material";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
-import { useHeroModeState } from "@/features/hero/heroModeStore";
 import { useHeroBgModeState } from "@/features/hero/heroBgModeStore";
 import {
   GROUP_ORDER,
@@ -29,7 +28,6 @@ const isEditableTarget = (t: EventTarget | null): boolean => {
 export function CommandPalette() {
   const { navigateWithCurtain } = useTransitionCurtain();
   const reducedMotion = useReducedMotion();
-  const { mode: heroMode } = useHeroModeState();
   const { mode: heroBgMode } = useHeroBgModeState();
 
   const [open, setOpen] = useState(false);
@@ -234,7 +232,6 @@ export function CommandPalette() {
                       const selected = index === activeIndex;
                       const hint = commandHint(cmd, {
                         copied: copiedId === cmd.id,
-                        heroMode,
                         heroBgMode,
                       });
                       return (

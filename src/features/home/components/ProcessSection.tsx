@@ -14,11 +14,9 @@ export function ProcessSection() {
   return (
     <SectionBeat
       section={homeSection("process")}
-      order={6}
       // Was "Major Establishing Shot 2" as a separate sibling in
       // routes/index.tsx; see ProcessEstablishingShot.tsx.
       establishing={<ProcessEstablishingShot selfDriven={false} />}
-      establishScale="major"
     >
       <Box
         ref={anchorRef}
@@ -31,7 +29,7 @@ export function ProcessSection() {
           borderBottom: "1px solid rgba(255, 199, 44, 0.2)",
           py: { xs: 8, md: 14 },
           /**
-           * Break out of SectionBeat's `Container maxWidth="2xl"`.
+           * Break out of SectionBeat's `Container maxWidth="xl"`.
            *
            * The old `width: 100vw; ml/mr: calc(50% - 50vw)` version left a visible
            * gutter down both sides instead of bleeding to the true viewport edge.

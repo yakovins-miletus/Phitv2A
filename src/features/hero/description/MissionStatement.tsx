@@ -1,3 +1,5 @@
+import { lazy, Suspense, useRef } from "react";
+import { useInView } from "motion/react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { Link } from "@tanstack/react-router";
@@ -10,7 +12,58 @@ import { GROUNDS } from "@/shared/theme/grounds";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
-import { ServiceGlobe } from "./ServiceGlobe";
+// Lazy, and load-bearing that it stays that way. `ServiceGlobe` renders a
+// react-three-fiber scene, so a static import here would pull all of three.js
+// (~221KB brotli) into the eager home route chunk — this component is rendered
+// by the home page, so "statically imported" means "downloaded by every visitor
+// before anything paints". It is a decorative background sphere behind the
+// mission copy: nothing above it depends on it, and the section reads correctly
+// without it, so it can arrive a beat late.
+//
+// It was one of TWO edges putting three.js on the home critical path; the other
+// was `playground/constants.ts` reaching into `heroScene.ts` for a colour (see
+// `features/hero/heroPalette.ts`). Both had to be cut — fixing either alone left
+// the engine on the critical path.
+const ServiceGlobe = lazy(() =>
+  import("./ServiceGlobe").then((m) => ({ default: m.ServiceGlobe })),
+);
+
+/** How early the globe's chunk starts fetching, in px below the fold. Enough
+ *  that ~220KB has landed and the scene has mounted before the section is
+ *  actually looked at, so the globe is never seen popping in — but far short of
+ *  the ~6 viewports between first paint and this section, so it costs the
+ *  initial load nothing. */
+const GLOBE_PREFETCH_MARGIN = "0px 0px 900px 0px";
+
+/**
+ * Renders the globe only once the section is nearly in view.
+ *
+ * `React.lazy` alone does NOT keep three.js off the initial load, which is the
+ * trap this component exists to avoid: a lazy import fires as soon as the
+ * component *renders*, and `MissionStatement` renders during the home page's
+ * first paint. Measured on the 2026-08-23 build — with `lazy()` but no viewport
+ * gate, `three-*.js` (270KB transferred) was still fetched before any scroll
+ * happened. Deferring the *render* is what actually defers the download.
+ *
+ * The sentinel is a separate zero-cost sibling rather than a wrapper around the
+ * globe: `ServiceGlobe` positions itself `absolute` against the section's
+ * container, so wrapping it in another positioned element would re-anchor it.
+ */
+function DeferredServiceGlobe() {
+  const sentinelRef = useRef<HTMLSpanElement>(null);
+  const near = useInView(sentinelRef, { once: true, margin: GLOBE_PREFETCH_MARGIN });
+
+  return (
+    <>
+      <span ref={sentinelRef} aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
+      {near ? (
+        <Suspense fallback={null}>
+          <ServiceGlobe />
+        </Suspense>
+      ) : null}
+    </>
+  );
+}
 
 // Follows the section registry rather than naming a ground twice — see the same
 // note in MarketPosition.tsx.
@@ -56,7 +109,10 @@ export function MissionStatement() {
   const { heroLine, execSummary, cta } = CONTENT.hero.salesPitch;
 
   return (
-    <SectionBeat section={homeSection("hero-mission")} order={1} background={<ServiceGlobe />}>
+    <SectionBeat
+      section={homeSection("hero-mission")}
+      background={<DeferredServiceGlobe />}
+    >
       {/* Foreground Content.
        *
        * Narrower than the old 62% at desktop: the orbit ring's left extreme

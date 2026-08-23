@@ -39,8 +39,8 @@ export const NAV_ANCHORS = {
   PROCESS_IMMERSIVE: 'process-immersive',
   /** The Blog page's hero section. */
   BLOG_HERO: 'blog-hero',
-  /** The Home page's blog section. */
-  HOME_BLOG_SECTION: 'home-blog-section',
+  /** The About page's blog section (relocated from home — PRD-home-client-focus §US-2). */
+  ABOUT_BLOG_SECTION: 'about-blog-section',
   /** The Home page's closing shelf — navy ground, so the navbar must go light. */
   HOME_CLOSING: 'home-closing',
   /** AppShell's footer, on every route. */
@@ -63,10 +63,10 @@ export const NAV_ANCHORS = {
    *  between two now-dark sections (process, daily-life), so this anchor is
    *  what corrects the navbar back to light between them. */
   HOME_REACH: 'home-reach',
-  /** Home page: talent & careers section. Light ground. */
-  HOME_CANDIDATES: 'home-candidates',
-  /** Home page: testimonials section. Light ground. */
-  HOME_TESTIMONIALS: 'home-testimonials',
+  /** About page: talent & careers section (relocated from home). Light ground. */
+  ABOUT_CANDIDATES: 'about-candidates',
+  /** About page: testimonials section (relocated from home). Light ground. */
+  ABOUT_TESTIMONIALS: 'about-testimonials',
   /** The /services route. One anchor for the whole page — it's a single uniform
    *  light ground throughout, not a SectionBeat/ground-per-section page. */
   SERVICES_PAGE: 'services-page',

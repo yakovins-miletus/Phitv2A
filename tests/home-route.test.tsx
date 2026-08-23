@@ -48,7 +48,11 @@ test("home route loads via the router: hero, services, new visual sections", asy
     screen.getByRole("heading", { name: "Wall St. & Banking Leadership" }),
   ).toBeInTheDocument();
 
-  expect(screen.getByText(CONTENT.services[0]!.title)).toBeInTheDocument();
+  // PRD-home-client-focus §2b: CapabilityRack (the "four disciplines" grid
+  // duplicated from /services) no longer mounts on home — was previously
+  // asserted present via `CONTENT.services[0].title` here; now asserted
+  // absent instead, since that duplication is exactly what US-1 AC-3 forbids.
+  expect(screen.queryByText(CONTENT.services[0]!.title)).not.toBeInTheDocument();
   // ReachSection's heading became a SectionLede bound to CONTENT.ledes.reach.
   //
   // Asserted against the lede's current copy rather than a literal typed in here.
@@ -58,8 +62,14 @@ test("home route loads via the router: hero, services, new visual sections", asy
   // ReachSection renders its bound lede — without re-freezing prose that the copy
   // deck owns.
   expect(screen.getByText(CONTENT.ledes.reach.gunshot)).toBeInTheDocument();
-  // Careers panel 1 heading, now bound to CONTENT.targetCandidates.
+  // PRD-home-client-focus §2c/US-1 AC-1: the talent/culture narrative
+  // (daily-life, careers, testimonials, blog) relocated to /about — was
+  // previously asserted present here via the careers panel heading; now
+  // asserted absent from home, since home must present no hiring content.
   expect(
-    screen.getByRole("heading", { name: /For talents that outgrow large institutions/i }),
-  ).toBeInTheDocument();
+    screen.queryByRole("heading", { name: /For talents that outgrow large institutions/i }),
+  ).not.toBeInTheDocument();
+  // US-1 AC-4: a contact CTA in the opening view — the hero's
+  // "Start a conversation" CTA (see content.ts `cta`).
+  expect(screen.getByRole("link", { name: /start a conversation/i })).toBeInTheDocument();
 });

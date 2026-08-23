@@ -15,6 +15,7 @@ import {
   type ChapterIndex,
 } from "@/shared/sections";
 import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
+import { heroTotalHeight } from "@/shared/motion/heroPin";
 import { useReducedMotion } from "@/shared/motion";
 import { getLenis } from "./SmoothScroll";
 import { useNavbar } from "./NavbarContext";
@@ -52,12 +53,12 @@ export function EyeFlow() {
   /**
    * Chapter/progress tracking — cached offsets, not per-frame layout.
    *
-   * The five section anchors (`use-cases`, `reach`, `daily-life`, `candidates`,
-   * `blog`) only need their *document-relative* Y offset. `window.scrollY +
-   * rect.top` is scroll-position-invariant — the two terms cancel — so that
-   * number only changes when the layout above the anchor changes: a resize, a
-   * pin's spacer being sized, lazy content mounting. It never changes just
-   * because the reader scrolled. The previous version re-read all five
+   * The section anchors (`use-cases`, `reach`, `closing`) only need their
+   * *document-relative* Y offset. `window.scrollY + rect.top` is
+   * scroll-position-invariant — the two terms cancel — so that number only
+   * changes when the layout above the anchor changes: a resize, a pin's
+   * spacer being sized, lazy content mounting. It never changes just because
+   * the reader scrolled. The previous version re-read all five
    * `getBoundingClientRect()`s (plus `scrollHeight`) inside `gsap.ticker`,
    * i.e. a forced synchronous layout on every single frame, permanently, on
    * the home route.
@@ -68,29 +69,29 @@ export function EyeFlow() {
    * which offsets downstream of a pin are final), and on a debounced
    * `resize`. The per-frame `updateProgress` reads only `window.scrollY` (no
    * layout) and does arithmetic against the cached `offsets`.
+   *
+   * `daily-life`/`candidates`/`blog` anchors were removed here when those
+   * sections relocated to /about (PRD-home-client-focus §US-2) — `closing`
+   * (the operational-footprint beat) is now home's final chapter instead.
    */
   useEffect(() => {
     let limit = 0;
-    let offsets: number[] = new Array(11).fill(0);
+    let offsets: number[] = new Array(9).fill(0);
 
     const measure = () => {
       const winH = window.innerHeight;
       const docH = document.documentElement.scrollHeight;
       limit = docH - winH;
 
-      const heroHeight = 9 * winH; // 900% total (800% pin scroll + 100% natural height)
+      const heroHeight = heroTotalHeight(winH);
 
       const useCasesEl = document.getElementById("use-cases");
       const reachEl = document.getElementById("reach");
-      const dailyLifeEl = document.getElementById("daily-life");
-      const candidatesEl = document.getElementById("candidates");
-      const blogEl = document.getElementById("blog");
+      const closingEl = document.getElementById("closing");
 
       const y_useCases = useCasesEl ? window.scrollY + useCasesEl.getBoundingClientRect().top : heroHeight;
       const y_reach = reachEl ? window.scrollY + reachEl.getBoundingClientRect().top : y_useCases + winH;
-      const y_dailyLife = dailyLifeEl ? window.scrollY + dailyLifeEl.getBoundingClientRect().top : y_reach + winH;
-      const y_candidates = candidatesEl ? window.scrollY + candidatesEl.getBoundingClientRect().top : y_dailyLife + winH;
-      const y_blog = blogEl ? window.scrollY + blogEl.getBoundingClientRect().top : y_candidates + winH;
+      const y_closing = closingEl ? window.scrollY + closingEl.getBoundingClientRect().top : y_reach + winH;
 
       offsets = [
         0,                        // Ch 0: FLATTEN
@@ -100,9 +101,7 @@ export function EyeFlow() {
         0.60 * heroHeight,        // Ch 4: QUANTITATIVE R&D
         y_useCases,               // Ch 5: PRACTICE
         y_reach,                  // Ch 6: REACH
-        y_dailyLife,              // Ch 7: BEHIND THE CODE
-        y_candidates,             // Ch 8: TALENT
-        y_blog,                   // Ch 9: SIGNAL
+        y_closing,                // Ch 7: HORIZON
         limit,                    // End
       ];
     };
@@ -128,7 +127,7 @@ export function EyeFlow() {
         localP = (y - yStart) / range;
       }
 
-      const totalChapters = 10;
+      const totalChapters = 8;
       const segmentProgress = (intervalIdx + localP) / totalChapters;
       normalizedProgress.set(Math.max(0, Math.min(segmentProgress, 1)));
       setActiveChapter(intervalIdx as ChapterIndex);
@@ -178,7 +177,7 @@ export function EyeFlow() {
 
   const scrollToChapter = (index: ChapterIndex) => {
     const winH = window.innerHeight;
-    const heroHeight = 9 * winH; // 900% total (800% pin scroll + 100% natural height)
+    const heroHeight = heroTotalHeight(winH);
 
     if (index < 5) {
       const targetY = [
@@ -202,9 +201,7 @@ export function EyeFlow() {
       "", "", "", "", "",
       "use-cases",
       "reach",
-      "daily-life",
-      "candidates",
-      "blog",
+      "closing",
     ];
 
     const id = ids[index];

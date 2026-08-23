@@ -9,7 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
-import { homeSection } from "@/shared/sections";
+import { aboutSection, sectionOrder } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { BEAT_START, refreshPriorityFor } from "@/shared/motion/beatThresholds";
@@ -18,11 +18,12 @@ import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext"
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Same page order as the `SectionBeat` wrapper below (order={12}) — kept in
- *  sync manually because the card stagger runs on its own ScrollTrigger,
- *  scoped to this component's own ref rather than SectionBeat's (SectionBeat
- *  does not forward its internal ref). */
-const TESTIMONIALS_ORDER = 12;
+/** Same page order as the `SectionBeat` wrapper below — derived from the
+ *  registry via `sectionOrder`, rather than a second hand-written constant,
+ *  because the card stagger runs on its own ScrollTrigger, scoped to this
+ *  component's own ref rather than SectionBeat's (SectionBeat does not
+ *  forward its internal ref). */
+const TESTIMONIALS_ORDER = sectionOrder("testimonials");
 
 /** Card entrance stagger, in seconds. */
 const CARD_STAGGER = 0.08;
@@ -183,7 +184,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 export function TestimonialsSection() {
   const scopeRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_TESTIMONIALS, { dark: false });
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TESTIMONIALS, { dark: false });
 
   useGSAP(
     () => {
@@ -209,7 +210,7 @@ export function TestimonialsSection() {
   );
 
   return (
-    <SectionBeat section={homeSection("testimonials")} order={12} muted>
+    <SectionBeat section={aboutSection("testimonials")} muted>
       <Box
         ref={(el: HTMLDivElement | null) => {
           scopeRef.current = el;

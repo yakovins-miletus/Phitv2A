@@ -55,21 +55,39 @@ export const BEAT_ENTER_START = "top bottom";
  * separate top-level trigger (GreenSock forbids `scrub` + `toggleActions` on
  * one trigger, but permits two triggers on one element with disjoint ranges).
  *
- * These reproduce the *current* exit behaviour rather than inventing a new one.
- * Today `StageSection` runs one scrubbed timeline over `BEAT_START` →
- * `"bottom top"`, and `stageChoreo.ts` splits it 0.35 enter / 0.47 hold / 0.18
- * exit — so the dim occupies the final 18% of that range. Resolving that for a
- * full-viewport section (height H = 1vh, range length L = H + 0.75vh = 1.75vh):
+ * This used to be derived (`bottom 30%`) from a retired single-timeline split of
+ * 0.35 enter / 0.47 hold / 0.18 exit. That derivation no longer describes the
+ * code — the entrance and the exit have been two separate triggers since Phase
+ * 3 — and the value it produced was actively wrong: on a `minHeight: 100svh`
+ * section, `bottom 30%` opens the dim while the section is still ~70% on screen
+ * and being read, so a scrub reversal there is a reversal the reader watches.
  *
- *   exit begins at  end − 0.18·L  =  top + 1vh − 0.315vh  =  top + 0.685vh
- *
- * which, expressed against the section's bottom edge, is
- * `bottom (1 − 0.685) = bottom 31.5%` — rounded to `bottom 30%`. The end is
- * unchanged from today's `"bottom top"`: the dim completes exactly as the
- * section leaves the top of the viewport.
+ * `bottom 10%` instead: the recede begins only once the section is genuinely
+ * leaving. The end is unchanged — the dim completes exactly as the section
+ * clears the top of the viewport.
  */
-export const BEAT_EXIT_START = "bottom 30%";
+export const BEAT_EXIT_START = "bottom 10%";
 export const BEAT_EXIT_END = "bottom top";
+
+/**
+ * SCRUB POLICY — when a ScrollTrigger may use `scrub` at all.
+ *
+ * `SCROLL_SPEED` appears in several components with no shared statement of when
+ * scrubbing is legitimate, and the ambiguity has cost real bugs (see STAGE_EXIT
+ * in stageChoreo.ts). The rule:
+ *
+ *   SCRUB      pins and progress-linked narratives — anything where the reader's
+ *              scroll position IS the timeline position and reversing is the
+ *              intended, legible behaviour (UseCasesNarrative, DailyLifeSection,
+ *              JourneyTimeline).
+ *   DO NOT     entrances and recedes. These are events, not progressions. A
+ *   SCRUB      scrubbed one plays backwards on every scroll micro-reversal.
+ *              Use a time-based tween on a `once` trigger instead.
+ *
+ * The one scrubbed tween that is not a pin — SectionBeat's exit dim — is
+ * permitted only because it animates opacity alone, which makes its reversal
+ * imperceptible. That exemption does not generalise.
+ */
 
 /**
  * Page order → `refreshPriority`.

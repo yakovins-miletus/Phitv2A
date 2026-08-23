@@ -1,12 +1,13 @@
 import {
   ACT_BREAK_INDEX,
+  buildGroundStops,
   GROUND_STOPS,
   mixRgb,
   parseGround,
   sampleGround,
   smoothstep,
 } from "@/shared/components/ground/groundStops";
-import { HOME_SECTIONS, actOfChapter } from "@/shared/sections";
+import { HOME_SECTIONS, actOfChapter, type ChapterDef, type SectionDef } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 
 // The ground track is pure data and pure maths, deliberately split from the
@@ -15,7 +16,10 @@ import { GROUNDS } from "@/shared/theme/grounds";
 // they only differ in how.
 
 test("every rendered section has a stop, in scroll order", () => {
-  const UNRENDERED = ["closing", "hero-flatten", "hero-align", "hero-reveal", "hero-dwell"];
+  // `closing` (ClosingShelf) does render an element via its own SectionBeat
+  // (`id={section.id}`), so it is no longer in the unrendered set — only the
+  // four decorative hero-flatten/align/reveal/dwell phases have no element.
+  const UNRENDERED = ["hero-flatten", "hero-align", "hero-reveal", "hero-dwell"];
   const rendered = HOME_SECTIONS.filter((s) => !UNRENDERED.includes(s.id)).map((s) => s.id);
   expect(GROUND_STOPS.map((s) => s.id)).toEqual(rendered);
 });
@@ -29,17 +33,40 @@ test("every stop resolves to a real colour from the palette", () => {
   }
 });
 
-test("there is exactly one act break, and it is reach -> daily-life", () => {
+test("the home page's ground track has no act break, having collapsed to a single act", () => {
+  // PRD-home-client-focus §US-2 relocated `daily-life`/`candidates`/
+  // `testimonials`/`blog` (the PEOPLE act) to /about, so home is now a single
+  // "services" act front to back and there is nothing for the ground layer to
+  // wipe between. This replaces the old "reach -> daily-life" act-break
+  // assertion, which is no longer true of the page.
   const breaks = GROUND_STOPS.filter((s) => s.actBreak);
-  expect(breaks).toHaveLength(1);
-  expect(ACT_BREAK_INDEX).toBeGreaterThan(0);
+  expect(breaks).toHaveLength(0);
+  expect(ACT_BREAK_INDEX).toBe(-1);
+  expect(new Set(GROUND_STOPS.map((s) => s.act))).toEqual(new Set(["services"]));
+});
 
-  const at = GROUND_STOPS[ACT_BREAK_INDEX];
-  const before = GROUND_STOPS[ACT_BREAK_INDEX - 1];
-  expect(before?.id).toBe("reach");
-  expect(at?.id).toBe("daily-life");
-  expect(before?.act).toBe("services");
-  expect(at?.act).toBe("people");
+/**
+ * `buildGroundStops` (the generic ground-track builder shared by home and
+ * /about — see groundStops.ts) still needs to be exercised against an actual
+ * act break: real home data no longer has one, so these fixture sections
+ * synthesize a two-act track purely to test the seam/act-break maths that
+ * `sampleGround` depends on (see the two tests below that consume it).
+ */
+const FIXTURE_CHAPTERS: readonly ChapterDef[] = [
+  { index: 0, label: "A", act: "services" },
+  { index: 1, label: "B", act: "people" },
+];
+const FIXTURE_SECTIONS: readonly SectionDef[] = [
+  { id: "fixture-a", label: "A", chapter: 0, ground: "white" },
+  { id: "fixture-b", label: "B", chapter: 1, ground: "deep" },
+];
+const FIXTURE_STOPS = buildGroundStops(FIXTURE_SECTIONS, FIXTURE_CHAPTERS);
+const FIXTURE_ACT_BREAK_INDEX = FIXTURE_STOPS.findIndex((s) => s.actBreak);
+
+test("buildGroundStops still flags an act break when consecutive sections change act", () => {
+  expect(FIXTURE_ACT_BREAK_INDEX).toBe(1);
+  expect(FIXTURE_STOPS[0]?.act).toBe("services");
+  expect(FIXTURE_STOPS[1]?.act).toBe("people");
 });
 
 /** Weighted byte-space luminance — a cheap ordering of how light a ground reads. */
@@ -73,8 +100,8 @@ test("the act break is a visible colour change, not just a flag", () => {
   // Note the seam's *legibility* no longer rests on delta magnitude alone: the
   // shader's directional wipe (glGround.ts) is a per-pixel effect and reads even
   // across a modest colour change.
-  const before = GROUND_STOPS[ACT_BREAK_INDEX - 1];
-  const at = GROUND_STOPS[ACT_BREAK_INDEX];
+  const before = FIXTURE_STOPS[FIXTURE_ACT_BREAK_INDEX - 1];
+  const at = FIXTURE_STOPS[FIXTURE_ACT_BREAK_INDEX];
   const a = parseGround(before!.color);
   const b = parseGround(at!.color);
 
@@ -119,11 +146,13 @@ test("home page stops are light except the sections declared dark", () => {
     }
   }
 
+  // `daily-life` and `blog` dropped out of this list when they relocated to
+  // /about (PRD-home-client-focus §US-2); `closing` (ground "field", same
+  // dark ground `blog` used to declare) is the one that stayed on home.
   const dark = GROUND_STOPS.filter((s) => GROUNDS[s.ground].dark);
   expect(dark.map((s) => s.id), "the home page's declared dark grounds").toEqual([
     "process",
-    "daily-life",
-    "blog",
+    "closing",
   ]);
 });
 
@@ -177,41 +206,58 @@ test("sampleGround holds a stable colour mid-section and blends only near the se
   expect(at.color).toEqual(parseGround(stops[1]!.color));
 });
 
+// Both remaining tests need an actual act break, which real home data no
+// longer has (see "the home page's ground track has no act break" above) —
+// they run against a fixture that has three stops so there's also a
+// within-act boundary to contrast against, built the same way FIXTURE_STOPS
+// was above.
+const RUNWAY_FIXTURE_SECTIONS: readonly SectionDef[] = [
+  { id: "fx-1", label: "1", chapter: 0, ground: "white" },
+  { id: "fx-2", label: "2", chapter: 0, ground: "panel" },
+  { id: "fx-3", label: "3", chapter: 1, ground: "deep" },
+];
+const RUNWAY_FIXTURE_CHAPTERS: readonly ChapterDef[] = [
+  { index: 0, label: "A", act: "services" },
+  { index: 1, label: "B", act: "people" },
+];
+const RUNWAY_STOPS = buildGroundStops(RUNWAY_FIXTURE_SECTIONS, RUNWAY_FIXTURE_CHAPTERS);
+const RUNWAY_ACT_BREAK_INDEX = RUNWAY_STOPS.findIndex((s) => s.actBreak);
+
 test("the act break gets a wider runway than an ordinary boundary", () => {
-  // `daily-life` is pinned, so its measured offset shifts once GSAP sizes the pin
-  // spacer. A wider seam blend means that late correction lands inside a gradient
-  // that is already moving rather than as a visible snap.
-  const positions = GROUND_STOPS.map((_, i) => i * 4000);
+  // A pinned section's measured offset shifts once GSAP sizes the pin
+  // spacer. A wider seam blend means that late correction lands inside a
+  // gradient that is already moving rather than as a visible snap.
+  const positions = RUNWAY_STOPS.map((_, i) => i * 4000);
   const blend = 400;
   const seamBlend = 1600;
 
   // 800px before the act break: outside the ordinary blend, inside the seam blend.
-  const y = ACT_BREAK_INDEX * 4000 - 800;
-  const narrow = sampleGround(GROUND_STOPS, positions, y, blend, blend);
-  const wide = sampleGround(GROUND_STOPS, positions, y, blend, seamBlend);
+  const y = RUNWAY_ACT_BREAK_INDEX * 4000 - 800;
+  const narrow = sampleGround(RUNWAY_STOPS, positions, y, blend, blend);
+  const wide = sampleGround(RUNWAY_STOPS, positions, y, blend, seamBlend);
 
   expect(narrow.seam).toBe(0);
   expect(wide.seam).toBeGreaterThan(0);
 
   // A non-act boundary must be unaffected by the seam width.
-  const inside = (ACT_BREAK_INDEX - 1) * 4000 - 800;
-  expect(sampleGround(GROUND_STOPS, positions, inside, blend, seamBlend).color).toEqual(
-    sampleGround(GROUND_STOPS, positions, inside, blend, blend).color,
+  const inside = (RUNWAY_ACT_BREAK_INDEX - 1) * 4000 - 800;
+  expect(sampleGround(RUNWAY_STOPS, positions, inside, blend, seamBlend).color).toEqual(
+    sampleGround(RUNWAY_STOPS, positions, inside, blend, blend).color,
   );
 });
 
 test("sampleGround reports seam only across an act break", () => {
-  const positions = GROUND_STOPS.map((_, i) => i * 1000);
+  const positions = RUNWAY_STOPS.map((_, i) => i * 1000);
   const blend = 400;
 
   // Approaching the act break, seam ramps up.
-  const breakPos = ACT_BREAK_INDEX * 1000;
-  const atBreak = sampleGround(GROUND_STOPS, positions, breakPos - 1, blend);
+  const breakPos = RUNWAY_ACT_BREAK_INDEX * 1000;
+  const atBreak = sampleGround(RUNWAY_STOPS, positions, breakPos - 1, blend);
   expect(atBreak.seam).toBeGreaterThan(0);
 
   // Approaching any within-act boundary, it stays flat at zero.
-  const withinAct = ACT_BREAK_INDEX - 1;
-  const inside = sampleGround(GROUND_STOPS, positions, withinAct * 1000 - 1, blend);
+  const withinAct = RUNWAY_ACT_BREAK_INDEX - 1;
+  const inside = sampleGround(RUNWAY_STOPS, positions, withinAct * 1000 - 1, blend);
   expect(inside.seam).toBe(0);
 });
 
@@ -224,9 +270,12 @@ test("sampleGround survives an empty track and a missing section", () => {
 });
 
 test("acts partition the stop list with no interleaving", () => {
+  // Home collapsed to a single act (PRD-home-client-focus §US-2), so there
+  // are zero switches now rather than the one Services -> People switch that
+  // used to exist here.
   const acts = GROUND_STOPS.map((s) => s.act);
   const switches = acts.filter((a, i) => i > 0 && a !== acts[i - 1]).length;
-  expect(switches).toBe(1);
+  expect(switches).toBe(0);
   for (const stop of GROUND_STOPS) {
     const section = HOME_SECTIONS.find((s) => s.id === stop.id);
     expect(stop.act).toBe(actOfChapter(section!.chapter));

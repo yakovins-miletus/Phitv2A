@@ -80,8 +80,6 @@ export function ClosingShelf() {
   return (
     <SectionBeat
       section={homeSection("closing")}
-      order={16}
-      noExitDim
       // Was "Mini Establishing Shot 7: Horizon Gateway" in routes/index.tsx.
       establishing={
         <MiniEstablishingShot
@@ -93,8 +91,6 @@ export function ClosingShelf() {
           dark
         />
       }
-      establishScale="mini"
-      establishAlign="left"
       sx={{
         position: "relative",
         zIndex: 1,
@@ -114,7 +110,7 @@ export function ClosingShelf() {
           justifyContent: "center",
           width: "100%",
           // Was Container maxWidth="xl" — narrower than SectionBeat's own
-          // maxWidth="2xl" Container, so the constraint moves here rather than
+          // maxWidth="xl" Container, so the constraint moves here rather than
           // widening the shelf to match every other migrated beat.
           maxWidth: (theme) => theme.breakpoints.values.xl,
           mx: "auto",

@@ -10,9 +10,10 @@ import { useState } from "react";
 import { blogPostsQuery, type BlogPostSummary } from "@/features/blog/api";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
 import { Reveal } from "@/shared/components/Reveal";
+import { RouterLink } from "@/shared/components/RouterLink";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
-import { homeSection } from "@/shared/sections";
+import { aboutSection } from "@/shared/sections";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
@@ -36,15 +37,25 @@ function SideArticleCard({
   post: BlogPostSummary;
   index: number;
 }) {
-  const navigate = useNavigate();
-  const [hovered, setHovered] = useState(false);
-
   return (
     <Reveal delay={0.15 + index * 0.08} style={{ display: "flex", flex: 1 }}>
-      <Box
-        onClick={() => void navigate({ to: "/blog/$slug", params: { slug: post.slug } })}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+      {/* A real anchor, not a clickable <Box>.
+          This was `<Box onClick={navigate(...)} sx={{cursor:"pointer"}}>` with no
+          role, tabIndex or key handler — so the whole card was invisible to the
+          keyboard, unannounced by screen readers, and could not be opened in a
+          new tab or middle-clicked. Rendering the link the browser already has
+          gives all of that back for free, and is strictly less code than
+          bolting role/tabIndex/onKeyDown onto a div would have been.
+
+          Hover also moved from React state to CSS `:hover` + `&:hover .class`
+          descendants. It reads the same, but it no longer re-renders the card
+          (and its image, watermark and three Typographys) twice per pointer
+          crossing, and it keeps working under `:focus-visible` for keyboard
+          users, which the old mouse-only handlers never did. */}
+      <RouterLink
+        to="/blog/$slug"
+        params={{ slug: post.slug }}
+        underline="none"
         sx={{
           flex: 1,
           position: "relative",
@@ -54,35 +65,57 @@ function SideArticleCard({
           alignItems: { xs: "flex-start", sm: "center" },
           gap: 3,
           p: { xs: 2.5, md: 3 },
-          borderRadius: 3.5,
-          bgcolor: hovered ? "rgba(10, 42, 102, 0.55)" : "rgba(6, 18, 38, 0.75)",
+          // Corner + elevation from the glass system rather than local values
+          // (was `borderRadius: 3.5` = 14px and two hand-rolled black shadows).
+          borderRadius: "var(--r-card)",
+          bgcolor: `rgba(${NOIR.navyInkRgb}, 0.75)`,
           border: "1px solid",
-          borderColor: hovered ? "rgba(255, 199, 44, 0.4)" : "rgba(255, 255, 255, 0.08)",
-          cursor: "pointer",
-          transition: `all 0.35s ${EASE_OUT_EXPO_CSS}`,
-          transform: hovered ? "translateY(-3px)" : "translateY(0)",
-          boxShadow: hovered ? "0 16px 36px rgba(0, 0, 0, 0.35)" : "0 4px 16px rgba(0, 0, 0, 0.15)",
+          borderColor: `rgba(${NOIR.whiteRgb}, 0.08)`,
+          boxShadow: "var(--glass-shadow-1)",
+          transition: `background-color 0.35s ${EASE_OUT_EXPO_CSS}, border-color 0.35s ${EASE_OUT_EXPO_CSS}, transform 0.35s ${EASE_OUT_EXPO_CSS}, box-shadow 0.35s ${EASE_OUT_EXPO_CSS}`,
+          "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+
+          "&:hover, &:focus-visible": {
+            bgcolor: `rgba(${NOIR.navyFieldRgb}, 0.55)`,
+            borderColor: `rgba(${NOIR.goldRgb}, 0.4)`,
+            transform: "translateY(-3px)",
+            boxShadow: "var(--glass-shadow-3)",
+          },
+          "&:focus-visible": { outline: `2px solid ${NOIR.gold}`, outlineOffset: "3px" },
+
+          // Child reactions, previously six `hovered ? a : b` ternaries driven
+          // by React state. Keyed off the same :hover/:focus-visible pair so
+          // the card animates identically for pointer and keyboard.
+          "&:hover .blogcard-watermark, &:focus-visible .blogcard-watermark": {
+            transform: "translateY(-50%) scale(1.08)",
+            opacity: 0.16,
+            filter: `drop-shadow(0 0 16px rgba(${NOIR.goldRgb}, 0.25))`,
+          },
+          "&:hover .blogcard-thumb, &:focus-visible .blogcard-thumb": { transform: "scale(1.08)" },
+          "&:hover .blogcard-title, &:focus-visible .blogcard-title": { color: NOIR.frost },
+          "&:hover .blogcard-arrow, &:focus-visible .blogcard-arrow": { transform: "translateX(4px)" },
         }}
       >
         {/* Phitopolis Vector Logo Watermark in Container Background */}
         <Box
           aria-hidden="true"
+          className="blogcard-watermark"
           sx={{
             position: "absolute",
             right: { xs: -30, sm: -20 },
             top: "50%",
-            transform: hovered ? "translateY(-50%) scale(1.08)" : "translateY(-50%) scale(1)",
+            transform: "translateY(-50%) scale(1)",
             width: { xs: 160, sm: 220 },
             height: { xs: 160, sm: 220 },
             backgroundImage: "url('/phitopolis_logo_hero.svg')",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             backgroundSize: "contain",
-            opacity: hovered ? 0.16 : 0.07,
+            opacity: 0.07,
             pointerEvents: "none",
             zIndex: 0,
             transition: `opacity 0.4s ${EASE_OUT_EXPO_CSS}, transform 0.4s ${EASE_OUT_EXPO_CSS}`,
-            filter: hovered ? "drop-shadow(0 0 16px rgba(255, 199, 44, 0.25))" : "none",
+            filter: "none",
           }}
         />
 
@@ -97,19 +130,27 @@ function SideArticleCard({
               overflow: "hidden",
               position: "relative",
               zIndex: 1,
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              border: `1px solid rgba(${NOIR.whiteRgb}, 0.1)`,
             }}
           >
             <Box
               component="img"
+              // This section sits ~24,000px down the home page — roughly 27
+              // viewports past the fold — and these cards were loading eagerly,
+              // spending ~1MB of the initial page load on imagery nobody has
+              // scrolled to. The browser's lazy threshold still fetches well
+              // before the section enters view, so nothing pops in.
+              loading="lazy"
+              decoding="async"
               src={post.image_url}
               alt=""
+              className="blogcard-thumb"
               sx={{
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
                 transition: `transform 0.8s ${EASE_OUT_EXPO_CSS}`,
-                transform: hovered ? "scale(1.08)" : "scale(1)",
+                transform: "scale(1)",
               }}
             />
           </Box>
@@ -118,38 +159,27 @@ function SideArticleCard({
         {/* Content Details */}
         <Stack spacing={1} sx={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.6875rem",
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                color: NOIR.gold,
-                textTransform: "uppercase",
-              }}
-            >
+            {/* `micro` is the mono meta-rail variant — MONO family, 0.6875rem,
+                uppercase, wide tracking — so all four of those declarations
+                come from the theme now instead of being restated here. */}
+            <Typography variant="micro" sx={{ fontWeight: 700, color: NOIR.gold }}>
               {post.category}
             </Typography>
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                fontSize: "0.6875rem",
-                color: "rgba(244, 247, 252, 0.4)",
-              }}
-            >
+            <Typography variant="micro" sx={{ color: `rgba(${NOIR.frostRgb}, 0.4)` }}>
               · {formatDate(post.published_on)}
             </Typography>
           </Stack>
 
           <Typography
             variant="h4"
+            className="blogcard-title"
             sx={{
               fontFamily: DISPLAY_FONT,
               fontWeight: 700,
               fontSize: { xs: "1.1rem", md: "1.15rem" },
               lineHeight: 1.25,
               letterSpacing: "-0.015em",
-              color: hovered ? NOIR.frost : "rgba(244, 247, 252, 0.92)",
+              color: `rgba(${NOIR.frostRgb}, 0.92)`,
               transition: "color 0.2s ease",
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -164,7 +194,7 @@ function SideArticleCard({
             sx={{
               fontFamily: MONO,
               fontSize: "0.75rem",
-              color: "rgba(244, 247, 252, 0.5)",
+              color: `rgba(${NOIR.frostRgb}, 0.5)`,
               display: "flex",
               alignItems: "center",
               gap: 0.75,
@@ -174,9 +204,10 @@ function SideArticleCard({
             READ ARTICLE
             <Box
               component="span"
+              className="blogcard-arrow"
               sx={{
                 transition: "transform 0.2s ease",
-                transform: hovered ? "translateX(4px)" : "translateX(0)",
+                transform: "translateX(0)",
                 color: NOIR.gold,
               }}
             >
@@ -184,7 +215,7 @@ function SideArticleCard({
             </Box>
           </Typography>
         </Stack>
-      </Box>
+      </RouterLink>
     </Reveal>
   );
 }
@@ -194,7 +225,7 @@ export function BlogSection() {
   const page = useQuery(blogPostsQuery({ limit: 4, offset: 0 }));
   const posts = page.data?.items ?? FALLBACK_BLOG_PAGE.items;
   const navigate = useNavigate();
-  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_BLOG_SECTION, { dark: true });
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_BLOG_SECTION, { dark: true });
 
   const [featuredHovered, setFeaturedHovered] = useState(false);
 
@@ -205,8 +236,7 @@ export function BlogSection() {
 
   return (
     <SectionBeat
-      section={homeSection("blog")}
-      order={13}
+      section={aboutSection("blog")}
       // Was "Mini Establishing Shot 6" in routes/index.tsx; see CapabilityRack.
       establishing={
         <MiniEstablishingShot
@@ -218,7 +248,6 @@ export function BlogSection() {
           dark
         />
       }
-      establishScale="mini"
     >
       <Box
         ref={anchorRef}
@@ -295,6 +324,11 @@ export function BlogSection() {
                 {featuredPost.image_url && (
                   <Box
                     component="img"
+                    // Lazy for the same reason as the side cards above: far
+                    // below the fold, and this is the largest single image the
+                    // home page pulls (the featured post's full-size frame).
+                    loading="lazy"
+                    decoding="async"
                     src={featuredPost.image_url}
                     alt=""
                     sx={{

@@ -15,6 +15,7 @@ import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
+import { sectionOrder } from "@/shared/sections";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { useStagePresence } from "@/shared/components/StageSection";
 import {
@@ -72,16 +73,22 @@ export function DailyLifeSection() {
           start: "top top",
           end: DAILY_LIFE_PIN_DISTANCE,
           pin: true,
+          // SCRUB POLICY (beatThresholds.ts): legitimate here because this is
+          // a pin whose progress IS the timeline position, not an
+          // entrance/recede event.
           scrub: SCROLL_SPEED,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           // Page-order refresh priority. ScrollTrigger refreshes the HIGHEST
           // `refreshPriority` first (see beatThresholds.ts for the sort math),
           // and `refreshPriorityFor` maps page order onto a descending positive
-          // scale — so a smaller `order` refreshes earlier. This pin sits at
-          // page position 10; its +=140% spacer shifts careers/testimonials/
-          // blog/closing below it, so it must resolve before they measure.
-          refreshPriority: refreshPriorityFor(10),
+          // scale — so a smaller `order` refreshes earlier. `sectionOrder`
+          // reads this section's position straight out of `ABOUT_SECTIONS`
+          // (PRD-home-client-focus §US-5 AC-1) rather than a hand-copied
+          // number, so it can't drift if the registry is reordered. This pin's
+          // +=140% spacer shifts careers/testimonials/blog below it, so it
+          // must resolve before they measure.
+          refreshPriority: refreshPriorityFor(sectionOrder("daily-life")),
         },
       });
 

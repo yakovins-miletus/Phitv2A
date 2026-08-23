@@ -3,6 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef, useState } from "react";
 import type { SyntheticEvent } from "react";
 
+import { preferWebp } from "@/shared/bodyImages";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { CHAPTER_ACCENTS, NOIR } from "@/shared/theme/palette";
@@ -232,8 +233,28 @@ const CHAPTER_SCATTER: Record<string, ScatterPos[]> = {
 // URLs above, which stayed visibly broken. Now any failed extension degrades
 // once to a hidden element (an empty polaroid frame) instead of firing a
 // second network request against a host that may no longer exist.
+/**
+ * Two-stage fallback, because these `src`s are rewritten to `.webp` by
+ * `preferWebp` at render time (see `TimelinePhoto`/`StaticJourneyImage`).
+ *
+ * Stage 1 — retry the original raster. Every timeline photo has a WebP twin
+ * today (26/26, converted 2026-08-23), but the rewrite is a *convention*, not a
+ * guarantee: a photo added later without running the conversion would 404 its
+ * `.webp` and, under the previous version of this handler, silently vanish.
+ * Falling back to the path actually committed to the repo turns that into a
+ * slower image rather than a missing one.
+ *
+ * Stage 2 — hide, as before, if the original is missing too (the genuinely
+ * broken case this function was originally written for).
+ */
 function handleImgError(event: SyntheticEvent<HTMLImageElement>): void {
   const el = event.currentTarget;
+  const fallback = el.dataset.fallbackSrc;
+  if (fallback && el.dataset.triedFallback !== "1") {
+    el.dataset.triedFallback = "1";
+    el.src = fallback;
+    return;
+  }
   if (el.dataset.brokenImage === "1") return; // already handled — don't loop
   el.dataset.brokenImage = "1";
   el.style.display = "none";
@@ -515,8 +536,12 @@ function ScatterPhoto({ src, alt, pos }: { src: string; alt: string; pos: Scatte
         willChange: "transform",
       }}
     >
+      {/* preferWebp: the committed paths are .jpg/.png; every one has a WebP
+          twin (9.9MB -> 5.3MB across the 26 timeline photos). data-fallback-src
+          is what handleImgError retries if a twin is ever missing. */}
       <img decoding="async" loading="lazy"
-        src={src}
+        src={preferWebp(src)}
+        data-fallback-src={src}
         alt={alt}
         onError={handleImgError}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
@@ -533,7 +558,7 @@ function StaticJourneyImage({ src, title }: { src: string; title: string }) {
         aspectRatio: "4/3", maxWidth: 360, borderRadius: 10, overflow: "hidden", 
         border: "2px solid rgba(255,255,255,0.7)",
       }}>
-      <img decoding="async" loading="lazy" src={src} alt={title} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      <img decoding="async" loading="lazy" src={preferWebp(src)} data-fallback-src={src} alt={title} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
     </div>
   );
 }
@@ -598,6 +623,9 @@ export function JourneyTimeline() {
           trigger: containerRef.current,
           start: "top top",
           end: "bottom bottom",
+          // SCRUB POLICY (beatThresholds.ts): legitimate here because this is
+          // a progress-linked narrative — scroll position IS the timeline
+          // position, and reversing on scroll-back is the intended behaviour.
           scrub: SCROLL_SPEED,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
