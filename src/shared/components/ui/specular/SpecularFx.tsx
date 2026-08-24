@@ -193,7 +193,11 @@ export default function SpecularFx({
     const btn = fx?.parentElement;
     if (!fx || !btn || !enabled) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    // Capped at 2, matching HeroCanvas, LogoParticleField and GroundLayer. This
+    // was the one uncapped canvas in the codebase: on a 3x-DPR phone it was
+    // allocating 2.25x the pixels of every other surface to draw a 1px rim on a
+    // button, and up to six of these run at once (see glContextBudget.ts).
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     /** Everything owned by one GL lifetime, so `stop()` can drop it all. */
     let ctx: {
@@ -220,7 +224,22 @@ export default function SpecularFx({
     const start = () => {
       if (ctx) return;
 
-      const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr });
+      // `new Renderer()` throws (TypeError, from inside ogl) when the browser
+      // cannot hand out a WebGL context at all — disabled hardware
+      // acceleration, a crashed GPU process, a locked-down or headless browser.
+      // That is distinct from the context *eviction* glContextBudget.ts already
+      // manages: there is no slot to win here, so there is nothing to retry.
+      //
+      // Unguarded, the throw escaped into a rAF-adjacent callback: no page
+      // crash (it is outside React's render phase), but a console error and a
+      // button whose rim is silently dead for the session. Bail instead and
+      // leave the button as plain, working UI.
+      let renderer: Renderer;
+      try {
+        renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr });
+      } catch {
+        return;
+      }
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
       gl.enable(gl.BLEND);
@@ -376,7 +395,10 @@ export default function SpecularFx({
         requestRebalance();
       }
     };
-    window.addEventListener("pointermove", onPointerMove);
+    // passive: this handler only measures pointer distance and never calls
+    // preventDefault, so telling the browser up front means it doesn't have to
+    // wait on it before handling the gesture.
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
 
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
