@@ -4,10 +4,8 @@ import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import Grid from "@mui/material/Grid";
 import { useNavigate } from "@tanstack/react-router";
-import { motion } from "motion/react";
 
 import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
@@ -203,38 +201,6 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
         </Grid>
       </Container>
 
-      {/* Floating Scroll Down Cue */}
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: { xs: "4%", md: "5%" },
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1,
-          zIndex: 2,
-        }}
-      >
-        <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              border: "1px solid var(--accent-40)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--accent-fg)",
-              bgcolor: "rgba(var(--accent-rgb), 0.1)",
-            }}
-          >
-            <ArrowDownwardIcon fontSize="small" />
-          </Box>
-        </motion.div>
-      </Box>
     </Box>
   );
 }

@@ -98,6 +98,34 @@ void main() {
 }
 `;
 
+/** ogl's `parseColor` accepts only `#hex`, a named colour, a number, or three
+ *  decimals (see `ogl/src/math/functions/ColorFunc.js`). It accepts neither
+ *  `rgb()` nor `rgba()`. On anything else it logs "Color format not recognised"
+ *  and returns `[0, 0, 0]`.
+ *
+ *  Two consequences, both of which were live: the call sits inside the rAF
+ *  loop, so one unparseable value warned on every frame for as long as the
+ *  component stayed mounted (measured at roughly 190/second), and the rim
+ *  silently rendered black instead of the colour that was asked for.
+ *
+ *  The uniforms are `vec3`, so alpha was discarded regardless. Converting to
+ *  hex here changes nothing on screen except that the intended colour now
+ *  actually arrives; soften the rim with `baseOpacity` or `intensity`. */
+function oglSafeColor(value: string): string {
+  const raw = value.trim();
+  if (raw.startsWith("#")) return raw;
+  const m = /^rgba?\(\s*([^)]+)\)$/i.exec(raw);
+  const inner = m?.[1];
+  if (!inner) return raw;
+  const parts = inner.split(",").map((x) => Number.parseFloat(x.trim()));
+  const [r, g, b] = parts;
+  if (r === undefined || g === undefined || b === undefined) return raw;
+  if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return raw;
+  const hex = (n: number) =>
+    Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${hex(r)}${hex(g)}${hex(b)}`;
+}
+
 export interface SpecularFxProps {
   /**
    * Corner radius override in px, clamped to a pill against the shorter side.
@@ -328,8 +356,8 @@ export default function SpecularFx({
       const brightTarget = p.autoAnimate ? 1 : proximityT;
       bright += (brightTarget - bright) * (1 - Math.exp(-dt * 8));
 
-      lineC.set(p.lineColor);
-      baseC.set(p.baseColor);
+      lineC.set(oglSafeColor(p.lineColor));
+      baseC.set(oglSafeColor(p.baseColor));
       program.uniforms.uAngle.value = angle;
       program.uniforms.uRadius.value =
         Math.min(sizeRef.radius, Math.min(sizeRef.w, sizeRef.h) / 2) * dpr;

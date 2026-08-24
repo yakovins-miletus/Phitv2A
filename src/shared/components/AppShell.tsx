@@ -14,7 +14,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { motion } from "motion/react";
 
 import { CommandPalette } from "./CommandPalette";
@@ -256,7 +256,7 @@ function AnimatedContactButton({
     navigateWithCurtain("/contact");
   };
 
-  const specularColor = (hovered || isActive) ? NOIR.gold : (onDark ? "rgba(255,255,255,0.9)" : NOIR.navyField);
+  const specularColor = (hovered || isActive) ? NOIR.gold : (onDark ? NOIR.white : NOIR.navyField);
 
   return (
     <Button
@@ -425,7 +425,7 @@ function AnimatedMenuButton({
         },
       }}
     >
-      <SpecularFx lineColor={isPrimary ? NOIR.gold : (isImmersiveDark ? "rgba(255,255,255,0.9)" : NOIR.navyField)} baseOpacity={0} />
+      <SpecularFx lineColor={isPrimary ? NOIR.gold : (isImmersiveDark ? NOIR.white : NOIR.navyField)} baseOpacity={0} />
       <ThreeBarMenuIcon isHovered={isPrimary} color={iconColor} />
     </Box>
   );
@@ -899,17 +899,23 @@ const NAV_SOLID_AFTER_PX = 50;
                         }}
                         sx={{
                           fontFamily: MONO,
-                          fontSize: "0.72rem",
+                          fontSize: TYPE_SCALE.caption,
                           fontWeight: 700,
                           letterSpacing: "0.08em",
                           textDecoration: "none !important",
+                          // Gold as nav-item TEXT only on dark grounds, where it
+                          // measures 9.4:1 to 12:1. On light grounds it is 1.49:1,
+                          // well under AA, so active and hover resolve to navy and
+                          // the gold underline below carries the brand signal
+                          // instead. The wordmark keeps gold on both grounds: WCAG
+                          // 1.4.3 exempts logotypes, a nav item is not exempt.
                           color: isActive
-                            ? NOIR.gold
+                            ? (onDark ? NOIR.gold : NOIR.navyField)
                             : (onDark ? "rgba(255,255,255,0.7)" : "text.secondary"),
                           transition: "color 0.3s ease",
                           position: "relative",
                           "&:hover": {
-                            color: NOIR.gold,
+                            color: onDark ? NOIR.gold : NOIR.navyField,
                             textDecoration: "none !important",
                           },
                         }}

@@ -6,11 +6,9 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import CodeIcon from "@mui/icons-material/Code";
 import ScienceIcon from "@mui/icons-material/Science";
 import MemoryIcon from "@mui/icons-material/Memory";
-import { motion } from "motion/react";
 
 import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
@@ -196,37 +194,6 @@ export function InnovationHero() {
             gap: 1,
           }}
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                border: "1px solid var(--accent-40)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--accent-fg)",
-                bgcolor: "rgba(var(--accent-rgb), 0.1)",
-              }}
-            >
-              <ArrowDownwardIcon fontSize="small" />
-            </Box>
-          </motion.div>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.72rem",
-              letterSpacing: "0.18em",
-              color: "var(--accent-fg)",
-              fontWeight: 800,
-            }}
-          >
-            EXPLORE PET PROJECTS
-          </Typography>
         </Box>
       </Container>
     </Box>
