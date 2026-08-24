@@ -18,9 +18,9 @@ import { MetaLabel } from "@/features/about/components/MetaLabel";
 import { SmoothSection } from "@/features/about/components/SmoothSection";
 import { PoweredBySection } from "@/features/about/components/PoweredBySection";
 import { GraduateHallOfFameSection } from "@/features/about/components/GraduateHallOfFameSection";
-import { InternshipProgramSection } from "@/features/about/components/InternshipProgramSection";
 import { CertificationsSection } from "@/features/about/components/CertificationsSection";
 import { PrinciplesValuesShowcase } from "@/features/about/components/PrinciplesValuesShowcase";
+import { AcademySection } from "@/features/about/components/AcademySection";
 import { pageHead } from "@/shared/seo";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
@@ -176,7 +176,6 @@ function TalentSection() {
 function AboutPage() {
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
   const timelineAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TIMELINE, { dark: true });
-  const academicsAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_ACADEMICS, { dark: true });
 
   return (
     <>
@@ -291,7 +290,7 @@ function AboutPage() {
           borderTopRightRadius: { xs: 28, md: 48 },
           boxShadow: "0 -16px 48px rgba(0, 0, 0, 0.22)",
           pt: { xs: 8, md: 14 },
-          pb: { xs: 12, md: 16 },
+          pb: 0,
           display: "flex",
           flexDirection: "column",
           gap: { xs: 12, md: 20 },
@@ -316,10 +315,6 @@ function AboutPage() {
 
 
         <GraduateHallOfFameSection />
-
-        <Box ref={academicsAnchorRef}>
-          <InternshipProgramSection />
-        </Box>
         
         <SmoothSection>
           <CertificationsSection />
@@ -369,14 +364,12 @@ function AboutPage() {
           <CurtainTransition rows={6} />
         </Suspense>
 
-        {/* Deep Navy Dark Zone for the Intelligence Feed. `BlogSection`'s own
-            SectionBeat renders `id="blog"`, `aria-label="Intelligence Feed
-            and Blog"`, and `data-act="people"` directly (from the `blog`
-            SectionDef) — the wrapper `<section id="blog-sequence">` that
-            used to carry those attributes is gone; this outer Box now exists
-            solely for the dark background. */}
+        {/* Deep Navy Dark Zone for the Intelligence Feed + Academy.
+            Both sections share the navy ground so they flow seamlessly
+            with no white gap between them and the footer. */}
         <Box sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>
           <BlogSection />
+          <AcademySection />
         </Box>
       </Box>
     </Box>
