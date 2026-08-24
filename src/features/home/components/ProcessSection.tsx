@@ -19,10 +19,10 @@ export function ProcessSection() {
      * section as a whole has a one-viewport budget (ADR-0002), so a half-screen
      * announcement would leave ~218px for the composition it announces — the
      * measured breakdown at 1440x757 was 80 + 379 (shot) + 695 + 80 = 1234px.
-     * The shot's copy ("From Problem To Production.") moves inline below, where
-     * it sits *in* the composition rather than in front of it. That is also the
-     * better read: the crucible frame is itself the establishing image, and two
-     * announcements for one screen of content is one too many.
+     * The shot's copy moves inline below, where it sits *in* the composition
+     * rather than in front of it. That is also the better read: the growth
+     * diagram is itself the establishing image, and two announcements for one
+     * screen of content is one too many.
      *
      * `ProcessEstablishingShot.tsx` is kept — `/services` is the likely reuse —
      * but it now has no caller on the home page.
@@ -99,21 +99,23 @@ export function ProcessSection() {
           }}
         />
 
-        {/* Full-width crucible canvas — see ADR-0002. */}
+        {/* Full-width growth canvas — see ADR-0002 for the still-binding
+            one-viewport / reduced-motion / disqualified-shapes constraints;
+            the containment metaphor it chose has been replaced. */}
         <Box sx={{ width: "100%", px: { xs: 2, md: 6, lg: 8 }, position: "relative", zIndex: 2 }}>
           <Box sx={{ maxWidth: 1320, mx: "auto", mb: { xs: 1.5, md: 3 } }}>
             <Typography
               variant="h2"
               sx={{
-                fontSize: { xs: "1.6rem", md: "2.4rem" },
+                fontSize: { xs: "1.4rem", md: "2.15rem" },
                 fontWeight: 800,
-                lineHeight: 1.1,
+                lineHeight: 1.15,
                 color: NOIR.frost,
               }}
             >
-              From Problem{" "}
+              From our practices, our business gradually grew into a{" "}
               <Box component="span" sx={{ color: NOIR.gold }}>
-                To Production.
+                development powerhouse.
               </Box>
             </Typography>
           </Box>

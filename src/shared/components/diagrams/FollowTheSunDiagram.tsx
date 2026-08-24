@@ -9,15 +9,22 @@ const CX = 200;
 const CY = 100;
 const R = 70;
 
-// Three shift ticks at 0/120/240 degrees
-const TICKS = [0, 120, 240].map((deg) => {
+function pointAt(deg: number) {
   const rad = (deg * Math.PI) / 180;
-  const x1 = CX + Math.cos(rad) * (R - 8);
-  const y1 = CY + Math.sin(rad) * (R - 8);
-  const x2 = CX + Math.cos(rad) * (R + 8);
-  const y2 = CY + Math.sin(rad) * (R + 8);
-  return { deg, x1, y1, x2, y2 };
+  return { x: CX + Math.cos(rad) * R, y: CY + Math.sin(rad) * R };
+}
+
+// Three shifts, each covering 120 degrees, handing off to the next at
+// each boundary so the dial reads as unbroken coverage.
+const BOUNDARIES = [0, 120, 240, 360] as const;
+const SHIFT_ARCS = [0, 1, 2].map((i) => {
+  const start = pointAt(BOUNDARIES[i] ?? 0);
+  const end = pointAt(BOUNDARIES[i + 1] ?? 360);
+  return { d: `M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}`, opacity: 0.45 + i * 0.28 };
 });
+// Handoff markers sit at the boundary between consecutive shifts.
+const HANDOFFS = BOUNDARIES.slice(0, 3).map((deg) => pointAt(deg));
+const firstHandoff = HANDOFFS[0] ?? pointAt(0);
 
 export function FollowTheSunDiagram() {
   const reduced = useReducedMotion() === true;
@@ -28,13 +35,7 @@ export function FollowTheSunDiagram() {
   return (
     <Box
       ref={rootRef}
-      sx={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: { xs: 1, md: 2 },
-      }}
+      sx={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", p: { xs: 1, md: 2 } }}
     >
       <svg
         viewBox="0 0 400 200"
@@ -42,40 +43,48 @@ export function FollowTheSunDiagram() {
         width="100%"
         height="100%"
         role="img"
-        aria-label="Follow-the-sun coverage. Three shift rotations around a 24-hour dial, handing off without a gap."
+        aria-label="Follow-the-sun coverage. Three shifts, each covering a third of the dial, hand off to the next at three marked points for unbroken coverage."
         style={{ display: "block", maxHeight: 320 }}
       >
         {/* Base dial */}
         <circle cx={CX} cy={CY} r={R} fill="none" stroke={NOIR.navyField} strokeWidth={1.5} />
 
-        {/* Shift ticks */}
-        {TICKS.map((t) => (
-          <line
-            key={t.deg}
-            x1={t.x1}
-            y1={t.y1}
-            x2={t.x2}
-            y2={t.y2}
-            stroke={NOIR.navyField}
-            strokeWidth={1.5}
-          />
-        ))}
-
-        {/* Gold sweep arc, comes to rest */}
-        <motion.g
-          initial={reduced ? { rotate: 270, opacity: 1 } : { rotate: -90, opacity: 0 }}
-          animate={show ? { rotate: 270, opacity: 1 } : {}}
-          transition={{ duration: 1.4, ease: "easeInOut" }}
-          style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
-        >
-          <path
-            d={`M ${CX + R} ${CY} A ${R} ${R} 0 0 1 ${CX} ${CY - R}`}
+        {/* Three shift arcs, revealed in sequence around the dial */}
+        {SHIFT_ARCS.map((arc, idx) => (
+          <motion.path
+            key={`shift-${String(idx)}`}
+            d={arc.d}
             fill="none"
             stroke={NOIR.goldDark}
             strokeWidth={3}
             strokeLinecap="round"
+            initial={reduced ? false : { opacity: 0 }}
+            animate={show ? { opacity: arc.opacity } : false}
+            transition={{ duration: 0.4, delay: idx * 0.4, ease: "easeOut" }}
           />
-        </motion.g>
+        ))}
+
+        {/* Handoff markers: the point one shift passes to the next */}
+        {HANDOFFS.map((pt, idx) => (
+          <motion.circle
+            key={`handoff-${String(idx)}`}
+            cx={pt.x}
+            cy={pt.y}
+            r={5}
+            fill={NOIR.goldDark}
+            initial={reduced ? false : { opacity: 0, scale: 0 }}
+            animate={show ? { opacity: 1, scale: 1 } : false}
+            transition={{ duration: 0.25, delay: 0.35 + idx * 0.4, ease: "easeOut" }}
+            style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
+          />
+        ))}
+
+        <text x={CX} y={CY - R - 14} textAnchor="middle" fontFamily="monospace" fontSize={9} fill={NOIR.navyField} opacity={0.7}>
+          24h coverage
+        </text>
+        <text x={firstHandoff.x + 10} y={firstHandoff.y + 4} fontFamily="monospace" fontSize={9} fill={NOIR.goldDark}>
+          handoff
+        </text>
       </svg>
     </Box>
   );
