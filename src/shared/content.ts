@@ -121,7 +121,10 @@ export const CONTENT = {
     },
     reach: {
       gunshot: "Established International Presence",
-      tracer: "Arcs denote clients and investors.",
+      // No tracer. The map below states the presence better than a caption can,
+      // and "Arcs denote clients and investors" was explaining the diagram
+      // rather than saying anything about the business.
+      tracer: "",
     },
     dailyLife: {
       gunshot: "That is the work. These are the people who do it.",
@@ -355,25 +358,27 @@ export const CONTENT = {
       stack: ["React", "TypeScript", "Node.js", "Python", "Git"]
     }
   ],
-  // Role-based, not sequential: ADR-0002 replaces the six-step pipeline with a
-  // containment metaphor (many inputs -> two named among them -> two enclosed
-  // operations -> one output). `rawCount` sets how many unlabelled marks the
-  // diagram scatters in the field; only named/enclosed/output entries carry copy.
+  // Three-phase growth model, not the old many-in/enclosed/one-out containment
+  // metaphor. Each phase carries what it added, so the copy itself reads as
+  // accumulation: phase two names what phase one produced as its starting point.
   process: {
-    intake: [
-      { id: "discover", label: "Discover", caption: "Frame the problem with our partners" },
-      { id: "research", label: "Research", caption: "Prototype models against real data" },
+    phases: [
+      {
+        id: "discover-research",
+        name: "Discover & Research",
+        caption: "Frame the problem with our partners and prototype models against real data",
+      },
+      {
+        id: "build",
+        name: "Build",
+        caption: "Take validated prototypes and engineer them into production-grade systems",
+      },
+      {
+        id: "operate",
+        name: "Operate",
+        caption: "Run and support what we built around the clock, as products our partners rely on",
+      },
     ],
-    rawCount: 9,
-    enclosed: [
-      { id: "build", label: "Build", caption: "Engineer production-grade systems" },
-      { id: "operate", label: "Operate", caption: "Run and support them around the clock" },
-    ],
-    output: {
-      id: "products",
-      label: "Products",
-      caption: "Systems we built now run in production for our partners, monitored around the clock",
-    },
   },
   contact: {
     address: "27/F Ecotower Building, 32nd St. cor. 9th Avenue, Bonifacio Global City, Taguig, Philippines, 1634",
