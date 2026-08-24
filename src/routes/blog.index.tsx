@@ -9,7 +9,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { blogPostsQuery } from "@/features/blog/api";
 import type { BlogListParams, BlogSort } from "@/features/blog/api";
 import { BlogPostList } from "@/features/blog/components/BlogPostList";
-import { BlogSidebar } from "@/features/blog/components/BlogSidebar";
 import { BlogToolbar } from "@/features/blog/components/BlogToolbar";
 import { BlogVideoHero } from "@/features/blog/components/BlogVideoHero";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
@@ -131,11 +130,7 @@ function BlogPage() {
       >
         <Section>
           <Grid container spacing={6}>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <BlogSidebar items={data.items} />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 9 }}>
+            <Grid size={12}>
               <BlogToolbar
                 q={search.q ?? ""}
                 sort={search.sort ?? "newest"}
