@@ -23,4 +23,32 @@ declare module "@mui/material/Paper" {
   }
 }
 
+/**
+ * `micro` — one step below `caption`, for the mono meta-rail.
+ *
+ * The site has a real second register: uppercase, letter-spaced, monospace
+ * labels ("SYS.LOC // MANILA", "EXPLORE PHITOPOLIS // DIRECTORY", section
+ * kickers). Those were being written as raw `fontSize` values scattered
+ * between 0.68rem and 0.7rem — three sizes that are indistinguishable on
+ * screen but that made the scale look twice as large as it is. `overline`
+ * already covers the 0.75rem tier of that register; this is the tier below it.
+ *
+ * `caption` is NOT declared here — MUI ships it, it just had no theme entry,
+ * so it is configured in theme.ts alongside the rest rather than invented.
+ */
+declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    micro: React.CSSProperties;
+  }
+  interface TypographyVariantsOptions {
+    micro?: React.CSSProperties;
+  }
+}
+
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    micro: true;
+  }
+}
+
 export {};
