@@ -845,7 +845,7 @@ export function HeroSignalCore() {
               inset: 0,
               zIndex: 0,
               opacity: "var(--hp-sky, 1)",
-              background: "linear-gradient(180deg, #FFFFFF 0%, #F4F7FA 100%)",
+              background: `linear-gradient(180deg, ${NOIR.white} 0%, ${NOIR.void} 100%)`,
             }}
           />
 

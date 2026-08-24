@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 
 import { Reveal } from "@/shared/components/Reveal";
 import { RouterButton } from "@/shared/components/RouterLink";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 
 const TRACKS = [
@@ -213,14 +213,14 @@ export function AcademySection() {
                   color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
-                  fontSize: "0.82rem",
+                  fontSize: TYPE_SCALE.body2,
                   letterSpacing: "0.1em",
                   px: 4,
                   py: 1.75,
                   borderRadius: 2,
                   whiteSpace: "nowrap",
                   flexShrink: 0,
-                  "&:hover": { bgcolor: "#f5c842" },
+                  "&:hover": { bgcolor: NOIR.goldLight },
                 }}
               >
                 VIEW OPEN POSITIONS

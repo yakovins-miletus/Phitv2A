@@ -7,6 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { RouterLink } from "@/shared/components/RouterLink";
+import { NOIR } from "@/shared/theme/palette";
 
 import type { BlogPostPage, BlogPostSummary } from "../api";
 
@@ -120,7 +121,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                     color: "secondary.contrastText",
                     border: "none",
                     "& .MuiChip-label": { color: "inherit", fontWeight: 700 },
-                    "&:hover": { bgcolor: "#E5B327" },
+                    "&:hover": { bgcolor: NOIR.goldDark },
                   } : {
                     pointerEvents: "auto",
                     bgcolor: "rgba(255, 255, 255, 0.15)",
