@@ -24,7 +24,12 @@ export interface GroundStop {
   act: Act;
   /** Resolved background colour. */
   color: string;
-  /** True when this stop opens a new act — the layer wipes here instead of fading. */
+  /**
+   * True when this stop opens a new act. Descriptive metadata only — every
+   * boundary gets the same tile wipe now (see `sampleGround`'s header), so this
+   * no longer changes how the layer paints. Kept because it's still a real fact
+   * about the section structure, and `ACT_BREAK_INDEX` below still needs it.
+   */
   actBreak: boolean;
 }
 
@@ -112,18 +117,30 @@ export function rgbCss(c: Rgb): string {
  *
  * A linear ramp across a whole section makes the ground visibly drift the entire
  * time you are reading it. Easing keeps the middle of each section stable and
- * concentrates the change near the seam, which is where a transition belongs.
+ * concentrates the change near the boundary, which is where a transition belongs.
  */
 export function smoothstep(t: number): number {
   const k = t < 0 ? 0 : t > 1 ? 1 : t;
   return k * k * (3 - 2 * k);
 }
 
-/** A resolved ground sample: the colour to paint, and how close to an act break. */
+/**
+ * A resolved ground sample.
+ *
+ * `color` is a CPU pre-blend of `from`/`to` by `progress` — used only by the
+ * CSS/low-power fallback renderer, which has no per-tile hash of its own and
+ * still crossfades. The WebGL renderer ignores `color` and paints `from`/`to`
+ * directly, sweeping between them per-tile as `progress` advances (see
+ * `glGround.ts`).
+ */
 export interface GroundSample {
   color: Rgb;
-  /** 0 away from the act break, ramping to 1 at it. Drives the wipe. */
-  seam: number;
+  /** Raw colour of the stop being left. */
+  from: Rgb;
+  /** Raw colour of the stop being entered — equal to `from` if there is none. */
+  to: Rgb;
+  /** 0 away from the boundary, ramping to 1 at it. Drives the tile wipe. */
+  progress: number;
   /** Index of the stop currently being left. */
   fromIndex: number;
 }
@@ -135,25 +152,24 @@ export interface GroundSample {
  * `GROUND_STOPS`; `scrollY` is the current offset. Blending happens over the
  * approach to each stop rather than across whole sections, so a section holds one
  * stable colour while it is being read.
+ *
+ * Every boundary shares the same `blendPx` runway now, regardless of whether it
+ * used to be a within-act or act-break boundary — the tile wipe fires at every
+ * section change, so there is no longer a principled reason to treat any one
+ * boundary as bigger than another (see `actBreak`/`ACT_BREAK_INDEX` above,
+ * which are kept as descriptive metadata but no longer change the maths here).
  */
 export function sampleGround(
   stops: readonly GroundStop[],
   positions: readonly number[],
   scrollY: number,
   blendPx: number,
-  /**
-   * Blend distance for the act break specifically. Wider than `blendPx` on
-   * purpose, for two reasons: the act change is the page's biggest colour move and
-   * deserves the longest runway, and `daily-life` is pinned — its measured offset
-   * shifts once GSAP sizes the pin spacer, so a late correction lands inside an
-   * already-moving gradient instead of snapping. Defaults to `blendPx`.
-   */
-  seamBlendPx: number = blendPx,
 ): GroundSample {
-  if (stops.length === 0) return { color: [255, 255, 255], seam: 0, fromIndex: 0 };
+  const white: Rgb = [255, 255, 255];
+  if (stops.length === 0) return { color: white, from: white, to: white, progress: 0, fromIndex: 0 };
 
   const first = stops[0];
-  if (!first) return { color: [255, 255, 255], seam: 0, fromIndex: 0 };
+  if (!first) return { color: white, from: white, to: white, progress: 0, fromIndex: 0 };
 
   // Find the last stop whose section has already started.
   let i = 0;
@@ -165,21 +181,18 @@ export function sampleGround(
   const current = stops[i];
   const next = stops[i + 1];
   const nextPos = positions[i + 1];
-  if (!current) return { color: [255, 255, 255], seam: 0, fromIndex: 0 };
+  if (!current) return { color: white, from: white, to: white, progress: 0, fromIndex: 0 };
 
   const from = parseGround(current.color);
-  if (!next || nextPos === undefined) return { color: from, seam: 0, fromIndex: i };
+  if (!next || nextPos === undefined) {
+    return { color: from, from, to: from, progress: 0, fromIndex: i };
+  }
 
-  // Blend across the last `blendPx` before the next section begins — or the wider
-  // `seamBlendPx` when the next section opens a new act.
-  const want = next.actBreak ? seamBlendPx : blendPx;
-  const span = Math.max(1, Math.min(want, nextPos - (positions[i] ?? 0)));
+  // Blend across the last `blendPx` before the next section begins.
+  const span = Math.max(1, Math.min(blendPx, nextPos - (positions[i] ?? 0)));
   const raw = (scrollY - (nextPos - span)) / span;
   const t = smoothstep(raw);
+  const to = parseGround(next.color);
 
-  return {
-    color: mixRgb(from, parseGround(next.color), t),
-    seam: next.actBreak ? t : 0,
-    fromIndex: i,
-  };
+  return { color: mixRgb(from, to, t), from, to, progress: t, fromIndex: i };
 }

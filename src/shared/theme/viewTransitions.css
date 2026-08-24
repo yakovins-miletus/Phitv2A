@@ -1,0 +1,170 @@
+/**
+ * Route transitions — built on the View Transitions API, not an overlay.
+ *
+ * WHY NOT A CURTAIN. The previous implementation sealed the viewport with an
+ * opaque panel, swapped the route behind it, then retracted. That is robust and
+ * it is also the thing that reads as lag: for ~0.4s the reader is looking at
+ * nothing, and a blank screen carries no information, so the wait feels longer
+ * than it is. The brief was explicitly "never fully cover".
+ *
+ * Doing that honestly needs both the outgoing and incoming page on screen at
+ * once, which a router that swaps its tree in place cannot give you. The
+ * platform can: `document.startViewTransition()` snapshots the old DOM as an
+ * image, mounts the new tree, and hands both to the compositor as
+ * `::view-transition-old(root)` and `::view-transition-new(root)`. They animate
+ * as GPU layers — no React re-render, no second rAF loop, no blank frame ever.
+ *
+ * TanStack Router drives this for us via `navigate({ viewTransition: true })`.
+ * Where the API is missing (Firefox at time of writing) the router falls back
+ * to a plain synchronous swap: no animation, no error, no blank. That is the
+ * correct degradation for a decorative layer.
+ *
+ * Everything below is opacity/transform/clip-path only, so it stays on the
+ * compositor. `clip-path` on a VT pseudo-element is animating a flat snapshot
+ * image, not re-clipping live DOM — the expensive case doesn't apply here.
+ *
+ * DURATIONS LIVE HERE ONLY. 0.55s for interior routes, 0.9s for home — plain
+ * numbers, nothing to mirror. There used to be a pixel-tile wipe layered on
+ * top of this substrate (`PixelWipe.tsx`) whose TS constants these durations
+ * had to stay numerically equal to; that wipe was a navigation effect and has
+ * moved to the ground-color system instead (see `ground/glGround.ts`), where
+ * it's scroll-scrubbed rather than duration-based. Route transitions are back
+ * to being nothing but this view-transition substrate.
+ */
+
+::view-transition-group(root) {
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The outgoing page recedes rather than disappearing. It stays legible for the
+   whole transition, which is the entire point — the reader never loses their
+   place. Scale bottoms out at 0.985: enough to read as depth, small enough that
+   text never visibly resamples. */
+::view-transition-old(root) {
+  animation: fresko-page-recede 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* The incoming page wipes up over it. `inset()` from the bottom edge means the
+   new page is revealed, not slid in — no empty gutter travels across the
+   viewport the way a translate-only slide would. */
+::view-transition-new(root) {
+  animation: fresko-page-arrive 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fresko-page-recede {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.45;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes fresko-page-arrive {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(2%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+/**
+ * Arriving home is a different event from moving between interior pages, so it
+ * gets a different gesture: the outgoing page pulls back further and the hero
+ * opens through a circular aperture from the centre — the same optical language
+ * as the intro's exit mask, deliberately, so the site has one idea about how
+ * things are revealed rather than two unrelated ones.
+ *
+ * Set by `data-route-transition="home"` on <html> for the duration of the
+ * navigation. Longer (0.9s) because this is an arrival, not a step sideways.
+ */
+:root[data-route-transition="home"]::view-transition-group(root) {
+  animation-duration: 0.9s;
+}
+
+:root[data-route-transition="home"]::view-transition-old(root) {
+  animation: fresko-home-withdraw 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+:root[data-route-transition="home"]::view-transition-new(root) {
+  animation: fresko-home-aperture 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fresko-home-withdraw {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes fresko-home-aperture {
+  from {
+    clip-path: circle(0% at 50% 50%);
+    transform: scale(1.06);
+  }
+  to {
+    clip-path: circle(75% at 50% 50%);
+    transform: scale(1);
+  }
+}
+
+/**
+ * WCAG 2.3.3. The navigation still happens and the new page still arrives —
+ * only the motion is removed. `animation: none` on the pseudo-elements lets the
+ * browser cut straight to the new snapshot, which is the intended fallback, not
+ * a broken state.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/**
+ * The header (`<AppBar>` in AppShell.tsx) carries `view-transition-name:
+ * site-header`. A named element is automatically cut out of the `root`
+ * snapshot and captured as its own group — that alone stops it from
+ * receding/wiping with the rest of the page.
+ *
+ * FIRST ATTEMPT HERE SET `animation: none` ON BOTH OLD AND NEW. That was
+ * wrong: the browser's default cross-fade is what drops the old capture's
+ * opacity to 0 and brings the new one up to 1 over the transition. Killing
+ * that animation left both captures sitting at their UA-default opacity of
+ * 1, permanently, stacked on top of each other — which is exactly the
+ * doubled/ghosted header ("PHPHOPOLLSS", a cloned Contact button) seen on
+ * every navigation, and especially bad arriving at home: `minimal` mode's
+ * header geometry (logo size/position, nav items hidden, different Contact
+ * styling) differs enough from the previous page's header that the two
+ * overlapping, still-opaque captures don't even line up.
+ *
+ * Fixed by hiding the OLD capture outright rather than fading it — there is
+ * nothing here worth animating between two states that can look
+ * structurally different (minimal vs. glass/standard), so snap straight to
+ * the new one instead of asking the browser to reconcile two mismatched
+ * layouts over half a second.
+ */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 10;
+}
+
+::view-transition-old(site-header) {
+  animation: none;
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}

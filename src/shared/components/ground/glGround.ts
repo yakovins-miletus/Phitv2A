@@ -13,8 +13,16 @@ import type { Rgb } from "./groundStops";
  *  - Dithered gradient. A flat 8-bit fill across a 2560px viewport bands visibly on
  *    the near-neutral navies this palette uses; an ordered dither below the
  *    quantisation step removes it.
- *  - A directional wipe at the act break, which is a per-pixel function of position
- *    and cannot be expressed as a background-color tween.
+ *  - A per-tile hashed reveal at *every* section boundary, not just the page's
+ *    former "act break". Each tile on screen gets its own random threshold; as
+ *    the boundary's scroll-scrubbed progress advances, tiles flip from the old
+ *    ground to the new one in that per-tile order. That is a per-pixel function
+ *    of screen position and scroll offset, so it cannot be expressed as a
+ *    background-color tween — the earlier version of this file only ran a
+ *    single diagonal wipe, gated to the one act break the page used to have;
+ *    now that every boundary gets the same treatment, the effect had to become
+ *    the default rather than a special case (see `groundStops.ts`'s
+ *    `sampleGround` for why every boundary is now equal).
  *  - Vignette and grain composited in the same pass, so they cost no extra layers.
  *
  * The caller owns the rAF loop — `render` is a pure "draw this state now" call, so
@@ -39,29 +47,28 @@ in vec2 vUv;
 out vec4 outColor;
 
 uniform vec3  uFrom;      // ground being left, linear 0-1
-uniform vec3  uTo;        // ground being entered
-uniform float uMix;       // 0-1 blend between them
-uniform float uSeam;      // 0-1 act-break wipe progress
+uniform vec3  uTo;        // ground being entered, linear 0-1
+uniform float uProgress;  // 0-1 scroll-scrubbed boundary progress
+uniform float uTileSize;  // tile size, in device pixels
 uniform float uGrain;     // grain amount
 uniform vec2  uRes;
 
-// Hash for grain + dither. Cheap, stable, no texture fetch.
+// Hash for grain + dither + per-tile threshold. Cheap, stable, no texture fetch.
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
 }
 
 void main() {
-  vec3 base = mix(uFrom, uTo, uMix);
-
-  // Act break: a diagonal wipe sweeping bottom-left to top-right. The page uses
-  // this exactly once, where Services hands over to People, so the boundary reads
-  // as a chapter change rather than another crossfade.
-  if (uSeam > 0.0) {
-    float diag = (vUv.x + (1.0 - vUv.y)) * 0.5;
-    // Soft edge, and the leading edge runs slightly ahead so the wipe completes.
-    float edge = smoothstep(diag - 0.18, diag + 0.18, uSeam * 1.36 - 0.18);
-    base = mix(base, uTo, edge);
-  }
+  // Per-tile hashed reveal, active at every boundary. Each tile on screen gets
+  // its own random threshold in [0,1] from its integer grid coordinate; once
+  // uProgress passes that threshold the tile has "flipped" from uFrom to uTo.
+  // A smoothstep band around the threshold, rather than a hard cut, keeps the
+  // sweeping edge from reading as dithering noise as it crosses the tile field.
+  vec2 tileCoord = floor(gl_FragCoord.xy / uTileSize);
+  float threshold = hash(tileCoord + 0.5);
+  float band = 0.05;
+  float reveal = smoothstep(threshold - band, threshold + band, uProgress);
+  vec3 base = mix(uFrom, uTo, reveal);
 
   // Back to sRGB: uFrom/uTo arrive linearised so the blend happens in linear light,
   // but the drawing buffer is plain RGBA8 and is read as sRGB. Without this every
@@ -77,8 +84,17 @@ void main() {
   outColor = vec4(base, 1.0);
 }`;
 
+/** Tile size, in CSS pixels, before DPR scaling. Matches the retired DOM-based
+ *  `PixelWipe`'s `BASE_PIXEL_SIZE` for visual continuity of "this is the
+ *  site's tile-wipe visual language" now that the effect lives in the shader
+ *  instead of a route-transition overlay. */
+const TILE_SIZE_CSS_PX = 64;
+
 export interface GlGround {
-  render(from: Rgb, to: Rgb, mix: number, seam: number): void;
+  /** `progress` is 0 at `from`, 1 at `to`, ramping between them as the caller
+   *  scrolls through a boundary's blend window. Tiles reveal `to` in a hashed
+   *  per-tile order as it advances — see the shader comment above. */
+  render(from: Rgb, to: Rgb, progress: number): void;
   resize(w: number, h: number, dpr: number): void;
   dispose(): void;
   readonly canvas: HTMLCanvasElement;
@@ -145,8 +161,8 @@ export function createGlGround(canvas: HTMLCanvasElement, grain = 0.012): GlGrou
   gl.useProgram(prog);
   const uFrom = gl.getUniformLocation(prog, "uFrom");
   const uTo = gl.getUniformLocation(prog, "uTo");
-  const uMix = gl.getUniformLocation(prog, "uMix");
-  const uSeam = gl.getUniformLocation(prog, "uSeam");
+  const uProgress = gl.getUniformLocation(prog, "uProgress");
+  const uTileSize = gl.getUniformLocation(prog, "uTileSize");
   const uGrain = gl.getUniformLocation(prog, "uGrain");
   const uRes = gl.getUniformLocation(prog, "uRes");
   gl.uniform1f(uGrain, grain);
@@ -163,20 +179,23 @@ export function createGlGround(canvas: HTMLCanvasElement, grain = 0.012): GlGrou
       if (disposed) return;
       const pw = Math.max(1, Math.round(w * dpr));
       const ph = Math.max(1, Math.round(h * dpr));
+      // Tile size in device pixels must track dpr even when pw/ph don't change
+      // (e.g. a devicePixelRatio change with no viewport resize), so this is
+      // set unconditionally rather than only on the early-return path below.
+      gl.uniform1f(uTileSize, TILE_SIZE_CSS_PX * dpr);
       if (canvas.width === pw && canvas.height === ph) return;
       canvas.width = pw;
       canvas.height = ph;
       gl.viewport(0, 0, pw, ph);
       gl.uniform2f(uRes, pw, ph);
     },
-    render(from, to, mix, seam) {
+    render(from, to, progress) {
       if (disposed || gl.isContextLost()) return;
       const a = toLinear(from);
       const b = toLinear(to);
       gl.uniform3f(uFrom, a[0], a[1], a[2]);
       gl.uniform3f(uTo, b[0], b[1], b[2]);
-      gl.uniform1f(uMix, mix);
-      gl.uniform1f(uSeam, seam);
+      gl.uniform1f(uProgress, progress);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     },
     dispose() {

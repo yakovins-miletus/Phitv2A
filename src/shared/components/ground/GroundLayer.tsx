@@ -4,38 +4,34 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { useIsLowPowerDevice, usePreloaderReady, useReducedMotion } from "@/shared/motion";
-import {
-  GROUND_STOPS,
-  parseGround,
-  rgbCss,
-  sampleGround,
-  type GroundStop,
-  type Rgb,
-} from "./groundStops";
+import { GROUND_STOPS, rgbCss, sampleGround, type GroundStop } from "./groundStops";
 import { createGlGround, type GlGround } from "./glGround";
 
 /** Blend distance before a section boundary, in px. Long enough to read as a
  *  transition rather than a switch, short enough that the middle of a section
- *  holds one stable colour while you read it. */
+ *  holds one stable colour while you read it. The same distance is used at
+ *  every boundary now — see `groundStops.ts`'s `sampleGround` header for why
+ *  there is no longer a wider runway reserved for the former "act break". */
 const BLEND_PX = 560;
-
-/**
- * Runway for the one act break. Roughly a viewport and a half, so the
- * Services → People change is unmistakably a transition rather than a switch, and
- * so `daily-life`'s post-pin offset correction lands mid-gradient instead of as a
- * visible snap.
- */
-const SEAM_BLEND_PX = 1400;
 
 /**
  * The page ground.
  *
- * One fixed layer behind all content that owns the background colour and moves it
- * with scroll, so grounds cross-fade instead of cutting. Before this, every section
- * painted its own opaque `bgcolor` and `routes/index.tsx` put a `<Divider />` at
- * each seam, which meant every ground change on the page was a hard cut with a
- * hairline drawing attention to it — most visibly hero → mission, where two
- * full-viewport sections met with opposite grounds.
+ * One fixed layer behind all content that owns the background colour and moves
+ * it with scroll. Before this, every section painted its own opaque `bgcolor`
+ * and `routes/index.tsx` put a `<Divider />` at each seam, which meant every
+ * ground change on the page was a hard cut with a hairline drawing attention to
+ * it — most visibly hero → mission, where two full-viewport sections met with
+ * opposite grounds.
+ *
+ * The WebGL rung no longer cross-fades: every section boundary plays a
+ * scroll-scrubbed per-tile wipe (`glGround.ts`), the same visual language the
+ * site used to reserve for route transitions (the retired `PixelWipe`) and,
+ * before that, for a single "act break" partway down the home page. Once every
+ * boundary gets the same treatment there is no reason to special-case one of
+ * them, so the wipe simply replaced the crossfade outright. The CSS/low-power
+ * rung still crossfades, for want of a per-tile hash on a compositor-only
+ * background colour — see the comment at its render branch below.
  *
  * Degradation ladder, in order. Each rung is a real product, not an error state:
  *
@@ -147,7 +143,7 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
         measure();
       }
 
-      const s = sampleGround(stops, positions, window.scrollY, BLEND_PX, SEAM_BLEND_PX);
+      const s = sampleGround(stops, positions, window.scrollY, BLEND_PX);
 
       // Dev-only probe. The GL path runs with `preserveDrawingBuffer: false`, so
       // `readPixels` returns an empty buffer outside the render callback and there
@@ -158,7 +154,7 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
         (window as unknown as { __ground?: unknown }).__ground = {
           renderer: gl ? "webgl2" : "css",
           color: rgbCss(s.color),
-          seam: s.seam,
+          progress: s.progress,
           stop: stops[s.fromIndex]?.id,
           act: stops[s.fromIndex]?.act,
           positions: positions.slice(),
@@ -167,16 +163,20 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
 
       if (gl) {
         // Skip redundant draws: the ground holds one colour through most of a
-        // section, so this idles at zero GPU work while you read.
-        const key = `${s.fromIndex}|${s.color.join()}|${s.seam.toFixed(3)}`;
+        // section, so this idles at zero GPU work while you read. `from`/`to`
+        // only change when `fromIndex` changes, so keying on that plus
+        // `progress` is enough.
+        const key = `${s.fromIndex}|${s.progress.toFixed(3)}`;
         if (key === lastKey) return;
         lastKey = key;
-        const next = stops[s.fromIndex + 1];
-        const to: Rgb = next ? parseGround(next.color) : s.color;
-        gl.render(s.color, to, 0, s.seam);
+        gl.render(s.from, s.to, s.progress);
         return;
       }
 
+      // CSS rung: no per-tile hash available on a compositor-only background
+      // colour, so this keeps the plain crossfade `sampleGround` still computes
+      // into `s.color` for exactly this purpose. A real, if plainer, product —
+      // matching `GroundLayer`'s own degradation-ladder philosophy above.
       const css = rgbCss(s.color);
       if (css === lastCss) return;
       lastCss = css;

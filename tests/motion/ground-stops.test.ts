@@ -87,19 +87,19 @@ function relativeLuminance([r, g, b]: readonly [number, number, number]): number
 
 test("the act break is a visible colour change, not just a flag", () => {
   // A wipe between two identical colours renders as nothing. If someone retunes
-  // the grounds and the seam goes invisible, that should fail here rather than be
-  // discovered by eye.
+  // the grounds and the boundary goes invisible, that should fail here rather
+  // than be discovered by eye.
   //
   // This used to assert a raw channel-sum delta > 120, which the light palette
   // cleared easily by crossing from navy to off-white. Every ground is dark now, so
   // the largest move the palette can produce is `field` -> `base`: a channel delta
   // of 92 and a luminance ratio of 1.369. The threshold is re-expressed as that
   // ratio — a perceptual measure rather than an arithmetic one — with the channel
-  // sum kept as a secondary floor so a retune that flattens the seam still fails.
+  // sum kept as a secondary floor so a retune that flattens the boundary still fails.
   //
-  // Note the seam's *legibility* no longer rests on delta magnitude alone: the
-  // shader's directional wipe (glGround.ts) is a per-pixel effect and reads even
-  // across a modest colour change.
+  // Note the boundary's *legibility* no longer rests on delta magnitude alone: the
+  // shader's per-tile hashed reveal (glGround.ts) is a per-pixel effect and reads
+  // even across a modest colour change.
   const before = FIXTURE_STOPS[FIXTURE_ACT_BREAK_INDEX - 1];
   const at = FIXTURE_STOPS[FIXTURE_ACT_BREAK_INDEX];
   const a = parseGround(before!.color);
@@ -186,7 +186,7 @@ test("smoothstep is clamped and symmetric about its midpoint", () => {
   expect(smoothstep(0.25) + smoothstep(0.75)).toBeCloseTo(1, 6);
 });
 
-test("sampleGround holds a stable colour mid-section and blends only near the seam", () => {
+test("sampleGround holds a stable colour mid-section and blends only near the boundary", () => {
   const stops = GROUND_STOPS.slice(0, 2);
   const positions = [0, 4000];
   const blend = 500;
@@ -194,23 +194,27 @@ test("sampleGround holds a stable colour mid-section and blends only near the se
   // Deep inside the first section: the ground must not drift while you read.
   const mid = sampleGround(stops, positions, 1500, blend);
   expect(mid.color).toEqual(parseGround(stops[0]!.color));
+  expect(mid.from).toEqual(parseGround(stops[0]!.color));
+  expect(mid.progress).toBe(0);
   expect(mid.fromIndex).toBe(0);
 
   // Just before the boundary: partway between the two.
   const near = sampleGround(stops, positions, 4000 - blend / 2, blend);
   expect(near.color).not.toEqual(parseGround(stops[0]!.color));
   expect(near.color).not.toEqual(parseGround(stops[1]!.color));
+  expect(near.progress).toBeGreaterThan(0);
+  expect(near.progress).toBeLessThan(1);
 
   // At the boundary: fully arrived.
   const at = sampleGround(stops, positions, 4000, blend);
   expect(at.color).toEqual(parseGround(stops[1]!.color));
+  expect(at.to).toEqual(parseGround(stops[1]!.color));
 });
 
-// Both remaining tests need an actual act break, which real home data no
-// longer has (see "the home page's ground track has no act break" above) —
-// they run against a fixture that has three stops so there's also a
-// within-act boundary to contrast against, built the same way FIXTURE_STOPS
-// was above.
+// This fixture needs an actual act break, which real home data no longer has
+// (see "the home page's ground track has no act break" above) — it runs
+// against a fixture with three stops so there's also a within-act boundary to
+// contrast against, built the same way FIXTURE_STOPS was above.
 const RUNWAY_FIXTURE_SECTIONS: readonly SectionDef[] = [
   { id: "fx-1", label: "1", chapter: 0, ground: "white" },
   { id: "fx-2", label: "2", chapter: 0, ground: "panel" },
@@ -223,42 +227,43 @@ const RUNWAY_FIXTURE_CHAPTERS: readonly ChapterDef[] = [
 const RUNWAY_STOPS = buildGroundStops(RUNWAY_FIXTURE_SECTIONS, RUNWAY_FIXTURE_CHAPTERS);
 const RUNWAY_ACT_BREAK_INDEX = RUNWAY_STOPS.findIndex((s) => s.actBreak);
 
-test("the act break gets a wider runway than an ordinary boundary", () => {
-  // A pinned section's measured offset shifts once GSAP sizes the pin
-  // spacer. A wider seam blend means that late correction lands inside a
-  // gradient that is already moving rather than as a visible snap.
+test("the act break gets no wider a runway than an ordinary boundary", () => {
+  // The old contract reserved a wider seam blend for the act break specifically,
+  // because a pinned section's measured offset shifts once GSAP sizes the pin
+  // spacer. The tile wipe now fires identically at every boundary — see
+  // `sampleGround`'s header — so the same blend distance must produce the same
+  // shaped progress ramp whether or not the boundary happens to be an act break.
   const positions = RUNWAY_STOPS.map((_, i) => i * 4000);
   const blend = 400;
-  const seamBlend = 1600;
 
-  // 800px before the act break: outside the ordinary blend, inside the seam blend.
-  const y = RUNWAY_ACT_BREAK_INDEX * 4000 - 800;
-  const narrow = sampleGround(RUNWAY_STOPS, positions, y, blend, blend);
-  const wide = sampleGround(RUNWAY_STOPS, positions, y, blend, seamBlend);
-
-  expect(narrow.seam).toBe(0);
-  expect(wide.seam).toBeGreaterThan(0);
-
-  // A non-act boundary must be unaffected by the seam width.
-  const inside = (RUNWAY_ACT_BREAK_INDEX - 1) * 4000 - 800;
-  expect(sampleGround(RUNWAY_STOPS, positions, inside, blend, seamBlend).color).toEqual(
-    sampleGround(RUNWAY_STOPS, positions, inside, blend, blend).color,
+  // 200px before the act break, and 200px before the preceding (within-act)
+  // boundary: same offset into an equal-width blend window either way.
+  const atActBreak = sampleGround(RUNWAY_STOPS, positions, RUNWAY_ACT_BREAK_INDEX * 4000 - 200, blend);
+  const atWithinAct = sampleGround(
+    RUNWAY_STOPS,
+    positions,
+    (RUNWAY_ACT_BREAK_INDEX - 1) * 4000 - 200,
+    blend,
   );
+
+  expect(atActBreak.progress).toBeCloseTo(atWithinAct.progress, 6);
+  expect(atActBreak.progress).toBeGreaterThan(0);
 });
 
-test("sampleGround reports seam only across an act break", () => {
+test("sampleGround ramps progress at every boundary, not only the act break", () => {
   const positions = RUNWAY_STOPS.map((_, i) => i * 1000);
   const blend = 400;
 
-  // Approaching the act break, seam ramps up.
+  // Approaching the act break, progress ramps up.
   const breakPos = RUNWAY_ACT_BREAK_INDEX * 1000;
   const atBreak = sampleGround(RUNWAY_STOPS, positions, breakPos - 1, blend);
-  expect(atBreak.seam).toBeGreaterThan(0);
+  expect(atBreak.progress).toBeGreaterThan(0);
 
-  // Approaching any within-act boundary, it stays flat at zero.
+  // Approaching the within-act boundary, progress ramps up identically — this
+  // used to stay flat at zero because only the act break carried a wipe.
   const withinAct = RUNWAY_ACT_BREAK_INDEX - 1;
-  const inside = sampleGround(RUNWAY_STOPS, positions, withinAct * 1000 - 1, blend);
-  expect(inside.seam).toBe(0);
+  const atWithinAct = sampleGround(RUNWAY_STOPS, positions, withinAct * 1000 - 1, blend);
+  expect(atWithinAct.progress).toBeGreaterThan(0);
 });
 
 test("sampleGround survives an empty track and a missing section", () => {
@@ -267,6 +272,9 @@ test("sampleGround survives an empty track and a missing section", () => {
   // simply never advance to it rather than produce NaN.
   const s = sampleGround(GROUND_STOPS.slice(0, 2), [0, Number.POSITIVE_INFINITY], 500, 400);
   expect(s.color.every((c) => Number.isFinite(c))).toBe(true);
+  expect(s.from.every((c) => Number.isFinite(c))).toBe(true);
+  expect(s.to.every((c) => Number.isFinite(c))).toBe(true);
+  expect(Number.isFinite(s.progress)).toBe(true);
 });
 
 test("acts partition the stop list with no interleaving", () => {
