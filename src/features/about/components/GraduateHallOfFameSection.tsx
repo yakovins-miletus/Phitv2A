@@ -62,7 +62,7 @@ const GRADUATE_COHORTS: Cohort[] = [
   {
     id: "2026-b1",
     year: "2026 Batch 1",
-    badge: "NEXT-GEN LEADERS",
+    badge: "AI AGENTS & PLATFORM",
     title: "2026 Batch 1 Tech Graduates",
     description: "Our newest cohort, working on web architecture, cloud-native pipelines, and AI agents for global systems.",
     image: "/images/grads/2026B1Grads.webp",

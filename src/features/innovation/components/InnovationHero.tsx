@@ -112,7 +112,7 @@ export function InnovationHero() {
                 textShadow: "0 4px 20px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.9)",
               }}
             >
-              Where Phitopolis Engineers Build Next-Gen Experiments.
+              The tools we built for ourselves, opened up.
             </Typography>
           </Reveal>
 
