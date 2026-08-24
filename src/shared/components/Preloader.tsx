@@ -1,36 +1,91 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { animate, stagger } from "motion/react";
 
-import { MONO } from "@/shared/theme/theme";
+import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
-import { EASE_OUT_EXPO, EASE_IN_OUT_QUART, EASE_SPRING_SOFT } from "@/shared/motion/easing";
-import PhitopolisLogo from "./PhitopolisLogo";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 /**
- * This component used to run its entrance/exit choreography on gsap. gsap is
- * removed here on purpose, not just deferred: Preloader is the first thing a
- * first-time visitor sees (AppShell renders it before anything else has
- * painted), so it has to stay in the eager bundle and be instant — there's no
- * good moment to lazy-load it without risking a blank flash while its chunk
- * fetches. `motion` is already eager (it drives header/nav micro-interactions
- * elsewhere in AppShell), so porting this choreography onto it removes a
- * dependency from the bundle rather than relocating it.
+ * The intro.
  *
- * The easings below intentionally collapse gsap's power2.out/power3.out/
- * expo.out distinctions onto this repo's one shared "reveal" curve
- * (EASE_OUT_EXPO — see easing.ts, which already names the preloader wipe as
- * one of its two intended call sites) rather than hand-picking a new
- * cubic-bezier per step. That is a deliberate simplification made while
- * porting engines, not a fidelity loss anyone will see: the buffered,
- * one-at-a-time pacing is what reads as "choreographed," not which flavour of
- * ease-out each reveal uses.
+ * WHAT IT IS FOR. Not a splash screen. While it holds, `useWarmupSignals` in
+ * AppShell is running `router.preloadRoute()` across every route and decoding
+ * the hero-critical image manifest — so the screen time buys precompiled route
+ * chunks and warm assets, and every navigation afterwards is zero-fetch. That
+ * is the deal: the visitor waits once, briefly, and never waits again. An intro
+ * that doesn't buy something is a tax, and this one is measured against that.
+ *
+ * WHAT IT LOOKS LIKE, AND WHY IT LOOKS LIKE SO LITTLE. The previous version was
+ * a cockpit: fabricated GPS coordinates (`SYS.LOC // MANILA [14.5995° N ...]`),
+ * corner crosshairs, a framed logo plate, "Welcome to Phitopolis", a subtitle,
+ * and a progress bar that read 100% within 350ms. Three problems. The telemetry
+ * was invented data on a marketing site for a firm whose product is real
+ * numbers. The greeting spent the one uninterrupted branded moment on saying
+ * hello. And a bar that is full before anyone perceives it is decoration
+ * wearing instrumentation's clothes.
+ *
+ * What is left is three elements: the wordmark, one hairline, and the count.
+ * The hairline is the only geometric act and it is driven by real resolved
+ * signals — if it moves slowly, something genuinely is slow.
+ *
+ * THE EXIT is an expanding circular mask: a hole opens at the centre and grows
+ * past the corners, so the site is revealed through the intro rather than
+ * having the intro removed from in front of it. Deliberately the same optical
+ * idea as the home-arrival transition in `viewTransitions.css`, so the site has
+ * one notion of how things are revealed instead of two unrelated ones. It is
+ * not a handoff — nothing is shared with the hero, and the hero's own entrance
+ * runs independently.
+ *
+ * ENGINEERING INVARIANTS (kept from the previous revision — these were right):
+ *  - `motion/react`, never gsap. This module is on the first-paint path and
+ *    must not drag GSAP into the eager bundle.
+ *  - `useReducedMotion()` is compared with `=== true`. It returns
+ *    `boolean | null` and is null on first render; bare truthiness here caused
+ *    a freeze where the entrance effect re-ran on null→false, killed its own
+ *    animation, and early-returned on a latched ref so `onDone` never fired.
+ *  - An unconditional failsafe resolves the overlay even if every animation and
+ *    every signal fails. Nothing may leave this mounted.
  */
 
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
-const HARD_CAP_MS = 5000;
+
+/**
+ * The intro's *floor* — what it costs when there is nothing whatever to warm.
+ *
+ * Measured on a warm localhost, where every signal resolves before the entrance
+ * gate even opens, the first draft sat on screen for 1.14s (0.42 entrance +
+ * 0.72 exit). That is the exact failure the previous cockpit version had: time
+ * spent on choreography rather than on loading, paid by the visitors who needed
+ * it least. Trimmed to a ~0.92s floor, which still reads as deliberate rather
+ * than as a flash.
+ *
+ * Both numbers are animation lengths, not waits — the settle gate between them
+ * collapses to zero the moment the warm-up finishes.
+ */
+const IN_DURATION_S = 0.34;
+const OUT_DURATION_S = 0.58;
+
+/**
+ * Settle cap, and the one number that encodes the warm-up bargain.
+ *
+ * The previous revision capped settle at 800ms as part of a 1.5s total budget.
+ * That budget was written for a transition, not for a preloader whose whole job
+ * is to finish warming four route chunks plus a twelve-image manifest — at
+ * 800ms it would routinely give up partway and the navigations it was supposed
+ * to make instant would still fetch.
+ *
+ * 1800ms is the compromise: long enough that a cold load usually completes the
+ * warm-up, short enough that a stalled CDN costs under two seconds. Exit fires
+ * the *instant* signals resolve, so a warm cache still leaves in ~450ms — the
+ * cap is a ceiling, never a wall. Escape always skips.
+ */
+const MAX_SETTLE_MS = 1800;
+const BEAT_FAILSAFE_MS = 2600;
+
+const WORDMARK = "PHITOPOLIS";
 
 export interface LoadSignal {
   label: string;
@@ -49,312 +104,224 @@ interface PreloaderProps {
   warmup?: LoadSignal[];
 }
 
-/** Corner Crosshair Hairline Marker */
-function Crosshair({ position, refCallback }: { position: "tl" | "tr" | "bl" | "br"; refCallback?: (el: HTMLDivElement | null) => void }) {
-  const styles: Record<string, object> = {
-    tl: { top: -7, left: -7 },
-    tr: { top: -7, right: -7 },
-    bl: { bottom: -7, left: -7 },
-    br: { bottom: -7, right: -7 },
-  };
-
-  return (
-    <Box
-      ref={refCallback}
-      sx={{
-        position: "absolute",
-        width: 14,
-        height: 14,
-        pointerEvents: "none",
-        zIndex: 5,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: NOIR.gold,
-        opacity: 0,
-        ...styles[position],
-      }}
-    >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M7 0V14M0 7H14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
-      </svg>
-    </Box>
-  );
-}
-
 export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const reduced = useReducedMotion();
   const [signals] = useState<LoadSignal[]>(() => [...collectFontSignals(), ...(warmup ?? [])]);
   const [resolved, setResolved] = useState(0);
-  const [lastLabel, setLastLabel] = useState("ASSETS");
+  const [lastLabel, setLastLabel] = useState("");
   const [forced, setForced] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
-  // Drives the root's `pointerEvents`. This has to be React state, not a plain ref
-  // flipped inside the exit effect below: a ref mutation doesn't trigger a re-render,
-  // so `pointerEvents` would only ever pick up the new value whenever some *other*
-  // state change happened to re-render this component next — in practice, whatever
-  // AppShell's entrance-phase timers did next, several hundred ms later, not the
-  // moment the overlay actually started clearing. Making it state means the DOM
-  // attribute updates in the same render the curtain starts opening.
   const [exiting, setExiting] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const topShutterRef = useRef<HTMLDivElement>(null);
-  const bottomShutterRef = useRef<HTMLDivElement>(null);
-  const coordsRef = useRef<HTMLDivElement>(null);
-  const centerStageRef = useRef<HTMLDivElement>(null);
-  const frameBoxRef = useRef<HTMLDivElement>(null);
-  const crosshairRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const logoMarkRef = useRef<HTMLDivElement>(null);
-  const headlineRef = useRef<HTMLDivElement>(null);
-  const subtitleRef = useRef<HTMLDivElement>(null);
-  const counterWrapRef = useRef<HTMLDivElement>(null);
-  const progressFillRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const ruleRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const readoutRef = useRef<HTMLDivElement>(null);
 
-  const entranceControlsRef = useRef<ReturnType<typeof animate> | null>(null);
-
-  const total = Math.max(signals.length, 1);
   const isDoneRef = useRef(false);
-  const exitFiredRef = useRef(false);
-  const hasStartedExitRef = useRef(false);
-
   const onDoneRef = useRef(onDone);
   const onStartExitRef = useRef(onStartExit);
+  const entranceStartedRef = useRef(false);
+  const exitStartedRef = useRef(false);
 
   useEffect(() => {
     onDoneRef.current = onDone;
     onStartExitRef.current = onStartExit;
   });
 
-  // Lock body scroll while preloader is active
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prevOverflow;
-      };
+  const finish = useCallback(() => {
+    if (isDoneRef.current) return;
+    isDoneRef.current = true;
+    try {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
+      }
+    } catch {
+      // sessionStorage is blocked in private mode and some embedded webviews.
+      // Losing the once-per-session guarantee is acceptable; throwing is not.
     }
+    onDoneRef.current();
   }, []);
 
-  // Monitor loading signals
+  const total = Math.max(signals.length, 1);
+  const progressPercent =
+    forced || signals.length === 0 ? 100 : Math.min(100, Math.round((resolved / total) * 100));
+  const isComplete = progressPercent >= 100 || forced;
+
+  // Real signals only. Nothing here is on a timer pretending to be progress.
   useEffect(() => {
-    let cancelled = false;
-    for (const signal of signals) {
-      void signal.promise.then(() => {
-        if (!cancelled) {
-          setResolved((count) => count + 1);
-          setLastLabel(signal.label);
-        }
-      });
-    }
-    const cap = window.setTimeout(() => {
-      if (!cancelled) setForced(true);
-    }, HARD_CAP_MS);
+    if (signals.length === 0) return;
+    let mounted = true;
+    signals.forEach((sig) => {
+      const tick = () => {
+        if (!mounted) return;
+        setResolved((prev) => prev + 1);
+        setLastLabel(sig.label);
+      };
+      sig.promise.then(tick).catch(tick);
+    });
     return () => {
-      cancelled = true;
-      window.clearTimeout(cap);
+      mounted = false;
     };
   }, [signals]);
 
-  // Monitor Escape key for skipping
   useEffect(() => {
-    const skip = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setForced(true);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setForced(true);
     };
-    window.addEventListener("keydown", skip);
-    return () => window.removeEventListener("keydown", skip);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const progressPercent = forced || signals.length === 0 || resolved >= total
-    ? 100
-    : Math.round((Math.min(resolved, total) / total) * 100);
+  const triggerExit = useCallback(() => {
+    if (exitStartedRef.current) return;
+    exitStartedRef.current = true;
+    setExiting(true);
+    onStartExitRef.current?.();
 
-  const isComplete = progressPercent >= 100;
-
-  // Stately, one-at-a-time buffered entrance choreography
-  useEffect(() => {
-    const coordsEl = coordsRef.current;
-    const stageEl = centerStageRef.current;
-    const frameEl = frameBoxRef.current;
-    const crosshairs = crosshairRefs.current.filter((el): el is HTMLDivElement => el !== null);
-    const logoEl = logoMarkRef.current;
-    const headEl = headlineRef.current;
-    const subEl = subtitleRef.current;
-    const countEl = counterWrapRef.current;
-
-    if (reduced) {
-      // AppShell's reduced-motion gate resolves asynchronously, so this
-      // component still has to degrade on its own: snap straight to the
-      // resting state instead of playing the bounce entrance, and let the
-      // rest of the lifecycle (progress, exit) proceed immediately.
-      for (const el of [stageEl, frameEl, logoEl, headEl, subEl, countEl]) {
-        if (el) el.style.opacity = "1";
-      }
-      if (coordsEl) coordsEl.style.opacity = "0.5";
-      for (const el of crosshairs) el.style.opacity = "1";
-      // Deferred a tick (as the non-reduced path's controls.then() also is)
-      // rather than called synchronously in the effect body.
-      queueMicrotask(() => setEntranceDone(true));
-      return;
-    }
-
-    // Each step's [from, to] keyframe pair replaces the old gsap.set()
-    // reset + tl.to() pair — motion animates between the two keyframes
-    // directly, so there's no separate "reset initial state" pass.
-    const CROSSHAIR_STAGGER = 0.06;
-    const D1 = 0.35; // stage ground & coordinates
-    const D2 = 0.5; // center frame
-    const D3 = 0.35; // crosshairs (before stagger overlap)
-    const D4 = 0.55; // logo mark
-    const D5 = 0.55; // headline
-    const D6 = 0.45; // subtitle
-    const D7 = 0.4; // counter & diagnostics
-    const B1 = 0.15;
-    const B2 = 0.15;
-    const B3 = 0.18;
-    const B4 = 0.18;
-    const B5 = 0.15;
-    const B6 = 0.15;
-
-    // 1. Stage ground & coordinates fade in -> buffer
-    const t1 = 0;
-    // 2. Center frame emerges -> buffer
-    const t2 = t1 + D1 + B1;
-    // 3. Corner crosshairs lock into place one-by-one -> buffer
-    const t3 = t2 + D2 + B2;
-    const crosshairSpan = D3 + CROSSHAIR_STAGGER * Math.max(crosshairs.length - 1, 0);
-    // 4. Logo mark reveals inside frame -> buffer
-    const t4 = t3 + crosshairSpan + B3;
-    // 5. Headline "Welcome to Phitopolis" reveals -> buffer
-    const t5 = t4 + D4 + B4;
-    // 6. Subtitle brand pillar tag reveals -> buffer
-    const t6 = t5 + D5 + B5;
-    // 7. Counter & diagnostics reveal at bottom
-    const t7 = t6 + D6 + B6;
-
-    const controls = animate([
-      [coordsEl, { opacity: [0, 0.5], y: [-8, 0] }, { duration: D1, ease: EASE_OUT_EXPO, at: t1 }],
-      [stageEl, { opacity: [0, 1] }, { duration: D1, ease: EASE_OUT_EXPO, at: t1 }],
-      [frameEl, { scale: [0.93, 1], opacity: [0, 1] }, { duration: D2, ease: EASE_OUT_EXPO, at: t2 }],
-      [
-        crosshairs,
-        { opacity: [0, 1], scale: [0.6, 1] },
-        { duration: D3, delay: stagger(CROSSHAIR_STAGGER), ease: EASE_SPRING_SOFT, at: t3 },
-      ],
-      [logoEl, { scale: [0.88, 1], opacity: [0, 1], y: [10, 0] }, { duration: D4, ease: EASE_OUT_EXPO, at: t4 }],
-      [headEl, { opacity: [0, 1], y: [12, 0] }, { duration: D5, ease: EASE_OUT_EXPO, at: t5 }],
-      [subEl, { opacity: [0, 1], y: [8, 0] }, { duration: D6, ease: EASE_OUT_EXPO, at: t6 }],
-      [countEl, { opacity: [0, 1], y: [8, 0] }, { duration: D7, ease: EASE_OUT_EXPO, at: t7 }],
-    ]);
-
-    entranceControlsRef.current = controls;
-    void controls.then(() => setEntranceDone(true));
-
-    return () => {
-      controls.stop();
-    };
-  }, [reduced]);
-
-  // Update progress hairline. Animates `scaleX` (compositor-only) against a
-  // fixed-width, left-anchored element rather than tweening `width` (a layout
-  // property) on every tick. The fill's transform is never bound to React
-  // state directly in JSX (see the render below) — only this effect touches
-  // it — so each animate() call picks up from wherever the previous one left
-  // off instead of racing a React-applied snap to the same value.
-  useEffect(() => {
-    const fillEl = progressFillRef.current;
-    if (!fillEl) return;
-    const controls = animate(
-      fillEl,
-      { scaleX: progressPercent / 100 },
-      { duration: forced || reduced ? 0.1 : 0.3, ease: EASE_OUT_EXPO }
-    );
-    return () => controls.stop();
-  }, [progressPercent, forced, reduced]);
-
-  // Master Synchronized Exit Choreography with center-to-outward split black curtain
-  useEffect(() => {
-    const shouldExit = (entranceDone && isComplete) || forced;
-    if (!shouldExit || isDoneRef.current || hasStartedExitRef.current) return;
-    hasStartedExitRef.current = true;
-
-    if (forced) {
-      entranceControlsRef.current?.complete();
-    }
-
-    const finish = () => {
-      if (!isDoneRef.current) {
-        isDoneRef.current = true;
-        // Same private-browsing/sandboxed-context risk as the session-gate read in
-        // AppShell's shouldShowPreloader — but unguarded here it's worse than a stale
-        // gate: an uncaught throw would abort this callback before reaching
-        // onDoneRef.current?.() below, leaving showPreloader stuck `true` in AppShell
-        // forever (the overlay would never unmount). Losing the "don't replay the
-        // intro" bookkeeping for this one session is a fine trade against that.
-        try {
-          sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-        } catch {
-          // ignore — see above
-        }
-        onDoneRef.current?.();
-      }
-    };
-
-    const fireStartExit = () => {
-      if (!exitFiredRef.current && onStartExitRef.current) {
-        exitFiredRef.current = true;
-        onStartExitRef.current();
-      }
-    };
-
-    if (reduced) {
-      // WCAG 2.3.3 fast path, mirroring TransitionCurtain's reduced-motion
-      // branch: no shutter sweep, no content retreat — the overlay is about
-      // to unmount, so just fire the callbacks AppShell is waiting on.
-      // setExiting is deferred a tick (matching the entrance effect's own
-      // queueMicrotask above) rather than called synchronously here, which
-      // react-hooks/set-state-in-effect flags as a cascading-render risk.
-      queueMicrotask(() => setExiting(true));
-      fireStartExit();
+    if (reduced === true) {
       finish();
       return;
     }
 
-    const topShutter = topShutterRef.current;
-    const bottomShutter = bottomShutterRef.current;
-    const stageEl = centerStageRef.current;
-    const countEl = counterWrapRef.current;
-    const coordsEl = coordsRef.current;
+    const root = rootRef.current;
 
-    const delay = forced ? 0 : 0.25;
+    /**
+     * The expanding hole.
+     *
+     * A `clip-path: circle()` would contract the overlay to a dot at the
+     * centre — the opposite reading. To open a hole you need a mask whose
+     * transparent region grows, which means animating a radial-gradient stop.
+     *
+     * Driven by `animate(from, to, { onUpdate })` writing the style directly,
+     * rather than by handing Motion a `--custom-property` target: an unregistered
+     * custom property has no interpolation type, so relying on the CSS engine to
+     * tween it is undefined behaviour across browsers. A number tween plus a
+     * manual write is explicit and portable.
+     *
+     * Radius reaches the far corner (half the diagonal) with 6% of slack, so the
+     * last frame is genuinely clear of the viewport rather than leaving a
+     * vignette in the corners.
+     */
+    const reach =
+      typeof window === "undefined"
+        ? 1200
+        : (Math.hypot(window.innerWidth, window.innerHeight) / 2) * 1.06;
 
-    animate(
-      [
-        // Step 1: Bottom counter, coordinates and diagnostics gently draw back
-        [[countEl, coordsEl], { opacity: 0, y: 8 }, { duration: 0.3, ease: EASE_OUT_EXPO, at: 0 }],
-        // Step 2: Center stage content softly scales and fades
-        [stageEl, { opacity: 0, scale: 0.96, y: -10 }, { duration: 0.38, ease: EASE_OUT_EXPO, at: 0.12 }],
-        // Step 3: Center-to-outward split black curtain — top shutter moves
-        // up to -100%, bottom shutter moves down to 100%.
-        [topShutter, { y: "-100%" }, { duration: 0.85, ease: EASE_IN_OUT_QUART, at: 0.35 }],
-        [bottomShutter, { y: "100%" }, { duration: 0.85, ease: EASE_IN_OUT_QUART, at: 0.35 }],
-        // Release pointer-events the instant the curtain physically starts moving
-        // apart (same `at: 0.35` mark as the shutter tweens above), not before and
-        // not several hundred ms after. Any earlier and the overlay is still 100%
-        // opaque — releasing then would let a click fall through to page content
-        // the visitor cannot yet see, exactly the "click things you can't see"
-        // failure mode this is guarding against. Any later (the old behavior:
-        // effectively "whenever AppShell's next unrelated re-render happens to
-        // land") and the overlay keeps swallowing input long after the curtain has
-        // visibly started clearing.
-        [() => setExiting(true), { at: 0.35 }],
-        // Mid-curtain release: notify AppShell at 50% curtain split
-        [fireStartExit, { at: 0.7 }],
-      ],
-      { delay, onComplete: finish }
-    );
-  }, [entranceDone, isComplete, forced, reduced]);
+    const out: Promise<unknown>[] = [];
+
+    if (stageRef.current) {
+      // The content clears slightly ahead of the mask so the hole opens onto a
+      // clean field instead of catching the wordmark mid-dissolve.
+      out.push(
+        animate(
+          stageRef.current,
+          { opacity: 0, y: -8 },
+          { duration: OUT_DURATION_S * 0.42, ease: "easeIn" },
+        ).then(() => {}),
+      );
+    }
+
+    if (root) {
+      root.style.willChange = "mask-image, -webkit-mask-image";
+      out.push(
+        animate(0, reach, {
+          duration: OUT_DURATION_S,
+          ease: EASE_OUT_EXPO,
+          onUpdate: (r) => {
+            const g = `radial-gradient(circle at 50% 50%, transparent ${r}px, #000 ${r}px)`;
+            root.style.webkitMaskImage = g;
+            root.style.maskImage = g;
+          },
+        }).then(() => {}),
+      );
+    }
+
+    // Belt and braces: the timer resolves even if a Motion promise never
+    // settles (a backgrounded tab suspends rAF, so this is not hypothetical).
+    const timer = window.setTimeout(finish, OUT_DURATION_S * 1000 + 60);
+    Promise.all(out)
+      .catch(() => undefined)
+      .then(() => {
+        window.clearTimeout(timer);
+        finish();
+      });
+  }, [reduced, finish]);
+
+  useEffect(() => {
+    if (reduced === true) {
+      onStartExitRef.current?.();
+      finish();
+    }
+  }, [reduced, finish]);
+
+  // IN beat. `entranceStartedRef` latches so the null→false flip of
+  // `useReducedMotion` cannot restart it; the early return below is keyed on
+  // `reduced === true` so that same flip cannot strand it either.
+  useEffect(() => {
+    if (reduced === true) return;
+    if (entranceStartedRef.current) return;
+    entranceStartedRef.current = true;
+
+    const letters = letterRefs.current.filter((el): el is HTMLSpanElement => el !== null);
+    if (letters.length > 0) {
+      animate(
+        letters,
+        { opacity: [0, 1], y: [14, 0] },
+        { delay: stagger(0.022), duration: 0.4, ease: EASE_OUT_EXPO },
+      );
+    }
+    if (ruleRef.current) {
+      animate(
+        ruleRef.current,
+        { opacity: [0, 1], scaleX: [0.4, 1] },
+        { duration: 0.5, delay: 0.12, ease: EASE_OUT_EXPO },
+      );
+    }
+    if (readoutRef.current) {
+      animate(readoutRef.current, { opacity: [0, 1] }, { duration: 0.3, delay: 0.22 });
+    }
+
+    const entranceTimer = window.setTimeout(() => setEntranceDone(true), IN_DURATION_S * 1000);
+    return () => window.clearTimeout(entranceTimer);
+  }, [reduced]);
+
+  // The fill is the progress bar. scaleX only — no width animation, no reflow.
+  useEffect(() => {
+    if (fillRef.current) {
+      animate(fillRef.current, { scaleX: progressPercent / 100 }, { duration: 0.28, ease: "easeOut" });
+    }
+  }, [progressPercent]);
+
+  // SETTLE. Leaves the instant the warm-up completes; the cap only bites when
+  // something is genuinely stuck.
+  useEffect(() => {
+    if (reduced === true) return;
+    if (!entranceDone) return;
+    if (isComplete) {
+      triggerExit();
+      return;
+    }
+    const settleTimeout = window.setTimeout(triggerExit, MAX_SETTLE_MS);
+    return () => window.clearTimeout(settleTimeout);
+  }, [entranceDone, isComplete, reduced, triggerExit]);
+
+  // Unconditional. Nothing may leave this overlay mounted — not a rejected
+  // animation, not a hung signal, not a suspended tab.
+  useEffect(() => {
+    const failsafeTimer = window.setTimeout(() => {
+      if (!isDoneRef.current) {
+        onStartExitRef.current?.();
+        finish();
+      }
+    }, BEAT_FAILSAFE_MS);
+    return () => window.clearTimeout(failsafeTimer);
+  }, [finish]);
+
+  const readout = `${String(progressPercent).padStart(2, "0")}%`;
+  const status = isComplete ? "READY" : lastLabel ? `WARMING — ${lastLabel}` : "WARMING";
 
   return (
     <Box
@@ -364,266 +331,114 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
         position: "fixed",
         inset: 0,
         zIndex: 99999,
+        bgcolor: NOIR.navyInk,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         overflow: "hidden",
         pointerEvents: exiting ? "none" : "auto",
       }}
     >
-      {/* Top Half Black/Navy Shutter Curtain (Moves upward to -100%) */}
+      {/* One column, sized by the wordmark. The rule and the readout inherit
+          that width rather than being given one, so the three elements stay
+          optically locked at every viewport without a media query. */}
       <Box
-        ref={topShutterRef}
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "50.5vh", // Slight overlap to prevent subpixel hairline gap at horizon
-          bgcolor: NOIR.navyInk,
-          background: "linear-gradient(180deg, #030712 0%, #06183B 100%)",
-          borderBottom: "1px solid rgba(255, 199, 44, 0.15)",
-          zIndex: 2,
-          willChange: "transform",
-        }}
-      />
-
-      {/* Bottom Half Black/Navy Shutter Curtain (Moves downward to 100%) */}
-      <Box
-        ref={bottomShutterRef}
-        sx={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "50.5vh",
-          bgcolor: NOIR.navyInk,
-          background: "linear-gradient(180deg, #06183B 0%, #030712 100%)",
-          borderTop: "1px solid rgba(255, 199, 44, 0.15)",
-          zIndex: 2,
-          willChange: "transform",
-        }}
-      />
-
-      {/* Center Foreground Layer. Despite the name, nothing inside it is actually
-          interactive — it's the coordinates tag, logo/headline stage, and progress
-          counter, none of them a button or link. Left at the pointer-events default
-          (auto), this `inset: 0` flex container was a full-viewport, mostly-transparent
-          click-catcher sitting *above* the shutters (zIndex 10 vs. their 2): a runtime
-          audit found it swallowing clicks meant for the header (e.g. `a[href="/about"]`)
-          at every sample through the whole entrance *and* well into the exit, because it
-          intercepted hits over its own empty padding/gap regions regardless of whether a
-          shutter was still visually covering that pixel. Since it truly has nothing to
-          click, it doesn't need to intercept anything — the shutters themselves (opaque,
-          and correctly hit-tested at wherever their transform has actually moved them to)
-          are what should be, and already are, the thing standing in the way. */}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 10,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "space-between",
-          py: { xs: 5, md: 7 },
-          px: 3,
-          pointerEvents: "none",
-        }}
+        ref={stageRef}
+        sx={{ display: "inline-flex", flexDirection: "column", alignItems: "stretch", px: 3 }}
       >
-        {/* Top Subtle Coordinates Tag */}
-        <Box ref={coordsRef} sx={{ opacity: 0, userSelect: "none" }}>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: { xs: "0.6rem", md: "0.68rem" },
-              letterSpacing: "0.22em",
-              color: "rgba(244, 247, 252, 0.6)",
-              textTransform: "uppercase",
-            }}
-          >
-            SYS.LOC // MANILA [14.5995° N, 120.9842° E]
-          </Typography>
-        </Box>
-
-        {/* Center Stage Container */}
-        <Box
-          ref={centerStageRef}
+        <Typography
+          component="h1"
+          aria-label="Phitopolis"
           sx={{
+            fontFamily: DISPLAY_FONT,
+            fontWeight: 600,
+            fontSize: { xs: "1.55rem", sm: "2.1rem", md: "2.6rem" },
+            lineHeight: 1,
+            color: NOIR.frost,
+            letterSpacing: "0.34em",
+            // letter-spacing adds a trailing gap after the final glyph, which
+            // would push the block off-centre and desync the rule beneath it.
+            mr: "-0.34em",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: { xs: 2.5, md: 3 },
-            my: "auto",
           }}
         >
-          {/* Framed Square with Corner Gold Crosshairs */}
-          <Box
-            ref={frameBoxRef}
-            sx={{
-              position: "relative",
-              width: { xs: 160, sm: 190, md: 210 },
-              height: { xs: 160, sm: 190, md: 210 },
-              bgcolor: "rgba(6, 18, 38, 0.6)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.09)",
-              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* 4 Corner Precision Crosshairs */}
-            <Crosshair position="tl" refCallback={(el) => { crosshairRefs.current[0] = el; }} />
-            <Crosshair position="tr" refCallback={(el) => { crosshairRefs.current[1] = el; }} />
-            <Crosshair position="bl" refCallback={(el) => { crosshairRefs.current[2] = el; }} />
-            <Crosshair position="br" refCallback={(el) => { crosshairRefs.current[3] = el; }} />
-
-            {/* Central Phitopolis Logo Mark with Gold Phi Accent */}
+          {WORDMARK.split("").map((char, i) => (
             <Box
-              ref={logoMarkRef}
-              sx={{
-                width: { xs: 75, sm: 90, md: 100 },
-                height: { xs: 75, sm: 90, md: 100 },
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                filter: "drop-shadow(0 4px 20px rgba(255, 199, 44, 0.2))",
+              key={`${char}-${i}`}
+              component="span"
+              aria-hidden="true"
+              ref={(el: HTMLSpanElement | null) => {
+                letterRefs.current[i] = el;
               }}
+              sx={{ display: "inline-block", willChange: "transform, opacity" }}
             >
-              <PhitopolisLogo
-                style={{ width: "100%", height: "100%" }}
-                color="#FFFFFF"
-                accentColor={NOIR.gold}
-                title="Phitopolis"
-              />
+              {char}
             </Box>
-          </Box>
+          ))}
+        </Typography>
 
-          {/* Center Editorial Headline: "Welcome to Phitopolis" */}
-          <Box
-            ref={headlineRef}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              userSelect: "none",
-            }}
-          >
-            {/* Not an <h1>: this splash message isn't the page's heading — the route
-                being loaded underneath already has its own — and rendering it as one
-                gave every hard load a transient *second* <h1> for as long as the
-                overlay was mounted. `component="p"` keeps the identical visual
-                treatment (the styling below is all this element ever relied on) while
-                leaving the document outline to the actual page content. */}
-            <Typography
-              component="p"
-              sx={{
-                fontFamily: "Inter, sans-serif",
-                fontSize: { xs: "1.25rem", sm: "1.6rem", md: "1.95rem" },
-                fontWeight: 800,
-                letterSpacing: "0.06em",
-                color: NOIR.frost,
-                lineHeight: 1.2,
-                textTransform: "none",
-                m: 0,
-              }}
-            >
-              Welcome to{" "}
-              <Box component="span" sx={{ color: NOIR.gold, fontWeight: 900 }}>
-                Phitopolis
-              </Box>
-            </Typography>
-          </Box>
-
-          {/* Under-Headline Subtitle: Brand Pillar Tag */}
-          <Box
-            ref={subtitleRef}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              userSelect: "none",
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: MONO,
-                fontSize: { xs: "0.6rem", sm: "0.68rem", md: "0.74rem" },
-                fontWeight: 600,
-                letterSpacing: { xs: "0.2em", sm: "0.26em" },
-                color: "rgba(244, 247, 252, 0.65)",
-                textTransform: "uppercase",
-              }}
-            >
-              QUANTITATIVE SYSTEMS · HIGH PERFORMANCE R&D
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Bottom Minimalist Progress Bar, Kinetic Counter & Diagnostics */}
+        {/* The one geometric act. Track plus a scaleX fill — real progress. */}
         <Box
-          ref={counterWrapRef}
+          ref={ruleRef}
+          aria-hidden="true"
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1.2,
-            userSelect: "none",
-            width: "100%",
-            maxWidth: 240,
+            position: "relative",
+            height: "1px",
+            mt: { xs: 2.5, md: 3 },
+            bgcolor: `rgba(${NOIR.frostRgb}, 0.16)`,
+            transformOrigin: "left center",
+            overflow: "hidden",
           }}
         >
-          {/* Hairline Progress Rail */}
           <Box
+            ref={fillRef}
             sx={{
-              width: "100%",
-              height: "1.5px",
-              bgcolor: "rgba(255, 255, 255, 0.08)",
-              position: "relative",
-              overflow: "hidden",
+              position: "absolute",
+              inset: 0,
+              bgcolor: NOIR.gold,
+              transformOrigin: "left center",
+              transform: "scaleX(0)",
+              willChange: "transform",
             }}
-          >
-            <Box
-              ref={progressFillRef}
-              sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                bottom: 0,
-                width: "100%",
-                transformOrigin: "left center",
-                transform: "scaleX(0)",
-                bgcolor: NOIR.gold,
-                boxShadow: `0 0 8px ${NOIR.gold}`,
-              }}
-            />
-          </Box>
+          />
+        </Box>
 
-          {/* Minimal Tabular Counter */}
+        <Box
+          ref={readoutRef}
+          sx={{
+            mt: 1.25,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 2,
+          }}
+        >
+          {/* Real signal names, not invented telemetry. Kept small and quiet:
+              it explains the wait to anyone who looks for it and disappears for
+              everyone who doesn't. */}
           <Typography
             sx={{
               fontFamily: MONO,
-              fontSize: { xs: "0.85rem", md: "0.95rem" },
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: NOIR.gold,
+              fontSize: { xs: 8.5, md: 9.5 },
+              letterSpacing: "0.24em",
+              color: `rgba(${NOIR.frostRgb}, 0.34)`,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {status}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: { xs: 8.5, md: 9.5 },
+              letterSpacing: "0.24em",
+              color: `rgba(${NOIR.frostRgb}, 0.55)`,
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {String(progressPercent).padStart(2, "0")}%
-          </Typography>
-
-          {/* Accessible System Status Label */}
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.62rem",
-              letterSpacing: "0.18em",
-              color: "rgba(244, 247, 252, 0.45)",
-              textTransform: "uppercase",
-            }}
-          >
-            {isComplete ? "READY" : `WARMING — ${lastLabel}`}
+            {readout}
           </Typography>
         </Box>
       </Box>
