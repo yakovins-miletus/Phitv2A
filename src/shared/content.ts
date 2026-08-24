@@ -26,7 +26,11 @@ const OPEN_ROLES_COUNT = CAREER_POSITIONS.length;
 
 export const CONTENT = {
   hero: {
-    tagline: "Making tomorrow's technology available today",
+    /** The hero motto, rendered by `SuperHeroSequence`'s `.hero-motto` block.
+     *  Title case because that is how it is set on the page; this string is the
+     *  single source, so editing it here changes what ships. It used to be dead
+     *  data while the hero carried its own hardcoded literal. */
+    tagline: "Making Tomorrow's Technology Available Today",
     description:
       "At Phitopolis, we view global markets as the ultimate intellectual puzzle. As a R&D firm, we create technology and solutions driven by deep insights, modern engineering, and latest trends in Artificial Intelligence.",
     salesPitch: {

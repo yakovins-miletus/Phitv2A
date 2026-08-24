@@ -39,6 +39,7 @@ const HeroImageWall = lazy(() =>
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import { DWELL_END } from "./heroPhases";
 import { HERO_WALL_TILES } from "./heroWallTiles";
+import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
@@ -1101,7 +1102,7 @@ export function HeroSignalCore() {
               color: roomIsDark ? NOIR.frost : NOIR.navyField,
             }}
           >
-            Making Tomorrow's Technology Available Today
+            {CONTENT.hero.tagline}
           </Typography>
         </Box>
 
