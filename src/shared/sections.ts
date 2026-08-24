@@ -33,12 +33,20 @@ export interface ChapterDef {
   act: Act;
 }
 
-/** Chapters in scroll order, including the detailed hero phases. */
+/** Chapters in scroll order, including the detailed hero phases.
+ *
+ *  The first four are positions inside the hero's logo choreography. Their
+ *  labels used to be the internal phase names — FLATTEN, ALIGN, REVEAL,
+ *  DWELL — which are what the animation code calls them, not anything a
+ *  visitor could act on. The chapter rail is visitor-facing navigation, so it
+ *  names what is on screen at each position instead. The phase constants in
+ *  `heroScene.ts` (PHASE_FLATTEN_END, DWELL_END and friends) keep the
+ *  engineering names; only these display strings changed. */
 export const CHAPTERS: readonly ChapterDef[] = [
-  { index: 0, label: "FLATTEN", act: "services" },
-  { index: 1, label: "ALIGN", act: "services" },
-  { index: 2, label: "REVEAL", act: "services" },
-  { index: 3, label: "DWELL", act: "services" },
+  { index: 0, label: "THE MARK", act: "services" },
+  { index: 1, label: "THE GRID", act: "services" },
+  { index: 2, label: "PHITOPOLIS", act: "services" },
+  { index: 3, label: "WHAT WE DO", act: "services" },
   { index: 4, label: "QUANTITATIVE R&D", act: "services" },
   { index: 5, label: "PRACTICE", act: "services" },
   { index: 6, label: "REACH", act: "services" },

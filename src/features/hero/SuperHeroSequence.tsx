@@ -1137,7 +1137,7 @@ export function HeroSignalCore() {
               textTransform: "uppercase",
             }}
           >
-            EXPLORE PHITOPOLIS // DIRECTORY
+            EXPLORE PHITOPOLIS
           </Typography>
 
           <Box

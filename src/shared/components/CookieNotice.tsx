@@ -101,7 +101,12 @@ export function CookieNotice() {
             bottom: 0,
             zIndex: 1400, // theme.zIndex.snackbar — same tier CommandPalette uses
             display: "flex",
-            justifyContent: "center",
+            // Docked to the trailing edge on desktop rather than centred. As a
+            // centred 720px bar it sat directly over the home hero's CTA row
+            // ("WHAT WE DO", "EXPLORE COMMUNITY"), which are the page's primary
+            // actions and were partly unclickable behind it. Full width still on
+            // mobile, where there is no room to dock and nothing beside it.
+            justifyContent: "flex-end",
             padding: "16px",
             pointerEvents: "none",
           }}
@@ -110,7 +115,7 @@ export function CookieNotice() {
             sx={{
               pointerEvents: "auto",
               width: "100%",
-              maxWidth: 720,
+              maxWidth: { xs: "100%", md: 460 },
               // Owned by the glass system rather than a local multiplier — see
               // theme.ts's note on why `shape.borderRadius` stays 4.
               borderRadius: "var(--r-card)",

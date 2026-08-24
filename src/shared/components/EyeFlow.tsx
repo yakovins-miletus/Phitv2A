@@ -42,8 +42,16 @@ export function EyeFlow() {
    */
   const { isOverDarkSection } = useNavbar();
   const railFg = isOverDarkSection ? "rgba(255, 255, 255, 0.82)" : "text.secondary";
-  // The accent does not follow the ground — brand gold is the accent on both.
-  const railAccent = NOIR.gold;
+  // The accent DOES have to follow the ground here, unlike a fill or a border.
+  // These are 11px mono labels: gold measures 1.45:1 on the hero's light ground,
+  // so making the ACTIVE chapter gold made the one row a reader most needs to
+  // read the only row they cannot. Inactive rows were already legible (navy at
+  // 0.82, ~5.9:1), which left the rail reading backwards.
+  //
+  // On dark grounds gold clears comfortably and stays. On light the active row
+  // takes the navy ink; weight (800 against 500) plus the moving indicator
+  // already carry the state, so nothing is lost by not colouring it.
+  const railAccent = isOverDarkSection ? NOIR.gold : NOIR.navyField;
   const normalizedProgress = useMotionValue(0);
   const [activeChapter, setActiveChapter] = useState<ChapterIndex>(0);
   const activeAct = actOfChapter(activeChapter);
