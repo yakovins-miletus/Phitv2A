@@ -191,7 +191,7 @@ test("reduced motion: use-case narrative stacks vertically, all slides reachable
   expect(screen.getByText("Algorithmic Signal Generation")).toBeInTheDocument();
   expect(screen.getByText("Cloud-Native Infrastructure")).toBeInTheDocument();
   expect(screen.getByText("Global Technical Operations")).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /noise to alpha/i })).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /cloud-native data pipeline/i })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /noise, model, signal/i })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /sources, pipeline stages/i })).toBeInTheDocument();
   expect(screen.getByRole("img", { name: /follow-the-sun coverage/i })).toBeInTheDocument();
 });

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { act, render } from "@testing-library/react";
 import { NAV_ANCHORS, NavbarProvider, useNavbar } from "@/shared/components/NavbarContext";
 
@@ -24,7 +25,9 @@ function renderProbe() {
   let registerAnchor!: ReturnType<typeof useNavbar>["registerAnchor"];
   function Capture() {
     const navbar = useNavbar();
-    registerAnchor = navbar.registerAnchor;
+    useEffect(() => {
+      registerAnchor = navbar.registerAnchor;
+    });
     return null;
   }
   const utils = render(
