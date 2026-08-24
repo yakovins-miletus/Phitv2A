@@ -491,11 +491,14 @@ export function PlaygroundCanvas({
    */
   const target = useMemo(
     () => copyDayCycleSample(createDayCycleSample(), sampleForMode(skyMode)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- built once from
-    // whatever mode was live at mount; the effect below keeps it live after.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
-  const applied = useMemo(() => copyDayCycleSample(createDayCycleSample(), target), [target]);
+  const applied = useMemo(
+    () => copyDayCycleSample(createDayCycleSample(), sampleForMode(skyMode)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   /**
    * Re-point `target` at the chosen sky, in place.
@@ -514,9 +517,10 @@ export function PlaygroundCanvas({
    * forced to 0 regardless of mode.
    */
   useEffect(() => {
-    copyDayCycleSample(target, sampleForMode(skyMode));
-    if (lowPower) target.starVisibility = 0;
-  }, [target, skyMode, lowPower]);
+    const src = sampleForMode(skyMode);
+    copyDayCycleSample(target, lowPower ? { ...src, starVisibility: 0 } : src);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skyMode, lowPower]);
 
   /**
    * Arrive immediately rather than easing, whenever frames are not flowing.

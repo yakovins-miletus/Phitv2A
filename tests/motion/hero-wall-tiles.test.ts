@@ -13,6 +13,9 @@
  * it only appears 60% of the way through an eight-viewport scroll.
  */
 
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { HERO_WALL_TILES } from "@/features/hero/heroWallTiles";
 
 describe("hero drift wall tiles", () => {
@@ -37,9 +40,31 @@ describe("hero drift wall tiles", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("draws only from the CMS blog media library", () => {
+  it("draws only from the generated hero-wall derivatives", () => {
+    // NOT `/images/blog/...`, and that is the point of this assertion.
+    //
+    // The tile renders at 300x280 while the blog originals are 1520px+, and the
+    // wall prefetches all 25 on the home page — 2.55MB of transfer for 300px
+    // tiles. `/images/hero-wall/<slug>-<NN>.webp` holds 600x560 derivatives
+    // (1.13MB total) that look identical on screen.
+    //
+    // Pointing a tile back at the blog original still *works*, which is exactly
+    // why this is pinned: the regression is invisible in the browser and only
+    // shows up as bytes.
     for (const tile of HERO_WALL_TILES) {
-      expect(tile.src).toMatch(/^\/images\/blog\/[^/]+\/\d+\.webp$/);
+      expect(tile.src).toMatch(/^\/images\/hero-wall\/[^/]+\.webp$/);
+    }
+  });
+
+  it("points at files that actually exist in public/", () => {
+    // The failure the header describes — a fat-fingered path rendering a broken
+    // tile 60% of the way down an eight-viewport scroll — is now more likely,
+    // not less: these paths are generated derivatives rather than the blog
+    // originals someone can eyeball in the media library. A shape-only regex
+    // would pass happily on a file that was never generated.
+    for (const tile of HERO_WALL_TILES) {
+      const onDisk = resolve(process.cwd(), `public${tile.src}`);
+      expect(existsSync(onDisk), `missing derivative: public${tile.src}`).toBe(true);
     }
   });
 
@@ -52,7 +77,14 @@ describe("hero drift wall tiles", () => {
   });
 
   it("takes at most one frame from any single event", () => {
-    const events = HERO_WALL_TILES.map((t) => t.src.split("/")[3]);
+    // The event slug used to be a path segment (`/images/blog/<slug>/<NN>.webp`,
+    // index 3). In the flat derivative tree it is the filename minus the frame
+    // number, so it has to be parsed rather than indexed — a `split("/")[3]`
+    // here would now return the whole filename and silently degrade this into a
+    // second copy of the duplicate-src check above.
+    const events = HERO_WALL_TILES.map((t) =>
+      t.src.replace(/^\/images\/hero-wall\//, "").replace(/-\d+\.webp$/, ""),
+    );
     expect(new Set(events).size).toBe(events.length);
   });
 });

@@ -20,6 +20,7 @@
  */
 
 import { flattenProgress, moveLeftProgress, sideFaceOpacity } from "./heroPhases";
+import { RGB_GOLD, RGB_STEEL, type Rgb } from "./heroPalette";
 
 /** Grid cell base dimension in pixels. */
 export const GRID_CELL = 42;
@@ -30,34 +31,20 @@ export const PLANE_SIZE = GRID_CELLS * GRID_CELL;
 /** CSS `perspective` on the old scene container. */
 export const PERSPECTIVE = 1600;
 
-/* ── Palette, as numeric triplets so the renderer never parses strings per frame ──
+/* ── Palette ──
  *
- * RE-CUT FOR THE DARK CARD. The hero card was `#FFFFFF`; it is `NOIR.navyPanel`
- * (#0A1833) now, which inverted what these values mean. `RGB_NAVY` was the scene's
- * *structural* colour — grid lines, the non-gold cubes, one of the signal loops — and
- * navy structure on a navy panel is invisible. Worse, the old `RGB_SHADOW` [10,24,51]
- * is now byte-identical to the card it was casting a shadow onto.
+ * The values themselves now live in `./heroPalette`, which has no imports of its
+ * own. That is deliberate and load-bearing: `playground/constants.ts` needs
+ * `RGB_STEEL` and also imports three.js, and while that value lived here the
+ * bundler hoisted all of three.js into this module's chunk — which the eager 2D
+ * hero requires — putting the entire 3D engine on the home page's critical path.
+ * See the header comment in `heroPalette.ts` for the full account.
  *
- * So structure moves to light-on-dark, and the shadow to real black. `RGB_NAVY` is
- * kept: it is still the right fill for the raised service-node faces, which now read
- * as *lifted* against the darker panel — dark-mode elevation is the lighter surface. */
-
-/** Brand navy. Now a *raised surface* fill, not a structural stroke. */
-export const RGB_NAVY: Rgb = [10, 42, 102];
-export const RGB_GOLD: Rgb = [255, 199, 44];
-/**
- * Structural marks that used to be navy-on-white: the non-gold cubes and the cool
- * signal loop. This is the cool end of the palette's navy→gold accent ramp
- * (CHAPTER_ACCENTS 2019), so the scene stays inside the brand family, and it measures
- * 5.52:1 on the base ground.
- */
-export const RGB_STEEL: Rgb = [105, 138, 213];
-/** Off-white, for hairline structure: the isometric grid. Matches NOIR.frost. */
-export const RGB_FROST: Rgb = [244, 247, 252];
-/** Contact and cast shadows. Black, not navy — a navy shadow on a navy panel is nothing. */
-export const RGB_SHADOW: Rgb = [0, 0, 0];
-
-export type Rgb = readonly [number, number, number];
+ * These are re-exported so existing importers of `heroScene` keep working. New
+ * code in the 3D playground must import from `./heroPalette` DIRECTLY; reaching
+ * these through this module restores the edge and silently re-ships three.js. */
+export { RGB_NAVY, RGB_GOLD, RGB_STEEL, RGB_FROST, RGB_SHADOW } from "./heroPalette";
+export type { Rgb } from "./heroPalette";
 
 export interface Point3 {
   x: number;
@@ -363,6 +350,7 @@ export interface HeroFrameState {
  * to the final flat layout exactly as `HeroSignalP.tsx:549` did.
  */
 export function heroFrameState(progress: number, reduced: boolean, _containerStart: number): HeroFrameState {
+  void _containerStart;
   const p = reduced ? 1 : progress;
   const flatten = flattenProgress(p);
   const pexit = p <= 0.86 ? 0 : p >= 0.89 ? 1 : (p - 0.86) / 0.03;

@@ -15,7 +15,14 @@
 
 import * as THREE from "three";
 import { DAWN, NOIR, SKY, TWILIGHT } from "@/shared/theme/palette";
-import { RGB_STEEL, type Rgb } from "../heroScene";
+// From `../heroPalette`, NOT `../heroScene` — and this is load-bearing.
+// `heroScene.ts` is statically reachable from the eager 2D hero
+// (SuperHeroSequence -> HeroCanvas -> heroScene), so a runtime-value import from
+// it *here* — in a module that also imports three.js — welds the entire 3D
+// engine into the home route's critical path. That cost 191KB brotli on every
+// visit to `/` until 2026-08-23. `heroScene.ts` re-exports these for back-compat;
+// importing them through it would silently undo the fix.
+import { RGB_STEEL, type Rgb } from "../heroPalette";
 
 /**
  * The floor altitude. Every scene's ground-level objects sit at `y = GROUND_Y`;

@@ -215,7 +215,12 @@ export function HeroSignalCore() {
   /** Video is only meaningful over the Monolith room — the legacy 2D canvas
    *  has no notion of a background mode at all. */
   const useVideoBg = false; // Disabled to use ParallaxHeroBg instead
-  const heroBgVideo = useBackgroundVideo();
+  const {
+    containerRef: bgContainerRef,
+    videoRef: bgVideoRef,
+    shouldLoad: bgShouldLoad,
+    posterOnly: bgPosterOnly,
+  } = useBackgroundVideo();
 
   /**
    * Ref-based parallax — no React re-renders.
@@ -246,7 +251,7 @@ export function HeroSignalCore() {
       cur.x += (tgt.x - cur.x) * 0.08;
       cur.y += (tgt.y - cur.y) * 0.08;
 
-      const video = heroBgVideo.videoRef.current;
+      const video = bgVideoRef.current;
       if (video) {
         video.style.transform =
           `translate3d(${cur.x}px, ${cur.y}px, 0) scale(1.04)`;
@@ -259,7 +264,7 @@ export function HeroSignalCore() {
       window.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(raf);
     };
-  }, [useVideoBg, reduced, heroBgVideo.videoRef]);
+  }, [useVideoBg, reduced, bgVideoRef]);
 
   /**
    * Ping-pong video playback.
@@ -273,11 +278,12 @@ export function HeroSignalCore() {
    */
   useEffect(() => {
     if (!useVideoBg || reduced) return;
-    const video = heroBgVideo.videoRef.current;
+    const video = bgVideoRef.current;
     if (!video) return;
 
     // Disable native loop — we own the playback direction
-    video.loop = false;
+    const el = video;
+    el.loop = false;
 
     let direction: 1 | -1 = 1;
     let rafId: number;
@@ -313,7 +319,7 @@ export function HeroSignalCore() {
 
     rafId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafId);
-  }, [useVideoBg, reduced, heroBgVideo.videoRef]);
+  }, [useVideoBg, reduced, bgVideoRef]);
 
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
@@ -687,7 +693,7 @@ export function HeroSignalCore() {
          * two lines a designed identity instead of floating text at flat weight. */}
         {stage.flank && (
           <>
-            {/* Top Text: 7 YEARS OF EXCELLENCE */}
+            {/* Top Text: YEARS OF EXCELLENCE */}
             <Box
               ref={flankTopRef}
               sx={{
@@ -718,7 +724,7 @@ export function HeroSignalCore() {
                   textShadow: "0 2px 14px rgba(6, 24, 59, 0.55)",
                 }}
               >
-                7 YEARS OF EXCELLENCE
+                YEARS OF EXCELLENCE
               </Typography>
             </Box>
 
@@ -850,7 +856,7 @@ export function HeroSignalCore() {
           {useVideoBg && (
             <Box
               aria-hidden
-              ref={heroBgVideo.containerRef}
+              ref={bgContainerRef}
               sx={{
                 position: "absolute",
                 inset: 0,
@@ -862,7 +868,7 @@ export function HeroSignalCore() {
             >
               <Box
                 component="video"
-                ref={heroBgVideo.videoRef}
+                ref={bgVideoRef}
                 autoPlay
                 muted
                 playsInline
@@ -877,7 +883,7 @@ export function HeroSignalCore() {
                   willChange: "transform",
                 }}
               >
-                {heroBgVideo.shouldLoad && !heroBgVideo.posterOnly && (
+                {bgShouldLoad && !bgPosterOnly && (
                   <>
                     <source src={HERO_BG_VIDEO.webm} type="video/webm" />
                     <source src={HERO_BG_VIDEO.mp4} type="video/mp4" />
