@@ -6,7 +6,6 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import Chip from "@mui/material/Chip";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -20,35 +19,16 @@ import { CAREER_POSITIONS } from "@/shared/careersData";
 import { Reveal } from "@/shared/components/Reveal";
 import { Section } from "@/shared/components/Section";
 import { RouterButton } from "@/shared/components/RouterLink";
+import { SpecularButton as Button } from "@/shared/components/ui/specular";
 import { messageFromError } from "@/shared/api/errors";
 import { pageHead } from "@/shared/seo";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, TRACKING } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
+import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useSubmitContactMessage } from "@/features/contact/api";
 
-const lightTextFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    bgcolor: "rgba(10, 42, 102, 0.03)",
-    color: "text.primary",
-    borderRadius: "12px",
-    "& fieldset": { borderColor: "rgba(10, 42, 102, 0.18)" },
-    "&:hover fieldset": { borderColor: "primary.main" },
-    "&.Mui-focused fieldset": { borderColor: "primary.main", borderWidth: 1 },
-  },
-  "& .MuiInputLabel-root": {
-    color: "text.secondary",
-    "&.Mui-focused": { color: "primary.main" },
-  },
-};
-
 /**
- * This form POSTs to the same `/api/v1/contact-messages` endpoint as
- * ContactForm.tsx, so it needs the same client-side guardrails — duplicated
- * here rather than extracted to a shared module because that would mean
- * adding a file outside this fix's owned file list. Field names differ
- * (fullName/university/coverNote vs. name/subject/message) since this form
- * composes its own `message` payload; `fullName` maps 1:1 to the server's
- * `name` constraint, and `coverNote` is capped so the assembled message
- * (boilerplate + cover note) stays under the server's message max.
+ * Client-side validation guardrails matching the backend constraints.
  */
 const RULES = {
   fullName: { min: 2, max: 100, label: "Full name" },
@@ -104,6 +84,7 @@ export const Route = createFileRoute("/careers/$jobId")({
 });
 
 function JobDetailPage() {
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.CAREERS_PAGE, { dark: false });
   const { jobId } = Route.useParams();
   const job = CAREER_POSITIONS.find((p) => p.id === jobId);
 
@@ -135,15 +116,78 @@ function JobDetailPage() {
 
   if (!job) {
     return (
-      <Section>
-        <Stack spacing={3} alignItems="flex-start" sx={{ pt: 16, pb: 16 }}>
-          <Typography variant="h2">Position Not Found</Typography>
-          <Typography variant="body1">The requested job position could not be found.</Typography>
-          <RouterButton to="/careers" variant="contained">
-            RETURN TO CAREERS
-          </RouterButton>
-        </Stack>
-      </Section>
+      <Box
+        data-ground="light"
+        ref={anchorRef}
+        sx={{
+          width: "100%",
+          minHeight: "100dvh",
+          bgcolor: "var(--g-void)",
+          color: "var(--text-1)",
+          background: "var(--g-page)",
+          pt: { xs: 14, md: 22 },
+          pb: { xs: 10, md: 16 },
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <Section>
+          <Box
+            sx={{
+              maxWidth: 640,
+              mx: "auto",
+              p: { xs: 4, md: 6 },
+              borderRadius: "var(--r-panel)",
+              bgcolor: "var(--glass-fill-2)",
+              border: "1px solid var(--glass-border-1)",
+              boxShadow: "var(--glass-shadow-2)",
+              backdropFilter: "var(--glass-filter)",
+              WebkitBackdropFilter: "var(--glass-filter)",
+              textAlign: "center",
+            }}
+          >
+            <Stack spacing={3} alignItems="center">
+              <Typography
+                variant="overline"
+                sx={{
+                  fontFamily: MONO,
+                  fontWeight: 800,
+                  fontSize: "0.75rem",
+                  letterSpacing: TRACKING.meta,
+                  color: "var(--accent-fg)",
+                }}
+              >
+                ERROR 404 · POSITION NOT FOUND
+              </Typography>
+              <Typography variant="h2" component="h1" sx={{ fontWeight: 800, color: "var(--text-1)" }}>
+                Position Not Found
+              </Typography>
+              <Typography variant="body1" sx={{ color: "var(--text-2)", lineHeight: 1.6, maxWidth: 460 }}>
+                The requested engineering position file could not be located in our active register. It may have been filled or archived.
+              </Typography>
+              <RouterButton
+                to="/careers"
+                variant="contained"
+                sx={{
+                  fontFamily: MONO,
+                  fontWeight: 800,
+                  fontSize: "0.82rem",
+                  letterSpacing: "0.06em",
+                  bgcolor: "var(--accent-fg)",
+                  color: NOIR.navyInk,
+                  borderRadius: "var(--r-control)",
+                  boxShadow: "0 4px 16px rgba(var(--accent-rgb), 0.25)",
+                  "&:hover": {
+                    bgcolor: NOIR.goldLight,
+                  },
+                }}
+              >
+                RETURN TO CAREERS REGISTER
+              </RouterButton>
+            </Stack>
+          </Box>
+        </Section>
+      </Box>
     );
   }
 
@@ -152,13 +196,6 @@ function JobDetailPage() {
     const nextErrors = validate({ fullName, email, university, coverNote });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
-      // Deliberately left without `noValidate`: the browser's own HTML5
-      // validation (required/type=email) still runs first and auto-focuses
-      // an empty/malformed field before this handler ever sees the submit.
-      // This custom pass only catches what HTML5 can't (length limits, a
-      // stricter email check), so it takes over focus management only for
-      // those — moving to the first invalid field the same way the browser
-      // would have.
       const firstInvalidField = FIELD_ORDER.find((field) => nextErrors[field]);
       if (firstInvalidField) {
         fieldRefs[firstInvalidField].current?.focus();
@@ -175,336 +212,612 @@ function JobDetailPage() {
   };
 
   return (
-    <Box sx={{ width: "100%", bgcolor: "background.default", pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 } }}>
+    <Box
+      data-ground="light"
+      ref={anchorRef}
+      sx={{
+        width: "100%",
+        minHeight: "100dvh",
+        bgcolor: "var(--g-void)",
+        color: "var(--text-1)",
+        background: "var(--g-page)",
+        pt: { xs: 12, md: 18 },
+        pb: { xs: 10, md: 16 },
+        position: "relative",
+      }}
+    >
       <Section>
-        <Stack spacing={{ xs: 6, md: 8 }}>
-          {/* Back Navigation Button */}
+        <Stack spacing={{ xs: 5, md: 7 }}>
+          {/* Quiet Back Navigation */}
           <Reveal>
             <RouterButton
               to="/careers"
               variant="text"
-              startIcon={<ArrowBackIcon />}
+              startIcon={<ArrowBackIcon sx={{ fontSize: "1rem" }} />}
               sx={{
                 fontFamily: MONO,
-                fontWeight: 700,
-                color: "#0A2A66",
+                fontWeight: 600,
+                fontSize: "0.75rem",
+                letterSpacing: TRACKING.meta,
+                color: "var(--text-3)",
                 px: 0,
+                transition: "color var(--dur) var(--ease-out)",
+                "&:hover": {
+                  color: "var(--text-1)",
+                  bgcolor: "transparent",
+                },
               }}
             >
-              BACK TO CAREERS & GRADUATE POSITIONS
+              ← RETURN TO OPEN ROLES
             </RouterButton>
           </Reveal>
 
-          {/* Job Header Info */}
-          <Stack spacing={2} sx={{ maxWidth: 840 }}>
-            <Reveal>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          {/* Job Header & Eye's First Stop (D4) */}
+          <Stack spacing={2.5} sx={{ maxWidth: 960 }}>
+            <Reveal delay={0.05}>
+              <Typography
+                variant="h1"
+                component="h1"
+                sx={{
+                  fontWeight: 800,
+                  color: "var(--text-1)",
+                  fontSize: { xs: "2.2rem", sm: "3rem", md: "3.5rem" },
+                  lineHeight: 1.1,
+                  letterSpacing: TRACKING.display,
+                }}
+              >
+                {job.title}
+              </Typography>
+            </Reveal>
+
+            <Reveal delay={0.1}>
+              {/* Technical Mono Meta-Rail */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  flexWrap: "wrap",
+                  fontFamily: MONO,
+                  fontSize: "0.75rem",
+                  letterSpacing: "0.08em",
+                }}
+              >
                 <Chip
                   label={job.badge}
                   size="small"
                   sx={{
                     fontFamily: MONO,
                     fontWeight: 800,
-                    fontSize: "0.72rem",
-                    bgcolor: "secondary.main",
-                    color: "secondary.contrastText",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.1em",
+                    bgcolor: "var(--glass-fill-1)",
+                    color: "var(--accent-fg)",
+                    border: "1px solid var(--accent-border)",
+                    borderRadius: "var(--r-pill)",
+                    boxShadow: "0 0 12px var(--accent-15)",
                   }}
                 />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, color: "var(--text-3)" }}>
+                  <LocationOnIcon sx={{ fontSize: "0.95rem", color: "var(--text-3)" }} />
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: "inherit",
+                      fontWeight: 600,
+                      color: "var(--text-2)",
+                    }}
+                  >
+                    {job.location}
+                  </Typography>
+                </Box>
+                <Typography component="span" sx={{ color: "var(--divider)" }}>
+                  /
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, color: "var(--text-3)" }}>
+                  <WorkIcon sx={{ fontSize: "0.95rem", color: "var(--text-3)" }} />
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: "inherit",
+                      fontWeight: 600,
+                      color: "var(--text-2)",
+                    }}
+                  >
+                    {job.department}
+                  </Typography>
+                </Box>
+                <Typography component="span" sx={{ color: "var(--divider)" }}>
+                  /
+                </Typography>
                 <Chip
-                  label={job.type}
+                  label={job.type.toUpperCase()}
                   size="small"
                   sx={{
                     fontFamily: MONO,
                     fontWeight: 700,
-                    fontSize: "0.7rem",
-                    bgcolor: "rgba(10, 42, 102, 0.08)",
+                    fontSize: "0.68rem",
+                    letterSpacing: "0.06em",
+                    bgcolor: "var(--glass-fill-1)",
+                    color: "var(--text-3)",
+                    border: "1px solid var(--glass-border-1)",
+                    borderRadius: "var(--r-pill)",
                   }}
                 />
               </Box>
             </Reveal>
-
-            <Reveal delay={0.1}>
-              <Typography variant="h1" component="h1" sx={{ fontWeight: 800, color: "text.primary" }}>
-                {job.title}
-              </Typography>
-            </Reveal>
-
-            <Reveal delay={0.2}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", color: "text.secondary" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-                  <LocationOnIcon sx={{ fontSize: "1.1rem" }} />
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {job.location}
-                  </Typography>
-                </Box>
-                <Typography variant="body2">•</Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-                  <WorkIcon sx={{ fontSize: "1.1rem" }} />
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {job.department}
-                  </Typography>
-                </Box>
-              </Box>
-            </Reveal>
           </Stack>
 
-          {/* Grid Layout: Job Description vs Application Form */}
-          <Grid container spacing={{ xs: 6, md: 8 }}>
+          {/* 2-Column Register Grid: Left (Prose & 3 Lists) vs Right (Application Form) */}
+          <Grid container spacing={{ xs: 6, md: 8 }} alignItems="flex-start">
             {/* Left Column: Role Details */}
             <Grid size={{ xs: 12, md: 7 }}>
-              <Stack spacing={5}>
-                {/* Overview */}
-                <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
-                    Program Overview
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7, fontSize: "1.05rem" }}>
-                    {job.description}
-                  </Typography>
-                </Stack>
-
-                {/* Key Responsibilities */}
-                <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
-                    Key Responsibilities
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    {job.responsibilities.map((item, idx) => (
-                      <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                        <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "var(--accent)", mt: 1, flexShrink: 0 }} />
-                        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                          {item}
-                        </Typography>
-                      </Box>
-                    ))}
+              <Stack spacing={6}>
+                {/* 1. Program Overview / Description */}
+                <Reveal delay={0.15}>
+                  <Stack spacing={2}>
+                    <Typography
+                      variant="h3"
+                      component="h2"
+                      sx={{
+                        fontWeight: 700,
+                        color: "var(--text-1)",
+                        fontSize: { xs: "1.3rem", md: "1.5rem" },
+                      }}
+                    >
+                      Role Overview
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "var(--text-2)",
+                        lineHeight: 1.75,
+                        fontSize: "1.05rem",
+                        maxWidth: "65ch",
+                      }}
+                    >
+                      {job.description}
+                    </Typography>
                   </Stack>
-                </Stack>
+                </Reveal>
 
-                {/* Candidate Requirements */}
-                <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
-                    Qualifications & Requirements
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    {job.requirements.map((item, idx) => (
-                      <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                        <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#0A2A66", mt: 1, flexShrink: 0 }} />
-                        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                          {item}
-                        </Typography>
-                      </Box>
-                    ))}
+                {/* 2. Key Responsibilities */}
+                <Reveal delay={0.2}>
+                  <Stack spacing={2.5}>
+                    <Typography
+                      variant="h3"
+                      component="h2"
+                      sx={{
+                        fontWeight: 700,
+                        color: "var(--text-1)",
+                        fontSize: { xs: "1.2rem", md: "1.35rem" },
+                      }}
+                    >
+                      Key Responsibilities
+                    </Typography>
+                    <Stack spacing={1.75}>
+                      {job.responsibilities.map((item, idx) => (
+                        <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                          <Box
+                            sx={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              bgcolor: "var(--accent-fg)",
+                              mt: 1.1,
+                              flexShrink: 0,
+                              boxShadow: "0 0 8px rgba(var(--accent-rgb), 0.5)",
+                            }}
+                          />
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "var(--text-2)",
+                              lineHeight: 1.65,
+                              fontSize: "0.95rem",
+                              maxWidth: "65ch",
+                            }}
+                          >
+                            {item}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
                   </Stack>
-                </Stack>
+                </Reveal>
 
-                {/* Program Benefits */}
-                <Stack spacing={2}>
-                  <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
-                    What We Offer
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    {job.benefits.map((item, idx) => (
-                      <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                        <CheckCircleOutlineIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem", mt: 0.2, flexShrink: 0 }} />
-                        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6, fontWeight: 500 }}>
-                          {item}
-                        </Typography>
-                      </Box>
-                    ))}
+                {/* 3. Candidate Requirements / Qualifications */}
+                <Reveal delay={0.25}>
+                  <Stack spacing={2.5}>
+                    <Typography
+                      variant="h3"
+                      component="h2"
+                      sx={{
+                        fontWeight: 700,
+                        color: "var(--text-1)",
+                        fontSize: { xs: "1.2rem", md: "1.35rem" },
+                      }}
+                    >
+                      Candidate Requirements & Qualifications
+                    </Typography>
+                    <Stack spacing={1.75}>
+                      {job.requirements.map((item, idx) => (
+                        <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                          <Box
+                            sx={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              bgcolor: "var(--accent-fg)",
+                              mt: 1.1,
+                              flexShrink: 0,
+                              boxShadow: "0 0 8px var(--accent-20)",
+                            }}
+                          />
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "var(--text-2)",
+                              lineHeight: 1.65,
+                              fontSize: "0.95rem",
+                              maxWidth: "65ch",
+                            }}
+                          >
+                            {item}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
                   </Stack>
-                </Stack>
+                </Reveal>
+
+                {/* 4. Benefits & Compensation */}
+                <Reveal delay={0.3}>
+                  <Stack spacing={2.5}>
+                    <Typography
+                      variant="h3"
+                      component="h2"
+                      sx={{
+                        fontWeight: 700,
+                        color: "var(--text-1)",
+                        fontSize: { xs: "1.2rem", md: "1.35rem" },
+                      }}
+                    >
+                      Benefits & Compensation
+                    </Typography>
+                    <Stack spacing={1.75}>
+                      {job.benefits.map((item, idx) => (
+                        <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.75 }}>
+                          <CheckCircleOutlineIcon
+                            sx={{
+                              color: "var(--accent-fg)",
+                              fontSize: "1.2rem",
+                              mt: 0.2,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "var(--text-2)",
+                              lineHeight: 1.65,
+                              fontSize: "0.95rem",
+                              fontWeight: 500,
+                              maxWidth: "65ch",
+                            }}
+                          >
+                            {item}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Stack>
+                </Reveal>
+
+                {/* 5. Technology Stack Pills */}
+                <Reveal delay={0.35}>
+                  <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        fontFamily: MONO,
+                        fontWeight: 700,
+                        fontSize: "0.72rem",
+                        letterSpacing: TRACKING.meta,
+                        color: "var(--text-3)",
+                      }}
+                    >
+                      TECHNOLOGY STACK & TOOLS
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {job.stack.map((tech) => (
+                        <Chip
+                          key={tech}
+                          label={tech}
+                          size="small"
+                          sx={{
+                            fontFamily: MONO,
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            bgcolor: "var(--glass-fill-1)",
+                            color: "var(--text-2)",
+                            border: "1px solid var(--glass-border-1)",
+                            borderRadius: "var(--r-pill)",
+                            px: 0.5,
+                            transition: "all var(--dur) var(--ease-out)",
+                            "&:hover": {
+                              bgcolor: "var(--glass-fill-2)",
+                              borderColor: "var(--glass-border-2)",
+                              color: "var(--text-1)",
+                            },
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Stack>
+                </Reveal>
               </Stack>
             </Grid>
 
             {/* Right Column: Interactive Application Form */}
             <Grid size={{ xs: 12, md: 5 }}>
-              <Box
-                sx={{
-                  position: { md: "sticky" },
-                  top: 120,
-                  p: { xs: 4, md: 5 },
-                  borderRadius: 6,
-                  bgcolor: "background.paper",
-                  border: "1px solid",
-                  borderColor: "rgba(10, 42, 102, 0.12)",
-                  boxShadow: "0 12px 40px rgba(10, 42, 102, 0.06)",
-                }}
-              >
-                {mutation.isSuccess ? (
-                  <Stack spacing={3} alignItems="center" textAlign="center" sx={{ py: 4 }}>
-                    <CheckCircleOutlineIcon sx={{ fontSize: "4rem", color: "var(--accent-fg)" }} />
-                    <Typography variant="h3" component="h2" sx={{ fontWeight: 800 }}>
-                      Application Received!
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                      Thank you for applying to the <strong>{job.title}</strong> position. Our technical recruitment team will review your application and reach out shortly.
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        mutation.reset();
-                        setFullName("");
-                        setEmail("");
-                        setUniversity("");
-                        setCoverNote("");
-                        setCompanyWebsite("");
-                        setErrors({});
-                      }}
-                      sx={{ mt: 2, fontFamily: MONO, fontWeight: 700 }}
-                    >
-                      SUBMIT ANOTHER APPLICATION
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Stack component="form" onSubmit={handleSubmit} spacing={3}>
-                    {/* Client-side validation summary — role="alert" (MUI Alert's
-                        default) so a failed submit is announced. HTML5
-                        required/type=email still runs first and auto-focuses
-                        empty/malformed fields; this only fires for what that
-                        misses (length limits, a stricter email check). */}
-                    {errorSummary.length > 0 ? (
-                      <Alert severity="error">{errorSummary.join(" ")}</Alert>
-                    ) : null}
-                    {mutation.isError ? (
-                      <Alert severity="error">{messageFromError(mutation.error)}</Alert>
-                    ) : null}
-                    <Stack spacing={1}>
-                      <Typography variant="h3" component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "text.primary" }}>
-                        Apply for this Position
+              <Reveal delay={0.2}>
+                <Box
+                  sx={{
+                    position: { md: "sticky" },
+                    top: 120,
+                    p: { xs: 3.5, sm: 4, md: 4.5 },
+                    borderRadius: "var(--r-panel)",
+                    bgcolor: "var(--glass-fill-2)",
+                    border: "1px solid var(--glass-border-1)",
+                    boxShadow: "var(--glass-shadow-2)",
+                    backdropFilter: "var(--glass-filter)",
+                    WebkitBackdropFilter: "var(--glass-filter)",
+                  }}
+                >
+                  {mutation.isSuccess ? (
+                    <Stack spacing={3} alignItems="center" textAlign="center" sx={{ py: 4 }}>
+                      <CheckCircleOutlineIcon sx={{ fontSize: "3.8rem", color: "var(--accent-fg)" }} />
+                      <Typography
+                        variant="h3"
+                        component="h2"
+                        sx={{
+                          fontWeight: 800,
+                          color: "var(--text-1)",
+                          fontSize: "1.45rem",
+                        }}
+                      >
+                        Application Received!
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Submit your details below for direct evaluation by Phitopolis R&D engineering leads.
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: "var(--text-2)",
+                          lineHeight: 1.65,
+                          fontSize: "0.95rem",
+                          maxWidth: 380,
+                        }}
+                      >
+                        Thank you for applying to the <strong>{job.title}</strong> position. Our technical recruitment team will review your application and reach out shortly.
                       </Typography>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          mutation.reset();
+                          setFullName("");
+                          setEmail("");
+                          setUniversity("");
+                          setCoverNote("");
+                          setCompanyWebsite("");
+                          setErrors({});
+                        }}
+                        sx={{
+                          mt: 1.5,
+                          fontFamily: MONO,
+                          fontWeight: 700,
+                          fontSize: "0.78rem",
+                          letterSpacing: "0.06em",
+                          color: "var(--accent-fg)",
+                          borderColor: "var(--accent-border)",
+                          borderRadius: "var(--r-control)",
+                        }}
+                      >
+                        SUBMIT ANOTHER APPLICATION
+                      </Button>
                     </Stack>
+                  ) : (
+                    <Stack component="form" onSubmit={handleSubmit} noValidate spacing={2.75}>
+                      {errorSummary.length > 0 ? (
+                        <Alert severity="error">{errorSummary.join(" ")}</Alert>
+                      ) : null}
+                      {mutation.isError ? (
+                        <Alert severity="error">{messageFromError(mutation.error)}</Alert>
+                      ) : null}
+                      
+                      <Stack spacing={1}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              bgcolor: "var(--accent-fg)",
+                              boxShadow: "0 0 10px var(--accent-fg)",
+                            }}
+                          />
+                          <Typography
+                            variant="overline"
+                            sx={{
+                              fontFamily: MONO,
+                              fontWeight: 800,
+                              fontSize: "0.72rem",
+                              letterSpacing: TRACKING.meta,
+                              color: "var(--accent-fg)",
+                            }}
+                          >
+                            APPLICATION REGISTER
+                          </Typography>
+                        </Box>
+                        <Typography
+                          variant="h3"
+                          component="h2"
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: "1.4rem",
+                            color: "var(--text-1)",
+                          }}
+                        >
+                          Apply for this Position
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "var(--text-3)",
+                            fontSize: "0.85rem",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          Submit your details below for direct evaluation by Phitopolis R&D engineering leads.
+                        </Typography>
+                      </Stack>
 
-                    <TextField
-                      id={`${formId}-fullName`}
-                      label="Full Name"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      error={errors.fullName !== undefined}
-                      helperText={errors.fullName ?? " "}
-                      fullWidth
-                      inputRef={fullNameRef}
-                      sx={lightTextFieldSx}
-                    />
-
-                    <TextField
-                      id={`${formId}-email`}
-                      label="Email Address"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      error={errors.email !== undefined}
-                      helperText={errors.email ?? " "}
-                      fullWidth
-                      inputRef={emailRef}
-                      sx={lightTextFieldSx}
-                    />
-
-                    <TextField
-                      id={`${formId}-university`}
-                      label="University / Current Company"
-                      required
-                      value={university}
-                      onChange={(e) => setUniversity(e.target.value)}
-                      error={errors.university !== undefined}
-                      helperText={errors.university ?? " "}
-                      placeholder="e.g. DLSU, Ateneo, UP, or Current Firm"
-                      fullWidth
-                      inputRef={universityRef}
-                      sx={lightTextFieldSx}
-                    />
-
-                    <TextField
-                      id={`${formId}-coverNote`}
-                      label="Cover Note / Relevant Projects"
-                      multiline
-                      rows={3}
-                      value={coverNote}
-                      onChange={(e) => setCoverNote(e.target.value)}
-                      error={errors.coverNote !== undefined}
-                      helperText={errors.coverNote ?? " "}
-                      placeholder="Tell us briefly about your technical background or GitHub portfolio..."
-                      fullWidth
-                      inputRef={coverNoteRef}
-                      sx={lightTextFieldSx}
-                    />
-
-                    {/* Honeypot — same treatment as ContactForm.tsx: visually
-                        hidden off-screen, aria-hidden, and out of the tab
-                        order, so only bots that fill every field find it. */}
-                    <Box
-                      aria-hidden
-                      sx={{ position: "absolute", left: "-10000px", width: "1px", overflow: "hidden" }}
-                    >
                       <TextField
-                        label="Company website"
-                        value={companyWebsite}
-                        onChange={(e) => setCompanyWebsite(e.target.value)}
-                        autoComplete="off"
-                        // See ContactForm.tsx: a top-level `tabIndex` prop on
-                        // TextField lands on the wrapper div, not the actual
-                        // <input>, so it must go through slotProps.htmlInput
-                        // to actually remove this field from the tab order.
-                        slotProps={{ htmlInput: { tabIndex: -1 } }}
+                        id={`${formId}-fullName`}
+                        label="Full Name"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        error={errors.fullName !== undefined}
+                        helperText={errors.fullName ?? " "}
+                        fullWidth
+                        inputRef={fullNameRef}
                       />
-                    </Box>
 
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      disabled={mutation.isPending}
-                      endIcon={
-                        mutation.isPending ? (
-                          <CircularProgress size={18} color="inherit" />
-                        ) : (
-                          <SendIcon />
-                        )
-                      }
-                      sx={{
-                        py: 1.8,
-                        bgcolor: "#0A2A66",
-                        color: "common.white",
-                        fontFamily: MONO,
-                        fontWeight: 800,
-                        fontSize: "0.85rem",
-                        borderRadius: 3,
-                        "&:hover": {
-                          bgcolor: "#14418D",
-                        },
-                      }}
-                    >
-                      {mutation.isPending ? "SUBMITTING…" : "SUBMIT APPLICATION"}
-                    </Button>
+                      <TextField
+                        id={`${formId}-email`}
+                        label="Email Address"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        error={errors.email !== undefined}
+                        helperText={errors.email ?? " "}
+                        fullWidth
+                        inputRef={emailRef}
+                      />
 
-                    <Button
-                      href="https://forms.gle/niyMK6Wkc4v5yfLm7"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="outlined"
-                      endIcon={<OpenInNewIcon />}
-                      sx={{
-                        py: 1.5,
-                        borderColor: "rgba(10, 42, 102, 0.3)",
-                        color: "#0A2A66",
-                        fontFamily: MONO,
-                        fontWeight: 700,
-                        fontSize: "0.78rem",
-                        borderRadius: 3,
-                        "&:hover": {
-                          borderColor: "#0A2A66",
-                          bgcolor: "rgba(10, 42, 102, 0.05)",
-                        },
-                      }}
-                    >
-                      OR APPLY VIA OFFICIAL GOOGLE FORM
-                    </Button>
-                  </Stack>
-                )}
-              </Box>
+                      <TextField
+                        id={`${formId}-university`}
+                        label="University / Current Company"
+                        required
+                        value={university}
+                        onChange={(e) => setUniversity(e.target.value)}
+                        error={errors.university !== undefined}
+                        helperText={errors.university ?? " "}
+                        placeholder="e.g. DLSU, Ateneo, UP, or Current Firm"
+                        fullWidth
+                        inputRef={universityRef}
+                      />
+
+                      <TextField
+                        id={`${formId}-coverNote`}
+                        label="Cover Note / Relevant Projects"
+                        multiline
+                        rows={3}
+                        value={coverNote}
+                        onChange={(e) => setCoverNote(e.target.value)}
+                        error={errors.coverNote !== undefined}
+                        helperText={errors.coverNote ?? " "}
+                        placeholder="Tell us briefly about your technical background or GitHub portfolio..."
+                        fullWidth
+                        inputRef={coverNoteRef}
+                      />
+
+                      {/* Honeypot */}
+                      <Box
+                        aria-hidden
+                        sx={{ position: "absolute", left: "-10000px", width: "1px", overflow: "hidden" }}
+                      >
+                        <TextField
+                          label="Company website"
+                          value={companyWebsite}
+                          onChange={(e) => setCompanyWebsite(e.target.value)}
+                          autoComplete="off"
+                          slotProps={{ htmlInput: { tabIndex: -1 } }}
+                        />
+                      </Box>
+
+                      {/* Primary Contained Specular CTA (D2) */}
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={mutation.isPending}
+                        endIcon={
+                          mutation.isPending ? (
+                            <CircularProgress size={18} color="inherit" />
+                          ) : (
+                            <SendIcon sx={{ fontSize: "1rem" }} />
+                          )
+                        }
+                        sx={{
+                          py: 1.75,
+                          bgcolor: "var(--accent-fg)",
+                          color: NOIR.navyInk,
+                          fontFamily: MONO,
+                          fontWeight: 800,
+                          fontSize: "0.85rem",
+                          letterSpacing: "0.06em",
+                          borderRadius: "var(--r-control)",
+                          border: "1px solid var(--accent-border)",
+                          boxShadow: "0 4px 16px rgba(var(--accent-rgb), 0.25)",
+                          "&:hover": {
+                            bgcolor: NOIR.goldLight,
+                            boxShadow: "0 6px 20px rgba(var(--accent-rgb), 0.4)",
+                          },
+                          "&:active": {
+                            bgcolor: NOIR.goldDark,
+                          },
+                          "&.Mui-disabled": {
+                            bgcolor: "rgba(255, 199, 44, 0.4)",
+                            color: "rgba(6, 18, 38, 0.6)",
+                          },
+                        }}
+                      >
+                        {mutation.isPending ? "SUBMITTING…" : "SUBMIT APPLICATION"}
+                      </Button>
+
+                      {/* Quiet Secondary Action */}
+                      <Button
+                        href="https://forms.gle/niyMK6Wkc4v5yfLm7"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="outlined"
+                        endIcon={<OpenInNewIcon sx={{ fontSize: "0.9rem" }} />}
+                        sx={{
+                          py: 1.3,
+                          borderColor: "var(--glass-border-1)",
+                          color: "var(--text-3)",
+                          fontFamily: MONO,
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                          letterSpacing: "0.04em",
+                          borderRadius: "var(--r-control)",
+                          bgcolor: "transparent",
+                          "&:hover": {
+                            borderColor: "var(--glass-border-2)",
+                            color: "var(--text-1)",
+                            bgcolor: "var(--glass-fill-1)",
+                          },
+                        }}
+                      >
+                        OR APPLY VIA OFFICIAL GOOGLE FORM
+                      </Button>
+                    </Stack>
+                  )}
+                </Box>
+              </Reveal>
             </Grid>
           </Grid>
         </Stack>

@@ -1,29 +1,27 @@
 import { useState, useMemo } from "react";
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
-import { SpecularButton as Button } from "@/shared/components/ui/specular";
-import WorkIcon from "@mui/icons-material/Work";
+import { SpecularButton as Button, SpecularIconButton as IconButton } from "@/shared/components/ui/specular";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { createFileRoute } from "@tanstack/react-router";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 
 import { CAREER_POSITIONS } from "@/shared/careersData";
-import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
-import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
+import { Reveal } from "@/shared/components/Reveal";
 import { Section } from "@/shared/components/Section";
 import { RouterButton } from "@/shared/components/RouterLink";
-import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
 import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { pageHead } from "@/shared/seo";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, DISPLAY_FONT, BODY_FONT, TYPE_SCALE, LINE_HEIGHT, TRACKING } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
@@ -40,8 +38,9 @@ export function CareersIndexPage() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.CAREERS_PAGE, { dark: false });
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [activeJobTitle, setActiveJobTitle] = useState<string | null>(null);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [brochureOpen, setBrochureOpen] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   const categories = [
     { label: "All", count: CAREER_POSITIONS.length },
@@ -65,395 +64,686 @@ export function CareersIndexPage() {
     });
   }, [selectedCategory, searchQuery]);
 
-  return (
-    <Box ref={anchorRef} sx={{ width: "100%", bgcolor: NOIR.void, pt: { xs: 12, md: 18 }, pb: { xs: 10, md: 16 }, position: "relative" }}>
-      {/* ── Background Hero Image with Gradial Mask ── */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: { xs: "680px", md: "600px" },
-          overflow: "hidden",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/careers/careers-hero-bg.jpg"
-          alt="Phitopolis Careers Background"
-          sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: { xs: "75% center", md: "60% center" },
-            opacity: 0.85,
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background: `
-              linear-gradient(to right, ${NOIR.void} 0%, rgba(244, 247, 252, 0.95) 25%, rgba(244, 247, 252, 0.75) 48%, rgba(244, 247, 252, 0.35) 72%, rgba(244, 247, 252, 0.1) 100%),
-              radial-gradient(ellipse 65% 100% at 15% 50%, ${NOIR.void} 0%, rgba(244, 247, 252, 0.9) 45%, transparent 100%),
-              linear-gradient(to bottom, transparent 70%, ${NOIR.void} 100%)
-            `,
-          }}
-        />
-      </Box>
+  const toggleExpanded = (id: string) => {
+    setExpandedJobId((curr) => (curr === id ? null : id));
+  };
 
+  return (
+    <Box
+      ref={anchorRef}
+      data-ground="light"
+      sx={{
+        width: "100%",
+        minHeight: "100vh",
+        bgcolor: "var(--g-void)",
+        background: "var(--g-page)",
+        color: "var(--text-1)",
+        pt: { xs: 12, md: 16 },
+        pb: { xs: 10, md: 16 },
+        position: "relative",
+      }}
+    >
       <Section>
-        <Stack spacing={{ xs: 6, md: 10 }} sx={{ position: "relative", zIndex: 1 }}>
-          {/* ── Interactive Recruitment Header ── */}
-          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
-            <Grid size={{ xs: 12, md: 7 }}>
-              <Stack spacing={2.5}>
-                <Reveal>
-                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                    <WorkIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
-                    <Typography
-                      variant="overline"
-                      sx={{
-                        color: "var(--accent-fg)",
-                        fontWeight: 800,
-                        letterSpacing: "0.2em",
-                        fontSize: "0.85rem",
-                        fontFamily: MONO,
-                      }}
-                    >
-                      CAREERS & GRADUATE PATHWAYS
-                    </Typography>
-                  </Box>
-                </Reveal>
-                <Reveal delay={0.1}>
+        <Stack spacing={{ xs: 6, md: 8 }} sx={{ position: "relative", zIndex: 1 }}>
+          {/* ── Archival Register Header & Meta-bar ── */}
+          <Box>
+            <Reveal>
+              <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.2, mb: 2 }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontFamily: MONO,
+                    fontSize: TYPE_SCALE.micro,
+                    fontWeight: 700,
+                    letterSpacing: TRACKING.meta,
+                    color: "var(--accent-fg)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  REGISTER // PHITOPOLIS R&D MANILA
+                </Typography>
+              </Box>
+            </Reveal>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                justifyContent: "space-between",
+                alignItems: { xs: "flex-start", md: "flex-end" },
+                gap: 3,
+              }}
+            >
+              <Box sx={{ maxWidth: "70ch" }}>
+                <Reveal delay={0.05}>
                   <Typography
                     variant="h1"
                     component="h1"
                     sx={{
-                      fontWeight: 900,
-                      color: NOIR.navyField,
-                      fontSize: { xs: "2.4rem", sm: "3.4rem", md: "4.2rem" },
-                      lineHeight: 1.08,
-                      letterSpacing: "-0.025em",
+                      fontFamily: DISPLAY_FONT,
+                      fontSize: { xs: "2.2rem", sm: "3rem", md: "3.75rem" },
+                      fontWeight: 700,
+                      letterSpacing: TRACKING.display,
+                      lineHeight: 1.06,
+                      color: "var(--text-1)",
+                      mb: 2,
                     }}
                   >
-                    Build the Future of Quantitative Systems
+                    Active Engineering Positions & Graduate Fellowships
                   </Typography>
                 </Reveal>
-                <Reveal delay={0.2}>
-                  <Typography variant="subtitle1" sx={{ color: "rgba(10, 42, 102, 0.82)", fontSize: "1.18rem", lineHeight: 1.65, maxWidth: 680 }}>
-                    We are actively recruiting ambitious engineering, computer science, and quantitative talent for our Technical Graduate Program, paid R&D internships, and senior engineering positions in Manila.
+                <Reveal delay={0.1}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontFamily: BODY_FONT,
+                      fontSize: { xs: "1rem", md: "1.125rem" },
+                      color: "var(--text-2)",
+                      lineHeight: LINE_HEIGHT.relaxed,
+                      maxWidth: "65ch",
+                    }}
+                  >
+                    Open engineering roles, quantitative research fellowships, and paid R&D internships at our Manila development center. Explore file dossiers below.
                   </Typography>
                 </Reveal>
-              </Stack>
-            </Grid>
+              </Box>
 
-            {/* Right Hero Interactive Portal Card */}
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Reveal delay={0.25}>
-                <Box
+              {/* Quiet Tertiary Utility: Program Brochure Trigger */}
+              <Reveal delay={0.15}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setBrochureOpen(true)}
+                  startIcon={<PictureAsPdfIcon sx={{ fontSize: "1rem" }} />}
                   sx={{
-                    p: { xs: 3.5, md: 4 },
-                    borderRadius: 5,
-                    bgcolor: "rgba(244, 247, 252, 0.95)",
-                    border: "1px solid rgba(10, 42, 102, 0.18)",
-                    boxShadow: "0 10px 32px rgba(10, 42, 102, 0.06)",
-                    backdropFilter: "blur(8px)",
+                    fontFamily: MONO,
+                    fontSize: TYPE_SCALE.caption,
+                    letterSpacing: "0.06em",
+                    color: "var(--text-2)",
+                    borderColor: "var(--glass-border-1)",
+                    bgcolor: "var(--glass-fill-1)",
+                    borderRadius: "var(--r-control)",
+                    px: 2.2,
+                    py: 0.9,
+                    whiteSpace: "nowrap",
+                    "&:hover": {
+                      borderColor: "var(--glass-border-2)",
+                      bgcolor: "var(--glass-fill-2)",
+                      color: "var(--text-1)",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid var(--accent-fg)",
+                      boxShadow: "0 0 0 4px var(--focus-halo)",
+                    },
                   }}
                 >
-                  <Stack spacing={2.5}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.1rem" }} />
-                      <Typography variant="overline" sx={{ fontFamily: MONO, fontWeight: 800, color: NOIR.navyField, letterSpacing: "0.12em", fontSize: "0.75rem" }}>
-                        RECRUITMENT HIGHLIGHTS
-                      </Typography>
-                    </Box>
-
-                    <Stack spacing={1.5}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Chip label="BGC Office" size="small" sx={{ fontFamily: MONO, fontWeight: 700, bgcolor: "rgba(10, 42, 102, 0.08)", color: NOIR.navyField }} />
-                        <Typography variant="body2" sx={{ color: NOIR.navyField, fontWeight: 600 }}>
-                          Hybrid Schedule (3 Days On-site / 2 Remote)
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Chip label="Mentorship" size="small" sx={{ fontFamily: MONO, fontWeight: 700, bgcolor: "rgba(var(--accent-rgb), 0.25)", color: NOIR.navyField }} />
-                        <Typography variant="body2" sx={{ color: NOIR.navyField, fontWeight: 600 }}>
-                          1-on-1 Senior Staff Engineering Mentorship
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Chip label="Fast-Track" size="small" sx={{ fontFamily: MONO, fontWeight: 700, bgcolor: "rgba(10, 42, 102, 0.08)", color: NOIR.navyField }} />
-                        <Typography variant="body2" sx={{ color: NOIR.navyField, fontWeight: 600 }}>
-                          Direct Full-Time Offers for Top Interns
-                        </Typography>
-                      </Box>
-                    </Stack>
-
-                    <Button
-                      variant="contained"
-                      onClick={() => setBrochureOpen(true)}
-                      startIcon={<PictureAsPdfIcon />}
-                      sx={{
-                        borderRadius: "100px",
-                        px: 3.5,
-                        py: 1.2,
-                        fontFamily: MONO,
-                        fontWeight: 800,
-                        fontSize: "0.78rem",
-                        bgcolor: NOIR.gold,
-                        color: NOIR.navyInk,
-                        boxShadow: "0 4px 14px rgba(var(--accent-rgb), 0.25)",
-                        "&:hover": {
-                          bgcolor: NOIR.goldLight,
-                          boxShadow: "0 6px 18px rgba(var(--accent-rgb), 0.4)",
-                          transform: "translateY(-1px)",
-                        },
-                        transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
-                      }}
-                    >
-                      VIEW PROGRAM BROCHURE (PDF)
-                    </Button>
-                  </Stack>
-                </Box>
+                  PROGRAM BROCHURE (PDF)
+                </Button>
               </Reveal>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
-          <Box>
-            {/* ── Search & Department Filter Rail (No Dividers) ── */}
-            <Reveal delay={0.3}>
-              <Stack spacing={3} sx={{ pb: 3 }}>
-                <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-                  {/* Search Bar */}
-                  <Grid size={{ xs: 12, md: 5 }}>
-                    <TextField
-                      placeholder="Search by role, stack (e.g. C++, Python, React)..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <SearchIcon sx={{ color: NOIR.navyField }} />
-                            </InputAdornment>
-                          ),
+          {/* ── Search & Category Filter Rail ── */}
+          <Reveal delay={0.2}>
+            <Stack spacing={2.5}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  justifyContent: "space-between",
+                  alignItems: { xs: "stretch", md: "center" },
+                  gap: 2.5,
+                }}
+              >
+                {/* Search Input Well */}
+                <Box sx={{ width: { xs: "100%", md: "380px" } }}>
+                  <TextField
+                    placeholder="Search by role, stack (e.g. C++, Python, AWS)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ color: "var(--text-3)", fontSize: "1.1rem" }} />
+                          </InputAdornment>
+                        ),
+                        endAdornment: searchQuery ? (
+                          <InputAdornment position="end">
+                            <IconButton
+                              size="small"
+                              onClick={() => setSearchQuery("")}
+                              aria-label="Clear search query"
+                              sx={{ color: "var(--text-3)", p: 0.5, "&:hover": { color: "var(--text-1)" } }}
+                            >
+                              <CloseIcon sx={{ fontSize: "0.95rem" }} />
+                            </IconButton>
+                          </InputAdornment>
+                        ) : null,
+                      },
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "var(--r-control)",
+                        bgcolor: "var(--glass-fill-1)",
+                        fontFamily: MONO,
+                        fontSize: TYPE_SCALE.caption,
+                        color: "var(--text-1)",
+                        "& fieldset": { borderColor: "var(--glass-border-1)" },
+                        "&:hover fieldset": { borderColor: "var(--glass-border-2)" },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "var(--accent-fg)",
+                          boxShadow: "0 0 0 3px var(--focus-halo)",
                         },
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "100px",
-                          bgcolor: "rgba(244, 247, 252, 0.95)",
-                          fontFamily: MONO,
-                          fontSize: "0.82rem",
-                          "& fieldset": { borderColor: "rgba(10, 42, 102, 0.22)" },
-                          "&:hover fieldset": { borderColor: NOIR.navyField },
-                          "&.Mui-focused fieldset": { borderColor: NOIR.navyField },
-                        },
-                      }}
-                    />
-                  </Grid>
+                      },
+                      "& .MuiInputBase-input::placeholder": {
+                        color: "var(--text-3)",
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                </Box>
 
-                  {/* Filter Pills */}
-                  <Grid size={{ xs: 12, md: 7 }}>
-                    <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap justifyContent={{ xs: "flex-start", md: "flex-end" }}>
-                      {categories.map((cat) => (
-                        <Chip
-                          key={cat.label}
-                          label={`${cat.label.toUpperCase()} (${cat.count})`}
-                          onClick={() => setSelectedCategory(cat.label)}
-                          sx={{
-                            fontFamily: MONO,
-                            fontWeight: 800,
-                            fontSize: "0.72rem",
-                            bgcolor: selectedCategory === cat.label ? NOIR.navyField : "rgba(244, 247, 252, 0.95)",
-                            color: selectedCategory === cat.label ? "common.white" : NOIR.navyField,
-                            border: "1px solid",
-                            borderColor: selectedCategory === cat.label ? NOIR.navyField : "rgba(10, 42, 102, 0.18)",
-                            "& .MuiChip-label": { color: "inherit" },
-                            cursor: "pointer",
-                            py: 2,
-                            px: 1,
-                            transition: "all 0.2s ease",
-                          }}
-                        />
-                      ))}
-                    </Stack>
-                  </Grid>
-                </Grid>
-              </Stack>
-            </Reveal>
-
-            {/* ── Positions List (Divider-free, clean spacing and hover states) ── */}
-            {filteredPositions.length === 0 ? (
-              <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.7)", py: 6, textAlign: "center" }}>
-                No positions match this search or filter.
-              </Typography>
-            ) : (
-            <StaggerGroup key={selectedCategory + searchQuery}>
-              <Stack spacing={1.5}>
-                {filteredPositions.map((position) => (
-                  <Box key={position.id}>
-                    <StaggerItem>
-                      <Box
+                {/* Category Chips */}
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                  {categories.map((cat) => {
+                    const isSelected = selectedCategory === cat.label;
+                    return (
+                      <Chip
+                        key={cat.label}
+                        label={
+                          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.8 }}>
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontFamily: MONO,
+                                fontSize: TYPE_SCALE.micro,
+                                fontWeight: 700,
+                                letterSpacing: "0.06em",
+                              }}
+                            >
+                              {cat.label.toUpperCase()} [{cat.count}]
+                            </Typography>
+                          </Box>
+                        }
+                        onClick={() => setSelectedCategory(cat.label)}
                         sx={{
-                          py: { xs: 3.5, md: 4 },
-                          px: { xs: 3, md: 4 },
-                          borderRadius: 4,
-                          display: "flex",
-                          flexDirection: { xs: "column", md: "row" },
-                          gap: { xs: 4, md: 6 },
-                          alignItems: { xs: "flex-start", md: "center" },
-                          transition: "all 0.25s ease",
+                          cursor: "pointer",
+                          height: 32,
+                          px: 0.5,
+                          borderRadius: "var(--r-control)",
+                          bgcolor: isSelected ? "var(--accent-15)" : "var(--glass-fill-1)",
+                          color: isSelected ? "var(--accent-fg)" : "var(--text-2)",
+                          border: "1px solid",
+                          borderColor: isSelected ? "var(--accent-border)" : "var(--glass-border-1)",
+                          transition: "all var(--dur) var(--ease-out)",
                           "&:hover": {
-                            bgcolor: "rgba(10, 42, 102, 0.03)",
-                            boxShadow: "0 4px 20px rgba(10, 42, 102, 0.04)",
+                            bgcolor: isSelected ? "var(--accent-20)" : "var(--glass-fill-2)",
+                            borderColor: isSelected ? "var(--accent-fg)" : "var(--glass-border-2)",
+                            color: isSelected ? "var(--accent-fg)" : "var(--text-1)",
+                          },
+                          "&:focus-visible": {
+                            outline: "2px solid var(--accent-fg)",
+                            boxShadow: "0 0 0 4px var(--focus-halo)",
                           },
                         }}
-                      >
-                        {/* Left: Badge and Title */}
-                        <Box sx={{ flex: "1 1 35%", minWidth: 0 }}>
-                          <Stack spacing={1.5}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-                              <Typography
-                                variant="overline"
-                                sx={{
-                                  fontFamily: MONO,
-                                  fontWeight: 800,
-                                  fontSize: "0.72rem",
-                                  color: "var(--accent-fg)",
-                                  letterSpacing: "0.1em",
-                                }}
-                              >
-                                {position.badge}
-                              </Typography>
-                              <Chip
-                                label={position.type}
-                                size="small"
-                                sx={{
-                                  fontFamily: MONO,
-                                  fontSize: "0.68rem",
-                                  fontWeight: 800,
-                                  bgcolor: position.category === "Graduate Program" ? "rgba(var(--accent-rgb), 0.25)" : "rgba(10, 42, 102, 0.08)",
-                                  color: NOIR.navyField,
-                                  border: "1px solid rgba(10, 42, 102, 0.15)",
-                                  "& .MuiChip-label": { color: "inherit" },
-                                }}
-                              />
-                            </Box>
-                            <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.4rem", md: "1.65rem" } }}>
-                              {position.title}
-                            </Typography>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <LocationOnIcon sx={{ fontSize: "1rem", color: NOIR.navyField }} />
-                              <Typography variant="body2" sx={{ fontWeight: 700, color: NOIR.navyField }}>
-                                {position.location} • {position.department}
-                              </Typography>
-                            </Box>
-                          </Stack>
+                      />
+                    );
+                  })}
+                </Stack>
+              </Box>
+            </Stack>
+          </Reveal>
+
+          {/* ── Staggered Folder-Tab Register ── */}
+          <Box>
+            {filteredPositions.length === 0 ? (
+              <Reveal>
+                <Box
+                  sx={{
+                    p: { xs: 4, sm: 6 },
+                    borderRadius: "var(--r-card)",
+                    border: "1px dashed var(--glass-border-2)",
+                    bgcolor: "var(--glass-fill-1)",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: TYPE_SCALE.micro,
+                      letterSpacing: TRACKING.meta,
+                      color: "var(--accent-fg)",
+                      mb: 1,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    ARCHIVE STATUS // 0 MATCHES
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    component="p"
+                    sx={{
+                      fontFamily: DISPLAY_FONT,
+                      fontWeight: 600,
+                      color: "var(--text-1)",
+                      mb: 1.5,
+                    }}
+                  >
+                    No positions match your search query
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "var(--text-2)",
+                      maxWidth: "45ch",
+                      mx: "auto",
+                      mb: 3,
+                    }}
+                  >
+                    No active register files found for &ldquo;{searchQuery}&rdquo;. Try searching for alternative skills or resetting your filters.
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedCategory("All");
+                    }}
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: TYPE_SCALE.caption,
+                      borderRadius: "var(--r-control)",
+                      borderColor: "var(--accent-border)",
+                      color: "var(--accent-fg)",
+                      bgcolor: "var(--accent-15)",
+                      "&:hover": {
+                        bgcolor: "var(--accent-25)",
+                        borderColor: "var(--accent-fg)",
+                      },
+                    }}
+                  >
+                    RESET REGISTERS
+                  </Button>
+                </Box>
+              </Reveal>
+            ) : (
+              <Stack spacing={5}>
+                {categories
+                  .filter((cat) => cat.label !== "All")
+                  .map((cat) => {
+                    const groupPositions = filteredPositions.filter((p) => p.category === cat.label);
+                    if (groupPositions.length === 0) return null;
+
+                    return (
+                      <Box key={cat.label}>
+                        {/* One hairline rule per GROUP, not per row */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: 1.5,
+                            pb: 1.2,
+                            mb: 2.5,
+                            borderBottom: "1px solid var(--divider)",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: MONO,
+                              fontSize: TYPE_SCALE.micro,
+                              fontWeight: 700,
+                              letterSpacing: TRACKING.meta,
+                              color: "var(--text-2)",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {cat.label}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontFamily: MONO,
+                              fontSize: TYPE_SCALE.micro,
+                              color: "var(--text-3)",
+                            }}
+                          >
+                            {`[${String(groupPositions.length)}]`}
+                          </Typography>
                         </Box>
 
-                        {/* Middle: Summary & Stack */}
-                        <Box sx={{ flex: "1 1 45%", minWidth: 0 }}>
-                          <Stack spacing={2}>
-                            <Typography variant="body1" sx={{ color: "rgba(10, 42, 102, 0.82)", lineHeight: 1.65, fontSize: "0.98rem" }}>
-                              {position.summary}
-                            </Typography>
-                            <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
-                              {position.stack.map((tag) => (
+                        <Stack spacing={2}>
+                          {groupPositions.map((position, index) => {
+                            const isExpanded = expandedJobId === position.id;
+
+                            return (
+                              <Reveal key={position.id} delay={0.04 * index}>
+                                {/* Flat File Card */}
+                                <Box
+                                  sx={{
+                                    borderRadius: "var(--r-card)",
+                                    bgcolor: isExpanded ? "var(--glass-fill-2)" : "var(--g-panel)",
+                                    border: "1px solid",
+                                    borderColor: isExpanded ? "var(--accent-border)" : "var(--glass-border-1)",
+                                    boxShadow: isExpanded ? "var(--glass-shadow-2)" : "var(--glass-shadow-1)",
+                                    transition: "background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out)",
+                                    overflow: "hidden",
+                                  }}
+                                >
+                          {/* Clickable Folder Header Trigger */}
+                          <Box
+                            component="button"
+                            type="button"
+                            id={`job-tab-${position.id}`}
+                            aria-expanded={isExpanded}
+                            aria-controls={`job-peek-${position.id}`}
+                            onClick={() => toggleExpanded(position.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                toggleExpanded(position.id);
+                              }
+                            }}
+                            sx={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: { xs: "column", md: "row" },
+                              alignItems: { xs: "flex-start", md: "center" },
+                              justifyContent: "space-between",
+                              gap: { xs: 2, md: 3 },
+                              p: { xs: 2.5, sm: 3, md: 3.5 },
+                              bgcolor: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              outline: "none",
+                              color: "inherit",
+                              "&:focus-visible": {
+                                outline: "2px solid var(--accent-fg)",
+                                boxShadow: "0 0 0 4px var(--focus-halo)",
+                                borderRadius: "var(--r-card)",
+                              },
+                              "&:hover": {
+                                "& .job-title": {
+                                  color: "var(--accent-fg)",
+                                },
+                                "& .expand-indicator": {
+                                  borderColor: "var(--accent-fg)",
+                                  color: "var(--accent-fg)",
+                                },
+                              },
+                            }}
+                          >
+                            {/* Left: Title & Meta Info */}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant="h3"
+                                component="h2"
+                                className="job-title"
+                                sx={{
+                                  fontFamily: DISPLAY_FONT,
+                                  fontSize: { xs: "1.25rem", sm: "1.4rem", md: "1.6rem" },
+                                  fontWeight: 700,
+                                  color: "var(--text-1)",
+                                  lineHeight: LINE_HEIGHT.snug,
+                                  letterSpacing: TRACKING.display,
+                                  wordBreak: "break-word",
+                                  transition: "color var(--dur) var(--ease-out)",
+                                }}
+                              >
+                                {position.title}
+                              </Typography>
+
+                              <Stack
+                                direction="row"
+                                spacing={1.5}
+                                alignItems="center"
+                                flexWrap="wrap"
+                                useFlexGap
+                                sx={{ mt: 1.2 }}
+                              >
+                                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                                  <LocationOnIcon sx={{ fontSize: "0.95rem", color: "var(--text-3)" }} />
+                                  <Typography
+                                    sx={{
+                                      fontFamily: BODY_FONT,
+                                      fontSize: TYPE_SCALE.body2,
+                                      color: "var(--text-2)",
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {position.location}
+                                  </Typography>
+                                </Box>
+                                <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none" }}>•</Box>
+                                <Typography
+                                  sx={{
+                                    fontFamily: BODY_FONT,
+                                    fontSize: TYPE_SCALE.body2,
+                                    color: "var(--text-3)",
+                                  }}
+                                >
+                                  {position.department}
+                                </Typography>
                                 <Chip
-                                  key={tag}
-                                  label={tag}
+                                  label={position.type}
                                   size="small"
                                   sx={{
                                     fontFamily: MONO,
-                                    fontSize: "0.68rem",
-                                    fontWeight: 800,
-                                    bgcolor: "transparent",
-                                    color: "rgba(10, 42, 102, 0.7)",
-                                    border: "1px solid rgba(10, 42, 102, 0.15)",
-                                    "& .MuiChip-label": { color: "inherit", px: 1 },
+                                    fontSize: TYPE_SCALE.micro,
+                                    fontWeight: 700,
+                                    letterSpacing: "0.05em",
+                                    bgcolor: "var(--glass-fill-2)",
+                                    color: "var(--text-2)",
+                                    border: "1px solid var(--glass-border-1)",
+                                    height: 22,
+                                    "& .MuiChip-label": { px: 1 },
                                   }}
                                 />
-                              ))}
-                            </Stack>
-                          </Stack>
-                        </Box>
+                              </Stack>
+                            </Box>
 
-                        {/* Right: Actions */}
-                        <Box sx={{ flex: "1 1 20%", minWidth: 0, width: { xs: "100%", md: "auto" } }}>
-                          <Stack spacing={1.5} direction={{ xs: "row", md: "column" }}>
-                            <Button
-                              variant="contained"
-                              onClick={() => setActiveJobTitle(position.title)}
+                            {/* Right: Expand Affordance Button/Indicator */}
+                            <Box
+                              className="expand-indicator"
                               sx={{
-                                flex: { xs: 1, md: "none" },
-                                py: 1.4,
-                                bgcolor: NOIR.navyField,
-                                color: "common.white",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 1,
+                                px: 2,
+                                py: 0.8,
+                                borderRadius: "var(--r-pill)",
+                                bgcolor: isExpanded ? "var(--accent-15)" : "var(--glass-fill-2)",
+                                border: "1px solid",
+                                borderColor: isExpanded ? "var(--accent-border)" : "var(--glass-border-1)",
+                                color: isExpanded ? "var(--accent-fg)" : "var(--text-2)",
                                 fontFamily: MONO,
-                                fontWeight: 800,
-                                fontSize: "0.78rem",
-                                borderRadius: 3,
-                                boxShadow: "none",
-                                "&:hover": {
-                                  bgcolor: "#081F4D",
-                                  boxShadow: "none",
-                                },
+                                fontSize: TYPE_SCALE.micro,
+                                fontWeight: 700,
+                                letterSpacing: TRACKING.meta,
+                                transition: "all var(--dur) var(--ease-out)",
+                                flexShrink: 0,
                               }}
                             >
-                              QUICK PREVIEW
-                            </Button>
+                              <Box component="span">
+                                {isExpanded ? "COLLAPSE" : "PEEK DOSSIER"}
+                              </Box>
+                              <KeyboardArrowDownIcon
+                                sx={{
+                                  fontSize: "1.1rem",
+                                  transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                                  transition: "transform var(--dur) var(--ease-out)",
+                                }}
+                              />
+                            </Box>
+                          </Box>
 
-                            <RouterButton
-                              to="/careers/$jobId"
-                              params={{ jobId: position.id }}
-                              variant="outlined"
-                              endIcon={<ArrowForwardIcon />}
-                              sx={{
-                                flex: { xs: 1, md: "none" },
-                                py: 1.4,
-                                px: 2.5,
-                                fontFamily: MONO,
-                                fontWeight: 800,
-                                fontSize: "0.78rem",
-                                borderRadius: 3,
-                                borderColor: NOIR.navyField,
-                                color: NOIR.navyField,
-                                bgcolor: "transparent",
-                                "&:hover": {
-                                  borderColor: NOIR.navyField,
-                                  bgcolor: "rgba(10, 42, 102, 0.05)",
-                                },
-                              }}
-                            >
-                              APPLY NOW
-                            </RouterButton>
-                          </Stack>
-                        </Box>
+                          {/* In-Place Peek Expansion (Motion v12) */}
+                          <AnimatePresence initial={false}>
+                            {isExpanded && (
+                              <motion.div
+                                id={`job-peek-${position.id}`}
+                                role="region"
+                                aria-labelledby={`job-tab-${position.id}`}
+                                initial={reducedMotion ? false : { opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={reducedMotion ? { opacity: 0, height: 0 } : { opacity: 0, height: 0 }}
+                                transition={
+                                  reducedMotion
+                                    ? { duration: 0 }
+                                    : { duration: 0.35, ease: [0.16, 1, 0.3, 1] }
+                                }
+                                style={{ overflow: "hidden" }}
+                              >
+                                <Box
+                                  sx={{
+                                    px: { xs: 2.5, sm: 3, md: 3.5 },
+                                    pb: { xs: 3, sm: 3.5, md: 4 },
+                                    pt: 1,
+                                    borderTop: "1px solid var(--glass-border-1)",
+                                  }}
+                                >
+                                  {/* Datasheet Meta-Rail */}
+                                  <Box
+                                    sx={{
+                                      py: 1.5,
+                                      px: 2,
+                                      mb: 2.5,
+                                      borderRadius: "var(--r-control)",
+                                      bgcolor: "var(--glass-fill-2)",
+                                      border: "1px solid var(--glass-border-1)",
+                                      display: "flex",
+                                      flexWrap: "wrap",
+                                      gap: { xs: 1.5, md: 3 },
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
+                                      DEPT // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.department.toUpperCase()}</Box>
+                                    </Typography>
+                                    <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none" }}>|</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
+                                      LOC // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.location.toUpperCase()}</Box>
+                                    </Typography>
+                                    <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none", display: { xs: "none", sm: "inline" } }}>|</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
+                                      TYPE // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.type.toUpperCase()}</Box>
+                                    </Typography>
+                                  </Box>
+
+                                  {/* Summary Prose (45-75ch measure) */}
+                                  <Box sx={{ mb: 3 }}>
+                                    <Typography
+                                      sx={{
+                                        fontFamily: MONO,
+                                        fontSize: TYPE_SCALE.micro,
+                                        letterSpacing: TRACKING.meta,
+                                        color: "var(--text-3)",
+                                        mb: 1,
+                                        textTransform: "uppercase",
+                                      }}
+                                    >
+                                      ROLE SPECIFICATION SUMMARY
+                                    </Typography>
+                                    <Typography
+                                      variant="body1"
+                                      sx={{
+                                        color: "var(--text-2)",
+                                        lineHeight: LINE_HEIGHT.relaxed,
+                                        fontSize: TYPE_SCALE.body1,
+                                        maxWidth: "65ch",
+                                      }}
+                                    >
+                                      {position.summary}
+                                    </Typography>
+                                  </Box>
+
+                                  {/* Tech Stack Chips */}
+                                  <Box sx={{ mb: 3.5 }}>
+                                    <Typography
+                                      sx={{
+                                        fontFamily: MONO,
+                                        fontSize: TYPE_SCALE.micro,
+                                        letterSpacing: TRACKING.meta,
+                                        color: "var(--text-3)",
+                                        mb: 1.2,
+                                        textTransform: "uppercase",
+                                      }}
+                                    >
+                                      ENGINEERING STACK
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                      {position.stack.map((tag) => (
+                                        <Chip
+                                          key={tag}
+                                          label={tag}
+                                          size="small"
+                                          sx={{
+                                            fontFamily: MONO,
+                                            fontSize: TYPE_SCALE.micro,
+                                            fontWeight: 600,
+                                            bgcolor: "var(--glass-fill-2)",
+                                            color: "var(--text-1)",
+                                            border: "1px solid var(--glass-border-1)",
+                                            borderRadius: "var(--r-control)",
+                                            height: 26,
+                                            "& .MuiChip-label": { px: 1.2 },
+                                          }}
+                                        />
+                                      ))}
+                                    </Stack>
+                                  </Box>
+
+                                  {/* Sole Primary Action: Navigate to Canonical Detail Route */}
+                                  <RouterButton
+                                    to="/careers/$jobId"
+                                    params={{ jobId: position.id }}
+                                    variant="contained"
+                                    endIcon={<ArrowForwardIcon sx={{ fontSize: "1rem" }} />}
+                                    sx={{
+                                      py: 1.2,
+                                      px: 3.5,
+                                      fontFamily: MONO,
+                                      fontWeight: 800,
+                                      fontSize: TYPE_SCALE.caption,
+                                      letterSpacing: "0.08em",
+                                      bgcolor: NOIR.gold,
+                                      color: NOIR.navyInk,
+                                      borderRadius: "var(--r-control)",
+                                      boxShadow: "0 4px 14px rgba(var(--accent-rgb), 0.25)",
+                                      "&:hover": {
+                                        bgcolor: NOIR.goldLight,
+                                        boxShadow: "0 6px 20px rgba(var(--accent-rgb), 0.4)",
+                                        transform: "translateY(-1px)",
+                                      },
+                                      "&:focus-visible": {
+                                        outline: "2px solid var(--accent-fg)",
+                                        boxShadow: "0 0 0 4px var(--focus-halo)",
+                                      },
+                                      transition: "all var(--dur) var(--ease-out)",
+                                    }}
+                                  >
+                                    OPEN FULL ROLE
+                                  </RouterButton>
+                                </Box>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                                </Box>
+                              </Reveal>
+                            );
+                          })}
+                        </Stack>
                       </Box>
-                    </StaggerItem>
-                  </Box>
-                ))}
+                    );
+                  })}
               </Stack>
-            </StaggerGroup>
             )}
           </Box>
         </Stack>
       </Section>
-
-      {/* Interactive Job Details Modal Drawer */}
-      <JobDetailsDrawer
-        open={Boolean(activeJobTitle)}
-        jobTitle={activeJobTitle}
-        onClose={() => setActiveJobTitle(null)}
-      />
 
       {/* Program Brochure Modal Drawer */}
       <BrochureDrawer
