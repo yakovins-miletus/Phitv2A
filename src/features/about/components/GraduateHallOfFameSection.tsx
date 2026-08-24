@@ -125,7 +125,7 @@ export function GraduateHallOfFameSection() {
             </Reveal>
             <Reveal delay={0.2}>
               <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: "1.15rem", lineHeight: 1.6 }}>
-                Our technical graduate cohorts — engineering and quantitative research fellows trained in Manila for global production systems.
+                Our technical graduate cohorts: engineering and quantitative research fellows trained in Manila for global production systems.
               </Typography>
             </Reveal>
           </Stack>
@@ -292,16 +292,14 @@ export function GraduateHallOfFameSection() {
                         {/* Clean Frameless Text Block */}
                         <Stack spacing={1.2}>
                           <Typography
-                            variant="overline"
+                            variant="caption"
                             sx={{
                               fontFamily: MONO,
-                              fontWeight: 800,
                               fontSize: "0.78rem",
-                              color: "#0A2A66",
-                              letterSpacing: "0.12em",
+                              color: "rgba(10, 42, 102, 0.7)",
                             }}
                           >
-                            GRADUATE BATCH {index + 1} OF {GRADUATE_COHORTS.length} — {cohort.year}
+                            {cohort.year}
                           </Typography>
                           <Typography variant="h3" component="h3" sx={{ fontWeight: 800, color: "text.primary", fontSize: { xs: "1.5rem", md: "1.85rem" } }}>
                             {cohort.title}
@@ -337,21 +335,6 @@ export function GraduateHallOfFameSection() {
               }}
             >
               <Stack spacing={1.5} sx={{ maxWidth: 680 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <EmojiEventsIcon sx={{ color: "var(--accent-fg)", fontSize: "1.3rem" }} />
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "var(--accent-fg)",
-                      fontWeight: 800,
-                      letterSpacing: "0.15em",
-                      fontFamily: MONO,
-                      fontSize: "0.78rem",
-                    }}
-                  >
-                    BECOME A PHITOPOLIS R&D FELLOW
-                  </Typography>
-                </Box>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 800, color: NOIR.navyField, fontSize: { xs: "1.6rem", md: "2.1rem" } }}>
                   Ready to Shape the Future of Production Systems?
                 </Typography>
