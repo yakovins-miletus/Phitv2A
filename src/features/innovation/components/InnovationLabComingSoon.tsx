@@ -4,7 +4,7 @@ import Chip from "@mui/material/Chip";
 import { Flask, Cpu, HardDrives, TerminalWindow } from "@phosphor-icons/react";
 
 import { NOIR } from "@/shared/theme/palette";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
@@ -173,7 +173,7 @@ export function InnovationLabComingSoon() {
         <Reveal delay={0.1}>
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, mb: 3, px: 2, py: 0.5, borderRadius: "100px", bgcolor: "rgba(255, 255, 255, 0.1)", border: "1px solid rgba(255, 255, 255, 0.2)" }}>
             <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: NOIR.gold, boxShadow: `0 0 10px ${NOIR.gold}` }} />
-            <Typography variant="overline" sx={{ color: "common.white", fontWeight: 800, letterSpacing: "0.15em", fontFamily: MONO, fontSize: "0.7rem", lineHeight: 1.5 }}>
+            <Typography variant="overline" sx={{ color: "common.white", fontWeight: 800, letterSpacing: "0.15em", fontFamily: MONO, fontSize: TYPE_SCALE.micro, lineHeight: 1.5 }}>
               COMING SOON
             </Typography>
           </Box>
@@ -193,7 +193,7 @@ export function InnovationLabComingSoon() {
               mb: 3,
             }}
           >
-            Innovation Labs
+            Innovation Lab
           </Typography>
         </Reveal>
 

@@ -13,7 +13,7 @@ import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
 
 const FALLBACK_DESCRIPTION =
-  "R&D notes from the Phitopolis Innovation Lab — quantitative research, tooling, and emerging platform work.";
+  "R&D notes from the Phitopolis Innovation Lab: quantitative research, tooling, and emerging platform work.";
 
 export const Route = createFileRoute("/innovation-hub/$slug")({
   // `head()` gets no query-client context of its own (unlike `loader`), so it
