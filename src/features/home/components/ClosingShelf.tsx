@@ -84,7 +84,6 @@ export function ClosingShelf() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          category="GATEWAY TERMINAL"
           title="In"
           titleAccent="closing"
           tracer="Direct line to our technical leadership and quantitative engineering directors."

@@ -241,7 +241,6 @@ export function BlogSection() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          category="TECHNICAL DISPATCHES"
           title="Inside"
           titleAccent="Phitopolis"
           tracer="Fresh technical dispatches from our quantitative labs, systems engineers, and market strategists."

@@ -93,7 +93,6 @@ export function CandidatesAndCareersSection() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          category="HUMAN CAPITAL"
           title="For talents that outgrow"
           titleAccent="large institutions"
           tracer="Work alongside extraordinary researchers, system architects, and algorithmic specialists."

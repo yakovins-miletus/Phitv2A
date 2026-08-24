@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
+import { MONO, DISPLAY_FONT, TYPE_SCALE } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { useReducedMotion } from "@/shared/motion";
 import { BEAT_START } from "@/shared/motion/beatThresholds";
@@ -18,7 +18,10 @@ import {
 gsap.registerPlugin(ScrollTrigger);
 
 export interface MiniEstablishingShotProps {
-  category: string;
+  /** Optional section eyebrow. Omit it: the design bar budgets eyebrows at
+   *  ceil(sections / 3) per route, and a heading that needs a label above it to
+   *  be understood usually needs a better heading instead. */
+  category?: string;
   title: string;
   titleAccent?: string;
   tracer?: string;
@@ -122,32 +125,34 @@ export function MiniEstablishingShot({
         overflow: "hidden",
       }}
     >
-      {/* Top Coordinate Kicker Bar */}
-      <Box
-        ref={metaRef}
-        className="est-meta"
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: align === "center" ? "center" : "flex-start",
-          gap: 2,
-          mb: 1.5,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography
-          variant="overline"
+      {/* Section eyebrow, when this section is one of the few that carries one. */}
+      {category ? (
+        <Box
+          ref={metaRef}
+          className="est-meta"
           sx={{
-            fontFamily: MONO,
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.18em",
-            color: dark ? NOIR.frost : NOIR.navyField,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: align === "center" ? "center" : "flex-start",
+            gap: 2,
+            mb: 1.5,
+            flexWrap: "wrap",
           }}
         >
-          // {category}
-        </Typography>
-      </Box>
+          <Typography
+            variant="overline"
+            sx={{
+              fontFamily: MONO,
+              fontSize: TYPE_SCALE.caption,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              color: dark ? NOIR.frost : NOIR.navyField,
+            }}
+          >
+            {category}
+          </Typography>
+        </Box>
+      ) : null}
 
       {/* Kinetic Caliper Hairline Ruler */}
       <Box
