@@ -210,7 +210,7 @@ export function UseCasesNarrative() {
 
 
           {/* Use Case Slides */}
-          {CONTENT.useCases.map((uc, index) => {
+          {CONTENT.useCases.map((uc) => {
             const Diagram = DIAGRAMS[uc.id];
             return (
               <Box
@@ -253,33 +253,6 @@ export function UseCasesNarrative() {
                         width: "100%",
                       }}
                     >
-                      {/* Overline Tag Badge */}
-                      <Box
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          px: 1.75,
-                          py: 0.5,
-                          borderRadius: "100px",
-                          bgcolor: "rgba(10, 42, 102, 0.05)",
-                          border: "1px solid rgba(10, 42, 102, 0.08)",
-                          mb: 1.5,
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontFamily: MONO,
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            letterSpacing: "0.12em",
-                            color: NOIR.navyField,
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          0{index + 1} — {uc.tag}
-                        </Typography>
-                      </Box>
-
                       {/* Title */}
                       <Typography
                         variant="h3"

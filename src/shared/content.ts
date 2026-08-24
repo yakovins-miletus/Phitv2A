@@ -51,21 +51,30 @@ export const CONTENT = {
           desc: "Smart, efficient, communicative technical talent operating alongside client teams globally.",
         },
       ],
+      // The three images below (/images/pillars/*.webp) are not yet in the repo.
+      // The component renders a styled placeholder until they arrive; see the
+      // generation brief in the plan file for the shot list.
       pillars: [
         {
           id: "01",
           name: "Research Pillar",
           detail: "Data Science, Machine Learning, AI & High-Dimensional Statistics",
+          image: "/images/pillars/research.webp",
+          alt: "Quantitative researcher at a two-monitor workstation, seen from behind",
         },
         {
           id: "02",
           name: "Development Pillar",
           detail: "Public & Private Cloud Architecture, Big Data Systems & Software",
+          image: "/images/pillars/development.webp",
+          alt: "Software engineer typing at a laptop next to a server rack",
         },
         {
           id: "03",
           name: "Support & Delivery Pillar",
           detail: "Dedicated Technical Staff with Superior Communication & Global Operations",
+          image: "/images/pillars/support.webp",
+          alt: "Support technician on a headset call in front of a wall of monitors",
         },
       ],
       positioning: {
