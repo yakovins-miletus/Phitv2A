@@ -1,0 +1,28 @@
+# node_modules is reinstalled from yarn.lock inside the image. Copying the host's
+# is both slow and wrong — it carries darwin-arm64 binaries into a linux image.
+node_modules
+
+# dist is produced by the build stage. A stale host dist/ copied in would be
+# overwritten anyway, but it is large and slows every build context upload.
+dist
+dist-ssr
+
+.git
+.gitignore
+.DS_Store
+*.log
+
+.vscode
+.idea
+.claude
+.agents
+.codegraph
+.playwright-mcp
+
+tests
+docs
+_archive
+public/_source
+
+Dockerfile
+.dockerignore

@@ -462,3 +462,188 @@ Either way the honest statement is "at or slightly over budget", not the
 comfortable "3" recorded above. The establishing-shot `category` prop is a
 site-wide pattern, not an About-page one, and culling it belongs with the
 deferred home-page eyebrow round rather than here.
+
+---
+
+## Round 4 — Move the pixel-tile wipe from route transitions to the ground · 2026-08-24
+
+**Goal:** the tile-grid wipe (`PixelWipe.tsx`) had drifted onto the wrong
+system. It ran once per route change, layered on top of
+`document.startViewTransition()`, and it duplicated an effect the ground layer
+already had a narrower version of: a single hard-coded "act break" wipe
+(`uSeam` in `glGround.ts`) that only ever fired once, because both home and
+`/about` collapsed to a single act (PRD-home-client-focus §US-2) and
+`ACT_BREAK_INDEX` has been `-1` on both pages ever since. The decision: kill
+the route-transition wipe outright, and give every section/ground boundary on
+the page the tile-wipe treatment the act break used to reserve for itself.
+
+### 4.1 · Route transitions: back to pure View Transitions
+
+`TransitionCurtain.tsx`'s own header comment already claimed "there is no
+curtain here any more" — that was true of the opaque overlay, but not of the
+`PixelWipe` grid still riding on top of the view transition. Removed:
+
+- The `wipe` state (`useState<{ phase, pattern, durationMs } | null>`) and
+  every `setWipe(...)` call in `navigateWithCurtain`.
+- The `<PixelWipe .../>` render and its imports (`PixelWipe`, `PixelWipePhase`,
+  `HOME_PATTERN`, `HOME_TRANSITION_MS`, `INTERIOR_PATTERN`,
+  `INTERIOR_TRANSITION_MS`, `PatternName`).
+- `transitionParamsFor()`, which existed only to hand the wipe a pattern and a
+  duration.
+- The "PIXEL WIPE." paragraph from the header comment.
+
+What's left is exactly what the comment already described: suspend Lenis,
+`router.navigate({ to, viewTransition: true })` (or the plain
+`router.navigate({ to })` form under reduced motion), resume Lenis, refresh
+ScrollTrigger, focus `#main-content`, announce. No `setWipe(null)` in the
+catch block either — there's no wipe state left to unwind.
+
+`PixelWipe.tsx` and `pixelGrid.ts` had no other consumers (checked with a
+repo-wide grep for `PixelWipe`, `pixelGrid`, `PatternName`, `buildGrid`,
+`coverScale`, `HOME_PATTERN`/`INTERIOR_PATTERN`/`*_TRANSITION_MS`), so both
+files were deleted rather than repurposed — the ground system's CSS/low-power
+fallback stays a plain crossfade (see 4.2), so `pixelGrid.ts`'s DOM-tile
+geometry helpers had no destination to move to. The now-empty
+`src/shared/components/transition/` directory went with them.
+
+Checked `tests/motion/transition-curtain.test.tsx`,
+`tests/motion/transition-curtain-timings.test.ts` and `.test.tsx`, and
+`tests/bundle-assertion.test.ts` for anything asserting `wipe`/`PixelWipe`
+behaviour: none of the four files reference either name. All four assert the
+router-navigate contract, Lenis suspension, the announcer, and focus — which
+this change doesn't touch — so none needed edits.
+
+**Left dangling, out of scope for this round:** `src/shared/theme/viewTransitions.css`'s
+header comment still names
+`src/shared/components/transition/PixelWipe.tsx` as the source of truth for
+`INTERIOR_TRANSITION_MS`/`HOME_TRANSITION_MS`, and describes the (now-deleted)
+tile grid as riding on top of the view-transition substrate. That file wasn't
+in this round's touch list (`TransitionCurtain.tsx`, `PixelWipe.tsx`,
+`pixelGrid.ts`, `GroundLayer.tsx`, `glGround.ts`, `groundStops.ts`, their
+tests, this log) and its actual CSS — the `0.55s`/`0.9s` durations — is still
+correct; only the comment's file reference is now stale. Flagged rather than
+edited.
+
+### 4.2 · Ground system: every boundary gets the tile wipe
+
+`groundStops.ts`'s `sampleGround` used to take two blend distances — `blendPx`
+for an ordinary boundary, a wider `seamBlendPx` reserved for whichever stop
+had `actBreak: true` — and returned a `seam` value that stayed `0` at every
+boundary except that one. Collapsed to one blend distance and one `progress`
+value, computed identically regardless of `actBreak`:
+
+- `GroundSample` is now `{ color, from, to, progress, fromIndex }`. `color` is
+  the same CPU-side `mixRgb` pre-blend as before, kept only for the CSS/
+  low-power fallback. `from`/`to` are the raw (un-blended) endpoints, and
+  `progress` ramps 0→1 across `blendPx` at *every* boundary — the smoothstep
+  shaping is unchanged, only which boundaries get it.
+- `sampleGround`'s `seamBlendPx` parameter is gone. `GroundLayer.tsx`'s
+  `SEAM_BLEND_PX` constant is gone with it — `BLEND_PX` (560px, unchanged) is
+  now the only blend distance in the system.
+- `actBreak`/`ACT_BREAK_INDEX` are kept as descriptive metadata (a stop still
+  correctly reports whether it opens a new act) but no longer feed the maths.
+
+`glGround.ts`'s fragment shader: `uSeam` (a single hard-coded diagonal wipe,
+gated `if (uSeam > 0.0)`) is gone, replaced with `uProgress` plus a new
+`uTileSize` uniform (tile size in device pixels, `TILE_SIZE_CSS_PX = 64 *
+dpr` — the same 64px base `PixelWipe`'s `BASE_PIXEL_SIZE` used, for visual
+continuity with the site's retired route-transition tile language). The
+always-active per-fragment math:
+
+```glsl
+vec2 tileCoord = floor(gl_FragCoord.xy / uTileSize);
+float threshold = hash(tileCoord + 0.5);
+float band = 0.05;
+float reveal = smoothstep(threshold - band, threshold + band, uProgress);
+vec3 base = mix(uFrom, uTo, reveal);
+```
+
+Every tile hashes its own random flip point in `[0, 1]`; as `uProgress`
+(driven by `sampleGround`'s `progress`, scroll-scrubbed, not time-based) sweeps
+from 0 to 1, tiles cross their threshold in that random order and flip from
+`uFrom` to `uTo`, softened by a `0.05`-wide smoothstep band so the sweeping
+edge doesn't read as dither noise. `uMix` is gone — there is no continuous
+crossfade left in the shader at all, only the tile threshold. Gamma-correction
+(sRGB round-trip) and the grain pass are untouched, composited on the same
+`base` as before.
+
+`GlGround.render`'s signature dropped from `(from, to, mix, seam)` to
+`(from, to, progress)`. `GroundLayer.tsx`'s `paint()` now calls
+`gl.render(s.from, s.to, s.progress)` directly with the raw endpoints — no more
+CPU-side `mixRgb`/`parseGround` round-trip feeding the GL path (that
+round-trip is now only exercised by the CSS fallback, so `GroundLayer.tsx`
+dropped its now-unused `parseGround`/`Rgb` imports). The redundant-draw guard
+key changed from `` `${fromIndex}|${color.join()}|${seam.toFixed(3)}` `` to
+`` `${fromIndex}|${progress.toFixed(3)}` `` — `from`/`to` are pure functions of
+`fromIndex`, so the shorter key is equivalent.
+
+Reduced motion is untouched: `GroundLayer` still short-circuits to one static
+paint under `prefers-reduced-motion` before any of the above runs.
+
+### 4.3 · Tests
+
+Rewrote `tests/motion/ground-stops.test.ts`'s boundary-behaviour tests against
+the new contract:
+
+- `"the act break gets a wider runway than an ordinary boundary"` →
+  `"the act break gets no wider a runway than an ordinary boundary"` — same
+  fixture, now asserting an act-break boundary and a within-act boundary
+  produce the *same* `progress` at the same offset into an equal blend window,
+  rather than asserting the old contract's asymmetry.
+- `"sampleGround reports seam only across an act break"` →
+  `"sampleGround ramps progress at every boundary, not only the act break"` —
+  asserts `progress > 0` approaching *both* a within-act and an act-break
+  boundary, where the old test asserted the within-act one stayed flat at
+  zero.
+- `"sampleGround holds a stable colour mid-section..."` extended with
+  `from`/`progress` assertions (`progress === 0` mid-section, `0 < progress <
+  1` approaching the boundary) alongside the pre-existing `color` assertions.
+- `"sampleGround survives an empty track and a missing section"` extended to
+  check `from`/`to`/`progress` are finite, not just `color`.
+
+Left unchanged, because they're still true regardless of this round: "every
+rendered section has a stop", "every stop resolves to a real colour", "the
+home page's ground track has no act break", "buildGroundStops still flags an
+act break" (still exercises `buildGroundStops` itself, untouched), the
+luminance/palette tests, `parseGround`/`mixRgb`/`smoothstep` unit tests, and
+"acts partition the stop list with no interleaving".
+
+### 4.4 · Errors and false starts this round
+
+- First pass at the `GroundSample` shape kept `color` as the *only* field the
+  GL path read, still pre-blended on the CPU via `mixRgb`. That would have
+  meant the shader wipes between two already-blended colours instead of the
+  raw stop colours, which defeats the point of a hashed reveal — a tile
+  flipping from "70% navyField" to "72% navyField" is invisible. Caught before
+  writing the shader: added `from`/`to` as raw endpoints, kept `color` only
+  for the CSS fallback that still wants a single pre-blended value.
+- Nearly left `uMix` in the shader alongside the new `uProgress`, on the
+  assumption both parameters had it wired every call already. Traced actual
+  call sites: `GroundLayer.tsx` only ever passed `mix = 0`, i.e. `uMix` had
+  already been dead weight before this round even started (the base colour
+  was always `uFrom` verbatim, with the seam wipe layered on top). Removed
+  rather than carried forward.
+
+### 4.5 · Verification
+
+Per this round's instructions, `yarn build`, `yarn typecheck`, and `yarn test`
+were **not run** — that's an explicit constraint for this task, not an
+oversight, so there are no measured before/after numbers here the way earlier
+rounds have them. Expected results for the commands named in scope, based on
+reading every changed file and every remaining reference to the removed
+exports/APIs:
+
+| Check | Expected |
+|---|---|
+| `npx tsc -b` | clean — no remaining reference to `PixelWipe`, `pixelGrid`, `PatternName`, `uSeam`, `seamBlendPx`, or the old 4-arg `GlGround.render` found anywhere in `src/` |
+| `npx eslint .` | no new errors; `GroundLayer.tsx`'s dropped `parseGround`/`Rgb` imports were the only imports this round could have orphaned, and both were removed |
+| `npx vitest run tests/motion/ground-stops.test.ts tests/motion/transition-curtain.test.tsx tests/motion/transition-curtain-timings.test.tsx tests/bundle-assertion.test.ts` | pass — the transition-curtain suites don't reference the removed wipe machinery so their assertions are unaffected by its removal; the rewritten ground-stops tests exercise the new `progress`/`from`/`to` contract directly |
+| Orphaned files | none — `PixelWipe.tsx`, `pixelGrid.ts`, and the directory they lived in are deleted; no remaining import of either |
+| Orphaned exports | none found in `src/` outside the two deleted files |
+
+### 4.6 · Found but deliberately not fixed
+
+- `src/shared/theme/viewTransitions.css`'s header comment names
+  `PixelWipe.tsx` as the source of truth for the two transition durations and
+  describes a tile grid that no longer exists. Out of this round's scope (see
+  4.1). The CSS itself is still correct.
