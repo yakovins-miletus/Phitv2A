@@ -73,7 +73,7 @@ export const MEGA_NAV_ITEMS: NavSectionItem[] = [
     to: "/contact",
     label: "Contact",
     sub: "BGC Manila R&D Office",
-    preview: "/images/bgc-2.jpg",
+    preview: "/images/bgc-2.webp",
     tag: "06",
   },
 ];
