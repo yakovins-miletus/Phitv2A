@@ -154,7 +154,12 @@ export const CONTENT = {
     body: "The architectural backbone of modern quantitative engineering",
     sub: "Born where mathematics and modern engineering meet, backed by investors across the USA, Europe, and Hong Kong.",
     overline: "WHO WE ARE",
-    heading: "Your Global R&D Partner, Built on Trust and Innovation.",
+    /** Rendered two-tone by the /about hero: `headingAccent` in brand gold,
+     *  `headingRest` in white. Split here rather than in the component so the
+     *  copy stays in one place; the hero used to hardcode its own copy of this
+     *  sentence while `heading` sat unread. */
+    headingAccent: "Your Global R&D Partner,",
+    headingRest: "Built on Trust and Innovation.",
     lead: "Accelerating Your Future with Manila's Top Technical Talent and International Expertise.",
   },
   principles: {

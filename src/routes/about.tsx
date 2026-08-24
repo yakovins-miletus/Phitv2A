@@ -23,7 +23,7 @@ import { PrinciplesValuesShowcase } from "@/features/about/components/Principles
 import { AcademySection } from "@/features/about/components/AcademySection";
 import { pageHead } from "@/shared/seo";
 import { NOIR } from "@/shared/theme/palette";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 
 // ── Talent/culture narrative, relocated from the home page ──────────────────
 // (PRD-home-client-focus §US-2: home became client-facing only, so the
@@ -227,10 +227,10 @@ function AboutPage() {
                   <Typography
                     variant="overline"
                     sx={{
-                      color: "#EAB308",
+                      color: NOIR.gold,
                       fontWeight: 800,
                       letterSpacing: "0.22em",
-                      fontSize: "0.85rem",
+                      fontSize: TYPE_SCALE.body2,
                       fontFamily: MONO,
                       textTransform: "uppercase",
                     }}
@@ -248,11 +248,11 @@ function AboutPage() {
                     letterSpacing: "-0.025em",
                   }}
                 >
-                  <Box component="span" sx={{ color: "#EAB308", display: "inline" }}>
-                    Your Global R&D Partner,{" "}
+                  <Box component="span" sx={{ color: NOIR.gold, display: "inline" }}>
+                    {CONTENT.about.headingAccent}{" "}
                   </Box>
-                  <Box component="span" sx={{ color: "#FFFFFF", display: "inline" }}>
-                    Built on Trust and Innovation.
+                  <Box component="span" sx={{ color: NOIR.white, display: "inline" }}>
+                    {CONTENT.about.headingRest}
                   </Box>
                 </Typography>
                 <Typography
