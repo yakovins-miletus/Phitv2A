@@ -241,13 +241,22 @@ function AnimatedContactButton({
   variant?: "default" | "onDark";
 }) {
   const [hovered, setHovered] = useState(false);
-  const router = useRouter();
+  // Was `useRouter()` + a bare `router.navigate({ to: "/contact" })` - every
+  // other nav trigger (logo, desktop nav items) goes through
+  // `navigateWithCurtain`, which is what actually sets `viewTransition: true`,
+  // marks `data-route-transition`, and suspends/resumes Lenis around the
+  // swap. Going around it here meant clicking Contact fell back to the
+  // router's own untransitioned default - the "contact doesn't get the same
+  // transition as the other pages" bug.
+  const { navigateWithCurtain } = useTransitionCurtain();
   const onDark = variant === "onDark";
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    router.navigate({ to: "/contact" });
+    navigateWithCurtain("/contact");
   };
+
+  const specularColor = (hovered || isActive) ? NOIR.gold : (onDark ? "rgba(255,255,255,0.9)" : NOIR.navyField);
 
   return (
     <Button
@@ -255,6 +264,7 @@ function AnimatedContactButton({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); }}
       onClick={handleClick}
+      specular={{ lineColor: specularColor }}
       sx={{
         borderRadius: "10px",
         border: "none !important",
@@ -267,6 +277,12 @@ function AnimatedContactButton({
         boxShadow: "none !important",
         backdropFilter: "none !important",
         WebkitBackdropFilter: "none !important",
+        // `MuiButton`'s "outlined" variant (components.ts) lifts 2px and adds a
+        // glow box-shadow on hover/active - this button already overrides the
+        // fill/border/shadow above to stay chrome-less, but not `transform`, so
+        // it still floated on hover despite every other piece of that variant's
+        // hover treatment being cancelled.
+        transform: "none !important",
         transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
         "&:hover": {
           border: "none !important",
@@ -277,6 +293,11 @@ function AnimatedContactButton({
           backdropFilter: "none !important",
           WebkitBackdropFilter: "none !important",
           color: `${NOIR.gold} !important`,
+          transform: "none !important",
+        },
+        "&:active": {
+          transform: "none !important",
+          boxShadow: "none !important",
         },
         ...sx,
       }}
@@ -404,7 +425,7 @@ function AnimatedMenuButton({
         },
       }}
     >
-      <SpecularFx lineColor={NOIR.gold} baseOpacity={0} />
+      <SpecularFx lineColor={isPrimary ? NOIR.gold : (isImmersiveDark ? "rgba(255,255,255,0.9)" : NOIR.navyField)} baseOpacity={0} />
       <ThreeBarMenuIcon isHovered={isPrimary} color={iconColor} />
     </Box>
   );
@@ -621,6 +642,15 @@ const NAV_SOLID_AFTER_PX = 50;
           position="fixed"
           elevation={0}
           sx={{
+            // Opts the header out of the page-recede/arrive treatment in
+            // viewTransitions.css. Without a name of its own it's part of the
+            // single `root` snapshot and recedes/scales/wipes with everything
+            // else on every navigation; a stable name pulls it into its own
+            // view-transition group, which viewTransitions.css then pins
+            // static and on top (see the `site-header` rules there) so it
+            // reads as chrome that was never part of the transition, not
+            // "chrome that happens to sit still."
+            viewTransitionName: "site-header",
             bgcolor: isGlass
               ? "transparent"
               : isStandard
@@ -652,16 +682,12 @@ const NAV_SOLID_AFTER_PX = 50;
                 top: 0,
                 left: 0,
                 right: 0,
-                bottom: -20, // extend below the navbar to allow a smooth blur fade
+                bottom: 0,
                 zIndex: -1,
                 backdropFilter: "blur(12px) saturate(120%)",
                 WebkitBackdropFilter: "blur(12px) saturate(120%)",
-                // Gradient mask to fade out the blur
-                WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)",
-                maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)",
                 bgcolor: isOverDarkSection ? "rgba(30, 30, 30, 0.25)" : "rgba(255, 255, 255, 0.4)",
                 transition: `background-color 0.6s ${EASE_OUT_EXPO_CSS}`,
-                borderBottom: isOverDarkSection ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.02)",
               }}
             />
           )}
@@ -710,15 +736,27 @@ const NAV_SOLID_AFTER_PX = 50;
                     : isOverDarkSection
                       ? "blur(16px) saturate(140%)"
                       : "none"),
-                border: isIsland ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
-                borderColor: isIsland ? "rgba(255, 255, 255, 0.4)" : "transparent",
+                // No CSS `border` here any more — island used to draw a flat
+                // 1px rgba(255,255,255,0.4) line, but `borderRadius` below had
+                // no `isIsland` case, so that flat line rendered on a 0px-radius
+                // (square) box while bgcolor/backdropFilter/boxShadow all styled
+                // this as a floating rounded pill. The straight edges clipped
+                // squarely across the Contact/menu buttons' own rounded
+                // specular rims sitting just inside it, reading as two
+                // different, misaligned borders at the same corner. Fixed by
+                // giving island its own radius below and replacing the flat
+                // line with a `SpecularFx` rim (mounted just below, matching
+                // the buttons' own treatment) that traces whatever radius this
+                // box actually resolves to, so the two can never disagree again.
+                border: "none",
+                borderColor: "transparent",
                 borderRadius: isStandardOrGlass
                   ? "0px"
                   : (isNotch
                     ? "0px 0px 24px 24px"
                     : isImmersive
                       ? "28px"
-                      : (derivedIsCompact ? "100px" : "0px")),
+                      : (isIsland || derivedIsCompact ? "100px" : "0px")),
                 padding: isMinimal
                   ? { xs: "4px 32px", md: "4px 72px" }
                   : (isStandardOrGlass
@@ -736,6 +774,33 @@ const NAV_SOLID_AFTER_PX = 50;
                 mx: "auto",
               }}
             >
+              {/* The island pill's own edge. Mounted here rather than a CSS
+                  `border` so it traces whatever `borderRadius` this box
+                  actually resolves to (SpecularFx reads `getComputedStyle`),
+                  the same rim treatment the Contact/menu buttons use just
+                  inside it — one border system for the whole cluster instead
+                  of two disagreeing at the seam. Static (no `autoAnimate`,
+                  no pointer-follow) - a full-width nav bar sweeping a
+                  highlight on every mouse move would be a bigger motion cue
+                  than this chrome should make. */}
+              {isIsland && (
+                <SpecularFx
+                  baseColor={NOIR.white}
+                  baseOpacity={1}
+                  intensity={0}
+                  followMouse={false}
+                  speed={0}
+                  // `enabled` inside SpecularFx is gated on a fine pointer
+                  // unless `autoAnimate` is set - without it this rim would
+                  // vanish on touch devices while the pill's bgcolor/blur/
+                  // shadow stayed, reintroducing the same "border doesn't
+                  // match the rest of the chrome" mismatch this exists to
+                  // fix. `intensity={0}` already kills the moving highlight,
+                  // so `autoAnimate` here only unlocks the static base stroke
+                  // for coarse pointers, not an idle sweep.
+                  autoAnimate
+                />
+              )}
               <Box
                 sx={{
                   display: "flex",
@@ -871,6 +936,16 @@ const NAV_SOLID_AFTER_PX = 50;
               )}
 
               {/* Rightmost Controls: Contact + 3-Bar Menu Icon with Hover Dropdown & Click Mega Drawer */}
+              {/* Minimal mode used to fall through to the "else" branch on every
+                  ternary below - the plain, uncompacted MUI Button size/padding
+                  and a 36px menu box instead of the tight mono chip glass/island
+                  get. Same specular rim component either way, but at a
+                  different size and proportion the rim traces a differently
+                  shaped box, which is what read as "the border look doesn't
+                  match" between minimal and glassmorphism. `isMinimal` joins
+                  the other two modes here so all three render this cluster
+                  identically; home's own distinct treatment (logo size, no nav
+                  items) is untouched — that's decided elsewhere, above. */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <AnimatedContactButton
                   label="Contact"
@@ -879,14 +954,19 @@ const NAV_SOLID_AFTER_PX = 50;
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
-                    height: (isStandardOrGlass || isIsland) ? "24px" : "32px",
-                    fontSize: (isStandardOrGlass || isIsland) ? "0.72rem" : undefined,
-                    fontWeight: (isStandardOrGlass || isIsland) ? 700 : undefined,
-                    fontFamily: (isStandardOrGlass || isIsland) ? MONO : undefined,
-                    letterSpacing: (isStandardOrGlass || isIsland) ? "0.08em" : undefined,
-                    textTransform: (isStandardOrGlass || isIsland) ? "none" : undefined,
-                    padding: isGlass ? "2px" : ((isStandardOrGlass || isIsland) ? "2px 0px" : undefined),
-                    minWidth: (isStandardOrGlass || isIsland) ? "auto" : undefined,
+                    height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px",
+                    fontSize: (isStandardOrGlass || isIsland || isMinimal) ? "0.72rem" : undefined,
+                    fontWeight: (isStandardOrGlass || isIsland || isMinimal) ? 700 : undefined,
+                    fontFamily: (isStandardOrGlass || isIsland || isMinimal) ? MONO : undefined,
+                    letterSpacing: (isStandardOrGlass || isIsland || isMinimal) ? "0.08em" : undefined,
+                    textTransform: (isStandardOrGlass || isIsland || isMinimal) ? "none" : undefined,
+                    // Was "2px 0px" - zero horizontal padding, so the specular
+                    // rim (traced against this button's own border box) sat
+                    // flush against the label glyphs with no breathing room.
+                    // A little horizontal room keeps the rim from reading as
+                    // "the border is touching the text".
+                    padding: (isStandardOrGlass || isIsland || isMinimal) ? "2px 8px" : undefined,
+                    minWidth: (isStandardOrGlass || isIsland || isMinimal) ? "auto" : undefined,
                   }}
                 />
 
@@ -897,8 +977,8 @@ const NAV_SOLID_AFTER_PX = 50;
                   isNotch={false}
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
-                  noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px", padding: isGlass ? "2px" : undefined }}
+                  noBorder={isStandardOrGlass || isIsland || isMinimal}
+                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isIsland || isMinimal) ? "32px" : "36px" }}
                 />
 
                 {/* Mobile 3-Bar Menu Button */}
@@ -908,8 +988,8 @@ const NAV_SOLID_AFTER_PX = 50;
                   isNotch={false}
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
-                  noBorder={isStandardOrGlass || isIsland}
-                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland) ? "24px" : "32px", width: (isStandardOrGlass || isIsland) ? "32px" : "36px", padding: isGlass ? "2px" : undefined }}
+                  noBorder={isStandardOrGlass || isIsland || isMinimal}
+                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isIsland || isMinimal) ? "32px" : "36px" }}
                 />
               </Box>
               </Box>
