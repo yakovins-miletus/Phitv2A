@@ -27,6 +27,9 @@ export function FillText({ text, onComplete }: { text: string; onComplete?: (com
             trigger: scope.current,
             start: "top 85%",
             end: "top 55%",
+            // SCRUB POLICY (beatThresholds.ts): legitimate here because the
+            // fill amount IS the scroll progress across this range — a
+            // progression, not a one-shot entrance event.
             scrub: SCROLL_SPEED,
             onUpdate: (self) => {
               if (onComplete) {

@@ -143,11 +143,13 @@ export function bottomPanelX(p: number): number {
 
 /** Left flanking text X translation px (unused — texts move vertically now). */
 export function leftFlankX(_p: number): number {
+  void _p;
   return 0;
 }
 
 /** Right flanking text X translation px (unused — texts move vertically now). */
 export function rightFlankX(_p: number): number {
+  void _p;
   return 0;
 }
 

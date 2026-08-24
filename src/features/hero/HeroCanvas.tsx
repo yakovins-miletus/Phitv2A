@@ -108,7 +108,9 @@ export function HeroCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progressRef = useRef(initialProgress);
   const activeNodeRef = useRef<number | null>(activeNode);
-  activeNodeRef.current = activeNode;
+  useEffect(() => {
+    activeNodeRef.current = activeNode;
+  }, [activeNode]);
   const reduced = useReducedMotion();
   const lowPower = useIsLowPowerDevice();
   // Gates affordances, never cost. A pointer-type change (hybrid devices) must

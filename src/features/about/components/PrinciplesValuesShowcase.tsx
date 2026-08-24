@@ -24,7 +24,7 @@ interface ValueItem {
   definition: string;
   valueToClient: string;
   image: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
 }
 
 const VALUES_DATA: ValueItem[] = [

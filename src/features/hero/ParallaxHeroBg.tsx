@@ -22,7 +22,10 @@
 import { useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 
-const BG_SRC = "/images/hero-sky-bg.jpg";
+// .webp, while `seo.ts` keeps the .jpg for the OG image on purpose: social
+// scrapers are unreliable with WebP, so the share card stays a JPEG even
+// though this on-page use does not. Both files are committed.
+const BG_SRC = "/images/hero-sky-bg.webp";
 
 /** Parallax multipliers — how much each layer moves relative to the cursor. */
 const PARALLAX = { bg: 0.3, mid: 0.6, fg: 1.0 } as const;

@@ -23,6 +23,7 @@ const MOCK_ARCHIVE = [
 ];
 
 export function BlogSidebar(_props: BlogSidebarProps) {
+  void _props;
   // Start with 2025 and 2024 expanded by default
   const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>({
     "2025": true,

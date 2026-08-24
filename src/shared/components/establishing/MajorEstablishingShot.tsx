@@ -134,7 +134,7 @@ export function MajorEstablishingShot({
         overflow: "hidden",
       }}
     >
-      <Container maxWidth="2xl" sx={{ position: "relative", zIndex: 1, width: "100%" }}>
+      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1, width: "100%" }}>
         {/* Minimal Kicker Metadata Bar */}
         {category && (
           <Box

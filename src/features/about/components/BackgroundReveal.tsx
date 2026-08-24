@@ -35,7 +35,7 @@ export function BackgroundReveal() {
       >
         <Box
           component="img"
-          src="/images/about-hero-bg.jpg"
+          src="/images/about-hero-bg.webp"
           alt="Manila Skyline Dusk Hero Background"
           sx={{
             width: "100%",

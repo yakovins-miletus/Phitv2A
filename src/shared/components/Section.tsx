@@ -26,7 +26,7 @@ export function Section({ children, muted = false, ref }: SectionProps) {
         borderColor: "divider",
       }}
     >
-      <Container maxWidth="2xl">{children}</Container>
+      <Container maxWidth="xl">{children}</Container>
     </Box>
   );
 }
