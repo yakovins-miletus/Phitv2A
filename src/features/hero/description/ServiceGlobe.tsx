@@ -1,6 +1,5 @@
 import { useRef, useMemo } from "react";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Line, Sphere, Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -9,7 +8,6 @@ import { NOIR } from "@/shared/theme/palette";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { homeSection } from "@/shared/sections";
 import { useReducedMotion } from "@/shared/motion";
-import { MONO } from "@/shared/theme/theme";
 import PhitopolisLogo from "@/shared/components/PhitopolisLogo";
 
 const GROUND = GROUNDS[homeSection("hero-mission").ground ?? "panel"];
@@ -108,7 +106,6 @@ function StationaryCentralMonogram({ reduced }: { reduced: boolean }) {
 
       {/* Inner Reticle Rings */}
       <group ref={reticleRef}>
-        {/* @ts-ignore - R3F line */}
         <Line
           points={reticlePoints}
           color={NOIR.goldDark}
@@ -119,7 +116,6 @@ function StationaryCentralMonogram({ reduced }: { reduced: boolean }) {
           dashScale={24}
           dashSize={0.4}
         />
-        {/* @ts-ignore - R3F line */}
         <Line
           points={outerReticlePoints}
           color={GROUND.dark ? NOIR.frost : NOIR.navyField}
@@ -249,7 +245,7 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
           const isPrime = i === 0 || i === MERIDIANS / 2;
           return (
             <group key={`m-${i}`} rotation={[Math.PI / 2, 0, (i * Math.PI) / MERIDIANS]}>
-              {/* @ts-ignore - R3F line */}
+              {/* @ts-expect-error - R3F line */}
               <line geometry={meridianGeom}>
                 <lineBasicMaterial
                   color={
@@ -276,7 +272,7 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
 
           return (
             <group key={`p-${lat}`} position={[0, y, 0]}>
-              {/* @ts-ignore - R3F line */}
+              {/* @ts-expect-error - R3F line */}
               <line geometry={parallelGeoms[i]}>
                 <lineBasicMaterial
                   color={
@@ -285,13 +281,13 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
                       : isTropic
                         ? GROUND.dark
                           ? "rgba(255, 199, 44, 0.35)"
-                          : "rgba(10, 42, 102, 0.25)"
+                          : "rgba(10, 42, 102, 0.24)"
                         : GROUND.dark
-                          ? "rgba(255, 255, 255, 0.14)"
-                          : "rgba(10, 42, 102, 0.12)"
+                          ? "rgba(255, 255, 255, 0.12)"
+                          : "rgba(10, 42, 102, 0.08)"
                   }
                   transparent
-                  opacity={isEquator ? 0.75 : isTropic ? 0.4 : 0.2}
+                  opacity={isEquator ? 0.75 : isTropic ? 0.45 : 0.22}
                 />
               </line>
             </group>
@@ -335,7 +331,6 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
 
       {/* ── 4. Outer Celestial Gimbal / Astrolabe Ring ── */}
       <group ref={astrolabeGroup} rotation={[0.41, 0.35, 0]}>
-        {/* @ts-ignore - R3F line */}
         <Line
           points={astrolabeMain}
           color={GROUND.dark ? "rgba(255, 255, 255, 0.22)" : "rgba(10, 42, 102, 0.2)"}
@@ -343,7 +338,6 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
           opacity={0.4}
           lineWidth={1}
         />
-        {/* @ts-ignore - R3F line */}
         <Line
           points={astrolabeDashed}
           color={NOIR.goldDark}
@@ -366,19 +360,24 @@ function AnimatedArc({
   points: THREE.Vector3[];
   reduced: boolean;
 }) {
-  const lineRef = useRef<any>(null);
-  const speed = useMemo(() => 0.75 + Math.random() * 0.9, []);
+  const lineRef = useRef<React.ComponentRef<typeof Line>>(null);
+  const speed = useMemo(() => {
+    const pt = points[0];
+    const seed = pt ? Math.abs(pt.x * 13 + pt.y * 7) : 1;
+    const frac = seed - Math.floor(seed);
+    return 0.75 + frac * 0.9;
+  }, [points]);
 
   useFrame((_state, delta) => {
-    if (!reduced && lineRef.current?.material) {
-      lineRef.current.material.dashOffset -= delta * speed;
+    const mat = lineRef.current?.material as { dashOffset: number } | undefined;
+    if (!reduced && mat) {
+      mat.dashOffset -= delta * speed;
     }
   });
 
   return (
     <>
       {/* Delicate Trajectory Line */}
-      {/* @ts-ignore - R3F line */}
       <Line
         points={points}
         color={NOIR.goldDark}
@@ -387,7 +386,6 @@ function AnimatedArc({
         lineWidth={1}
       />
       {/* Traveling Photon Pulse */}
-      {/* @ts-ignore - R3F line */}
       <Line
         ref={lineRef}
         points={points}
@@ -450,44 +448,6 @@ export function ServiceGlobe() {
         <GlobeModel reduced={reduced} />
       </Canvas>
 
-      {/* ── Micro-Telemetry Status Badges ── */}
-      <Box
-        aria-hidden
-        sx={{
-          position: "absolute",
-          bottom: "12%",
-          left: { xs: "8%", md: "4%" },
-          display: "flex",
-          flexDirection: "column",
-          gap: 0.5,
-          opacity: 0.65,
-          userSelect: "none",
-        }}
-      >
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.6875rem",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: GROUND.dark ? NOIR.frost : NOIR.navyField,
-            fontWeight: 700,
-          }}
-        >
-          ORBIT · 23.5° AXIAL
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.625rem",
-            letterSpacing: "0.12em",
-            color: NOIR.goldDark,
-            fontWeight: 700,
-          }}
-        >
-          HQ · 14.5995° N, 120.9842° E [MNL]
-        </Typography>
-      </Box>
     </Box>
   );
 }
