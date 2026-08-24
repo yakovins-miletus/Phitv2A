@@ -187,6 +187,13 @@
      the failure the accent note warns about. The underline plus hover carries
      the affordance. On dark grounds the accent reads at 11:1 and links keep it. */
   --link-fg: #0a2a66; /* = NOIR.ink — 13.08:1 on panel */
+
+  /* The accent where it is TEXT and has to stay recognisably gold — an eyebrow,
+     a selected chip's label, an accented word in a heading. `--accent-fg` is
+     1.45:1 here, so those reads were failing. This is the same hue walked down
+     in lightness only: 5.21:1 on void, 5.34:1 on panel.
+     Fills, borders and icons keep `--accent`; this is text only. */
+  --accent-ink: #8c5f09; /* = NOIR.goldInk */
   --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
 
   /* ── Destructive ────────────────────────────────────────────────────────── */
@@ -304,6 +311,7 @@
   --accent-border: rgba(var(--accent-rgb), 0.38);
   --accent-fg: #ffc72c; /* = NOIR.gold — 6.16:1 worst case on glass over field */
   --link-fg: #ffc72c;   /* = NOIR.gold — 11.20:1 on navy, so links keep the accent here */
+  --accent-ink: #ffc72c; /* = NOIR.gold — the accent reads at 9:1+ on dark, no walk-down needed */
   --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
 
   --danger-fg: #f2a3a3;

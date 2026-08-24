@@ -222,7 +222,8 @@ export function ClosingShelf() {
                         fontFamily: MONO,
                         fontSize: "0.68rem",
                         letterSpacing: "0.16em",
-                        color: NOIR.goldDark,
+                        // Text on white: goldDark measures 1.96:1.
+                        color: NOIR.goldInk,
                         textTransform: "uppercase",
                         mb: 1.5,
                       }}

@@ -96,11 +96,11 @@ export function CareersIndexPage() {
                     fontSize: TYPE_SCALE.micro,
                     fontWeight: 700,
                     letterSpacing: TRACKING.meta,
-                    color: "var(--accent-fg)",
+                    color: "var(--accent-ink)",
                     textTransform: "uppercase",
                   }}
                 >
-                  REGISTER // PHITOPOLIS R&D MANILA
+                  REGISTER · PHITOPOLIS R&D MANILA
                 </Typography>
               </Box>
             </Reveal>
@@ -276,7 +276,7 @@ export function CareersIndexPage() {
                           px: 0.5,
                           borderRadius: "var(--r-control)",
                           bgcolor: isSelected ? "var(--accent-15)" : "var(--glass-fill-1)",
-                          color: isSelected ? "var(--accent-fg)" : "var(--text-2)",
+                          color: isSelected ? "var(--accent-ink)" : "var(--text-2)",
                           border: "1px solid",
                           borderColor: isSelected ? "var(--accent-border)" : "var(--glass-border-1)",
                           transition: "all var(--dur) var(--ease-out)",

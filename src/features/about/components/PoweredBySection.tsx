@@ -408,7 +408,6 @@ export function PoweredBySection() {
             {Object.entries(categories).map(([label, slug]) => {
               const isActive = activeCat === slug;
               const activeColor = TECH_CAT_COLORS[slug];
-              const isDataStorage = slug === "data";
               return (
                 <Box
                   component="button"
@@ -441,7 +440,10 @@ export function PoweredBySection() {
                     sx={{
                       fontFamily: "Inter, sans-serif",
                       fontSize: 11,
-                      color: isActive ? activeColor : activeCat ? "rgba(0,0,0,0.3)" : "text.secondary",
+                      // Dimming used to be rgba(0,0,0,0.3), which is unreadable rather
+                      // than de-emphasised. text.disabled is the theme's own
+                      // de-emphasis and stays legible.
+                      color: isActive ? activeColor : activeCat ? "text.disabled" : "text.secondary",
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
                       fontWeight: isActive ? 700 : 500,
@@ -452,22 +454,6 @@ export function PoweredBySection() {
                     }}
                   >
                     {label}
-                    {isDataStorage && !activeCat && (
-                      <Box
-                        component="span"
-                        sx={{
-                          fontFamily: MONO,
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          letterSpacing: "0.05em",
-                          textTransform: "lowercase",
-                          opacity: 0.15,
-                          color: "primary.main"
-                        }}
-                      >
-                        (click me)
-                      </Box>
-                    )}
                   </Typography>
                 </Box>
               );

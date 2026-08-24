@@ -230,7 +230,10 @@ export function MajorEstablishingShot({
                 <Box
                   component="span"
                   sx={{
-                    color: dark ? NOIR.gold : NOIR.goldDark,
+                    // goldInk, not goldDark, on light: this is the accent as
+                    // TEXT and goldDark measures 1.82:1 there. Fills and
+                    // borders in this file keep goldDark; they are not text.
+                    color: dark ? NOIR.gold : NOIR.goldInk,
                     display: "inline",
                     fontWeight: 800,
                   }}

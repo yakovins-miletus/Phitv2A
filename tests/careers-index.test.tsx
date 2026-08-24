@@ -25,7 +25,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
   test("renders archival register header and classification in MONO", async () => {
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         name: /Active Engineering Positions & Graduate Fellowships/i,
@@ -40,7 +40,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
   test("renders all position files initially with offset tab ears and closed state", async () => {
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     for (const pos of CAREER_POSITIONS) {
       expect(screen.getByRole("heading", { name: pos.title, level: 2 })).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
     const user = userEvent.setup();
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     // Click Graduate Program filter
     const gradChip = screen.getByText(/GRADUATE PROGRAM \[1\]/i);
@@ -73,7 +73,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
     const user = userEvent.setup();
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     const searchInput = screen.getByPlaceholderText(/Search by role, stack/i);
     await user.type(searchInput, "Kubernetes");
@@ -86,7 +86,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
     const user = userEvent.setup();
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     const searchInput = screen.getByPlaceholderText(/Search by role, stack/i);
     await user.type(searchInput, "nonexistent-quantum-stack-xyz");
@@ -104,7 +104,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
   test("expands folder tab in place to reveal mono meta-rail, summary, stack, and single Open full role CTA", async () => {
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     const targetPos = CAREER_POSITIONS[0]!;
     const folderTrigger = screen.getByRole("button", { name: new RegExp(targetPos.title, "i") });
@@ -132,7 +132,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
   test("keyboard navigation toggles folder expansion with Enter and Space", async () => {
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     const targetPos = CAREER_POSITIONS[0]!;
     const folderTrigger = screen.getByRole("button", { name: new RegExp(targetPos.title, "i") });
@@ -150,7 +150,7 @@ describe("CareersIndexPage — Archival Engineering Register", () => {
     const user = userEvent.setup();
     renderCareersRoute();
 
-    expect(await screen.findByText(/REGISTER \/\/ PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REGISTER · PHITOPOLIS R&D MANILA/i)).toBeInTheDocument();
 
     const brochureBtn = screen.getByRole("button", { name: /PROGRAM BROCHURE \(PDF\)/i });
     await user.click(brochureBtn);

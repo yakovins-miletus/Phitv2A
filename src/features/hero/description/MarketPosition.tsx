@@ -8,7 +8,7 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 import { homeSection } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { NOIR } from "@/shared/theme/palette";
-import { MONO } from "@/shared/theme/theme";
+import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 
 const GROUND = GROUNDS[homeSection("hero-position").ground ?? "panel"];
 
@@ -79,9 +79,10 @@ export function MarketPosition() {
                   sx={{
                     fontFamily: MONO,
                     fontVariantNumeric: "tabular-nums",
-                    fontSize: "0.8125rem",
+                    fontSize: TYPE_SCALE.caption,
                     lineHeight: 2.1,
-                    color: NOIR.goldDark,
+                    // Text on a light ground: goldDark measures 1.82:1 here.
+                    color: NOIR.goldInk,
                   }}
                 >
                   {String(i + 1).padStart(2, "0")}

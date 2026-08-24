@@ -33,6 +33,22 @@ export const NOIR = {
   gold: "#FFC72C",
   goldLight: "#FFD966",
   goldDark: "#E5B228",
+  /** Brand gold walked down in lightness until it clears AA as TEXT on the
+   *  light grounds. Measured: void 5.21:1, panel 5.34:1, white 5.59:1, against
+   *  gold's own 1.45 / 1.49 / 1.56.
+   *
+   *  This token was retired once before, and the note above records why: half
+   *  the call sites wrote the gold literally and never picked the bronze up, so
+   *  one brand role rendered in four colours. It is back on a narrower contract
+   *  than last time, and the contract is the point:
+   *
+   *    Use it ONLY where brand gold is TEXT sitting on a light ground.
+   *    Not for fills. Not for borders. Not for icons. Not on dark grounds,
+   *    where `gold` itself measures 9:1 and up and should be used.
+   *
+   *  Everything outside that one role stays `gold`, so there is still exactly
+   *  one accent; this is the same accent made readable where it has to be read. */
+  goldInk: "#8C5F09",
   /** @deprecated Primary text on a *light* ground. On dark use `frost`. */
   ink: "#0A2A66", // Primary text uses Phitopolis Navy
   /** Secondary text.
