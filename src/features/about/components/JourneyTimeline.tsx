@@ -746,7 +746,7 @@ export function JourneyTimeline() {
                   {(CHAPTER_SCATTER[ch.num] ?? []).map((pos, j) => {
                     const photo = ch.images[j];
                     if (!photo) return null;
-                    return <ScatterPhoto key={ch.id + "-" + String(j)} src={photo} alt={`${ch.title} — ${String(j + 1)}`} pos={pos} />;
+                    return <ScatterPhoto key={ch.id + "-" + String(j)} src={photo} alt={`${ch.title}, photo ${String(j + 1)}`} pos={pos} />;
                   })}
                 </div>
               )}
@@ -823,7 +823,7 @@ export function JourneyTimeline() {
                         key={ch.id + "-m-" + String(j)}
                         style={{ flex: 1, aspectRatio: "4/3", borderRadius: 10, overflow: "hidden", border: "2px solid rgba(255,255,255,0.7)", boxShadow: "0 4px 16px rgba(0,0,0,0.35)" }}
                       >
-                        <img decoding="async" loading="lazy" src={src} alt={`${ch.title} — ${String(j + 1)}`} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <img decoding="async" loading="lazy" src={preferWebp(src)} data-fallback-src={src} alt={`${ch.title}, photo ${String(j + 1)}`} onError={handleImgError} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       </div>
                     ))}
                   </div>
