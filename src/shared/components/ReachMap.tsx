@@ -3,7 +3,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import { motion, useInView } from "motion/react";
-import { useRef, useId, useState, useEffect } from "react";
+import { useRef, useId, useState } from "react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { MONO } from "@/shared/theme/theme";
@@ -55,18 +55,14 @@ export function ReachMap() {
   const theme = useTheme();
   const reduced = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(rootRef, { amount: 0.2 });
+  const inView = useInView(rootRef, { once: true, amount: 0.2 });
   const uid = useId();
   const [activeCity, setActiveCity] = useState<string | null>(null);
 
   const land = theme.palette.primary.main;
   const arc = NOIR.gold;
 
-  const [hasPlayed, setHasPlayed] = useState(false);
-  useEffect(() => {
-    if (inView) setHasPlayed(true);
-  }, [inView]);
-  const show = reduced === true || hasPlayed || inView;
+  const show = reduced === true || inView;
 
   const hq = projectPoint(HQ.lon, HQ.lat);
 

@@ -5,7 +5,6 @@ import { Reveal } from "@/shared/components/Reveal";
 import { ReachMap } from "@/shared/components/ReachMap";
 import { SectionLede } from "@/shared/components/SectionLede";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
-import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { homeSection } from "@/shared/sections";
 import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
@@ -36,22 +35,16 @@ export function ReachSection() {
   return (
     <SectionBeat
       section={homeSection("reach")}
-      // Was "Mini Establishing Shot 4" in routes/index.tsx; see CapabilityRack.
-      establishing={
-        <MiniEstablishingShot
-          selfDriven={false}
-          category="GLOBAL FABRIC"
-          title="Worldwide Low-Latency"
-          titleAccent="Interconnect"
-          tracer="Co-located execution presence spanning London, New York, Singapore, and Tokyo financial hubs."
-        />
-      }
+      // The establishing shot is gone deliberately. It carried a second, competing
+      // headline ("Worldwide Low-Latency Interconnect") plus a "GLOBAL FABRIC"
+      // eyebrow directly above the section's own "Established International
+      // Presence", so the reader met two claims and a label in one screen. One
+      // heading now, which is the claim that matters.
     >
       <Box ref={anchorRef} sx={{ mb: { xs: 5, md: 7 } }}>
         <SectionLede
           gunshot={CONTENT.ledes.reach.gunshot}
           tracer={CONTENT.ledes.reach.tracer}
-          eyebrow="Global Footprint"
           titleSx={{ maxWidth: "none", textWrap: { xs: "balance", md: "wrap" } }}
         />
       </Box>
