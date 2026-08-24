@@ -175,6 +175,18 @@
   --accent-40: rgba(var(--accent-rgb), 0.4); /* focused input border */
   --accent-border: rgba(var(--accent-rgb), 0.55);
   --accent-fg: #ffc72c; /* = NOIR.gold — accent as text/icon, both grounds */
+
+  /* Inline links specifically. `--accent-fg` is the brand accent and stays gold
+     on both grounds per the note above; that is fine for a fill, a border, an
+     icon or a large display word, and it is measured and accepted there. It is
+     not fine for an inline hyperlink, which is body text with no size exemption
+     and no logotype exemption: gold measures 1.45:1 here.
+
+     So links take the body ink on light grounds. That introduces no new colour
+     (this is already the text colour beside them) and no fifth gold, which is
+     the failure the accent note warns about. The underline plus hover carries
+     the affordance. On dark grounds the accent reads at 11:1 and links keep it. */
+  --link-fg: #0a2a66; /* = NOIR.ink — 13.08:1 on panel */
   --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
 
   /* ── Destructive ────────────────────────────────────────────────────────── */
@@ -291,6 +303,7 @@
 
   --accent-border: rgba(var(--accent-rgb), 0.38);
   --accent-fg: #ffc72c; /* = NOIR.gold — 6.16:1 worst case on glass over field */
+  --link-fg: #ffc72c;   /* = NOIR.gold — 11.20:1 on navy, so links keep the accent here */
   --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
 
   --danger-fg: #f2a3a3;

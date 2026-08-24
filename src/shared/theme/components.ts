@@ -366,7 +366,10 @@ export const components: Components<Theme> = {
     defaultProps: { underline: "hover" },
     styleOverrides: {
       root: {
-        color: "var(--accent-fg)",
+        // `--link-fg`, not `--accent-fg`: an inline link is body text, and the
+        // accent measures 1.45:1 on the light grounds. See the note beside
+        // `--link-fg` in glass.css.
+        color: "var(--link-fg)",
         textDecorationColor: "var(--accent-40)",
         transition: `color var(--dur) var(--ease-out)`,
       },

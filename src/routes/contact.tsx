@@ -10,13 +10,21 @@ import { CONTENT } from "@/shared/content";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
-import { MONO } from "@/shared/theme/theme";
+import { alpha } from "@mui/material/styles";
+
+import { NOIR } from "@/shared/theme/palette";
+import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 
+// Three steps, and the middle one used to undo the third: it promised
+// "immediate review" directly above "within 24 to 48 business hours". A reader
+// notices that. It also described an internal tool ("our active inquiry
+// dashboard") that tells the sender nothing about what happens to their
+// message. Both replaced with what the sender actually cares about.
 const NEXT_STEPS = [
-  { line: "Your message lands directly with our engineering & partnerships leadership team." },
-  { line: "It is logged into our active inquiry dashboard for immediate review." },
-  { line: "You get a direct human response within 24 to 48 business hours." },
+  { line: "Your message goes straight to our engineering and partnerships leads." },
+  { line: "We read it ourselves. No auto-reply, no ticket queue, no routing bot." },
+  { line: "You get a reply from a person within 24 to 48 business hours." },
 ] as const;
 
 function NextStepsTimeline() {
@@ -40,13 +48,13 @@ function NextStepsTimeline() {
                   width: 14,
                   height: 14,
                   borderRadius: "50%",
-                  bgcolor: "#0A2A66",
+                  bgcolor: NOIR.ink,
                   border: "2px solid var(--accent)",
                   mt: 0.5,
                   transition: "all 0.25s ease",
                 }}
               />
-              {isLast ? null : <Box sx={{ width: "2px", flexGrow: 1, bgcolor: "rgba(10, 42, 102, 0.12)", my: 0.8 }} />}
+              {isLast ? null : <Box sx={{ width: "2px", flexGrow: 1, bgcolor: `${alpha(NOIR.ink, 0.12)}`, my: 0.8 }} />}
             </Stack>
             <Box sx={{ pb: isLast ? 0 : 3.5, pt: 0.2 }}>
               <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary", lineHeight: 1.5 }}>
@@ -93,9 +101,9 @@ function ContactPage() {
               height: "100%",
               borderRadius: "24px",
               overflow: "hidden",
-              border: "1px solid rgba(10, 42, 102, 0.12)",
+              border: `1px solid ${alpha(NOIR.ink, 0.12)}`,
               bgcolor: "background.paper",
-              boxShadow: "0 20px 50px rgba(10, 42, 102, 0.06)",
+              boxShadow: `0 20px 50px ${alpha(NOIR.ink, 0.06)}`,
               p: { xs: 3.5, md: 4.5 },
               display: "flex",
               flexDirection: "column",
@@ -103,20 +111,10 @@ function ContactPage() {
             }}
           >
             <Stack spacing={3.5}>
+              {/* No eyebrow. It read "INQUIRY PROTOCOL", which is jargon for a
+                  contact page, and its replacement would have restated the
+                  heading directly below it word for word. */}
               <Box>
-                <Typography
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.72rem",
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "var(--accent-fg)",
-                    fontWeight: 800,
-                    mb: 0.5,
-                  }}
-                >
-                  INQUIRY PROTOCOL
-                </Typography>
                 <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
                   What happens next
                 </Typography>
@@ -125,30 +123,30 @@ function ContactPage() {
               <NextStepsTimeline />
 
               {/* Direct Reach Channels */}
-              <Stack spacing={2} sx={{ pt: 3, borderTop: "1px solid rgba(10, 42, 102, 0.08)" }}>
+              <Stack spacing={2} sx={{ pt: 3, borderTop: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
                 <Typography
-                  sx={{ fontFamily: MONO, fontSize: "0.72rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "text.secondary", fontWeight: 700 }}
+                  sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.caption, letterSpacing: "0.18em", textTransform: "uppercase", color: "text.secondary", fontWeight: 700 }}
                 >
                   Direct Channels
                 </Typography>
 
-                <Box sx={{ p: 2, borderRadius: "12px", bgcolor: "rgba(10, 42, 102, 0.03)", border: "1px solid rgba(10, 42, 102, 0.08)" }}>
+                <Box sx={{ p: 2, borderRadius: "12px", bgcolor: `${alpha(NOIR.ink, 0.03)}`, border: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
                   <Stack spacing={0.5}>
                     <Typography variant="caption" sx={{ fontFamily: MONO, color: "text.secondary", fontWeight: 700 }}>
                       GENERAL &amp; PARTNERSHIPS
                     </Typography>
-                    <Link href={`mailto:${CONTENT.contact.generalInquiries}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: "1.05rem" }}>
+                    <Link href={`mailto:${CONTENT.contact.generalInquiries}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: TYPE_SCALE.subtitle1 }}>
                       {CONTENT.contact.generalInquiries}
                     </Link>
                   </Stack>
                 </Box>
 
-                <Box sx={{ p: 2, borderRadius: "12px", bgcolor: "rgba(10, 42, 102, 0.03)", border: "1px solid rgba(10, 42, 102, 0.08)" }}>
+                <Box sx={{ p: 2, borderRadius: "12px", bgcolor: `${alpha(NOIR.ink, 0.03)}`, border: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
                   <Stack spacing={0.5}>
                     <Typography variant="caption" sx={{ fontFamily: MONO, color: "text.secondary", fontWeight: 700 }}>
                       CAREERS &amp; GRADUATE FELLOWSHIPS
                     </Typography>
-                    <Link href={`mailto:${CONTENT.contact.careersEmail}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: "1.05rem" }}>
+                    <Link href={`mailto:${CONTENT.contact.careersEmail}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: TYPE_SCALE.subtitle1 }}>
                       {CONTENT.contact.careersEmail}
                     </Link>
                   </Stack>
@@ -156,8 +154,8 @@ function ContactPage() {
               </Stack>
 
               {/* HQ Address Info */}
-              <Stack spacing={1} sx={{ pt: 2, borderTop: "1px solid rgba(10, 42, 102, 0.08)" }}>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontSize: "0.88rem" }}>
+              <Stack spacing={1} sx={{ pt: 2, borderTop: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontSize: TYPE_SCALE.body2 }}>
                   <strong>Phitopolis International Corp.</strong><br />
                   27/F Ecotower, 32nd St. cor. 9th Ave., Bonifacio Global City, Taguig, Metro Manila, Philippines 1634
                 </Typography>

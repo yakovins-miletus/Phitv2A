@@ -268,8 +268,12 @@ function AnimatedContactButton({
       sx={{
         borderRadius: "10px",
         border: "none !important",
+        // Gold as a label colour only where it can be read. On the light
+        // grounds it measures 1.49:1, so hover and active resolve to the navy
+        // ink instead; the specular rim still traces in gold, which is where the
+        // accent belongs on this control.
         color: (hovered || isActive)
-          ? `${NOIR.gold} !important`
+          ? `${onDark ? NOIR.gold : NOIR.navyField} !important`
           : (onDark ? "rgba(255,255,255,0.9)" : "text.secondary"),
         bgcolor: "transparent !important",
         background: "none !important",
@@ -292,7 +296,7 @@ function AnimatedContactButton({
           boxShadow: "none !important",
           backdropFilter: "none !important",
           WebkitBackdropFilter: "none !important",
-          color: `${NOIR.gold} !important`,
+          color: `${onDark ? NOIR.gold : NOIR.navyField} !important`,
           transform: "none !important",
         },
         "&:active": {
