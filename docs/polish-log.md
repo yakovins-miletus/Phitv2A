@@ -431,3 +431,34 @@ and the closing CTA eyebrow merely restated the heading directly beneath it.
 - `daily-life.mp4` is 18.7MB. `preload="metadata"` keeps it off the load path,
   but there is an 806KB `daily-life-loop.mp4` sitting beside it that may be the
   better source.
+
+### 3.8 · Correction to 3.4: the eyebrow count was measured too narrowly
+
+The "11 to 3" figure above counts only `variant="overline"`. That is the number
+that moved, and it is true, but it is not the standard's test. The mechanical
+check is "count instances of `uppercase tracking` micro-labels above section
+headlines", and there are three distinct spellings of that on this page:
+
+| Spelling | Count after this round | Where |
+|---|---|---|
+| `variant="overline"` | 3 | GraduateHallOfFame, PrinciplesValuesShowcase, about.tsx |
+| `<MetaLabel>` | 4 | PoweredBySection x1, about.tsx x3 |
+| `category=` on an establishing shot | 2 | BlogSection, CandidatesAndCareers |
+
+`MetaLabel` is `fontFamily: MONO, fontSize: 0.72rem, letterSpacing: 0.18em,
+textTransform: uppercase` - the eyebrow signature exactly. I did not count it
+because I grepped for the wrong string.
+
+Reading it strictly, the page carries **9**, against a budget of
+`ceil(13 / 3) = 5`. It is not under budget.
+
+The defensible reading is narrower: the four `MetaLabel` uses head sub-blocks
+inside a section ("Disciplines", "Alma Maters", "Tech Stack") rather than
+announcing a section, which is a list heading rather than an eyebrow. On that
+reading the section-eyebrow count is 3 overlines plus 2 establishing-shot
+categories = **5**, exactly at budget.
+
+Either way the honest statement is "at or slightly over budget", not the
+comfortable "3" recorded above. The establishing-shot `category` prop is a
+site-wide pattern, not an About-page one, and culling it belongs with the
+deferred home-page eyebrow round rather than here.
