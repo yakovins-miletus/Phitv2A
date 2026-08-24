@@ -248,3 +248,186 @@ and the pre-existing `Transitioner`/`AppShellInner` React console error.
 New this round: the slab's `calc(100svh - 160px)` duplicates `SectionBeat`'s own
 `py` because SectionBeat exports no token for it. If that padding changes, this
 breaks silently. A shared constant would be the honest fix.
+
+---
+
+## Round 3 — Careers relight, home figures, pillars, about tail · 2026-08-24
+
+**Goal:** three separate complaints with one cause. The site had accumulated
+decorative complexity that reads as generated rather than designed. Acceptance
+bar for this round was `/anthropic-skills:design-taste-frontend`.
+
+Design read: B2B marketing site for a quant R&D firm, brand already fixed
+(NOIR navy/gold, Outfit display). Mode is Redesign-Preserve. Dials moved from
+roughly `VARIANCE 9 / MOTION 9 / DENSITY 6` to `6 / 4 / 3`.
+
+Two rules from that standard drove most of the work: hand-rolled decorative SVG
+is strongly discouraged (the home page had 1,855 lines of it), and "three
+identical cards horizontally" is banned outright (which is exactly what the
+operating pillars were).
+
+### 3.1 · Careers back to light
+
+The working tree had flipped the page from light to dark and grown it 465 to 797
+lines. The interaction model that arrived with the dark pass is good and is
+covered by 12 tests, so it was kept; only the theme and the decoration that rode
+along with it were reverted.
+
+The flip itself is three lines, because the page is written almost entirely in
+CSS variables that are redefined per ground in `glass.css`. **One of the three is
+easy to miss and was the whole trap:** `--g-floor` is a raw colour token
+(`#04122e`) defined identically in BOTH the light and dark scopes, so flipping
+`data-ground` alone leaves the page navy. It had to become `--g-void`. By
+contrast `--g-page` on the next line IS ground-scoped and flips by itself.
+
+Removed with it: per-category accent colours (collapsed to the one brand
+accent), the decorative status dots, the offset folder-tab ears with their
+`ml`-by-index cascade (now one hairline per group, not per row), and the stacked
+translucent panel fills.
+
+Three raw `NOIR.navyInk` references were deliberately KEPT: they are
+`contrastText` on solid gold buttons, which is ground-independent.
+
+All 12 careers tests pass unmodified.
+
+### 3.2 · Three use-case figures
+
+| File | before | after |
+|---|---|---|
+| `SignalDiagram.tsx` | 328 | **67** |
+| `PipelineDiagram.tsx` | 299 | **87** |
+| `FollowTheSunDiagram.tsx` | 270 | **82** |
+
+Each is now one geometric mark on a shared spec, so the three read as a system:
+one viewBox, two colours (`navyField` structure, `goldDark` accent), a 1.5/3
+stroke scale. Gone: every `<defs>`, `<filter>` and `<linearGradient>`, the
+`useId` calls, `FollowTheSunDiagram`'s interactive `useState`, its third accent
+tone, the particle streams and the radar ping.
+
+The draw-on gesture was re-expressed as `scaleX` rather than `stroke-dashoffset`,
+because dashoffset is a paint-property animation and violates the repo's
+transform/opacity rule. It reads as a wipe rather than a trace. That is a
+deliberate change, not a regression.
+
+Also deleted `UseCasesNarrative.tsx:279`, which rendered `0{index + 1} — {uc.tag}`
+- a section-number label, an uppercase eyebrow and an em-dash, three separate
+bans in a single line.
+
+**The pin did not move, and that was the thing at risk.** The pin distance is a
+function of card width, stack gap and card count only, none of which changed:
+
+| | before | after |
+|---|---|---|
+| Slide travel, 1440 / 390 | 1811 / 663 | **1811 / 663** |
+| Use-cases pin spacer | 2892 / 1573 | **2892 / 1573** |
+| Card widths | 778 / 332 | **778 / 332** |
+
+### 3.3 · Pillars as three full-bleed rows
+
+`OperatingPillars.tsx` was a three-identical-cards grid with Phosphor icons and
+no photography. It is now three stacked rows, each a full-viewport-width band
+with the photograph contained at 640px inside it, image left and copy right, all
+three reading the same direction.
+
+Contained rather than edge-to-edge on purpose: the image never upscales, and
+three rows in one deliberate sequence read as composition rather than as the
+repetition the standard caps at two.
+
+The images do not exist yet, deliberately. Each row renders a labelled "Image
+pending" placeholder at the identical reserved aspect ratio, so the layout is
+complete and the gap is visible rather than silent. The generation brief for
+`/images/pillars/{research,development,support}.webp` at 2560x1440 is in the
+plan file. State is per-row, so one missing asset cannot blank the others.
+
+The component adds **no animation of its own** - that is required, not stylistic.
+`SectionBeat`'s entrance fires `once: true`, so its invariant is that the DOM
+default IS the final lit state; a beat whose trigger never fires must still
+render visible. The section is revealed entirely by SectionBeat's existing
+`grow-left` tween.
+
+`hero-pillars` grows 1.04 to 2.20 screens at 1440 and 1.47 to 1.86 at 390. That
+is the intended cost of three stacked rows. Dead scroll stayed 0 and horizontal
+overflow stayed 0 at both viewports.
+
+### 3.4 · About tail plus a page-wide eyebrow cull
+
+| File | before | after |
+|---|---|---|
+| `DailyLifeSection.tsx` | 398 | **60** |
+| `CertificationsSection.tsx` | 229 | **109** |
+| `InternshipProgramSection.tsx` | 303 | **149** |
+| `CandidatesAndCareersSection.tsx` | 403 | **351** |
+
+`useDailyLifeVideo.ts` deleted with its only consumer.
+
+Daily life was reimplementing HTML5 video controls by hand - play/pause, mute,
+a hover volume slider, a scrub slider, a time display - and pinning the section
+for `+=140%`, which inflated the pin-spacer and pushed everything below it. Both
+are gone; it is a native `<video controls>` now. Browsers already do this, and
+they do it with keyboard support nobody has to maintain.
+
+Certifications lost the 88x88 circular badge ring with its double border, glow
+and hover scale, the per-card chrome, and the filter tab bar (four providers is
+not enough to need filtering; grouping already does the job).
+
+Eyebrows across the About page: **11 to 3**, against a budget of 4. Two of the
+removed ones were worth naming: `GRADUATE BATCH n OF m — year` was a pagination
+label, an eyebrow and an em-dash at once (the year survives as a plain caption),
+and the closing CTA eyebrow merely restated the heading directly beneath it.
+
+### 3.5 · Errors and false starts this round
+
+- **I told five agents to preserve each figure's `aria-label` verbatim. That was
+  wrong.** When the drawing changes, the accessible description must change with
+  it. `PipelineDiagram` was left announcing "ingest, transform, store, and
+  analyze stages, with data pulses flowing between them" for a mark that draws
+  four lines converging, and `FollowTheSunDiagram` announced "a timeline below"
+  that no longer existed. Both rewritten by hand afterwards. A screen-reader user
+  would have got a description of a figure that had been deleted.
+- **The pillars shipped with `flex: 0 0 640px` on the image column.** The `md`
+  breakpoint starts at 900px, where a non-shrinking 640px image plus the gap and
+  the container padding leaves about 100px for the copy. Changed to `0 1 640px`
+  with `minWidth: 0`. Caught by reading the code, not by the tests, which had
+  nothing to say about it.
+- **Six agents reported test failures that did not exist.** Each was running
+  `npx vitest run` concurrently with the others, and several suites spin up their
+  own preview server on a fixed port. Re-run serially at the end: 318/318, 35
+  files. Every one of those "pre-existing unrelated failures" was contention.
+- The careers agent left a decorative gold status dot with a glow above the page
+  heading, having been told explicitly to remove decorative status dots. Removed
+  by hand.
+
+### 3.6 · Verification
+
+| Check | Result |
+|---|---|
+| `npx tsc -b` | clean |
+| `npx vitest run` | **318 passed / 318**, 35 files, no test modified |
+| `npx eslint .` | **26 errors** (baseline 27), 81 warnings (was 83) |
+| Use-cases pin span | **bit-identical** at 1440 and 390 |
+| Dead scroll | 0 at both viewports |
+| Horizontal overflow | 0 at both viewports |
+| Careers ground | resolves `light`, body `#F4F7FC` |
+| About eyebrows | 11 to 3 |
+| Lines removed | ~1,290 across the seven rewritten components |
+
+### 3.7 · Found but deliberately not fixed
+
+- **`ServiceGlobe.tsx:488` renders `HQ · 14.5995° N, 120.9842° E [MNL]`** -
+  fabricated GPS telemetry on the home page, the same invented-data pattern that
+  was removed from the intro earlier today. Out of the agreed scope for this
+  round. It is the strongest remaining candidate.
+- **The About hero overlays pills on its photographs** (`TRUSTED COLLABORATION`,
+  `ACADEMIC ENGAGEMENT`, `PHITOPOLIS R&D FIRM`), which the standard bans
+  outright. Lives in the hero, not the tail sections that were in scope.
+- **Em-dashes remain in copy**: 15 in `content.ts`, 14 in `routes/about.tsx`.
+  The standard says zero. A full sweep is a content change and wants
+  stakeholder review rather than an agent's judgement.
+- **Home-page eyebrows are still over budget.** `routes/index.tsx:141` and
+  several `MiniEstablishingShot` category labels. Enforcing the ratio across
+  every route is its own round.
+- **`JourneyTimeline`** (892 lines, 480vh of pinned horizontal scroll) is the
+  single largest thing on About and was deliberately left alone.
+- `daily-life.mp4` is 18.7MB. `preload="metadata"` keeps it off the load path,
+  but there is an 806KB `daily-life-loop.mp4` sitting beside it that may be the
+  better source.
