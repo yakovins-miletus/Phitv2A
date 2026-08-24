@@ -121,3 +121,130 @@ Dark/light tint flips still track the ground correctly: white tint over screens
 - Pre-existing React console error on every route
   (`Cannot update a component (Transitioner) while rendering AppShellInner`).
   Untouched — it lives in files that were already dirty before this work began.
+
+---
+
+## Round 2 — Problem → Production, one screen · 2026-08-24
+
+**Goal:** the section measured **4.05 viewports** (the diagram alone 3.34). Bring
+it to exactly one, and replace the vertical pipeline with a composition that
+actually carries the intended semantics.
+
+### 2.1 · The metaphor
+
+`docs/adr/0002-problem-to-production-metaphor.md` (proposed) holds the reasoning
+trail. The short version: `prefers-reduced-motion` must receive a *static*
+composition, and a still frame has no time — so any step-by-step form cannot
+carry the meaning at all, regardless of height. The pipeline was not merely too
+tall, it was the wrong category of diagram. Adopted: **containment and
+refinement** — many raw problems in an open field, two of them named, drawn
+across a material boundary into a Phitopolis vessel where Build and Operate are
+visibly *interior*, resolving to one refined artifact.
+
+Inversion disqualified four shapes before any aesthetic discussion: converging
+funnel, orbit/particle swirl, WebGL scene, long scrub choreography. Those
+exclusions are restated in the component header so they don't get reintroduced.
+
+### 2.2 · What changed
+
+| File | Change |
+|---|---|
+| `diagrams/ProcessDiagram.tsx` | Rewritten. Vertical spine + traveling payload gone. Two structurally distinct compositions — horizontal (field · vessel · artifact) at md+, vertical at xs — selected by `useMediaQuery`, not one layout reflowed. |
+| `home/components/ProcessSection.tsx` | Establishing shot removed; its copy inline. Slab now fills the beat. |
+| `shared/content.ts` | `CONTENT.process` from `{number,label,caption}[]` to role-based `{intake, rawCount, enclosed, output}`. |
+| `shared/sections.ts` | `establishScale: "major"` → `"mini"`; label `"Process Pipeline"` → `"Problem To Production"` (the old name described the design that was just deleted). |
+| `tests/process-diagram.test.tsx` | Rewritten for the role model — 4 tests, same count. |
+| `diagrams/process/*` (5 files) | Deleted. Sub-components of the spine, no remaining importer. |
+
+**The establishing shot had to go.** Measured breakdown at 1440×757 before the
+cut: `80 (beat py) + 379 (mini shot) + 695 (content) + 80 = 1234px`. A "mini"
+shot still reserves 0.5 screens, which left ~218px for the composition it was
+announcing — not enough for anything. `ProcessEstablishingShot.tsx` is kept
+(`/services` is the likely reuse) but now has no caller on the home page. This
+is a design call worth a second opinion; it is not forced by the ADR.
+
+### 2.3 · Errors and false starts this round
+
+- **First render was structurally broken and I shipped it to a screenshot before
+  looking at it.** Every absolutely-positioned child resolved against an inner
+  wrapper of `height: auto` instead of the sized container, so the two intake
+  chips landed superimposed on each other at the top and the vessel collapsed.
+  The fix was to stop threading one DOM tree through a dozen responsive `sx`
+  objects and write the two compositions as two explicit branches.
+- **`preserveAspectRatio="none"` turned every SVG `<circle>` into a visible
+  ellipse.** The distortion that makes the 0–100 coordinate space track the
+  container is the same distortion that ruins round things. Lines survive it
+  (with `vector-effect: non-scaling-stroke`); discs are DOM elements now.
+- **The chamfered rim drew as a broken rectangle.** `clip-path` clips an
+  element's own rendering, inset box-shadow included, so a single box with
+  `clipPath` + `inset 0 0 0 1px` erased the rim along exactly the chamfered
+  corners it existed to describe. Replaced with a gold outer box holding a 1px
+  inset, identically clipped inner box.
+- **The first "enclosure" failed its own ADR gate.** `navyPanel` on `navyDeep` is
+  a ~2% luminance step — inside and outside read as the same material with a
+  line between them, which inversion #4 explicitly disqualified. Now `navyField`
+  with its own finer gold grid.
+- **Three "375px" measurements in this session were actually taken at 490px.**
+  The CDP harness's `launch({width})` sets the window, not the viewport; Chrome
+  gave back `clientWidth: 490`. Every mobile number before the
+  `Emulation.setDeviceMetricsOverride` fix was wrong, including one that read
+  1.12 screens. All figures below are re-measured at a true 375.
+
+### 2.4 · Numbers
+
+| Measurement | Before | After |
+|---|---|---|
+| `process` footprint @1440 | 4.05 screens | **1.00** |
+| `process` footprint @768 | — | **1.00** |
+| `process` footprint @375 | — | **1.00** |
+| Page `scrollHeight` @1440 | 19625px (25.9 screens) | 16555px (18.4 screens) |
+| Footer dead space, all 3 viewports | 1px | 1px (unchanged) |
+| Horizontal overflow, all 3 viewports | — | 0px |
+| `/` LCP · CLS | 244ms · 0 | 264ms · 0 |
+
+Reduced-motion falsifier (ADR-0002): a static 375px capture with motion disabled
+reads as many things in the field, two named, an enclosure labelled "Inside
+Phitopolis" holding Build and Operate, one output. Passes.
+
+Animated path: after wheel-driven scroll into the section (Lenis ignores
+`window.scrollTo`), **0 elements** inside `#process` remain below 5% opacity —
+the entrance timeline completes and nothing is stranded.
+
+### 2.5 · Verification
+
+| Check | Result |
+|---|---|
+| `npx tsc -b` | clean **for the files this round touched** — see below |
+| `npx vitest run` | 263 passed at 09:19; 259/263 at 09:24 — see below |
+| `npx eslint .` | 27 errors at 09:19; 31 at 09:24 — see below |
+| Jitter / pin probes | not re-run this round — the hero was untouched |
+
+### 2.6 · Left undone, and one thing that went wrong outside this work
+
+**A concurrent session rewrote two files mid-round.** At 09:20,
+`shared/components/TransitionCurtain.tsx` (−560/+40) and
+`shared/components/Preloader.tsx` (−577/+72) were reverted in the working tree to
+a revision far older than HEAD, by an Antigravity teamwork run operating in the
+same directory. Consequences, none of them caused by this round's changes and
+none of them fixed here:
+
+- Round 1's `aria-live` announcer is gone from the tree, so its guard test
+  `tests/motion/no-dead-scroll.test.ts` fails. The fix is still in `dist/` only
+  because that build predates 09:20.
+- Both files now `import gsap` at module scope and `TransitionCurtain`
+  statically imports `SmoothScroll` (hence lenis), putting both libraries in the
+  eager bundle on every route — a direct violation of the bundle rule in
+  `CLAUDE.md`.
+- `Preloader`'s manifest-driven warm-up (`e81edda`) is gone; `warmup?:
+  LoadSignal[]` is still declared but never read.
+- `tsc -b` and `eslint` fail in those two files; 3 preloader tests fail.
+
+Those files are deliberately **not** in this round's commit and were not touched
+or reverted — a separate brief has been handed to that team to restore them.
+
+Still open from Round 1: `/about` LCP variance (2008 → 1424 → 1432ms, unexplained)
+and the pre-existing `Transitioner`/`AppShellInner` React console error.
+
+New this round: the slab's `calc(100svh - 160px)` duplicates `SectionBeat`'s own
+`py` because SectionBeat exports no token for it. If that padding changes, this
+breaks silently. A shared constant would be the honest fix.

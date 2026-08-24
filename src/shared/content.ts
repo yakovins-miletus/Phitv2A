@@ -346,14 +346,26 @@ export const CONTENT = {
       stack: ["React", "TypeScript", "Node.js", "Python", "Git"]
     }
   ],
-  process: [
-    { number: "00", label: "Ideas", caption: "The raw potential waiting to be materialized" },
-    { number: "01", label: "Discover", caption: "Frame the problem with our partners" },
-    { number: "02", label: "Research", caption: "Prototype models against real data" },
-    { number: "03", label: "Build", caption: "Engineer production-grade systems" },
-    { number: "04", label: "Operate", caption: "Run and support them around the clock" },
-    { number: "05", label: "Products", caption: "Materialized ideas shaping the market" }
-  ],
+  // Role-based, not sequential: ADR-0002 replaces the six-step pipeline with a
+  // containment metaphor (many inputs -> two named among them -> two enclosed
+  // operations -> one output). `rawCount` sets how many unlabelled marks the
+  // diagram scatters in the field; only named/enclosed/output entries carry copy.
+  process: {
+    intake: [
+      { id: "discover", label: "Discover", caption: "Frame the problem with our partners" },
+      { id: "research", label: "Research", caption: "Prototype models against real data" },
+    ],
+    rawCount: 9,
+    enclosed: [
+      { id: "build", label: "Build", caption: "Engineer production-grade systems" },
+      { id: "operate", label: "Operate", caption: "Run and support them around the clock" },
+    ],
+    output: {
+      id: "products",
+      label: "Products",
+      caption: "Systems we built now run in production for our partners, monitored around the clock",
+    },
+  },
   contact: {
     address: "27/F Ecotower Building, 32nd St. cor. 9th Avenue, Bonifacio Global City, Taguig, Philippines, 1634",
     offices: ["Bonifacio Global City, PH"],

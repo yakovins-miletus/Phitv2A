@@ -170,7 +170,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     noExitDim: true,
     establishScale: "mini",
   },
-  { id: "process", label: "Process Pipeline", chapter: 5, ground: "deep", establishScale: "major" },
+  { id: "process", label: "Problem To Production", chapter: 5, ground: "deep", establishScale: "mini" },
   {
     id: "reach",
     label: "Global Footprint",

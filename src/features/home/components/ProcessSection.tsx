@@ -1,23 +1,33 @@
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 import { CONTENT } from "@/shared/content";
 import { ProcessDiagram } from "@/shared/components/diagrams/ProcessDiagram";
 import { NOIR } from "@/shared/theme/palette";
 import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
-import { ProcessEstablishingShot } from "@/features/home/components/establishing/ProcessEstablishingShot";
 import { homeSection } from "@/shared/sections";
 
 export function ProcessSection() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.PROCESS_IMMERSIVE, { dark: true });
 
   return (
-    <SectionBeat
-      section={homeSection("process")}
-      // Was "Major Establishing Shot 2" as a separate sibling in
-      // routes/index.tsx; see ProcessEstablishingShot.tsx.
-      establishing={<ProcessEstablishingShot selfDriven={false} />}
-    >
+    /**
+     * No `establishing` shot, unlike every other beat on this page.
+     *
+     * `establishScale: "mini"` still reserves 0.5 screens for a title card. The
+     * section as a whole has a one-viewport budget (ADR-0002), so a half-screen
+     * announcement would leave ~218px for the composition it announces — the
+     * measured breakdown at 1440x757 was 80 + 379 (shot) + 695 + 80 = 1234px.
+     * The shot's copy ("From Problem To Production.") moves inline below, where
+     * it sits *in* the composition rather than in front of it. That is also the
+     * better read: the crucible frame is itself the establishing image, and two
+     * announcements for one screen of content is one too many.
+     *
+     * `ProcessEstablishingShot.tsx` is kept — `/services` is the likely reuse —
+     * but it now has no caller on the home page.
+     */
+    <SectionBeat section={homeSection("process")}>
       <Box
         ref={anchorRef}
         sx={{
@@ -27,7 +37,7 @@ export function ProcessSection() {
           overflow: "hidden",
           borderTop: "1px solid rgba(255, 199, 44, 0.2)",
           borderBottom: "1px solid rgba(255, 199, 44, 0.2)",
-          py: { xs: 8, md: 14 },
+          py: { xs: 3, md: 7 },
           /**
            * Break out of SectionBeat's `Container maxWidth="xl"`.
            *
@@ -54,6 +64,24 @@ export function ProcessSection() {
           left: "50%",
           transform: "translateX(-50%)",
           width: "100vw",
+          /**
+           * Fill the beat, don't float inside it.
+           *
+           * `SectionBeat` sets `minHeight: 100svh` on the <section> and
+           * `py: { xs: 6, md: 10 }` (48px / 80px) on it — see SectionBeat.tsx:475
+           * and :486. This slab is content-height, so once the section stopped
+           * being 4 viewports tall the navy ended well short of the section's
+           * own box and the whole thing read as a floating panel with white
+           * bands above and below it. Subtracting that padding makes the slab
+           * exactly as tall as the beat and keeps the section at 1.00 screens.
+           *
+           * The two numbers are duplicated here; SectionBeat exports no token
+           * for them. If its `py` changes, this changes with it.
+           */
+          minHeight: { xs: "calc(100svh - 96px)", md: "calc(100svh - 160px)" },
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
         }}
       >
         {/* Industrial Grid Background & Scanlines */}
@@ -71,9 +99,25 @@ export function ProcessSection() {
           }}
         />
 
-        {/* Full-width Pipeline Canvas */}
+        {/* Full-width crucible canvas — see ADR-0002. */}
         <Box sx={{ width: "100%", px: { xs: 2, md: 6, lg: 8 }, position: "relative", zIndex: 2 }}>
-          <ProcessDiagram steps={CONTENT.process} />
+          <Box sx={{ maxWidth: 1320, mx: "auto", mb: { xs: 1.5, md: 3 } }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: "1.6rem", md: "2.4rem" },
+                fontWeight: 800,
+                lineHeight: 1.1,
+                color: NOIR.frost,
+              }}
+            >
+              From Problem{" "}
+              <Box component="span" sx={{ color: NOIR.gold }}>
+                To Production.
+              </Box>
+            </Typography>
+          </Box>
+          <ProcessDiagram model={CONTENT.process} />
         </Box>
       </Box>
     </SectionBeat>

@@ -176,8 +176,10 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          {/* Major Establishing Shot 2: Process Pipeline — the shot now lives
-              inside ProcessSection's own SectionBeat, driven on one timeline. */}
+          {/* Problem To Production. Had a Major Establishing Shot 2 here, then
+              inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
+              entirely — a half-screen title card left nothing for the
+              one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
