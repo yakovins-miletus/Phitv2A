@@ -1,11 +1,7 @@
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import VerifiedIcon from "@mui/icons-material/Verified";
-import SchoolIcon from "@mui/icons-material/School";
-import GroupsIcon from "@mui/icons-material/Groups";
 import { motion } from "motion/react";
 
-import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 export function HeroGallery() {
@@ -36,7 +32,7 @@ export function HeroGallery() {
           position: "relative",
           borderRadius: "24px",
           overflow: "hidden",
-          border: "2.5px solid #EAB308",
+          border: `2.5px solid ${NOIR.gold}`,
           minHeight: { xs: 320, sm: "auto" },
           transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         }}
@@ -62,52 +58,9 @@ export function HeroGallery() {
             pointerEvents: "none",
           }}
         />
-        {/* Badge Pill: PHITOPOLIS R&D FIRM */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1.25,
-            px: 2,
-            py: 1,
-            bgcolor: "rgba(9, 18, 38, 0.88)",
-            backdropFilter: "blur(12px)",
-            border: "1.5px solid rgba(234, 179, 8, 0.6)",
-            borderRadius: "12px",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              bgcolor: "rgba(234, 179, 8, 0.18)",
-            }}
-          >
-            <VerifiedIcon sx={{ color: "#EAB308", fontSize: "1.1rem" }} />
-          </Box>
-          <Typography
-            sx={{
-              color: "#EAB308",
-              fontSize: "0.85rem",
-              fontWeight: 800,
-              fontFamily: MONO,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-            }}
-          >
-            PHITOPOLIS R&D FIRM
-          </Typography>
-        </Box>
       </Box>
 
-      {/* ── Image 2: Secondary Card (Top Right - TRUSTED COLLABORATION) ── */}
+      {/* ── Image 2: Secondary Card (Top Right) ── */}
       <Box
         component={motion.div}
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -146,52 +99,9 @@ export function HeroGallery() {
             pointerEvents: "none",
           }}
         />
-        {/* Badge Pill: TRUSTED COLLABORATION */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 16,
-            left: 16,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1.75,
-            py: 0.75,
-            bgcolor: "rgba(9, 18, 38, 0.88)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            borderRadius: "10px",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 20,
-              height: 20,
-              borderRadius: "50%",
-              bgcolor: "rgba(234, 179, 8, 0.2)",
-            }}
-          >
-            <GroupsIcon sx={{ color: "#EAB308", fontSize: "0.95rem" }} />
-          </Box>
-          <Typography
-            sx={{
-              color: "common.white",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              fontFamily: MONO,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
-          >
-            TRUSTED COLLABORATION
-          </Typography>
-        </Box>
       </Box>
 
-      {/* ── Image 3: Tertiary Card (Bottom Right - FUTURE-READY ENGAGEMENT) ── */}
+      {/* ── Image 3: Tertiary Card (Bottom Right) ── */}
       <Box
         component={motion.div}
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -229,49 +139,6 @@ export function HeroGallery() {
             pointerEvents: "none",
           }}
         />
-        {/* Badge Pill: ACADEMIC ENGAGEMENT */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 16,
-            left: 16,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1.75,
-            py: 0.75,
-            bgcolor: "rgba(9, 18, 38, 0.88)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            borderRadius: "10px",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 20,
-              height: 20,
-              borderRadius: "50%",
-              bgcolor: "rgba(234, 179, 8, 0.2)",
-            }}
-          >
-            <SchoolIcon sx={{ color: "#EAB308", fontSize: "0.95rem" }} />
-          </Box>
-          <Typography
-            sx={{
-              color: "common.white",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              fontFamily: MONO,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
-          >
-            ACADEMIC ENGAGEMENT
-          </Typography>
-        </Box>
       </Box>
     </Box>
   );
