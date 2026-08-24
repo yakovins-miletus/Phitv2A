@@ -1,5 +1,6 @@
 ---
-status: "proposed"
+status: "superseded"
+superseded-by: 0003-three-phase-growth-model
 date: 2026-08-24
 decision-makers: [yaakovins (stakeholder), engineering]
 consulted: [/unosrivet:deep-think reasoning trail below]
