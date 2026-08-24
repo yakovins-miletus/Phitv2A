@@ -17,6 +17,12 @@ export const Route = createFileRoute("/privacy")({
     pageHead(
       "Privacy Policy · Phitopolis",
       "How Phitopolis International Corp. collects, uses, and protects personal data submitted through this site.",
+      undefined,
+      // noindex while every section body is an unreviewed placeholder.
+      // A legal page carries obligations the moment it is public, and a
+      // crawler cannot tell scaffold from policy. Remove this once
+      // counsel-approved text lands.
+      { noindex: true },
     ),
   component: PrivacyPage,
 });

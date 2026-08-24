@@ -17,6 +17,12 @@ export const Route = createFileRoute("/terms")({
     pageHead(
       "Terms of Service · Phitopolis",
       "The terms governing use of the Phitopolis International Corp. website, including its contact and careers forms.",
+      undefined,
+      // noindex while every section body is an unreviewed placeholder.
+      // A legal page carries obligations the moment it is public, and a
+      // crawler cannot tell scaffold from policy. Remove this once
+      // counsel-approved text lands.
+      { noindex: true },
     ),
   component: TermsPage,
 });
