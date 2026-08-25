@@ -424,9 +424,9 @@ export function CareersIndexPage() {
                                 <Box
                                   sx={{
                                     borderRadius: "var(--r-card)",
-                                    bgcolor: isExpanded ? "var(--glass-fill-2)" : "var(--g-panel)",
+                                    bgcolor: "var(--g-panel)",
                                     border: "1px solid",
-                                    borderColor: isExpanded ? "var(--accent-border)" : "var(--glass-border-1)",
+                                    borderColor: "var(--glass-border-1)",
                                     boxShadow: isExpanded ? "var(--glass-shadow-2)" : "var(--glass-shadow-1)",
                                     transition: "background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out)",
                                     overflow: "hidden",
@@ -555,10 +555,10 @@ export function CareersIndexPage() {
                                 px: 2,
                                 py: 0.8,
                                 borderRadius: "var(--r-pill)",
-                                bgcolor: isExpanded ? "var(--accent-15)" : "var(--glass-fill-2)",
+                                bgcolor: "var(--glass-fill-2)",
                                 border: "1px solid",
-                                borderColor: isExpanded ? "var(--accent-border)" : "var(--glass-border-1)",
-                                color: isExpanded ? "var(--accent-fg)" : "var(--text-2)",
+                                borderColor: isExpanded ? "var(--glass-border-2)" : "var(--glass-border-1)",
+                                color: isExpanded ? "var(--text-1)" : "var(--text-2)",
                                 fontFamily: MONO,
                                 fontSize: TYPE_SCALE.micro,
                                 fontWeight: 700,
@@ -601,47 +601,42 @@ export function CareersIndexPage() {
                                   sx={{
                                     px: { xs: 2.5, sm: 3, md: 3.5 },
                                     pb: { xs: 3, sm: 3.5, md: 4 },
-                                    pt: 1,
+                                    pt: 2.5,
                                     borderTop: "1px solid var(--glass-border-1)",
                                   }}
                                 >
-                                  {/* Datasheet Meta-Rail */}
+                                  {/* Datasheet Meta-Rail — no surface, mono label treatment carries it */}
                                   <Box
                                     sx={{
-                                      py: 1.5,
-                                      px: 2,
-                                      mb: 2.5,
-                                      borderRadius: "var(--r-control)",
-                                      bgcolor: "var(--glass-fill-2)",
-                                      border: "1px solid var(--glass-border-1)",
                                       display: "flex",
                                       flexWrap: "wrap",
-                                      gap: { xs: 1.5, md: 3 },
-                                      alignItems: "center",
+                                      gap: { xs: 1, md: 2.5 },
+                                      alignItems: "baseline",
+                                      mb: 3.5,
                                     }}
                                   >
-                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
-                                      DEPT // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.department.toUpperCase()}</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--text-3)" }}>
+                                      DEPT // <Box component="span" sx={{ color: "var(--text-1)", fontWeight: 700 }}>{position.department.toUpperCase()}</Box>
                                     </Typography>
                                     <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none" }}>|</Box>
-                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
-                                      LOC // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.location.toUpperCase()}</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--text-3)" }}>
+                                      LOC // <Box component="span" sx={{ color: "var(--text-1)", fontWeight: 700 }}>{position.location.toUpperCase()}</Box>
                                     </Typography>
                                     <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none", display: { xs: "none", sm: "inline" } }}>|</Box>
-                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
-                                      TYPE // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.type.toUpperCase()}</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--text-3)" }}>
+                                      TYPE // <Box component="span" sx={{ color: "var(--text-1)", fontWeight: 700 }}>{position.type.toUpperCase()}</Box>
                                     </Typography>
                                   </Box>
 
                                   {/* Summary Prose (45-75ch measure) */}
-                                  <Box sx={{ mb: 3 }}>
+                                  <Box sx={{ mb: 3.5 }}>
                                     <Typography
                                       sx={{
                                         fontFamily: MONO,
                                         fontSize: TYPE_SCALE.micro,
                                         letterSpacing: TRACKING.meta,
                                         color: "var(--text-3)",
-                                        mb: 1,
+                                        mb: 0.8,
                                         textTransform: "uppercase",
                                       }}
                                     >
@@ -661,14 +656,14 @@ export function CareersIndexPage() {
                                   </Box>
 
                                   {/* Tech Stack Chips */}
-                                  <Box sx={{ mb: 3.5 }}>
+                                  <Box sx={{ mb: 4 }}>
                                     <Typography
                                       sx={{
                                         fontFamily: MONO,
                                         fontSize: TYPE_SCALE.micro,
                                         letterSpacing: TRACKING.meta,
                                         color: "var(--text-3)",
-                                        mb: 1.2,
+                                        mb: 0.8,
                                         textTransform: "uppercase",
                                       }}
                                     >
