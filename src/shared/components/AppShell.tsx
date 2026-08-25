@@ -157,6 +157,13 @@ const SECTION_MANIFEST: readonly string[] = [
   "/images/grads/FocusedProgramming.webp",
   "/images/blog/ateneo-career-talk-2025/01.webp",
   "/images/blog/csr-activity-repainting-community-spaces/01.webp",
+  // WS-13: About page hero gallery tiles (real assets, not dummy load)
+  "/images/hero-wall/phitopolis-datathon-2k25-the-grads-all-star-showdown-02.webp",
+  "/images/hero-wall/inspiring-the-next-generation-of-quants-our-talks-at-the-google-developers-student-club-dlsu-01.webp",
+  "/images/hero-wall/phitopolis-external-talk-01.webp",
+  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
+  "/images/hero-wall/likhapolis-pagbibigay-kulay-at-saya-02.webp",
+  "/images/hero-wall/csr-activity-repainting-community-spaces-01.webp",
 ];
 
 function preloadAsset(url: string): Promise<void> {
