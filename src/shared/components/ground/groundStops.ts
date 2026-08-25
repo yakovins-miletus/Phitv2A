@@ -17,6 +17,33 @@ import { GROUNDS, type GroundName } from "@/shared/theme/grounds";
  * unit tests consume the same source. Colours come from `GROUNDS`, which comes
  * from `NOIR`, so no colour value is authored here.
  */
+/**
+ * A declared transition into a stop, replacing the old implicit "560px before
+ * every boundary" window (former `BLEND_PX` in `GroundLayer.tsx`).
+ *
+ * `"cut"` is a zero-width, real no-op: the boundary owns no scroll region at
+ * all, so it cannot bleed into neighbouring content by construction, and
+ * `sampleGround` short-circuits before touching the renderers — no GL
+ * redraw, no CSS write. This is what a same-ground adjacent pair (e.g.
+ * About's `candidates` → `testimonials`, both `panel`) gets automatically:
+ * Step 1 found that pair never produced a *visible* artifact (from === to
+ * either way), but it still cost a GL tile-flip every tick inside the old
+ * blend window, so a real `"cut"` is strictly better even where nothing was
+ * visibly wrong.
+ *
+ * `"wipe"` owns an explicit `band` in px, sized to the boundary rather than a
+ * single global constant. Any boundary between two different grounds gets one.
+ */
+export type Transition = { kind: "cut" } | { kind: "wipe"; band: number };
+
+/** Default wipe band. Same distance the old global `BLEND_PX` used — long
+ *  enough to read as a transition, short enough that a section still holds a
+ *  stable colour while it's read. Boundaries that need a narrower runway (a
+ *  short, single-beat section that can't afford this much runway without
+ *  spilling into its neighbours) declare their own `band` instead of using
+ *  this default — see `buildGroundStops`. */
+export const DEFAULT_BAND = 560;
+
 export interface GroundStop {
   /** DOM id of the section element this stop is anchored to. */
   id: string;
@@ -31,6 +58,12 @@ export interface GroundStop {
    * about the section structure, and `ACT_BREAK_INDEX` below still needs it.
    */
   actBreak: boolean;
+  /**
+   * The declared transition **leaving** this stop, i.e. the boundary between
+   * this stop and the next one in the track. The last stop in a track always
+   * carries `{ kind: "cut" }` — there is nothing after it to transition into.
+   */
+  transitionOut: Transition;
 }
 
 /** `hero-flatten`/`hero-align`/`hero-reveal`/`hero-dwell` are in HOME_SECTIONS
@@ -51,21 +84,30 @@ export function buildGroundStops(
   sections: readonly SectionDef[],
   chapters: readonly ChapterDef[],
 ): readonly GroundStop[] {
-  return sections
-    .filter((s) => !UNRENDERED.has(s.id))
-    .map((section, i, list) => {
-      const act = actOfChapterIn(chapters, section.chapter);
-      const prev = i > 0 ? list[i - 1] : undefined;
-      return {
-        id: section.id,
-        // Sections without a declared ground inherit the page default rather
-        // than punching a hole in the track.
-        ground: section.ground ?? "deep",
-        act,
-        color: GROUNDS[section.ground ?? "deep"].bg,
-        actBreak: prev !== undefined && actOfChapterIn(chapters, prev.chapter) !== act,
-      };
-    });
+  const rendered = sections.filter((s) => !UNRENDERED.has(s.id));
+  return rendered.map((section, i, list) => {
+    const act = actOfChapterIn(chapters, section.chapter);
+    const prev = i > 0 ? list[i - 1] : undefined;
+    const next = i < list.length - 1 ? list[i + 1] : undefined;
+    const ground = section.ground ?? "deep";
+    const nextGround = next ? (next.ground ?? "deep") : undefined;
+    // No next stop, or the next stop shares this one's ground: this boundary
+    // owns no scroll region at all. A same-ground pair (About's
+    // `candidates` -> `testimonials`) is a real no-op, not a wipe between
+    // identical colours — see the `Transition` doc above.
+    const transitionOut: Transition =
+      next === undefined || nextGround === ground ? { kind: "cut" } : { kind: "wipe", band: DEFAULT_BAND };
+    return {
+      id: section.id,
+      // Sections without a declared ground inherit the page default rather
+      // than punching a hole in the track.
+      ground,
+      act,
+      color: GROUNDS[ground].bg,
+      actBreak: prev !== undefined && actOfChapterIn(chapters, prev.chapter) !== act,
+      transitionOut,
+    };
+  });
 }
 
 export const GROUND_STOPS: readonly GroundStop[] = buildGroundStops(HOME_SECTIONS, CHAPTERS);
@@ -153,17 +195,23 @@ export interface GroundSample {
  * approach to each stop rather than across whole sections, so a section holds one
  * stable colour while it is being read.
  *
- * Every boundary shares the same `blendPx` runway now, regardless of whether it
- * used to be a within-act or act-break boundary — the tile wipe fires at every
- * section change, so there is no longer a principled reason to treat any one
- * boundary as bigger than another (see `actBreak`/`ACT_BREAK_INDEX` above,
- * which are kept as descriptive metadata but no longer change the maths here).
+ * The band a boundary blends across comes from that stop's own declared
+ * `transitionOut` (see `buildGroundStops`) — a `"cut"` owns zero scroll region
+ * and short-circuits to `progress: 0` before any colour maths runs at all, and
+ * a `"wipe"` uses its own declared `band` rather than a single global constant
+ * centred wherever the boundary happens to fall.
+ *
+ * `blendPxOverride`, when given, replaces the declared band outright. Used by
+ * tests and fixtures that build a track by hand and want to exercise the
+ * ramp/smoothstep maths directly rather than the ground model's own band
+ * choice — production code (`GroundLayer.tsx`) never passes it, so a real
+ * boundary always uses the band the section registry actually declared.
  */
 export function sampleGround(
   stops: readonly GroundStop[],
   positions: readonly number[],
   scrollY: number,
-  blendPx: number,
+  blendPxOverride?: number,
 ): GroundSample {
   const white: Rgb = [255, 255, 255];
   if (stops.length === 0) return { color: white, from: white, to: white, progress: 0, fromIndex: 0 };
@@ -185,6 +233,19 @@ export function sampleGround(
 
   const from = parseGround(current.color);
   if (!next || nextPos === undefined) {
+    return { color: from, from, to: from, progress: 0, fromIndex: i };
+  }
+
+  const transition = current.transitionOut;
+  const declaredBand = transition.kind === "wipe" ? transition.band : 0;
+  const blendPx = blendPxOverride ?? declaredBand;
+
+  // A cut (declared, or an override of 0) owns no scroll region at all: the
+  // next stop's colour applies the instant its position is reached, with no
+  // ramp and no GL/CSS work in between. This is what a same-ground pair
+  // (e.g. About's `candidates` -> `testimonials`) gets automatically, and it
+  // is a real no-op, not a wipe between two identical colours.
+  if (blendPx <= 0) {
     return { color: from, from, to: from, progress: 0, fromIndex: i };
   }
 

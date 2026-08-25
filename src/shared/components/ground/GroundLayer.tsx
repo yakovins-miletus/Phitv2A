@@ -7,13 +7,6 @@ import { useIsLowPowerDevice, usePreloaderReady, useReducedMotion } from "@/shar
 import { GROUND_STOPS, rgbCss, sampleGround, type GroundStop } from "./groundStops";
 import { createGlGround, type GlGround } from "./glGround";
 
-/** Blend distance before a section boundary, in px. Long enough to read as a
- *  transition rather than a switch, short enough that the middle of a section
- *  holds one stable colour while you read it. The same distance is used at
- *  every boundary now — see `groundStops.ts`'s `sampleGround` header for why
- *  there is no longer a wider runway reserved for the former "act break". */
-const BLEND_PX = 560;
-
 /**
  * The page ground.
  *
@@ -127,6 +120,30 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
     let lastCss = "";
     let lastKey = "";
     let lastDocH = 0;
+    let stableTicks = 0;
+
+    /**
+     * `layoutStable` gates every wipe frame behind the first *accurate*
+     * post-layout measurement.
+     *
+     * Step 1's diagnosis (see ws-17-ground-transition.md): `measure()` used to
+     * run synchronously the instant `ready` flipped true, reading offsets off a
+     * layout that had not finished settling — hero fonts/images still
+     * swapping, pin-spacers for everything between the hero and the first real
+     * stop not yet sized. On /about that put `daily-life`'s measured offset far
+     * too small, which put `scrollY≈0` inside its blend window and painted a
+     * live per-tile wipe over the hero on first frame, before the first
+     * `ScrollTrigger` refresh corrected it.
+     *
+     * Until this flips true, `paint()` renders nothing but a flat fill of
+     * `stops[0].color` — never a transition frame — which is true of every
+     * route's first section by construction, not by chance. It flips true on
+     * whichever comes first: a real `ScrollTrigger` "refresh" (pin spacers
+     * final), or two consecutive ticks with an unchanged document height (the
+     * fallback for routes/timings a refresh event doesn't cover — font swaps,
+     * image decode).
+     */
+    let layoutStable = false;
 
     const paint = () => {
       if (positions.length === 0) return;
@@ -140,10 +157,28 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
       const docH = document.documentElement.scrollHeight;
       if (docH !== lastDocH) {
         lastDocH = docH;
+        stableTicks = 0;
         measure();
+      } else {
+        stableTicks++;
+        if (stableTicks >= 2) layoutStable = true;
       }
 
-      const s = sampleGround(stops, positions, window.scrollY, BLEND_PX);
+      if (!layoutStable) {
+        // Flat fill only — no GL, no CSS crossfade, no wipe. This is the fix
+        // for the About-hero grey-tile flash: there is structurally no frame
+        // in which an unsettled `positions[]` can reach the renderers.
+        if (canvas) canvas.style.opacity = "0";
+        const flat = stops[0]?.color ?? "";
+        if (flat !== lastCss) {
+          lastCss = flat;
+          host.style.backgroundColor = flat;
+        }
+        return;
+      }
+      if (useGl && canvas) canvas.style.opacity = "1";
+
+      const s = sampleGround(stops, positions, window.scrollY);
 
       // Dev-only probe. The GL path runs with `preserveDrawingBuffer: false`, so
       // `readPixels` returns an empty buffer outside the render callback and there
@@ -199,9 +234,16 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
       paint();
     };
     window.addEventListener("resize", remeasure, { passive: true });
-    // Fires after GSAP has built every pin and inserted its spacers, which is the
-    // only point at which section offsets are final.
-    ScrollTrigger.addEventListener("refresh", remeasure);
+    // Fires after GSAP has built every pin and inserted its spacers, which is
+    // the only point at which section offsets are final — the authoritative
+    // signal for `layoutStable` (the `stableTicks` counter in `paint()` is
+    // only the fallback for whatever a refresh doesn't cover, e.g. a later
+    // font swap).
+    const onRefresh = () => {
+      remeasure();
+      layoutStable = true;
+    };
+    ScrollTrigger.addEventListener("refresh", onRefresh);
     // ScrollTrigger may already have refreshed before this effect ran; catch that
     // case once on the next frame rather than waiting for a resize.
     const settleId = requestAnimationFrame(remeasure);
@@ -221,7 +263,7 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
       cancelAnimationFrame(settleId);
       gsap.ticker.remove(onTick);
       window.removeEventListener("resize", remeasure);
-      ScrollTrigger.removeEventListener("refresh", remeasure);
+      ScrollTrigger.removeEventListener("refresh", onRefresh);
       canvas?.removeEventListener("webglcontextlost", onLost);
       gl?.dispose();
       if (import.meta.env.DEV) {
