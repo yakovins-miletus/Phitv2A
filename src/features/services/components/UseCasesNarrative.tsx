@@ -293,10 +293,10 @@ export function UseCasesNarrative() {
                                 fontFamily: MONO,
                                 fontSize: "0.68rem",
                                 letterSpacing: "0.12em",
-                                // goldDark on this gold-tinted chip measured
-                                // 1.85:1. goldInk is the same hue walked down
-                                // for text; the chip fill stays gold.
-                                color: NOIR.goldInk,
+                                // Bright gold as text on this gold-tinted
+                                // chip too — deliberate brand call, sub-AA
+                                // accepted (see tests/a11y-contrast.test.ts).
+                                color: NOIR.gold,
                                 fontWeight: 700,
                               }}
                             >

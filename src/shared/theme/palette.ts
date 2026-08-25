@@ -64,6 +64,16 @@ export const NOIR = {
    *  A logotype/wordmark ("IT" in PHITOPOLIS) is WCAG 1.4.3-exempt and stays
    *  `gold` unconditionally on both grounds — it is not a text role for the
    *  purposes of this table. */
+  /**
+   * @deprecated No longer the text token. The user made a deliberate brand
+   * call to use `gold` (#FFC72C) as the accent on every ground, including as
+   * TEXT on light grounds, accepting that it falls below the WCAG AA
+   * contrast floor there (see `tests/a11y-contrast.test.ts`, which pins the
+   * resulting ratio as a known, accepted value rather than a regression).
+   * This bronze walk-down is kept only so the token still resolves for any
+   * stray reference; do not use it in new code and do not reintroduce
+   * `dark ? gold : goldInk` branching — it's `gold` unconditionally now.
+   */
   goldInk: "#8C5F09",
   /** @deprecated Primary text on a *light* ground. On dark use `frost`. */
   ink: "#0A2A66", // Primary text uses Phitopolis Navy

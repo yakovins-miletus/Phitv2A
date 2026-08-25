@@ -246,9 +246,10 @@ function titleWithKeyedTail(title: string) {
   return (
     <>
       {head}{" "}
-      {/* goldInk, not gold: this renders at 96px on the light ground, where
-          gold measures 1.45:1 against the 3:1 large-text floor. */}
-      <Box component="span" sx={{ color: NOIR.goldInk }}>
+      {/* Bright gold, deliberately, even though this renders at 96px on the
+          light ground where gold measures 1.45:1 against the 3:1 large-text
+          floor — accepted brand call, see tests/a11y-contrast.test.ts. */}
+      <Box component="span" sx={{ color: NOIR.gold }}>
         {tail}
       </Box>
     </>

@@ -163,7 +163,7 @@ export function CommandPalette() {
             <Typography
               component="span"
               aria-hidden
-              sx={{ fontFamily: MONO, fontSize: 15, color: NOIR.goldInk, lineHeight: 1 }}
+              sx={{ fontFamily: MONO, fontSize: 15, color: NOIR.gold, lineHeight: 1 }}
             >
               ❯
             </Typography>
@@ -271,7 +271,7 @@ export function CommandPalette() {
                             sx={{
                               ...monoLabelSx,
                               flexShrink: 0,
-                              ...(hint.active ? { color: NOIR.goldInk } : {}),
+                              ...(hint.active ? { color: NOIR.gold } : {}),
                               ...(copiedId === cmd.id ? { color: NOIR.goldDark } : {}),
                             }}
                           >

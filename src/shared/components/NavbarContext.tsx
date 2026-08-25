@@ -100,7 +100,10 @@ interface NavbarContextValue {
 const NavbarContext = createContext<NavbarContextValue | null>(null);
 
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('glassmorphism');
+  // Default navbar treatment is a standard solid bar, not glassmorphism —
+  // deliberate user decision (2026-08). Glass mode is still available via
+  // the command palette / navbar-mode override, just not the default.
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('standard');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
 

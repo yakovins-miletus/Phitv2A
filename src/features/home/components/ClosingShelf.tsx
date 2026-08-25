@@ -222,8 +222,10 @@ export function ClosingShelf() {
                         fontFamily: MONO,
                         fontSize: "0.68rem",
                         letterSpacing: "0.16em",
-                        // Text on white: goldDark measures 1.96:1.
-                        color: NOIR.goldInk,
+                        // Brand call: bright gold as text here too, even on
+                        // white, accepting sub-AA contrast (see
+                        // tests/a11y-contrast.test.ts).
+                        color: NOIR.gold,
                         textTransform: "uppercase",
                         mb: 1.5,
                       }}

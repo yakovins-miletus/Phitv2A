@@ -655,14 +655,18 @@ const NAV_SOLID_AFTER_PX = 50;
             // reads as chrome that was never part of the transition, not
             // "chrome that happens to sit still."
             viewTransitionName: "site-header",
+            // Standard mode is a genuinely solid bar, not a glass treatment
+            // in disguise — brand navy over dark sections, white/panel over
+            // light ones, a hairline border, no backdrop blur. Glass mode
+            // (isGlass) is untouched and still fully translucent/blurred.
             bgcolor: isGlass
               ? "transparent"
               : isStandard
               ? (isOverDarkSection
-                ? "rgba(30, 30, 30, 0.45)"
-                : "rgba(255, 255, 255, 0.55)")
+                ? NOIR.navyField
+                : NOIR.white)
               : "transparent",
-            backdropFilter: isGlass ? "none" : (isStandard ? "blur(20px) saturate(160%)" : "none"),
+            backdropFilter: "none",
             borderBottom: isStandard
               ? (isOverDarkSection
                 ? "1px solid rgba(255, 255, 255, 0.12)"
@@ -907,23 +911,18 @@ const NAV_SOLID_AFTER_PX = 50;
                           fontWeight: 700,
                           letterSpacing: "0.08em",
                           textDecoration: "none !important",
-                          // Gold as nav-item TEXT only on dark grounds, where it
-                          // measures 9.4:1 to 12:1. On light grounds gold itself is
-                          // 1.49:1, well under AA, so active and hover route through
-                          // `goldInk` (5.34:1 on panel) instead of navy — the accent
-                          // stays on-brand instead of falling back to the primary
-                          // colour. The gold underline below still carries the same
-                          // signal on both grounds; it's a fill, not text, so it has
-                          // no contrast obligation. The wordmark keeps gold on both
-                          // grounds: WCAG 1.4.3 exempts logotypes, a nav item is not
-                          // exempt.
+                          // Bright gold as nav-item TEXT on both grounds — a
+                          // deliberate brand call. On dark it measures 9.4:1
+                          // to 12:1; on light it's 1.49:1, well under AA, and
+                          // that's accepted (see tests/a11y-contrast.test.ts)
+                          // rather than routed through a bronze walk-down.
                           color: isActive
-                            ? (onDark ? NOIR.gold : NOIR.goldInk)
+                            ? NOIR.gold
                             : (onDark ? "rgba(255,255,255,0.7)" : "text.secondary"),
                           transition: "color 0.3s ease",
                           position: "relative",
                           "&:hover": {
-                            color: onDark ? NOIR.gold : NOIR.goldInk,
+                            color: NOIR.gold,
                             textDecoration: "none !important",
                           },
                         }}
