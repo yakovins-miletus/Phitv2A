@@ -736,12 +736,12 @@ const NAV_SOLID_AFTER_PX = 50;
                   : (isMinimal
                     ? "transparent"
                     : isNotch
-                    ? "#1E1E1E"
+                    ? NOIR.charcoal
                     : isIsland
                     ? "rgba(255, 255, 255, 0.65)"
                     : isOverDarkSection
                       ? "rgba(30, 30, 30, 0.28)"
-                      : (derivedIsCompact ? "#FFFFFF" : "transparent")),
+                      : (derivedIsCompact ? NOIR.white : "transparent")),
                 backdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
@@ -849,7 +849,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   borderRadius: "8px",
                 }}
               >
-                <Box sx={{ color: onDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
+                <Box sx={{ color: onDark ? NOIR.white : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
                     style={{ height: (isStandardOrGlass || isIsland) ? 18 : 24, width: 'auto', transition: "height 0.4s ease" }}
                     color="currentColor"
@@ -865,7 +865,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
+                      sx={{ color: onDark ? NOIR.white : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>

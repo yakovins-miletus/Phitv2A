@@ -170,7 +170,7 @@ export function BrochureDrawer({
           height: "calc(100vh - 65px)",
           overflow: "auto",
           WebkitOverflowScrolling: "touch",
-          bgcolor: "#050D1B",
+          bgcolor: NOIR.midnightNavy,
         }}
       >
         <object

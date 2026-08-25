@@ -162,7 +162,7 @@ const LINK_PILL_SX = {
   backdropFilter: "blur(16px) saturate(180%)",
   WebkitBackdropFilter: "blur(16px) saturate(180%)",
   boxShadow: "0 8px 24px rgba(10, 42, 102, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9)",
-  transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+  transition: `all 0.25s ${EASE_OUT_EXPO_CSS}`,
   "&, & *": {
     textDecoration: "none !important",
   },
@@ -949,7 +949,7 @@ export function HeroSignalCore() {
                 WebkitBackdropFilter: "blur(16px)",
                 pointerEvents: "auto",
                 cursor: "pointer",
-                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               }}
               onClick={() => setSelectedNodeIndex(null)}
               title="Click to dismiss"
@@ -981,7 +981,7 @@ export function HeroSignalCore() {
                   fontFamily: SANS,
                   fontSize: { xs: "0.74rem", md: "0.8rem" },
                   fontWeight: 600,
-                  color: "#FFFFFF",
+                  color: NOIR.white,
                   letterSpacing: "-0.01em",
                   whiteSpace: "nowrap",
                 }}

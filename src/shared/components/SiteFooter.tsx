@@ -86,7 +86,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
       ref={footerAnchorRef}
       sx={{
         bgcolor: NOIR.navyDeep,
-        color: "#FFFFFF",
+        color: NOIR.white,
         pt: { xs: 6, md: 8 },
         pb: { xs: 4, md: 6 },
         mt: "auto",

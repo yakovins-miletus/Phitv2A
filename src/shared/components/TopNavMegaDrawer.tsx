@@ -14,6 +14,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useLocation } from "@tanstack/react-router";
 
 import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 import {
   GROUP_ORDER,
   SIGNAL_TEXT,
@@ -274,7 +275,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                     sx={{
                       fontFamily: MONO,
                       fontSize: 14,
-                      color: "#FFF",
+                      color: NOIR.white,
                       "& input::placeholder": { color: "rgba(255,255,255,0.4)", opacity: 1 },
                     }}
                   />
@@ -473,7 +474,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                       backgroundColor: selected ? "var(--accent-15)" : "transparent",
                                     }}
                                   >
-                                    <Typography sx={{ fontFamily: MONO, fontSize: 13, color: selected ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: 13, color: selected ? NOIR.white : "rgba(255,255,255,0.7)" }}>
                                       {cmd.label}
                                     </Typography>
                                     <Typography
@@ -510,7 +511,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                         <Box
                           component="pre"
                           aria-hidden
-                          sx={{ m: 0, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, color: "#FFF", whiteSpace: "pre-wrap", minHeight: "calc(3 * 1.7em)" }}
+                          sx={{ m: 0, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, color: NOIR.white, whiteSpace: "pre-wrap", minHeight: "calc(3 * 1.7em)" }}
                         >
                           {SIGNAL_TEXT.slice(0, signalChars)}
                         </Box>

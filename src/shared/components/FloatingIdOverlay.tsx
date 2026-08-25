@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NOIR } from "@/shared/theme/palette";
+import { NOIR, CHAPTER_ACCENTS } from "@/shared/theme/palette";
 
 interface SnapshotItem {
   id: string;
@@ -201,13 +201,13 @@ export function FloatingIdOverlay() {
         case "heading":
           return { bg: `rgba(${NOIR.navyFieldRgb}, 0.95)`, border: NOIR.goldLight, text: NOIR.goldLight };
         case "interactive":
-          return { bg: "rgba(4, 30, 24, 0.95)", border: "#3AA189", text: "#4BB89B" };
+          return { bg: "rgba(4, 30, 24, 0.95)", border: NOIR.live, text: CHAPTER_ACCENTS["2022"]! };
         case "text":
-          return { bg: "rgba(15, 23, 42, 0.90)", border: "#509BD9", text: "#698AD5" };
+          return { bg: "rgba(15, 23, 42, 0.90)", border: CHAPTER_ACCENTS["2020"]!, text: CHAPTER_ACCENTS["2019"]! };
         case "media":
-          return { bg: "rgba(30, 15, 45, 0.95)", border: "#AABD55", text: "#AABD55" };
+          return { bg: "rgba(30, 15, 45, 0.95)", border: CHAPTER_ACCENTS["2024"]!, text: CHAPTER_ACCENTS["2024"]! };
         default:
-          return { bg: "rgba(10, 18, 32, 0.88)", border: "#94A3B8", text: NOIR.frost };
+          return { bg: "rgba(10, 18, 32, 0.88)", border: NOIR.slate, text: NOIR.frost };
       }
     };
 

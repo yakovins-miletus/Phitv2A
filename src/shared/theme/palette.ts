@@ -157,6 +157,16 @@ export const NOIR = {
       tests/a11y-contrast.test.ts pins that sub-AA reading deliberately, the same
       way it pins the two broken white alphas. */
   live: "#3AA189",
+  /** Dark navy variant — lighter than navyInk, darker than navyField. */
+  navyDark: "#081F4D",
+  /** Charcoal grey — near-black for high-contrast text. */
+  charcoal: "#1E1E1E",
+  /** Very dark navy — darker than navyInk. */
+  midnightNavy: "#050D1B",
+  /** Blue-grey slate — neutral secondary text on dark grounds. */
+  slate: "#94A3B8",
+  /** Near-white with cool cast — lighter than frost. */
+  almostWhite: "#FAFBFD",
 } as const;
 
 /**

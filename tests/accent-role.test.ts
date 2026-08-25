@@ -26,6 +26,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { describe, expect, test } from "vitest";
+import { NOIR } from "@/shared/theme/palette";
 
 const ROOT = path.resolve(__dirname, "..");
 const GLASS_CSS_PATH = path.join(ROOT, "src/shared/theme/glass.css");
@@ -57,7 +58,7 @@ describe("accent-ink / accent-fg parity (post bright-gold decision)", () => {
   test("light-scope --accent-ink now equals --accent-fg (#ffc72c) — the bronze walk-down was retired", () => {
     const accentInk = extractLightAccentInk();
     const accentFg = extractLightAccentFg();
-    expect(accentInk.toLowerCase()).toBe("#ffc72c");
+    expect(accentInk.toLowerCase()).toBe(NOIR.gold.toLowerCase());
     expect(accentInk.toLowerCase()).toBe(accentFg.toLowerCase());
   });
 });

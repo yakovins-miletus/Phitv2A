@@ -12,7 +12,7 @@ import {
 import { Reveal } from "@/shared/components/Reveal";
 import { RevealLines } from "@/shared/components/reveal/RevealLines";
 import { FONT, MONO } from "@/shared/theme/theme";
-import { TECH_CAT_ACCENTS } from "@/shared/theme/palette";
+import { NOIR, TECH_CAT_ACCENTS } from "@/shared/theme/palette";
 
 import { MetaLabel } from "./MetaLabel";
 
@@ -257,7 +257,7 @@ const TechCard = React.memo(({ tech, activeCat }: { tech: { name: string; cat: s
             sx={{
               fontSize: 20,
               fontWeight: 800,
-              color: "#fff",
+              color: NOIR.white,
               lineHeight: 1,
               fontFamily: MONO
             }}

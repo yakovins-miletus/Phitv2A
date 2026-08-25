@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { motion, useInView } from "motion/react";
 
 import { NOIR } from "@/shared/theme/palette";
-import { EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { EASE_OUT_EXPO, EASE_SPRING_SUBTLE_CSS } from "@/shared/motion/easing";
 import { useReducedMotion } from "@/shared/motion";
 
 /**
@@ -190,7 +190,7 @@ function PrimaryImage() {
         overflow: "hidden",
         border: `2.5px solid ${NOIR.gold}`,
         minHeight: { xs: 320, sm: "auto" },
-        transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        transition: `transform 0.4s ${EASE_SPRING_SUBTLE_CSS}`,
       }}
     >
       <Box

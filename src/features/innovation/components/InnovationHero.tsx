@@ -141,7 +141,7 @@ export function InnovationHero() {
                 sx={{
                   bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "#0A2A66",
+                  color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",
@@ -155,7 +155,7 @@ export function InnovationHero() {
                 sx={{
                   bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "#0A2A66",
+                  color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",
@@ -169,7 +169,7 @@ export function InnovationHero() {
                 sx={{
                   bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "#0A2A66",
+                  color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",

@@ -159,7 +159,7 @@ export function GraduateHallOfFameSection() {
                   sx={{
                     fontFamily: MONO,
                     fontWeight: 800,
-                    color: "#0A2A66",
+                    color: NOIR.navyField,
                     letterSpacing: "0.15em",
                     fontSize: "0.7rem",
                   }}
@@ -201,7 +201,7 @@ export function GraduateHallOfFameSection() {
                           fontFamily: MONO,
                           fontWeight: isActive ? 800 : 600,
                           fontSize: "0.78rem",
-                          color: isActive ? "#0A2A66" : "text.secondary",
+                          color: isActive ? NOIR.navyField : "text.secondary",
                         }}
                       >
                         {cohort.year}

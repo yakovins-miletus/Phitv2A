@@ -400,12 +400,12 @@ export function ServiceDrawer({ open, onClose, service }: ServiceDrawerProps) {
                 fontFamily: MONO,
                 fontWeight: 800,
                 bgcolor: NOIR.navyField,
-                color: "#FFFFFF",
+                color: NOIR.white,
                 py: 1.4,
                 borderRadius: "8px",
                 boxShadow: "none",
                 textTransform: "none",
-                "&:hover": { bgcolor: "#081F4D" },
+                "&:hover": { bgcolor: NOIR.navyDark },
               }}
             >
               Inquire About {service.name}

@@ -272,7 +272,7 @@ export function CandidatesAndCareersSection() {
                               fontFamily: MONO,
                               fontSize: "0.62rem",
                               bgcolor: "rgba(255, 255, 255, 0.15)",
-                              color: "#ffffff",
+                              color: NOIR.white,
                               border: "1px solid rgba(255, 255, 255, 0.45)",
                               borderRadius: 1,
                               height: "20px",

@@ -125,7 +125,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                   } : {
                     pointerEvents: "auto",
                     bgcolor: "rgba(255, 255, 255, 0.15)",
-                    color: "#FFFFFF",
+                    color: NOIR.white,
                     border: "1px solid rgba(255, 255, 255, 0.3)",
                     backdropFilter: "blur(8px)",
                     "& .MuiChip-label": { color: "inherit", fontWeight: 600 },
@@ -160,7 +160,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                   textOverflow: "ellipsis",
                   lineHeight: 1.2,
                   fontWeight: 700,
-                  color: "#FFFFFF"
+                  color: NOIR.white
                 }}
               >
                 {post.title}
@@ -253,12 +253,12 @@ export function BlogPostList({
               onCategoryChange(null);
             }}
             sx={{
-              bgcolor: "#0A2A66",
-              color: "#FFFFFF",
-              border: "1px solid #0A2A66",
+              bgcolor: NOIR.navyField,
+              color: NOIR.white,
+              border: `1px solid ${NOIR.navyField}`,
               fontWeight: 500,
               "& .MuiChip-label": { color: "inherit" },
-              "& .MuiChip-deleteIcon": { color: "rgba(255, 255, 255, 0.7)", "&:hover": { color: "#FFFFFF" } }
+              "& .MuiChip-deleteIcon": { color: "rgba(255, 255, 255, 0.7)", "&:hover": { color: NOIR.white } }
             }}
           />
         </Stack>

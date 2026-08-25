@@ -272,8 +272,8 @@ export function ContactForm() {
               fontSize: "1rem",
               textTransform: "none",
               fontWeight: 800,
-              bgcolor: "#0A2A66",
-              color: "#FFFFFF",
+              bgcolor: NOIR.navyField,
+              color: NOIR.white,
               "&:hover": {
                 bgcolor: NOIR.navyDeep,
               },

@@ -157,7 +157,7 @@ export function ReachMap() {
           </desc>
 
           {/* Clean Map Base Ground */}
-          <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill="#FAFBFD" />
+          <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill={NOIR.almostWhite} />
           {/* Subtle Ambient Ocean Grid */}
           <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill={`url(#sea-pattern-${uid})`} />
 

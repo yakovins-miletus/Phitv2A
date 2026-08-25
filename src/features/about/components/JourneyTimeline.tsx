@@ -568,7 +568,7 @@ function StaticJourney() {
     <section
       id="sec-timeline"
       data-ground="dark"
-      style={{ background: NOIR.navyField, padding: "96px clamp(24px, 6vw, 96px)", color: "#fff" }}
+      style={{ background: NOIR.navyField, padding: "96px clamp(24px, 6vw, 96px)", color: NOIR.white }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 64 }}>
         {CHAPTERS.map((ch) => (
