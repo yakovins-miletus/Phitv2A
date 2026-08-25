@@ -80,7 +80,7 @@ Implications to work through and record:
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **The core check:** scroll `/about` top to bottom, then bottom to top. No wipe at the hero.

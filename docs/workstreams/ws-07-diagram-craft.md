@@ -83,7 +83,7 @@ Figures that read as instrumentation rather than whiteboard sketches. The bar:
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn lint && yarn build
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn lint && yarn build
 ```
 
 - `yarn lint` — `react-hooks/refs` errors in these four files are **gone**. (Total repo

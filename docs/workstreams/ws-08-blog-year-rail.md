@@ -73,7 +73,7 @@ bordered box of buttons. Counts should be subordinate to years, set in the estab
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - Rail counts match `curl localhost:8000/api/v1/blog-posts/years`.

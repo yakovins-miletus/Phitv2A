@@ -85,7 +85,7 @@ scroll-linked loop; `DriftWall` and `PoweredBySection` are already two.
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **Legibility gate:** screenshot the hero mid-sequence; sample the composited backdrop

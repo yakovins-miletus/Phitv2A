@@ -104,7 +104,7 @@ Removing field borders is where contact forms usually break:
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - `tests/contact-mutation.test.tsx` passes — **submission still works.**

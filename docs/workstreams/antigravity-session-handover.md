@@ -108,7 +108,7 @@ that year, not the next.
 cd " Master P Frontend/Phitv2A" && yarn install && yarn dev
 ```
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn lint && yarn tsc --noEmit && yarn test && yarn build
+cd " Master P Frontend/Phitv2A" && yarn lint && yarn typecheck && yarn test && yarn build
 ```
 ```bash
 cd "Heimdall CMS" && uv sync && uv run pytest app/features/blog

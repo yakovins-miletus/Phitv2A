@@ -125,7 +125,7 @@ could be reordered without loss isn't a beat, it's a slide.
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **The fold test.** Show `/` to someone unfamiliar, scroll one screen, ask what the company

@@ -128,7 +128,7 @@ both (it is a fill, not text — no contrast obligation).
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build
 ```
 
 - `grep -rn "NOIR.gold\b" src/ --include="*.tsx" | grep -iE "color:|Typography"` — spot-check no gold-as-text-on-light survives.

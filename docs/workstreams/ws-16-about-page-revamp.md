@@ -155,7 +155,7 @@ containerization WS-01 removed. Reduced-motion renders a composed static version
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - All 339+ tests pass. `tests/accent-role.test.ts` will fail the build on any

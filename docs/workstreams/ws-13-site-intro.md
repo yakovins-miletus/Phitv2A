@@ -116,7 +116,7 @@ intact. **Prefer it where possible; use the buffer only for the remainder.**
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **Cold cache** (devtools disable-cache, hard reload): counter climbs visibly, never

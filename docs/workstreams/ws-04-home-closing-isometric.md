@@ -92,7 +92,7 @@ atmospheric scene with no exit is a worse closing than a scrapbook with one.
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **Budget gate (hard fail):** home entry JS ≤ ~196 KB. Confirm `three` is absent from the

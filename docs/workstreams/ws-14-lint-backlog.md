@@ -63,7 +63,7 @@ opens with.
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn lint && yarn tsc --noEmit && yarn test && yarn build
+cd " Master P Frontend/Phitv2A" && yarn lint && yarn typecheck && yarn test && yarn build
 ```
 
 - `yarn lint` exits 0 with zero errors and zero warnings.

@@ -68,7 +68,7 @@ deserves different copy from a transport failure.
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **The core check:** stop Heimdall entirely, hard-reload `/services`. Page must render

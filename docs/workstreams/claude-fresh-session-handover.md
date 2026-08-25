@@ -75,7 +75,7 @@ cd " Master P Frontend/Phitv2A" && yarn install && yarn dev
 cd "Heimdall CMS" && uv sync && uv run uvicorn app.main:app --reload --port 8000
 ```
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build
 ```
 
 Fresko's `.env.development` expects Heimdall at `http://localhost:8000`. Several

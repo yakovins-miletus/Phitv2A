@@ -72,7 +72,7 @@ brief says feels laggy. Hard rules:
 ## Verification
 
 ```bash
-cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build && yarn preview
+cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn build && yarn preview
 ```
 
 - **About LCP before/after** — must not regress. This is the page the brief called laggy.

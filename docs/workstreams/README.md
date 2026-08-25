@@ -71,6 +71,10 @@ Recorded here because each one has already caused, or nearly caused, a wrong fix
 - **The hero wall is not naive.** `DriftWall` already pauses its rAF offscreen, and the
   headline's `mixBlendMode: "difference"` imposes a hard backdrop-luminance budget. See WS-03.
 - **The preloader progress is real,** not a fake tween. See WS-13.
+- **`yarn tsc --noEmit` IS A NO-OP HERE.** The root `tsconfig.json` is `files: []` with
+  project references, so that command typechecks nothing and always "passes". Use
+  **`yarn typecheck`** (which runs `tsc -b`) or `yarn build`. A commit shipped a broken build
+  because only `tsc --noEmit` was run — see `67ea9be`.
 - **`--accent-fg` is NOT the gold text token.** It is fills/borders/icons and is #ffc72c on
   both grounds — 1.45:1 as text on light. Text goes through `--accent-ink`.
   `tests/accent-role.test.ts` fails the build on `color: "var(--accent-fg)"`.
