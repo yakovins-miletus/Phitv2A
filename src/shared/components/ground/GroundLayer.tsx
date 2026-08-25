@@ -106,12 +106,20 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
      * act kept painting the Services ground.
      */
     let positions: number[] = [];
-    const measure = () => {
+    // Cheap: `getBoundingClientRect` per stop, no GL/canvas work. Safe to call
+    // every tick — see the note in `paint()` on why gating this behind a
+    // document-height check let positions go stale mid-scroll.
+    const measurePositions = () => {
       positions = stops.map((stop) => {
         const el = document.getElementById(stop.id);
         if (!el) return Number.POSITIVE_INFINITY;
         return window.scrollY + el.getBoundingClientRect().top;
       });
+    };
+    // Expensive: resizes the GL canvas/context. Only needed when the viewport
+    // itself changes, not on every position re-measure.
+    const measure = () => {
+      measurePositions();
       if (gl) {
         gl.resize(window.innerWidth, window.innerHeight, Math.min(window.devicePixelRatio || 1, 2));
       }
@@ -148,17 +156,27 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
     const paint = () => {
       if (positions.length === 0) return;
 
-      // The page keeps growing after mount — pin spacers get sized, fonts swap,
-      // lazy media resolves — and each of those moves every section below it.
-      // ScrollTrigger's refresh event covers the pin case but fires before some of
-      // the rest, which left the People act still painting the Services ground
-      // because `daily-life`'s stored offset was from an earlier, shorter document.
-      // One cached height comparison per tick is enough to catch all of it.
+      // The page keeps growing/shifting after mount — pin spacers get sized,
+      // fonts swap, lazy media resolves — and each of those can move a
+      // section's on-screen position. A document-height comparison alone is
+      // not enough to catch this: a lazy image decoding inside an
+      // already-fixed-height container, or a pin-spacer resizing mid-scroll,
+      // shifts a section's offset WITHOUT changing `scrollHeight`, so a
+      // height-gated re-measure left `positions[]` stale and let
+      // `sampleGround` compute a blend window off a boundary that had
+      // already moved — a wipe painting mid-section instead of only in the
+      // declared band before a real boundary. `measurePositions()` is just a
+      // handful of `getBoundingClientRect` reads, cheap enough to run every
+      // tick unconditionally; only the actual GL canvas resize stays gated
+      // behind a real height/viewport change.
+      measurePositions();
       const docH = document.documentElement.scrollHeight;
       if (docH !== lastDocH) {
         lastDocH = docH;
         stableTicks = 0;
-        measure();
+        if (gl) {
+          gl.resize(window.innerWidth, window.innerHeight, Math.min(window.devicePixelRatio || 1, 2));
+        }
       } else {
         stableTicks++;
         if (stableTicks >= 2) layoutStable = true;
