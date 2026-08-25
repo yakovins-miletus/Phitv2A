@@ -60,7 +60,7 @@ function extractLightAccentInk(): string {
   if (matches.length === 0) {
     throw new Error("--accent-ink not found in glass.css — has the token been renamed or removed?");
   }
-  return matches[0][1];
+  return matches[0]![1]!;
 }
 
 /** Recursively list every file under `dir` matching `exts`. */
