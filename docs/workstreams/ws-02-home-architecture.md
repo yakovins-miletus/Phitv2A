@@ -13,23 +13,36 @@
 | Question | Answer |
 |---|---|
 | What a visitor must believe past the fold | **"They build the systems I need."** Capability-first. |
-| What dies | **`MarketPosition`** — and only that. |
+| What dies | **`MarketPosition`** — plus **all four people-sections**, see below. |
+| People on Home | **None.** Home is service-centric; people content lives on `/about` only. |
 | Heritage framing | **Demoted.** It no longer leads. |
 | Global-markets text blob | Lifted into its **own full-viewport-height section**. |
 
-## ⚠️ Scope honesty: this is not really a teardown
+## ⚠️ UPDATED — Home loses all people content
 
-The session called for a "full teardown," but exactly **one** of eight sections is being
-cut. Do not let the label drive over-reach: `ReachSection`, `OperatingPillars`,
-`ProcessSection`, `UseCasesNarrative`, `MissionStatement` and `ClosingShelf` all **survive**.
+A later session decision materially widened this. **Home is service-centric and carries no
+people content.** These four sections render on both `/` and `/about` today and must be
+**removed from `src/routes/index.tsx`** — they stay on About:
 
-The real change is threefold, and none of it is deletion:
+- `DailyLifeSection`  (the culture film)
+- `CandidatesAndCareersSection`
+- `TestimonialsSection`
+- `BlogSection`
+
+Plus `MarketPosition`, which is deleted outright (it restates `MissionStatement`).
+
+**Remove them from the Home route only. Do NOT edit the components themselves** — WS-16 owns
+`DailyLifeSection` and `CandidatesAndCareersSection` for its own fixes, and once they are
+About-only no variant props are needed.
+
+Surviving on Home: `SuperHeroSequence`, `MissionStatement`, `OperatingPillars`,
+`UseCasesNarrative`, `ProcessSection`, `ReachSection`, `ClosingShelf`, plus the new
+full-height global-markets section.
+
+The remaining work is still threefold and is not deletion:
 1. **Order** — services arrive early instead of fourth.
 2. **Narration** — the copy is rewritten so each beat earns the next.
 3. **Emphasis** — heritage stops leading; capability does.
-
-If an executor finds themselves rewriting section components wholesale, they have
-misread this file. Re-sequencing and re-writing is the job.
 
 ## Why
 
@@ -102,6 +115,9 @@ could be reordered without loss isn't a beat, it's a slide.
 4. Delete `MarketPosition` and its route reference. Check nothing else imports it.
 5. Re-order `index.tsx`. Move `MissionStatement` **with** its `ServiceGlobe` gate untouched.
 6. Update `stagePresence` / `EyeFlow` rail entries to the new order.
+6a. **Hand off to WS-17:** removing five sections changes Home's ground-stop sequence.
+   WS-17 owns `sections.ts` and re-derives the stops; report the new order to it rather
+   than editing ground declarations here.
 7. Narration pass across every surviving section.
 8. Re-verify the beat choreography — `SectionBeat` entrance/exit was tuned for the old
    adjacencies and will need retiming.

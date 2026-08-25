@@ -33,6 +33,8 @@ conversation that produced them.
 | WS-12 | [Contact: fewer surfaces](ws-12-contact-apple.md) | `routes/contact.tsx`, `features/contact/**` | ready |
 | WS-13 | [Site intro: pace the reveal](ws-13-site-intro.md) | `shared/components/Preloader.tsx`, preloader tests | ready |
 | WS-14 | [Lint backlog → real gate](ws-14-lint-backlog.md) | cross-cutting, mechanical only | ready |
+| WS-16 | [About page: seven section fixes](ws-16-about-page-revamp.md) | `features/about/**`, DailyLifeSection, CandidatesAndCareersSection | ready (one blocked sub-item) |
+| WS-17 | [Ground transition owns its own section](ws-17-ground-transition.md) | `shared/components/ground/**`, `shared/sections.ts` | ready — diagnose first |
 | WS-15 | *(spawned by WS-06)* — fix the top confirmed perf cause | set by WS-06's findings | not yet written |
 
 ## Ordering constraints — only two
@@ -69,6 +71,15 @@ Recorded here because each one has already caused, or nearly caused, a wrong fix
 - **The hero wall is not naive.** `DriftWall` already pauses its rAF offscreen, and the
   headline's `mixBlendMode: "difference"` imposes a hard backdrop-luminance budget. See WS-03.
 - **The preloader progress is real,** not a fake tween. See WS-13.
+- **`--accent-fg` is NOT the gold text token.** It is fills/borders/icons and is #ffc72c on
+  both grounds — 1.45:1 as text on light. Text goes through `--accent-ink`.
+  `tests/accent-role.test.ts` fails the build on `color: "var(--accent-fg)"`.
+- **The root `CLAUDE.md` is wrong about Lenis.** It says home-only; `about.tsx:182` mounts
+  `SmoothScroll` too (found by WS-06).
+- **Nothing pauses a marquee on hover today,** and nothing should. See WS-16 item 4.
+- **These four sections render on BOTH `/` and `/about`:** DailyLifeSection,
+  CandidatesAndCareersSection, TestimonialsSection, BlogSection. WS-02 removes them from
+  Home; until it does, editing them changes two pages.
 
 ## Decisions resolved in session
 
@@ -89,6 +100,9 @@ Three places where one file's decision lands in another file's code:
 | From | To | What |
 |---|---|---|
 | WS-01 | WS-03 | the `#FFC72C` literal at `SuperHeroSequence.tsx:957` |
+| WS-16 | WS-17 | daily-life must move to the NAVY ground (WS-17 owns sections.ts) |
+| WS-02 | WS-17 | Home's ground stops must be re-derived after five sections leave |
+| WS-02 | WS-16 | the four people-sections become About-only |
 | WS-02 | WS-03 | capability-led hero copy (WS-03 owns the file) |
 | WS-03 | WS-05 | the 29 freed photo tiles from `heroWallTiles.ts` |
 | WS-05 | WS-13 | the `## Warm assets` list for the warmup manifest |
