@@ -21,11 +21,27 @@ export interface BlogListParams {
   category?: string;
   q?: string;
   sort?: BlogSort;
+  year?: number;
+}
+
+/**
+ * WS-09's `year` facet contract (`GET /api/v1/blog-posts/years`) is live on
+ * Heimdall but `schema.d.ts` hasn't been regenerated against it yet — that
+ * file is generated infra outside this workstream's ownership
+ * (`src/features/blog/**` / `src/routes/blog.index.tsx` only), so it's typed
+ * by hand here rather than touched. Keep this in sync with
+ * `app/features/blog/schemas.py::BlogYearFacet` until `yarn typegen` picks it
+ * up for real.
+ */
+export interface BlogYearFacet {
+  year: number;
+  count: number;
 }
 
 export const blogKeys = {
   all: keyRoots.blog,
   list: (params: BlogListParams) => [...blogKeys.all, "list", params] as const,
+  years: () => [...blogKeys.all, "years"] as const,
   detail: (slug: string) => [...blogKeys.all, "detail", slug] as const,
 };
 
@@ -57,7 +73,12 @@ export const blogPostsQuery = (params: BlogListParams) =>
               ...(params.category !== undefined ? { category: params.category } : {}),
               ...(params.q !== undefined ? { q: params.q } : {}),
               ...(params.sort !== undefined ? { sort: params.sort } : {}),
-            },
+              // `year` isn't in the generated query type yet (see BlogYearFacet
+              // comment above) — widen the object so the extra key survives
+              // openapi-fetch's serializer instead of tsc stripping it as
+              // "not in type".
+              ...(params.year !== undefined ? { year: params.year } : {}),
+            } as operations["list_blog_posts"]["parameters"]["query"] & { year?: number },
           },
         }),
       ),
@@ -69,4 +90,21 @@ export const blogPostQuery = (slug: string) =>
     queryKey: blogKeys.detail(slug),
     queryFn: async () =>
       unwrap(await api.GET("/api/v1/blog-posts/{slug}", { params: { path: { slug } } })),
+  });
+
+// Editors publish a new year's first post live, so the facet list gets the
+// same no-stale-cache treatment as the list/detail queries above.
+export const blogYearsQuery = () =>
+  queryOptions({
+    ...CONTENT_FRESHNESS,
+    queryKey: blogKeys.years(),
+    queryFn: async (): Promise<BlogYearFacet[]> => {
+      const response = await fetch(
+        new URL("/api/v1/blog-posts/years", import.meta.env.VITE_API_URL),
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to load blog years (${String(response.status)})`);
+      }
+      return (await response.json()) as BlogYearFacet[];
+    },
   });
