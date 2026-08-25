@@ -143,8 +143,55 @@ cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build 
 
 ## Handoff to WS-03
 
-*(populate during implementation: the requested hero copy direction — capability-led, with
-heritage demoted below the fold. WS-03 owns `SuperHeroSequence.tsx` and makes the edit.)*
+The hero should open on capability, not heritage. Concretely:
+
+- Lead line: state what Phitopolis builds (quantitative R&D, cloud-native systems, AI for
+  global markets) — not how long it has existed or how many generations of anything. "7 YEARS
+  OF EXCELLENCE" and "GENERATIONS OF COMPETITIVENESS" should not be the first thing a visitor
+  reads. Heritage framing is demoted, not deleted — it can still live below the fold or in a
+  secondary line, just not as the opener.
+- The section immediately following the hero is now `GlobalMarketsStatement` — a full-viewport
+  restatement of the company's one intellectual bet ("we view global markets as the ultimate
+  intellectual puzzle…"). The hero's own copy should set up that beat, not compete with it or
+  duplicate its content: the hero states *what we do*, the next screen states *why it's hard
+  and worth doing*.
+- WS-02 did not touch `SuperHeroSequence.tsx` — this is a direction, not a diff. WS-03 owns the
+  file and the actual copy edit.
+
+## Handoff to WS-17
+
+Home's ground-stop sequence changed with the re-order and the `MarketPosition` deletion.
+`WS-17` owns `src/shared/sections.ts`'s consumer in `groundStops.ts` and re-derives the
+stops from `HOME_SECTIONS` — no ground declarations were edited here beyond what the
+section registry itself now carries.
+
+**New Home section order** (`src/routes/index.tsx`, mirrored in `HOME_SECTIONS`):
+
+1. `SuperHeroSequence` (`hero-flatten` / `hero-align` / `hero-reveal` / `hero-dwell` / `hero`)
+2. **`GlobalMarketsStatement`** (`global-markets`, NEW) — the lifted text blob, full viewport,
+   ground `deep`
+3. `OperatingPillars` (`hero-pillars`), ground `void`
+4. `UseCasesNarrative` (`use-cases`), ground `panel`, owns its own pin
+5. `ProcessSection` (`process`), ground `deep`
+6. `MissionStatement` (`hero-mission`) — moved here from position 2; ground `panel`; the
+   `ServiceGlobe` `useInView` lazy-mount gate moved with it, unmodified
+7. `ReachSection` (`reach`), ground `white`
+8. `ClosingShelf` (`closing`), ground `field`
+
+**Deleted:** `MarketPosition` (`hero-position`) — removed from `HOME_SECTIONS` entirely, its
+component file deleted. It restated `MissionStatement`'s job and carried no unique claim.
+
+**Chapters** (`CHAPTERS` in `sections.ts`) were renumbered to match: `global-markets` gets its
+own chapter (4, "QUANTITATIVE R&D", shared with the hero), pillars/use-cases/process share
+chapter 5 ("PRACTICE"), `hero-mission` gets its own chapter 6 ("WHO WE ARE"), `reach` is now
+chapter 7, `closing` is chapter 8 ("HORIZON"). Nine chapters total (0-8), up from eight (0-7) —
+the net effect of deleting one section and giving two others (the new blob section, and
+`MissionStatement` in its new support role) their own chapter identity instead of sharing
+chapter 4 with everything else in the old "QUANTITATIVE R&D" catch-all.
+
+`sectionOrder()`/`refreshPriorityFor()` need no separate update — both derive from array
+position in `HOME_SECTIONS`, so the reorder above already re-derived every beat's refresh
+priority automatically.
 
 ## Out of scope
 

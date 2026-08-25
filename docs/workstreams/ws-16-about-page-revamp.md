@@ -47,12 +47,39 @@ hero of the section and demote the discipline split to quiet supporting detail.
 mixed in with the nine Philippine schools. Give them their own labelled group; that
 separation is itself a credibility signal.
 
-> ⛔ **BLOCKED SUB-ITEM.** "37% QS TOP 1000 EDUCATED", "15% ADVANCED OR INTERNATIONAL
-> DEGREE" and the discipline percentages must be captioned with their basis — e.g.
-> "of 40 engineers, as of Q3 2026". **The real figures have not been supplied.** Do not
-> invent a denominator or a date. Build the layout with the caption slot present and
-> clearly marked TODO, and report the blocker. An unsourced statistic on a marketing page
-> is the opposite of the credibility this item is chasing.
+**UNBLOCKED — resolved by research, and the resolution is a change of approach.**
+
+The original wording was recovered verbatim from the legacy copy deck
+(`Project Armstrong V2 Final/docs/08-copy-deck.md:243-252` — note the **sibling directory**,
+not this repo):
+
+> **gunshot:** "Recruited from the top programs in the region."
+> **tracer:** "37% educated at QS Top 1000 universities. 15% hold an advanced or
+> international degree."
+> **note:** "Both figures are real, from the legacy `talent.highlights` data. Eight
+> disciplines and eleven alma maters carried over."
+
+**No denominator and no as-of date exist anywhere** — not in `content.ts`, not in git
+history, not in Heimdall's `TalentProfile` seed (`scripts/seed_content.py:362-370` carries a
+vaguer variant with no percentages at all). The legacy data never recorded a sample size, so
+there is nothing true to caption with. **Do not invent one. Do not add a TODO caption slot.**
+
+Instead, credibility comes from two changes that need no new facts:
+
+(c) **Restore the original prose phrasing.** Render "37% educated at QS Top 1000
+universities. 15% hold an advanced or international degree." as a sentence, not as two
+oversized stat tiles over mono labels. Prose reads as a claim someone stands behind; a naked
+"37%" in a dashboard tile reads as a number with no data behind it. The tiles are the
+problem, not the figures.
+
+(d) **Keep the 95% sum and make it legible.** `content.ts:207-209` records that the
+disciplines deliberately total 95%, "to present a partial breakdown honestly instead of as
+exhaustive." That is already an honesty signal — surface it rather than rounding it away.
+
+Precedent for this instinct is in the same array: a third stat,
+`{ value: 100, suffix: "%", label: "Equal-opportunity employer" }`, was removed because
+"that is a policy statement, not a metric, and placed beside two real percentages it read as
+a manufactured stat." Same reasoning applies to the tile treatment.
 
 ### 3. Add the 2026 Batch 2 cohort
 `src/features/about/components/GraduateHallOfFameSection.tsx:25-71`
