@@ -43,11 +43,13 @@ workstream is about visual craft only — **preserve every one of those properti
 | `services/components/ServiceDrawer.tsx` | 376 | five inline SVG backdrops, 400×400-540×400 |
 | `shared/components/ReachMap.tsx` | — | world map, city markers, arcs |
 
-⚠️ **Pre-existing lint failures live here.** `docs/perf-baseline.md` records
-`react-hooks/refs` ("Cannot access ref value during render") in **`SignalDiagram`,
-`ReachMap`, `PipelineDiagram`, `FollowTheSunDiagram`** — part of the 30 lint errors that
-were already failing before any of this work. Fix them while you are in these files; do not
-treat the existing lint state as a passing baseline.
+✅ **Already fixed, do not redo.** `docs/perf-baseline.md` originally recorded
+`react-hooks/refs` ("Cannot access ref value during render") in `SignalDiagram`, `ReachMap`,
+`PipelineDiagram`, `FollowTheSunDiagram` as part of a 30-error lint baseline. That baseline
+is gone — `yarn lint` is at 0 errors sitewide as of commit `427cd22` ("collapse the four
+figures onto shared geometric marks"), made outside this workstream's own history. Step 5
+below and the matching Verification line are stale; skip both. The visual craft work in
+Target State is otherwise fully in scope and unaffected.
 
 ## Target state
 
@@ -76,7 +78,8 @@ Figures that read as instrumentation rather than whiteboard sketches. The bar:
 3. Apply the language to `PipelineDiagram`, `FollowTheSunDiagram`, `ProcessDiagram`, then
    the five `ServiceDrawer` backdrops.
 4. `ReachMap` last — it is the most complex and the least broken.
-5. Clear the `react-hooks/refs` lint errors in these files as you go.
+5. ~~Clear the `react-hooks/refs` lint errors in these files as you go.~~ Already fixed
+   (`427cd22`) — skip.
 6. Preserve on every component: `role="img"`, an accurate `aria-label` (update the text if
    the figure changes), `useReducedMotion`, and the `useInView` gate.
 
@@ -86,8 +89,7 @@ Figures that read as instrumentation rather than whiteboard sketches. The bar:
 cd " Master P Frontend/Phitv2A" && yarn typecheck && yarn test && yarn lint && yarn build
 ```
 
-- `yarn lint` — `react-hooks/refs` errors in these four files are **gone**. (Total repo
-  errors should drop from the recorded 30; other files' errors are out of scope.)
+- `yarn lint` — stays at 0 errors sitewide (already true before this workstream starts).
 - `tests/process-diagram.test.tsx` still passes.
 - Side-by-side screenshots, before/after, each figure at 375 / 768 / 1440.
 - Render each on light and dark grounds — they must re-theme, which is the whole reason

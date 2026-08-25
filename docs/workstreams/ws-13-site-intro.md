@@ -40,6 +40,15 @@ only file in the set whose value is purely aesthetic.**
 
 ## Current state (verified)
 
+⚠️ **Provenance note, added at a later touchpoint.** The table below was verified against
+source that had already been through an unrelated prior refactor
+(`2acfa96`, "strip the cockpit, keep wordmark, hairline and a real count") — this workstream
+did not cause and is not describing a pristine, never-touched Preloader. The cited line
+numbers, constants, and the mask-reveal mechanism were re-confirmed to have survived that
+refactor intact, so the technical plan below is unaffected — only the framing "the preloader
+hasn't been touched" would have been wrong if implied. It's already been touched once; treat
+that refactor as the baseline you're building on, not as this workstream's own prior state.
+
 | Behaviour | Where |
 |---|---|
 | Real signal progress, `resolved / total` | `Preloader.tsx:148-168` |
