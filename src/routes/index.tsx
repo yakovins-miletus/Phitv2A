@@ -104,14 +104,16 @@ function HomePage() {
 
         {/* 02. Parallax overlay sheet
          *
-         * WS-02: capability now arrives immediately after the hero instead of
-         * behind four sections of identity. The lifted global-markets
-         * statement (the claim, alone on its own screen) opens this sheet;
-         * OperatingPillars follows with what that claim means in practice.
-         * `MissionStatement` used to run here, alongside a second identity
-         * section that has since been deleted outright (it restated
-         * MissionStatement's job). MissionStatement now runs later, as a
-         * support beat once capability has already been shown (see below). */}
+         * Partial reversal of the WS-02 re-order (explicit user decision):
+         * mission core is back up front, running immediately after the hero
+         * and ahead of the global-markets claim. `MissionStatement` used to
+         * run here too, alongside a second identity section that has since
+         * been deleted outright (it restated MissionStatement's job) — that
+         * deletion still stands, only the ordering reverted. It still
+         * lazy-mounts `ServiceGlobe` behind its own `useInView` gate; see
+         * MissionStatement.tsx. GlobalMarketsStatement follows with the
+         * claim, alone on its own screen, and OperatingPillars follows that
+         * with what the claim means in practice. */}
         <Box
           data-act="services"
           sx={{
@@ -123,6 +125,7 @@ function HomePage() {
             borderTopRightRadius: { xs: 28, md: 48 },
           }}
         >
+          <MissionStatement />
           <GlobalMarketsStatement />
 
           {/* Operating Pillars — establishing shot now lives inside its own
@@ -172,12 +175,10 @@ function HomePage() {
          * NavbarContext.tsx's NAV_ANCHORS and this file's per-section Boxes
          * below), so the giant catch-all is redundant, not just buggy — it's
          * been removed rather than resized. The stretches with no anchor at
-         * all — global-markets/hero-pillars/use-cases before this box starts,
-         * and `hero-mission` inside it (WS-02 moved MissionStatement here,
-         * between Process and Reach; it registers no anchor, same as before
-         * it moved) — need none: with nothing registered, `isOverDarkSection`
-         * resolves to false (see NavbarContext.tsx), which is exactly correct
-         * for light-ground sections.
+         * all — global-markets/hero-mission/hero-pillars/use-cases, all
+         * before this box starts — need none: with nothing registered,
+         * `isOverDarkSection` resolves to false (see NavbarContext.tsx),
+         * which is exactly correct for light-ground sections.
          *
          * PEOPLE-act sections (daily-life, candidates, testimonials, blog)
          * used to continue this zone below Reach — they relocated to /about
@@ -188,14 +189,6 @@ function HomePage() {
               entirely — a half-screen title card left nothing for the
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
-
-          {/* Core Mission — WS-02 re-order: MissionStatement now runs as a
-              support beat, after capability (pillars/use-cases/process) has
-              already been shown, rather than opening the page. It still
-              lazy-mounts `ServiceGlobe` behind its own `useInView` gate; that
-              gate moved with the section and stays load-bearing regardless of
-              where in the order it sits — see MissionStatement.tsx. */}
-          <MissionStatement />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own

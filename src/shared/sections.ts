@@ -25,7 +25,7 @@ export const ACT_LABELS: Record<Act, string> = {
  *  (it is shared with /about's own chapter registry below) but on home it
  *  now collapses to a single act: `ACT_GROUPS` in EyeFlow.tsx will render one
  *  group instead of two, which is the correct rail for a one-act page. */
-export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export interface ChapterDef {
   index: ChapterIndex;
@@ -42,12 +42,14 @@ export interface ChapterDef {
  *  names what is on screen at each position instead. The phase constants in
  *  `heroScene.ts` (PHASE_FLATTEN_END, DWELL_END and friends) keep the
  *  engineering names; only these display strings changed. */
-// WS-02 re-order: capability now arrives right after the hero instead of
-// after four sections of identity. `QUANTITATIVE R&D` covers the hero plus
-// the lifted global-markets statement (the claim, stated once); `PRACTICE`
-// covers everything that shows the work (pillars, use-cases, process);
-// `WHO WE ARE` is `MissionStatement`, now support for claims already made
-// rather than the section that opens them.
+// Partial reversal of the WS-02 re-order (explicit user decision):
+// MissionStatement ("who we are") moves back up to run right after the hero,
+// ahead of the global-markets claim, instead of as a support beat after
+// capability has been shown. `QUANTITATIVE R&D` now covers that whole
+// opening trio — hero, MissionStatement, and the lifted global-markets
+// statement — rather than hero+global-markets alone, so there is no longer a
+// separate "WHO WE ARE" chapter; `PRACTICE` still covers everything that
+// shows the work (pillars, use-cases, process).
 export const CHAPTERS: readonly ChapterDef[] = [
   { index: 0, label: "THE MARK", act: "services" },
   { index: 1, label: "THE GRID", act: "services" },
@@ -55,12 +57,10 @@ export const CHAPTERS: readonly ChapterDef[] = [
   { index: 3, label: "WHAT WE DO", act: "services" },
   { index: 4, label: "QUANTITATIVE R&D", act: "services" },
   { index: 5, label: "PRACTICE", act: "services" },
-  { index: 6, label: "WHO WE ARE", act: "services" },
-  { index: 7, label: "REACH", act: "services" },
-  // Closing beat (operational footprint / horizon gateway) is now the page's
-  // final chapter — it used to share chapter 9 ("SIGNAL") with `blog`, which
-  // has relocated to /about.
-  { index: 8, label: "HORIZON", act: "services" },
+  { index: 6, label: "REACH", act: "services" },
+  // Closing beat (operational footprint / horizon gateway) is still the
+  // page's final chapter.
+  { index: 7, label: "HORIZON", act: "services" },
 ];
 
 /** One home-page section: single source of truth for snap points, the left
@@ -151,14 +151,14 @@ export const STAGE_ATTR = "data-stage-section";
  *  `daily-life`, `candidates`, `testimonials`, `blog` relocated to
  *  `ABOUT_SECTIONS` below (PRD-home-client-focus §US-2) — the talent/culture
  *  narrative now lives on /about instead of closing out the home page. */
-// WS-02 re-order: capability arrives early, identity supports it rather than
-// preceding it. The old order ran the hero into four consecutive identity
-// beats before the first service. Now: hero -> global-markets (the claim,
-// alone) -> OperatingPillars -> UseCases -> Process (what we build, and how)
-// -> MissionStatement (who we are, now support) -> Reach (scale as proof) ->
-// Closing. The section that used to restate MissionStatement's job is
-// deleted outright. See "## Handoff to WS-17" in
-// docs/workstreams/ws-02-home-architecture.md for the reported order.
+// Partial reversal of the WS-02 re-order (explicit user decision): mission
+// core belongs near the top again. Order now: hero -> MissionStatement (who
+// we are, right after the hero) -> global-markets (the claim) ->
+// OperatingPillars -> UseCases -> Process (what we build, and how) -> Reach
+// (scale as proof) -> Closing. The section that used to restate
+// MissionStatement's job is still deleted outright — that part of WS-02
+// stands. See "## Handoff to WS-17" in
+// docs/workstreams/ws-02-home-architecture.md for the prior reported order.
 export const HOME_SECTIONS: readonly SectionDef[] = [
   // ── SERVICES ──────────────────────────────────────────────────────────────
   { id: "hero-flatten", label: "Logo Flatten", chapter: 0, ground: "void" },
@@ -166,9 +166,16 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   { id: "hero-reveal", label: "Wordmark Reveal", chapter: 2, ground: "void" },
   { id: "hero-dwell", label: "Logo Dwell", chapter: 3, ground: "void" },
   { id: "hero", label: "Signal Core", chapter: 4, ground: "void" },
+  // Mission core, back up front: runs immediately after the hero again,
+  // ahead of the global-markets claim. It still lazy-mounts `ServiceGlobe`
+  // behind its own `useInView` gate (900px prefetch margin) — that gate is
+  // load-bearing regardless of where in the order the section sits, and
+  // firing earlier on scroll now is expected, not a regression — see
+  // MissionStatement.tsx.
+  { id: "hero-mission", label: "Core Mission", chapter: 4, ground: "panel" },
   // The lifted global-markets text blob (WS-02): its own full-viewport beat,
-  // right after the hero and before anything else — the wager the rest of
-  // the page pays off. No establishing shot, no graphic; the words carry it.
+  // now right after MissionStatement — the wager the rest of the page pays
+  // off. No establishing shot, no graphic; the words carry it.
   { id: "global-markets", label: "The Global-Markets Wager", chapter: 4, ground: "deep" },
   {
     id: "hero-pillars",
@@ -189,14 +196,10 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     establishScale: "mini",
   },
   { id: "process", label: "Growing Into A Development Powerhouse", chapter: 5, ground: "deep", establishScale: "mini" },
-  // Support beat, not the opener: MissionStatement now runs after capability
-  // has already been shown. `ServiceGlobe`'s useInView gate (900px prefetch
-  // margin) moves with the section, intact — see MissionStatement.tsx.
-  { id: "hero-mission", label: "Core Mission", chapter: 6, ground: "panel" },
   {
     id: "reach",
     label: "Global Footprint",
-    chapter: 7,
+    chapter: 6,
     choreo: "spotlight-clip",
     ground: "white",
     establishScale: "mini",
@@ -208,7 +211,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   {
     id: "closing",
     label: "Horizon Gateway",
-    chapter: 8,
+    chapter: 7,
     choreo: "zoom-center",
     ground: "field",
     noExitDim: true,
