@@ -15,6 +15,14 @@ test("the theme is the light quant-noir palette", () => {
   expect(theme.shape.borderRadius).toBe(4);
 });
 
+test("MuiCard is flat by default — no automatic glass variant", () => {
+  const cardDefaults = theme.components?.MuiCard?.defaultProps as
+    | { elevation?: number; variant?: string }
+    | undefined;
+  expect(cardDefaults?.variant).toBeUndefined();
+  expect(cardDefaults?.elevation).toBe(0);
+});
+
 test("PageHeader renders the quant-noir display heading", () => {
   renderWithProviders(
     <PageHeader overline="Research" title="Notes from the lab floor." lead="A lead." />,

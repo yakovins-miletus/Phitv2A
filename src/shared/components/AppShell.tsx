@@ -908,18 +908,22 @@ const NAV_SOLID_AFTER_PX = 50;
                           letterSpacing: "0.08em",
                           textDecoration: "none !important",
                           // Gold as nav-item TEXT only on dark grounds, where it
-                          // measures 9.4:1 to 12:1. On light grounds it is 1.49:1,
-                          // well under AA, so active and hover resolve to navy and
-                          // the gold underline below carries the brand signal
-                          // instead. The wordmark keeps gold on both grounds: WCAG
-                          // 1.4.3 exempts logotypes, a nav item is not exempt.
+                          // measures 9.4:1 to 12:1. On light grounds gold itself is
+                          // 1.49:1, well under AA, so active and hover route through
+                          // `goldInk` (5.34:1 on panel) instead of navy — the accent
+                          // stays on-brand instead of falling back to the primary
+                          // colour. The gold underline below still carries the same
+                          // signal on both grounds; it's a fill, not text, so it has
+                          // no contrast obligation. The wordmark keeps gold on both
+                          // grounds: WCAG 1.4.3 exempts logotypes, a nav item is not
+                          // exempt.
                           color: isActive
-                            ? (onDark ? NOIR.gold : NOIR.navyField)
+                            ? (onDark ? NOIR.gold : NOIR.goldInk)
                             : (onDark ? "rgba(255,255,255,0.7)" : "text.secondary"),
                           transition: "color 0.3s ease",
                           position: "relative",
                           "&:hover": {
-                            color: onDark ? NOIR.gold : NOIR.navyField,
+                            color: onDark ? NOIR.gold : NOIR.goldInk,
                             textDecoration: "none !important",
                           },
                         }}

@@ -213,18 +213,23 @@ describe("accent on glass", () => {
     }
   });
 
-  test("gold as text on a light surface is pinned as a known sub-AA pairing", () => {
-    // NOT a guard — a record. `--accent-fg` is brand gold on BOTH grounds, so
-    // every gold overline, mailto link and contained-button label on a light
-    // page renders at these ratios: 1.45:1 on `void`, 1.49:1 on `panel`, under
-    // both the body floor and the large-text floor. That is a deliberate
-    // brand-consistency call taken over the contrast floor, made after the
-    // per-ground bronze (`goldInk`) failed to hold — half the call sites wrote
-    // the gold literally and never picked the bronze up, so one brand role
-    // shipped in four colours.
-    //
-    // Pinned the same way NOIR.live and the two broken white alphas are: if
-    // these numbers ever move, someone changed the accent and should say so.
+  test("goldInk carries text on every light surface, clearing AA", () => {
+    // Replaces the old pinned-failure record. `NOIR.gold` as text on light
+    // measures 1.45-1.56:1 — that pairing must never ship. `goldInk` is the
+    // token the accent-usage table (palette.ts) actually routes text-on-light
+    // to, and it clears AA_BODY across every light surface, worst case
+    // 4.59:1 on the lightest glass elevation over `void`.
+    for (const [name, surface] of LIGHT_SURFACES) {
+      const ratio = contrast(NOIR.goldInk, surface);
+      expect(ratio, `goldInk on ${name} — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_BODY);
+    }
+  });
+
+  test("gold as text on a light ground still fails — do not reach for it there", () => {
+    // Guards the negative: gold itself must stay unusable as light-ground text,
+    // so nobody "fixes" a future contrast complaint by reverting to gold
+    // instead of routing through goldInk. `--accent-fg` is brand gold on BOTH
+    // grounds for fills/borders/icons; this test is about the TEXT role only.
     for (const [name, surface] of LIGHT_SURFACES) {
       const ratio = contrast(NOIR.gold, surface);
       expect(ratio, `gold on ${name} — ${ratio.toFixed(2)}:1`).toBeLessThan(AA_LARGE);
