@@ -68,6 +68,15 @@ const GRADUATE_COHORTS: Cohort[] = [
     image: "/images/grads/2026B1Grads.webp",
     highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
   },
+  {
+    id: "2026-b2",
+    year: "2026 Batch 2",
+    badge: "AI AGENTS & PLATFORM",
+    title: "2026 Batch 2 Tech Graduates",
+    description: "Our latest cohort, extending web architecture, cloud-native pipelines, and AI agents for global systems.",
+    image: "/images/grads/2026B2Grads.webp",
+    highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
+  },
 ];
 
 export function GraduateHallOfFameSection() {

@@ -205,66 +205,63 @@ export function PrinciplesValuesShowcase() {
                         {activeValue.headline}
                       </Typography>
 
-                      {/* Definition Box */}
-                      <Box
-                        sx={{
-                          p: { xs: 3, md: 4 },
-                          borderRadius: 4,
-                          bgcolor: "rgba(244, 247, 252, 0.95)",
-                          borderLeft: `4px solid ${NOIR.goldDark}`,
-                          border: "1px solid rgba(10, 42, 102, 0.12)",
-                          borderLeftWidth: "4px",
-                          boxShadow: "0 4px 20px rgba(10, 42, 102, 0.06)",
-                        }}
+                      {/* Commitment / Value-to-client — WS-16 #1: one row
+                          divided by a hairline instead of two stacked,
+                          re-bordered cells (the containerization WS-01
+                          removed sitewide). */}
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={{ xs: 3, md: 4 }}
+                        sx={{ pt: 1 }}
                       >
-                        <Typography
-                          variant="caption"
+                        <Box
                           sx={{
-                            fontFamily: MONO,
-                            fontWeight: 800,
-                            color: "var(--accent-ink)",
-                            fontSize: "0.72rem",
-                            letterSpacing: "0.12em",
-                            display: "block",
-                            mb: 1,
+                            flex: 1,
+                            pb: { xs: 3, md: 0 },
+                            pr: { xs: 0, md: 4 },
+                            borderBottom: { xs: "1px solid rgba(10, 42, 102, 0.14)", md: "none" },
+                            borderRight: { xs: "none", md: "1px solid rgba(10, 42, 102, 0.14)" },
                           }}
                         >
-                          OUR COMMITMENT
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: NOIR.navyField, fontSize: "1.08rem", lineHeight: 1.65, fontWeight: 500 }}>
-                          "{activeValue.definition}"
-                        </Typography>
-                      </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontFamily: MONO,
+                              fontWeight: 800,
+                              color: "var(--accent-ink)",
+                              fontSize: "0.72rem",
+                              letterSpacing: "0.12em",
+                              display: "block",
+                              mb: 1,
+                            }}
+                          >
+                            OUR COMMITMENT
+                          </Typography>
+                          <Typography variant="body1" sx={{ color: NOIR.navyField, fontSize: "1.08rem", lineHeight: 1.65, fontWeight: 500 }}>
+                            "{activeValue.definition}"
+                          </Typography>
+                        </Box>
 
-                      {/* Value to Client */}
-                      <Box
-                        sx={{
-                          p: { xs: 3, md: 4 },
-                          borderRadius: 4,
-                          bgcolor: "rgba(10, 42, 102, 0.04)",
-                          borderLeft: `4px solid ${NOIR.navyField}`,
-                          border: "1px solid rgba(10, 42, 102, 0.12)",
-                          borderLeftWidth: "4px",
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontFamily: MONO,
-                            fontWeight: 800,
-                            color: NOIR.navyField,
-                            fontSize: "0.72rem",
-                            letterSpacing: "0.12em",
-                            display: "block",
-                            mb: 1,
-                          }}
-                        >
-                          VALUE DELIVERED TO CLIENTS
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: NOIR.navyField, fontSize: "1.02rem", lineHeight: 1.65, fontWeight: 500 }}>
-                          {activeValue.valueToClient}
-                        </Typography>
-                      </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontFamily: MONO,
+                              fontWeight: 800,
+                              color: NOIR.navyField,
+                              fontSize: "0.72rem",
+                              letterSpacing: "0.12em",
+                              display: "block",
+                              mb: 1,
+                            }}
+                          >
+                            VALUE DELIVERED TO CLIENTS
+                          </Typography>
+                          <Typography variant="body1" sx={{ color: NOIR.navyField, fontSize: "1.02rem", lineHeight: 1.65, fontWeight: 500 }}>
+                            {activeValue.valueToClient}
+                          </Typography>
+                        </Box>
+                      </Stack>
                     </Stack>
                   </motion.div>
                 </AnimatePresence>

@@ -173,3 +173,19 @@ cd " Master P Frontend/Phitv2A" && yarn tsc --noEmit && yarn test && yarn build 
 `src/routes/index.tsx` (WS-02). All ground/background behaviour including the navy ground for
 item 5 (WS-17). The About hero strips (WS-05). The video scroll choreography (deferred).
 Inventing statistics for item 2 (blocked).
+
+## Handoff to WS-17
+
+Item 5 ("These are the people who do it") needs its ground switched to the primary navy
+ground. `ABOUT_SECTIONS` in `src/shared/sections.ts` already declares `ground: "deep"` for the
+`daily-life` entry (`sections.ts:265-270`), which reads as navy already — if the gold-on-white
+symptom described in this ticket is still reproducing, the bug is not in that declaration
+itself but in how `GroundLayer`/`ABOUT_GROUND_STOPS` resolves the stop boundary around this
+section (e.g. the previous section's ground bleeding past its own stop, or the `daily-life`
+stop starting later than the `SeamEstablishingShot` gold headline it precedes). WS-16 did not
+edit `sections.ts`, `groundStops.ts`, or `GroundLayer` per its ownership boundary — please
+verify the rendered ground at the `SeamEstablishingShot`/`DailyLifeSection` boundary and adjust
+the stop offset there if it's landing white. Everything inside `DailyLifeSection.tsx` itself
+(spacing, type scale, video framing) was reviewed and left as-is — it has no gold text of its
+own to fix; the gold headline in question lives in `SeamEstablishingShot.tsx`, which is already
+`dark`-styled and out of this workstream's owned files.

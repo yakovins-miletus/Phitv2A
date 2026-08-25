@@ -301,10 +301,10 @@ export function CandidatesAndCareersSection() {
                     </Stack>
                   </Box>
 
-                  {/* Slat Title (inverted 90deg when inactive, rotates back on active).
-                      Rotation is a transform, so it stays within the
-                      transform/opacity-only rule even though it is not a
-                      SectionBeat reveal. */}
+                  {/* Slat Title — flat in every state (WS-16 #6 removes the
+                      rotate(-90deg)/rotate(0deg) inactive/active geometry).
+                      Only size/weight now signal the active card; treatment
+                      otherwise matches the description text below it. */}
                   <Typography
                     variant="h4"
                     component="h3"
@@ -312,13 +312,11 @@ export function CandidatesAndCareersSection() {
                       fontWeight: 800,
                       fontSize: { xs: "1.25rem", sm: "1.4rem", md: isActive ? "1.65rem" : "1.25rem" },
                       lineHeight: 1.2,
-                      whiteSpace: isMobile ? "normal" : isActive ? "normal" : "nowrap",
-                      transform: isMobile ? "none" : isActive ? "rotate(0deg)" : "rotate(-90deg)",
-                      transformOrigin: "left bottom",
+                      whiteSpace: "normal",
                       position: isMobile ? "relative" : "absolute",
-                      bottom: isMobile ? "auto" : isActive ? "0px" : "15px",
-                      left: isMobile ? "auto" : isActive ? "0px" : "calc(50% - 8px)",
-                      right: isMobile ? "auto" : isActive ? "24px" : "auto",
+                      bottom: isMobile ? "auto" : "0px",
+                      left: isMobile ? "auto" : "0px",
+                      right: isMobile ? "auto" : "24px",
                       transition: titleTransition,
                     }}
                   >

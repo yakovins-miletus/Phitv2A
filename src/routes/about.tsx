@@ -6,20 +6,17 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CONTENT } from "@/shared/content";
-import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
-import { Reveal, StaggerGroup, StaggerItem } from "@/shared/components/Reveal";
-import { Section } from "@/shared/components/Section";
-import { StatStrip } from "@/shared/components/StatStrip";
+import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
 import { JourneyTimeline } from "@/features/about/components/JourneyTimeline";
 import { BackgroundReveal } from "@/features/about/components/BackgroundReveal";
 import { HeroGallery } from "@/features/about/components/HeroGallery";
-import { MetaLabel } from "@/features/about/components/MetaLabel";
 import { SmoothSection } from "@/features/about/components/SmoothSection";
 import { PoweredBySection } from "@/features/about/components/PoweredBySection";
 import { GraduateHallOfFameSection } from "@/features/about/components/GraduateHallOfFameSection";
 import { CertificationsSection } from "@/features/about/components/CertificationsSection";
 import { PrinciplesValuesShowcase } from "@/features/about/components/PrinciplesValuesShowcase";
+import { TalentSection } from "@/features/about/components/TalentSection";
 import { AcademySection } from "@/features/about/components/AcademySection";
 import { pageHead } from "@/shared/seo";
 import { NOIR } from "@/shared/theme/palette";
@@ -70,108 +67,6 @@ export const Route = createFileRoute("/about")({
     ),
   component: AboutPage,
 });
-
-// Section 4: Talent credibility — education and disciplines as insight.
-function TalentSection() {
-  const { highlights, disciplines, schools } = CONTENT.talent;
-  return (
-    <Section>
-      <Stack spacing={{ xs: 5, md: 7 }}>
-        <Reveal>
-          <Stack spacing={1.5} sx={{ maxWidth: 720 }}>
-            <MetaLabel>Where Our Talent Comes From</MetaLabel>
-            <Typography variant="h2" component="h2">
-              Recruited from the top programs in the Philippines and Asia
-            </Typography>
-          </Stack>
-        </Reveal>
-
-        <Reveal delay={0.1}>
-          <StatStrip stats={highlights} />
-        </Reveal>
-
-        <Grid container spacing={{ xs: 4, md: 6 }}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Reveal>
-              <Stack spacing={2}>
-                <MetaLabel>Disciplines</MetaLabel>
-                <StaggerGroup>
-                  <Stack spacing={2}>
-                    {disciplines.map((discipline) => (
-                      <StaggerItem key={discipline.label}>
-                        <Box sx={{
-                          p: 1.5, borderRadius: 1, ml: -1.5,
-                          transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
-                          "&:hover": { bgcolor: "action.hover", transform: "translateX(8px)" }
-                        }}>
-                          <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.75 }}>
-                            <Typography variant="body2" color="text.primary">
-                              {discipline.label}
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontFamily: MONO, color: "text.secondary" }}>
-                              {discipline.pct}%
-                            </Typography>
-                          </Stack>
-                          <Box sx={{ height: 4, borderRadius: 2, bgcolor: "divider", overflow: "hidden" }}>
-                            <Box sx={{ width: `${String(discipline.pct)}%`, height: 1, bgcolor: NOIR.gold }} />
-                          </Box>
-                        </Box>
-                      </StaggerItem>
-                    ))}
-                  </Stack>
-                </StaggerGroup>
-              </Stack>
-            </Reveal>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Reveal delay={0.1}>
-              <Stack spacing={2}>
-                <MetaLabel>Alma Maters</MetaLabel>
-                <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
-                  {schools.map((school) => (
-                    <Stack
-                      key={school.name}
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      title={school.name}
-                      sx={{
-                        px: 1.5,
-                        py: 0.75,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        bgcolor: "background.default",
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                          borderColor: "primary.main",
-                        }
-                      }}
-                    >
-                      {school.logo ? (
-                        <Box component="img" decoding="async" loading="lazy" src={school.logo} alt={school.name} sx={{ width: 20, height: 20, objectFit: "contain", borderRadius: "50%", bgcolor: "white" }} />
-                      ) : (
-                        <Box sx={{ width: 20, height: 20, borderRadius: "50%", bgcolor: "divider" }} />
-                      )}
-                      <Typography variant="body2" sx={{ fontFamily: MONO, fontSize: "0.75rem", fontWeight: 500, color: "text.primary" }}>
-                        {school.abbr}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420 }}>
-                  A multi-disciplined team covering every layer of the stack — from the country's
-                  leading computer-science programs to internationally educated specialists
-                </Typography>
-              </Stack>
-            </Reveal>
-          </Grid>
-        </Grid>
-      </Stack>
-    </Section>
-  );
-}
 
 function AboutPage() {
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
