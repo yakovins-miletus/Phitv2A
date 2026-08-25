@@ -21,18 +21,18 @@ conversation that produced them.
 |---|---|---|---|
 | WS-01 | [Design system: flatten + unify accent](ws-01-design-system-flatten.md) | `src/shared/theme/**`, contrast tests | ✅ done |
 | WS-02 | [Home: service-centric re-architecture](ws-02-home-architecture.md) | `routes/index.tsx`, `features/home/**`, `features/hero/description/**` | ✅ done |
-| WS-03 | [Home hero: photo wall → word columns](ws-03-home-hero-wordwall.md) | `features/hero/{HeroImageWall,DriftWall,heroWallTiles,SuperHeroSequence}` | ready |
-| WS-04 | [Home closing: isometric lattice](ws-04-home-closing-isometric.md) | `features/home/components/ClosingShelf.tsx` + new scene dir | ready |
-| WS-05 | [About hero: slanted photo strips](ws-05-about-hero-strips.md) | `features/about/{HeroGallery,BackgroundReveal}` | ready |
+| WS-03 | [Home hero: photo wall → word columns](ws-03-home-hero-wordwall.md) | `features/hero/{HeroImageWall,DriftWall,heroWallTiles,SuperHeroSequence}` | ✅ done |
+| WS-04 | [Home closing: isometric lattice](ws-04-home-closing-isometric.md) | `features/home/components/ClosingShelf.tsx` + new scene dir | ✅ done |
+| WS-05 | [About hero: slanted photo strips](ws-05-about-hero-strips.md) | `features/about/{HeroGallery,BackgroundReveal}` | ✅ done |
 | WS-06 | [Performance audit (measure only)](ws-06-perf-audit.md) | *nothing — read-only* | ✅ done — see ws-06-findings.md |
-| WS-07 | [Diagram craft](ws-07-diagram-craft.md) | `shared/components/diagrams/**`, `ServiceDrawer`, `ReachMap` | ready |
+| WS-07 | [Diagram craft](ws-07-diagram-craft.md) | `shared/components/diagrams/**`, `ServiceDrawer`, `ReachMap` | ✅ done |
 | WS-08 | [Blog: year navigation rail](ws-08-blog-year-rail.md) | `features/blog/**`, `routes/blog.index.tsx` | ✅ done |
 | WS-09 | Heimdall: year facets → **`Heimdall CMS/docs/workstreams/`** | Heimdall `app/features/blog/**` | ✅ done |
 | WS-10 | [Services: kill the false error](ws-10-services-polish.md) | `routes/services.tsx`, `features/services/**` | ✅ done |
 | WS-11 | [Careers: flatten the dossier](ws-11-careers-polish.md) | `routes/careers.*.tsx`, `shared/careersData.ts` | ✅ done |
 | WS-12 | [Contact: fewer surfaces](ws-12-contact-apple.md) | `routes/contact.tsx`, `features/contact/**` | ✅ done |
-| WS-13 | [Site intro: pace the reveal](ws-13-site-intro.md) | `shared/components/Preloader.tsx`, preloader tests | ready |
-| WS-14 | [Lint backlog → real gate](ws-14-lint-backlog.md) | cross-cutting, mechanical only | ready |
+| WS-13 | [Site intro: pace the reveal](ws-13-site-intro.md) | `shared/components/Preloader.tsx`, preloader tests | ✅ done |
+| WS-14 | [Lint backlog → real gate](ws-14-lint-backlog.md) | cross-cutting, mechanical only | ✅ done — partial (65→11 warnings; react-refresh not fully cleared, see commit) |
 | WS-16 | [About page: seven section fixes](ws-16-about-page-revamp.md) | `features/about/**`, DailyLifeSection, CandidatesAndCareersSection | ✅ done |
 | WS-17 | [Ground transition owns its own section](ws-17-ground-transition.md) | `shared/components/ground/**`, `shared/sections.ts` | ✅ done (scroll capture outstanding) |
 | WS-15 | [About hydration perf](ws-15-about-hydration-perf.md) — WS-06's recommended fix was **already in the code** | none | ✅ moot, no change |
