@@ -70,8 +70,11 @@ test("every section EyeFlow can land on resolves, including the rail-only one", 
   // SectionBeat (`id={section.id}`) and is now home's final chapter (HORIZON)
   // since `blog`, which it used to share a chapter with, relocated to /about
   // (PRD-home-client-focus §US-2). It owns its own chapter's scroll target.
+  // WS-02 re-order added the `global-markets` beat as its own chapter between
+  // "QUANTITATIVE R&D" and "PRACTICE" and split MissionStatement's old
+  // chapter 4 slot into its own "WHO WE ARE" chapter, pushing HORIZON to 8.
   expect(HOME_SECTIONS.map((s) => s.id)).toContain("closing");
-  expect(homeSection("closing").chapter).toBe(7);
+  expect(homeSection("closing").chapter).toBe(8);
   expect(chapterTarget(homeSection("closing").chapter)).toBe("closing");
 });
 
@@ -86,10 +89,13 @@ test("chapters are contiguous and non-decreasing down the page", () => {
   for (let i = 1; i < chapters.length; i += 1) {
     expect(chapters[i]!).toBeGreaterThanOrEqual(chapters[i - 1]!);
   }
-  // Eight chapters now (0-7), not ten — the PEOPLE-act chapters (7-9) were
-  // pruned along with their sections when they relocated to /about
-  // (PRD-home-client-focus §US-2); `closing` became chapter 7 (HORIZON).
-  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7]));
+  // Nine chapters now (0-8) — the PEOPLE-act chapters were pruned along with
+  // their sections when they relocated to /about (PRD-home-client-focus
+  // §US-2), and WS-02's re-order added one back: `global-markets` gets its
+  // own chapter (4) right after the hero, and MissionStatement's move to a
+  // support beat gave it a dedicated "WHO WE ARE" chapter (6); `closing`
+  // became chapter 8 (HORIZON).
+  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]));
   // Every declared chapter is actually used by a section, so the rail never
   // renders a label you cannot scroll to.
   expect(new Set(CHAPTERS.map((c) => c.index))).toEqual(new Set(chapters));

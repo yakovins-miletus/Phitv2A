@@ -149,8 +149,11 @@ test("home page stops are light except the sections declared dark", () => {
   // `daily-life` and `blog` dropped out of this list when they relocated to
   // /about (PRD-home-client-focus §US-2); `closing` (ground "field", same
   // dark ground `blog` used to declare) is the one that stayed on home.
+  // WS-02 added `global-markets` (ground "deep") right after the hero — the
+  // lifted text blob's own full-viewport statement beat.
   const dark = GROUND_STOPS.filter((s) => GROUNDS[s.ground].dark);
   expect(dark.map((s) => s.id), "the home page's declared dark grounds").toEqual([
+    "global-markets",
     "process",
     "closing",
   ]);

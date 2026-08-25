@@ -12,7 +12,7 @@ import { homeSection } from "@/shared/sections";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
 import { MissionStatement } from "@/features/hero/description/MissionStatement";
 import { OperatingPillars } from "@/features/hero/description/OperatingPillars";
-import { MarketPosition } from "@/features/hero/description/MarketPosition";
+import { GlobalMarketsStatement } from "@/features/home/components/GlobalMarketsStatement";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
 import { ClosingShelf } from "@/features/home/components/ClosingShelf";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
@@ -102,7 +102,16 @@ function HomePage() {
           <SuperHeroSequence />
         </Box>
 
-        {/* 02-04. Parallax overlay sheet */}
+        {/* 02. Parallax overlay sheet
+         *
+         * WS-02: capability now arrives immediately after the hero instead of
+         * behind four sections of identity. The lifted global-markets
+         * statement (the claim, alone on its own screen) opens this sheet;
+         * OperatingPillars follows with what that claim means in practice.
+         * `MissionStatement` used to run here, alongside a second identity
+         * section that has since been deleted outright (it restated
+         * MissionStatement's job). MissionStatement now runs later, as a
+         * support beat once capability has already been shown (see below). */}
         <Box
           data-act="services"
           sx={{
@@ -114,15 +123,11 @@ function HomePage() {
             borderTopRightRadius: { xs: 28, md: 48 },
           }}
         >
-          <MissionStatement />
+          <GlobalMarketsStatement />
 
           {/* Operating Pillars — establishing shot now lives inside its own
               SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
           <OperatingPillars />
-
-          {/* Market Position — establishing shot now lives inside its own
-              SectionBeat, driven on one timeline. See MarketPosition.tsx. */}
-          <MarketPosition />
         </Box>
 
         {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
@@ -163,14 +168,16 @@ function HomePage() {
          * HOME_COMPACT had recorded on first entry — the navbar read light
          * over sections registered dark.
          *
-         * Every section this box wraps now has its own dedicated anchor (see
+         * Every section that needs one has its own dedicated anchor (see
          * NavbarContext.tsx's NAV_ANCHORS and this file's per-section Boxes
          * below), so the giant catch-all is redundant, not just buggy — it's
-         * been removed rather than resized. The one stretch it also used to
-         * cover — hero-mission/hero-pillars/hero-position, before this box
-         * even starts — needs no anchor at all: with nothing registered,
-         * `isOverDarkSection` resolves to false (see NavbarContext.tsx), which
-         * is exactly correct for those light-ground sections.
+         * been removed rather than resized. The stretches with no anchor at
+         * all — global-markets/hero-pillars/use-cases before this box starts,
+         * and `hero-mission` inside it (WS-02 moved MissionStatement here,
+         * between Process and Reach; it registers no anchor, same as before
+         * it moved) — need none: with nothing registered, `isOverDarkSection`
+         * resolves to false (see NavbarContext.tsx), which is exactly correct
+         * for light-ground sections.
          *
          * PEOPLE-act sections (daily-life, candidates, testimonials, blog)
          * used to continue this zone below Reach — they relocated to /about
@@ -181,6 +188,14 @@ function HomePage() {
               entirely — a half-screen title card left nothing for the
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
+
+          {/* Core Mission — WS-02 re-order: MissionStatement now runs as a
+              support beat, after capability (pillars/use-cases/process) has
+              already been shown, rather than opening the page. It still
+              lazy-mounts `ServiceGlobe` behind its own `useInView` gate; that
+              gate moved with the section and stays load-bearing regardless of
+              where in the order it sits — see MissionStatement.tsx. */}
+          <MissionStatement />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own

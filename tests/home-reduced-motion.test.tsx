@@ -49,8 +49,8 @@ test("reduced motion: every pitch section is reachable, not just the first", asy
   ).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Support & Delivery Pillar" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Technical Talent" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "International Backing" })).toBeInTheDocument();
+  // WS-02: `MarketPosition` (the "Technical Talent" / "International Backing"
+  // differentiators) is deleted outright — it restated MissionStatement's job.
 
   // And no beat-switching tab bar survives to be un-focusable.
   expect(screen.queryByText(/01 EXECUTIVE SUMMARY/i)).not.toBeInTheDocument();
