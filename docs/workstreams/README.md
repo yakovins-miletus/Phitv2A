@@ -35,7 +35,7 @@ conversation that produced them.
 | WS-14 | [Lint backlog → real gate](ws-14-lint-backlog.md) | cross-cutting, mechanical only | ready |
 | WS-16 | [About page: seven section fixes](ws-16-about-page-revamp.md) | `features/about/**`, DailyLifeSection, CandidatesAndCareersSection | ✅ done |
 | WS-17 | [Ground transition owns its own section](ws-17-ground-transition.md) | `shared/components/ground/**`, `shared/sections.ts` | ✅ done (scroll capture outstanding) |
-| WS-15 | *(spawned by WS-06)* — consolidate /about's three MiniEstablishingShot ScrollTrigger registrations onto `selfDriven={false}` | `MiniEstablishingShot` + 3 call sites | **not yet written** |
+| WS-15 | [About hydration perf](ws-15-about-hydration-perf.md) — WS-06's recommended fix was **already in the code** | none | ✅ moot, no change |
 
 ## Ordering constraints — only two
 
