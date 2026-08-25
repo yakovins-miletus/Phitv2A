@@ -103,11 +103,11 @@ export function GraduateHallOfFameSection() {
           <Stack spacing={2} sx={{ maxWidth: 840 }}>
             <Reveal>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <EmojiEventsIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
+                <EmojiEventsIcon sx={{ color: "var(--accent-ink)", fontSize: "1.2rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: "var(--accent-fg)",
+                    color: "var(--accent-ink)",
                     fontWeight: 800,
                     letterSpacing: "0.2em",
                     fontSize: "0.85rem",

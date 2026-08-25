@@ -1045,7 +1045,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   transition: "all 0.2s ease",
                   "&:hover": { color: "primary.main", bgcolor: "action.hover", paddingLeft: 2 }
                 }}
-                activeProps={{ sx: { color: "var(--accent-fg)" } }}
+                activeProps={{ sx: { color: "var(--accent-ink)" } }}
               >
                 {item.label}
               </RouterLink>

@@ -135,11 +135,11 @@ export function PrinciplesValuesShowcase() {
             {/* Section Overhead Title Bar */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2 }}>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
+                <AutoAwesomeIcon sx={{ color: "var(--accent-ink)", fontSize: "1.2rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: "var(--accent-fg)",
+                    color: "var(--accent-ink)",
                     fontWeight: 800,
                     letterSpacing: "0.2em",
                     fontSize: "0.85rem",
@@ -191,7 +191,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: "var(--accent-fg)",
+                            color: "var(--accent-ink)",
                             fontSize: "1.5rem",
                             letterSpacing: "0.1em",
                           }}
@@ -222,7 +222,7 @@ export function PrinciplesValuesShowcase() {
                           sx={{
                             fontFamily: MONO,
                             fontWeight: 800,
-                            color: "var(--accent-fg)",
+                            color: "var(--accent-ink)",
                             fontSize: "0.72rem",
                             letterSpacing: "0.12em",
                             display: "block",

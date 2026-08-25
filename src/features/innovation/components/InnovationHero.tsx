@@ -82,11 +82,11 @@ export function InnovationHero() {
         <Stack spacing={3.5} sx={{ maxWidth: 880 }}>
           <Reveal>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
-              <ScienceIcon sx={{ color: "var(--accent-fg)", fontSize: "1.3rem" }} />
+              <ScienceIcon sx={{ color: "var(--accent-ink)", fontSize: "1.3rem" }} />
               <Typography
                 variant="overline"
                 sx={{
-                  color: "var(--accent-fg)",
+                  color: "var(--accent-ink)",
                   fontWeight: 800,
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",

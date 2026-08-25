@@ -182,7 +182,7 @@ export function ContactFAQ() {
                   borderRadius: "8px",
                   cursor: "pointer",
                   bgcolor: isActive ? "#0A2A66" : "rgba(10, 42, 102, 0.04)",
-                  color: isActive ? "var(--accent-fg)" : "text.secondary",
+                  color: isActive ? "var(--accent-ink)" : "text.secondary",
                   border: "1px solid",
                   borderColor: isActive ? "#0A2A66" : "rgba(10, 42, 102, 0.1)",
                   transition: "all 0.2s ease",
@@ -230,7 +230,7 @@ export function ContactFAQ() {
                 <AccordionSummary
                   expandIcon={
                     isOpen ? (
-                      <Box component={Minus} sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
+                      <Box component={Minus} sx={{ color: "var(--accent-ink)", fontSize: "1.2rem" }} />
                     ) : (
                       <Box component={Plus} sx={{ color: "text.secondary", fontSize: "1.2rem" }} />
                     )
@@ -246,7 +246,7 @@ export function ContactFAQ() {
                       sx={{
                         fontFamily: MONO,
                         fontSize: "0.82rem",
-                        color: isOpen ? "var(--accent-fg)" : "text.secondary",
+                        color: isOpen ? "var(--accent-ink)" : "text.secondary",
                         fontWeight: 800,
                         flexShrink: 0,
                       }}

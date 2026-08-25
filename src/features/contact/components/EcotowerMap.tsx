@@ -38,7 +38,7 @@ export function EcotowerMap() {
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center">
-          <PlaceIcon sx={{ fontSize: 20, color: "var(--accent-fg)" }} />
+          <PlaceIcon sx={{ fontSize: 20, color: "var(--accent-ink)" }} />
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: NOIR.navyField }}>
               Phitopolis Headquarters · 27/F Ecotower

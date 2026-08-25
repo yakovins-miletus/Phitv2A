@@ -283,7 +283,7 @@ export function CareersIndexPage() {
                           "&:hover": {
                             bgcolor: isSelected ? "var(--accent-20)" : "var(--glass-fill-2)",
                             borderColor: isSelected ? "var(--accent-fg)" : "var(--glass-border-2)",
-                            color: isSelected ? "var(--accent-fg)" : "var(--text-1)",
+                            color: isSelected ? "var(--accent-ink)" : "var(--text-1)",
                           },
                           "&:focus-visible": {
                             outline: "2px solid var(--accent-fg)",
@@ -316,7 +316,7 @@ export function CareersIndexPage() {
                       fontFamily: MONO,
                       fontSize: TYPE_SCALE.micro,
                       letterSpacing: TRACKING.meta,
-                      color: "var(--accent-fg)",
+                      color: "var(--accent-ink)",
                       mb: 1,
                       textTransform: "uppercase",
                     }}
@@ -358,7 +358,7 @@ export function CareersIndexPage() {
                       fontSize: TYPE_SCALE.caption,
                       borderRadius: "var(--r-control)",
                       borderColor: "var(--accent-border)",
-                      color: "var(--accent-fg)",
+                      color: "var(--accent-ink)",
                       bgcolor: "var(--accent-15)",
                       "&:hover": {
                         bgcolor: "var(--accent-25)",
@@ -467,11 +467,11 @@ export function CareersIndexPage() {
                               },
                               "&:hover": {
                                 "& .job-title": {
-                                  color: "var(--accent-fg)",
+                                  color: "var(--accent-ink)",
                                 },
                                 "& .expand-indicator": {
                                   borderColor: "var(--accent-fg)",
-                                  color: "var(--accent-fg)",
+                                  color: "var(--accent-ink)",
                                 },
                               },
                             }}

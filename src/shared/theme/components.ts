@@ -193,7 +193,7 @@ export const components: Components<Theme> = {
         style: {
           ...surface("var(--accent-15)"),
           border: "1px solid var(--accent-border)",
-          color: "var(--accent-fg)",
+          color: "var(--accent-ink)",
           boxShadow: "none",
           "@media (hover: hover)": {
             "&:hover": {
@@ -346,7 +346,7 @@ export const components: Components<Theme> = {
         "&.MuiChip-colorPrimary, &.MuiChip-colorSecondary": {
           ...surface("var(--accent-15)"),
           borderColor: "var(--accent-border)",
-          color: "var(--accent-fg)",
+          color: "var(--accent-ink)",
         },
       },
     },
@@ -420,7 +420,7 @@ export const components: Components<Theme> = {
     styleOverrides: {
       root: {
         color: "var(--text-3)",
-        "&.Mui-focused": { color: "var(--accent-fg)" },
+        "&.Mui-focused": { color: "var(--accent-ink)" },
         "&.Mui-error": { color: "var(--danger-fg)" },
       },
     },
@@ -546,7 +546,7 @@ export const components: Components<Theme> = {
         "&:hover": { backgroundColor: "var(--glass-fill-2)" },
         "&.Mui-selected, &.Mui-selected:hover": {
           backgroundColor: "var(--accent-15)",
-          color: "var(--accent-fg)",
+          color: "var(--accent-ink)",
         },
       },
     },
@@ -612,7 +612,7 @@ export const components: Components<Theme> = {
 
   MuiCircularProgress: {
     styleOverrides: {
-      colorPrimary: { color: "var(--accent-fg)" },
+      colorPrimary: { color: "var(--accent-ink)" },
     },
   },
 

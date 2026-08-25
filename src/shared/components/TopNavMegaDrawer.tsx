@@ -244,7 +244,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "var(--accent)", display: { xs: "none", md: "block" } }} />
                 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, maxWidth: 600, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1.5, px: 2, py: 1, border: "1px solid rgba(255,255,255,0.1)", transition: "border-color 0.2s", "&:focus-within": { borderColor: "var(--accent)" } }}>
-                  <Typography component="span" aria-hidden sx={{ fontFamily: MONO, fontSize: 14, color: "var(--accent-fg)", lineHeight: 1 }}>
+                  <Typography component="span" aria-hidden sx={{ fontFamily: MONO, fontSize: 14, color: "var(--accent-ink)", lineHeight: 1 }}>
                     ❯
                   </Typography>
                   <InputBase
@@ -365,7 +365,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                 fontFamily: MONO,
                                 fontSize: { xs: "0.85rem", md: "1.1rem" },
                                 fontWeight: 800,
-                                color: (isSelected && !isCommandMode) ? "var(--accent-fg)" : "rgba(255, 255, 255, 0.4)",
+                                color: (isSelected && !isCommandMode) ? "var(--accent-ink)" : "rgba(255, 255, 255, 0.4)",
                                 transition: "color 0.25s ease",
                               }}
                             >
@@ -388,7 +388,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
 
                           <ArrowForwardIcon
                             sx={{
-                              color: "var(--accent-fg)",
+                              color: "var(--accent-ink)",
                               fontSize: "1.6rem",
                               opacity: (isSelected && !isCommandMode) ? 1 : 0,
                               transform: (isSelected && !isCommandMode) ? "translateX(0)" : "translateX(-16px)",
@@ -482,9 +482,9 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                         ...monoLabelSx,
                                         flexShrink: 0,
                                         color: copiedId === cmd.id
-                                          ? "var(--accent-fg)"
+                                          ? "var(--accent-ink)"
                                           : hint.active
-                                            ? "var(--accent-fg)"
+                                            ? "var(--accent-ink)"
                                             : selected
                                               ? "rgba(255,255,255,0.5)"
                                               : "rgba(255,255,255,0.3)",
@@ -505,7 +505,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                       <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.1)", px: 3, py: 2, bgcolor: "rgba(0,0,0,0.2)" }}>
                         <Box sx={{ display: "flex", justifyContent: "space-between", pb: 1 }}>
                           <Typography sx={monoLabelSx}>signal</Typography>
-                          <Typography sx={{ ...monoLabelSx, color: "var(--accent-fg)" }}>sim</Typography>
+                          <Typography sx={{ ...monoLabelSx, color: "var(--accent-ink)" }}>sim</Typography>
                         </Box>
                         <Box
                           component="pre"
@@ -573,7 +573,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                           variant="overline"
                           sx={{
                             fontFamily: MONO,
-                            color: "var(--accent-fg)",
+                            color: "var(--accent-ink)",
                             fontWeight: 800,
                             letterSpacing: "0.15em",
                             fontSize: "0.75rem",
@@ -584,7 +584,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                         <Typography variant="h3" sx={{ fontWeight: 800, fontSize: "2rem" }}>
                           {activeItem.sub}
                         </Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, color: "var(--accent-fg)" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, color: "var(--accent-ink)" }}>
                           <Typography sx={{ fontFamily: MONO, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.1em" }}>
                             NAVIGATE TO PAGE
                           </Typography>
@@ -617,7 +617,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                     ↑↓ NAVIGATE • ↵ EXECUTE
                   </Typography>
                 )}
-                <Typography variant="caption" sx={{ fontFamily: MONO, color: "var(--accent-fg)", fontSize: "0.72rem", fontWeight: 700 }}>
+                <Typography variant="caption" sx={{ fontFamily: MONO, color: "var(--accent-ink)", fontSize: "0.72rem", fontWeight: 700 }}>
                   PRESS [ESC] TO CLOSE
                 </Typography>
               </Box>

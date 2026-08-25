@@ -83,11 +83,11 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
             <Stack spacing={4}>
               <Reveal>
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
-                  <AutoAwesomeIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
+                  <AutoAwesomeIcon sx={{ color: "var(--accent-ink)", fontSize: "1.2rem" }} />
                   <Typography
                     variant="overline"
                     sx={{
-                      color: "var(--accent-fg)",
+                      color: "var(--accent-ink)",
                       fontWeight: 800,
                       letterSpacing: "0.2em",
                       fontSize: "0.85rem",
@@ -184,7 +184,7 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
                       
                       <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 5, transform: "translateZ(30px)" }}>
                         <Stack spacing={2}>
-                          <Typography variant="overline" sx={{ color: "var(--accent-fg)", fontWeight: 700, letterSpacing: "0.1em" }}>
+                          <Typography variant="overline" sx={{ color: "var(--accent-ink)", fontWeight: 700, letterSpacing: "0.1em" }}>
                             FEATURED ARTICLE
                           </Typography>
                           <Typography variant="h3" sx={{ color: "white", fontWeight: 800, lineHeight: 1.1 }}>

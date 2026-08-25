@@ -141,7 +141,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
                     size="small"
                     sx={{
                       bgcolor: "var(--accent-20)",
-                      color: "var(--accent-fg)",
+                      color: "var(--accent-ink)",
                       border: "1px solid rgba(var(--accent-rgb), 0.5)",
                       "& .MuiChip-label": { color: "inherit", fontWeight: 600 },
                     }}
@@ -183,7 +183,7 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
             </Stack>
             
             <Box sx={{ mt: 3, display: "flex", alignItems: "center" }}>
-              <Typography variant="button" sx={{ fontWeight: 700, color: "var(--accent-fg)", letterSpacing: "0.05em" }}>
+              <Typography variant="button" sx={{ fontWeight: 700, color: "var(--accent-ink)", letterSpacing: "0.05em" }}>
                 READ ARTICLE →
               </Typography>
             </Box>

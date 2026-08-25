@@ -154,7 +154,7 @@ function JobDetailPage() {
                   fontWeight: 800,
                   fontSize: "0.75rem",
                   letterSpacing: TRACKING.meta,
-                  color: "var(--accent-fg)",
+                  color: "var(--accent-ink)",
                 }}
               >
                 ERROR 404 · POSITION NOT FOUND
@@ -292,7 +292,7 @@ function JobDetailPage() {
                     fontSize: "0.7rem",
                     letterSpacing: "0.1em",
                     bgcolor: "var(--glass-fill-1)",
-                    color: "var(--accent-fg)",
+                    color: "var(--accent-ink)",
                     border: "1px solid var(--accent-border)",
                     borderRadius: "var(--r-pill)",
                     boxShadow: "0 0 12px var(--accent-15)",
@@ -492,7 +492,7 @@ function JobDetailPage() {
                         <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1.75 }}>
                           <CheckCircleOutlineIcon
                             sx={{
-                              color: "var(--accent-fg)",
+                              color: "var(--accent-ink)",
                               fontSize: "1.2rem",
                               mt: 0.2,
                               flexShrink: 0,
@@ -579,7 +579,7 @@ function JobDetailPage() {
                 >
                   {mutation.isSuccess ? (
                     <Stack spacing={3} alignItems="center" textAlign="center" sx={{ py: 4 }}>
-                      <CheckCircleOutlineIcon sx={{ fontSize: "3.8rem", color: "var(--accent-fg)" }} />
+                      <CheckCircleOutlineIcon sx={{ fontSize: "3.8rem", color: "var(--accent-ink)" }} />
                       <Typography
                         variant="h3"
                         component="h2"
@@ -619,7 +619,7 @@ function JobDetailPage() {
                           fontWeight: 700,
                           fontSize: "0.78rem",
                           letterSpacing: "0.06em",
-                          color: "var(--accent-fg)",
+                          color: "var(--accent-ink)",
                           borderColor: "var(--accent-border)",
                           borderRadius: "var(--r-control)",
                         }}
@@ -654,7 +654,7 @@ function JobDetailPage() {
                               fontWeight: 800,
                               fontSize: "0.72rem",
                               letterSpacing: TRACKING.meta,
-                              color: "var(--accent-fg)",
+                              color: "var(--accent-ink)",
                             }}
                           >
                             APPLICATION REGISTER
