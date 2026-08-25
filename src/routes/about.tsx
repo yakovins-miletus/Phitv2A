@@ -230,13 +230,27 @@ function AboutPage() {
             therefore AC-2's "pins, plays and releases exactly as it did on
             the home page" — is unaffected by the move. Order is /about's own
             first beat order (index 0 in ABOUT_SECTIONS), independent of
-            home's numbering. */}
-        <SectionBeat
-          section={aboutSection("daily-life")}
-          establishing={<SeamEstablishingShot selfDriven={false} />}
-        >
-          <DailyLifeSection />
-        </SectionBeat>
+            home's numbering.
+
+            Wrapped in its own opaque navy Box for the same reason the Blog
+            + Academy zone below is: the "Parallax Overlay Sheet" this whole
+            page lives inside paints `background.default` (light) at
+            `zIndex: 2` for its entire height, in front of GroundLayer's
+            scroll-driven canvas. `candidates`/`testimonials` never notice
+            because their own declared ground is light too — `daily-life` is
+            the one `deep` (navy) section in this run with nothing of its
+            own to occlude that sheet, so its GroundLayer navy was rendering
+            as the sheet's light `background.default` instead. Match
+            `GROUNDS.deep.bg` (`NOIR.navyDeep`) explicitly, the same pattern
+            the Blog/Academy Box below already uses. */}
+        <Box sx={{ bgcolor: NOIR.navyDeep, width: "100%", position: "relative", zIndex: 1 }}>
+          <SectionBeat
+            section={aboutSection("daily-life")}
+            establishing={<SeamEstablishingShot selfDriven={false} />}
+          >
+            <DailyLifeSection />
+          </SectionBeat>
+        </Box>
 
         {/* `CandidatesAndCareersSection`'s own SectionBeat renders
             `id="candidates"`, `aria-label="Talent and Technical Careers"`,
