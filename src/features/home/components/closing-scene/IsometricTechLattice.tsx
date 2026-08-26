@@ -11,7 +11,11 @@
  * - Isometric perspective via SVG transform
  * - Scroll-driven zoom-out via imperative DOM mutation (no React state)
  * - Reduced-motion: static composed frame showing the full lattice
- * - Mobile: simplified composition (fewer nodes, stacked layers)
+ * - Mobile (<600px, `theme.breakpoints.down("sm")`): all 12 nodes are kept —
+ *   nothing is dropped — but relaid out as a vertical stack (apps -> core ->
+ *   infra, top to bottom) with no isometric shear. Connector lines are
+ *   dropped entirely (see the comment at that JSX block for why); separators
+ *   and layer labels are kept, recomputed for the vertical geometry.
  *
  * Scroll behavior:
  * - Initial: zoomed in, scale ~100%, centered on upper layer
@@ -20,6 +24,9 @@
  */
 
 import { useRef, useImperativeHandle, forwardRef } from "react";
+
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
@@ -105,6 +112,96 @@ const LAYER_ROW_Y: Record<string, number> = Object.fromEntries(
   LAYERS.map((layer, i) => [layer.key, i * LAYER_GAP]),
 );
 
+/** Mobile (<600px) layout: no isometric shear, pure vertical stack. Rows are
+ *  capped at 3 nodes so node sizing can stay uniform across the whole
+ *  diagram — apps (3) and infra (3) stay one row each, core (6) wraps into 2
+ *  rows of 3. All 12 stacks from `LAYERS` are still placed; only the
+ *  coordinates differ from the desktop derivation above. */
+const MOBILE_NODE_GAP = 110;
+const MOBILE_ROW_GAP = 90;
+const MOBILE_BAND_GAP = 160;
+const MOBILE_NODE_SIZE = 64;
+const MOBILE_ROW_SIZE = 3;
+/** Space reserved above the apps band for its label (see label offset below). */
+const MOBILE_TOP_CLEARANCE = 40;
+/** How far above a band's first row its label sits. */
+const MOBILE_LABEL_OFFSET = 28;
+
+interface MobileLayout {
+  nodes: readonly PlacedNode[];
+  /** y of each layer's *first* row — mirrors `LAYER_ROW_Y`, used for label positioning. */
+  bandY: Record<string, number>;
+  /** y of each layer's *last* row — used to compute separator midpoints between bands. */
+  lastRowY: Record<string, number>;
+}
+
+/** Chunks a layer's stacks into rows of <= MOBILE_ROW_SIZE, centers each row
+ *  horizontally at x=0 with the same centering math as the desktop
+ *  derivation, and stacks rows/bands vertically with a running `y` cursor. */
+function buildMobileLayout(): MobileLayout {
+  const nodes: PlacedNode[] = [];
+  const bandY: Record<string, number> = {};
+  const lastRowY: Record<string, number> = {};
+  let y = 0;
+
+  LAYERS.forEach((layer, layerIndex) => {
+    bandY[layer.key] = y;
+
+    const rows: (typeof layer.stacks)[number][][] = [];
+    for (let i = 0; i < layer.stacks.length; i += MOBILE_ROW_SIZE) {
+      rows.push(layer.stacks.slice(i, i + MOBILE_ROW_SIZE));
+    }
+
+    rows.forEach((row, rowIndex) => {
+      const rowY = y + rowIndex * MOBILE_ROW_GAP;
+      const n = row.length;
+      row.forEach((tech, i) => {
+        nodes.push({
+          name: tech.name,
+          category: tech.category,
+          layer: layer.key,
+          x: (i - (n - 1) / 2) * MOBILE_NODE_GAP,
+          y: rowY,
+        });
+      });
+    });
+
+    const lastRowOfLayerY = y + (rows.length - 1) * MOBILE_ROW_GAP;
+    lastRowY[layer.key] = lastRowOfLayerY;
+
+    // Advance the cursor past this layer's own rows, then past the band gap
+    // before the next layer (no trailing gap after the last layer).
+    y = lastRowOfLayerY;
+    if (layerIndex < LAYERS.length - 1) {
+      y += MOBILE_BAND_GAP;
+    }
+  });
+
+  return { nodes, bandY, lastRowY };
+}
+
+const { nodes: PLACED_NODES_MOBILE, bandY: MOBILE_LAYER_BAND_Y, lastRowY: MOBILE_LAYER_LAST_ROW_Y } =
+  buildMobileLayout();
+
+// Mobile viewBox width: the widest possible row holds MOBILE_ROW_SIZE=3 nodes
+// at MOBILE_NODE_GAP=110 apart, spanning (3-1)*110 = 220px, i.e. ±110 from
+// center. Add the node radius (MOBILE_NODE_SIZE/2 = 32) and clearance for a
+// name label that can render a little wider than the node badge (~40px) on
+// each side: half-width = 110 + 32 + 40 = 182, so width = 364.
+const MOBILE_HALF_WIDTH = MOBILE_NODE_GAP + MOBILE_NODE_SIZE / 2 + 40;
+const MOBILE_VB_WIDTH = MOBILE_HALF_WIDTH * 2;
+
+// Mobile viewBox height: MOBILE_TOP_CLEARANCE (room above the apps label)
+// + the y of the last layer's last row (today: infra at 410 = apps 1 row +
+// MOBILE_BAND_GAP 160 + core's extra row at MOBILE_ROW_GAP 90 + MOBILE_BAND_GAP
+// 160) + that row's own extra-row offset (0 for a single-row infra band)
+// + clearance below the bottom row for its name label (MOBILE_NODE_SIZE,
+// which is where the label renders, per the node JSX below) plus a 20px margin.
+const MOBILE_LAST_LAYER_KEY = LAYERS[LAYERS.length - 1]!.key;
+const MOBILE_BOTTOM_CLEARANCE = MOBILE_NODE_SIZE + 20;
+const MOBILE_VB_HEIGHT =
+  MOBILE_TOP_CLEARANCE + MOBILE_LAYER_LAST_ROW_Y[MOBILE_LAST_LAYER_KEY]! + MOBILE_BOTTOM_CLEARANCE;
+
 export interface IsometricLatticeHandle {
   /** Update the zoom scale (0..1). Cheap, synchronous, causes no React render. */
   setScale: (scale: number) => void;
@@ -121,9 +218,14 @@ export const IsometricLattice = forwardRef<
   IsometricLatticeHandle,
   { reduced?: boolean }
 >(({ reduced = false }, ref) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const svgRef = useRef<SVGSVGElement>(null);
   const latticeGroupRef = useRef<SVGGElement>(null);
   const scaleRef = useRef(1);
+
+  const nodes = isMobile ? PLACED_NODES_MOBILE : PLACED_NODES;
+  const nodeSize = isMobile ? MOBILE_NODE_SIZE : 48;
 
   // SVG viewBox dimensions — wide enough for the widest row (6 core nodes at
   // NODE_GAP=130 spans 650px) plus the ISO_SHEAR lean on the bottom row.
@@ -131,12 +233,14 @@ export const IsometricLattice = forwardRef<
   // renders `size` (48px) below the node centre, doesn't clip the bottom edge:
   // infra row sits at 2*LAYER_GAP below centerY, so vbHeight must clear
   // centerY + 2*LAYER_GAP + 48 with margin to spare.
-  const vbWidth = 900;
-  const vbHeight = 660;
+  const vbWidth = isMobile ? MOBILE_VB_WIDTH : 900;
+  const vbHeight = isMobile ? MOBILE_VB_HEIGHT : 660;
   const centerX = vbWidth / 2;
-  // Centered on the middle (core) row, which is the widest, so the layout
-  // reads as balanced rather than top- or bottom-heavy.
-  const centerY = vbHeight / 2 - LAYER_GAP / 2;
+  // Desktop: centered on the middle (core) row, which is the widest, so the
+  // layout reads as balanced rather than top- or bottom-heavy. Mobile: fixed
+  // top clearance (see MOBILE_VB_HEIGHT comment) rather than a midpoint,
+  // since the vertical stack isn't symmetric top-to-bottom.
+  const centerY = isMobile ? MOBILE_TOP_CLEARANCE : vbHeight / 2 - LAYER_GAP / 2;
 
   useImperativeHandle(
     ref,
@@ -183,13 +287,16 @@ export const IsometricLattice = forwardRef<
             rows they separate, regardless of LAYER_GAP tuning. */}
         {!reduced &&
           LAYERS.slice(1).map((layer, i) => {
-            const midY = (LAYER_ROW_Y[LAYERS[i]!.key]! + LAYER_ROW_Y[layer.key]!) / 2;
+            const midY = isMobile
+              ? (MOBILE_LAYER_LAST_ROW_Y[LAYERS[i]!.key]! + MOBILE_LAYER_BAND_Y[layer.key]!) / 2
+              : (LAYER_ROW_Y[LAYERS[i]!.key]! + LAYER_ROW_Y[layer.key]!) / 2;
+            const halfSpan = isMobile ? MOBILE_HALF_WIDTH - 20 : 380;
             return (
               <line
                 key={`sep-${layer.key}`}
-                x1={-380}
+                x1={-halfSpan}
                 y1={midY}
-                x2={380}
+                x2={halfSpan}
                 y2={midY}
                 stroke={NOIR.frost}
                 strokeWidth={1}
@@ -200,8 +307,15 @@ export const IsometricLattice = forwardRef<
 
         {/* Connection lines from each non-apps-layer node up to the nearest
             apps-layer node — a light suggestion of "supports", not a claim
-            about real architecture. Drawn before the nodes so nodes sit on top. */}
+            about real architecture. Drawn before the nodes so nodes sit on top.
+            Dropped entirely on mobile: the "nearest apps node by x-distance"
+            heuristic only makes sense across a wide shear-offset row where
+            x actually varies meaningfully between rows. In the mobile vertical
+            stack every row is independently centered at x=0, so "nearest by
+            x" degenerates to arbitrary/near-random pairings — it would be
+            visual clutter with no informational value, not a missing feature. */}
         {!reduced &&
+          !isMobile &&
           PLACED_NODES.filter((n) => n.layer !== "apps").map((n) => {
             const apps = PLACED_NODES.filter((p) => p.layer === "apps");
             const nearest = apps.reduce((best, p) =>
@@ -222,8 +336,8 @@ export const IsometricLattice = forwardRef<
           })}
 
         {/* Render all tech nodes */}
-        {PLACED_NODES.map((node) => {
-          const size = 48;
+        {nodes.map((node) => {
+          const size = nodeSize;
           const isHighlighted = node.category === "ai";
 
           return (
@@ -293,8 +407,9 @@ export const IsometricLattice = forwardRef<
           {LAYERS.map((layer) => (
             <text
               key={`label-${layer.key}`}
-              x={-380}
-              y={LAYER_ROW_Y[layer.key]! + 4}
+              x={isMobile ? 0 : -380}
+              y={isMobile ? MOBILE_LAYER_BAND_Y[layer.key]! - MOBILE_LABEL_OFFSET : LAYER_ROW_Y[layer.key]! + 4}
+              textAnchor={isMobile ? "middle" : undefined}
               fontSize={12}
               fontFamily={MONO}
               fill={NOIR.frost}
