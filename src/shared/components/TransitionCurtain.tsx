@@ -1,10 +1,11 @@
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "@tanstack/react-router";
 import Box from "@mui/material/Box";
 
 import { useReducedMotion } from "@/shared/motion";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
+import { TransitionCurtainContext } from "./transitionCurtainContext";
 
 /**
  * Route transitions.
@@ -50,20 +51,6 @@ import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
  * — still no blank frame. Correct degradation for a decorative layer, and the
  * reason this needs no capability check of its own.
  */
-
-interface TransitionCurtainContextType {
-  navigateWithCurtain: (to: string) => void;
-}
-
-const TransitionCurtainContext = createContext<TransitionCurtainContextType | null>(null);
-
-export function useTransitionCurtain() {
-  const context = useContext(TransitionCurtainContext);
-  if (!context) {
-    throw new Error("useTransitionCurtain must be used within a TransitionCurtainProvider");
-  }
-  return context;
-}
 
 /**
  * Route changes never move focus on their own — the router swaps DOM content in
@@ -142,7 +129,7 @@ export function TransitionCurtainProvider({ children }: { children: ReactNode })
            * on arrival. Imported lazily — this module is eager on every route
            * and Lenis must not be.
            */
-          const mod = await import("@/shared/components/SmoothScroll");
+          const mod = await import("@/shared/components/smoothScrollControls");
           startLenis = mod.startLenis;
           mod.stopLenis();
 

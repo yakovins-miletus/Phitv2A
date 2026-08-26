@@ -15,7 +15,8 @@ import { motion, AnimatePresence, useScroll } from "motion/react";
 import { MONO } from "@/shared/theme/theme";
 import { CONTENT } from "@/shared/content";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 interface ValueItem {
   number: string;

@@ -16,12 +16,13 @@ import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { aboutSection } from "@/shared/sections";
-import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
+import { startLenis, stopLenis } from "@/shared/components/smoothScrollControls";
 import { useReducedMotion } from "@/shared/motion";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { MONO } from "@/shared/theme/theme";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 /**
  * Card backgrounds, served from 1200px derivatives rather than the originals.

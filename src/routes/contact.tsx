@@ -14,7 +14,8 @@ import { alpha } from "@mui/material/styles";
 
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 // Three steps, and the middle one used to undo the third: it promised
 // "immediate review" directly above "within 24 to 48 business hours". A reader

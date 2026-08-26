@@ -21,9 +21,11 @@ import { CommandPalette } from "./CommandPalette";
 import { CookieNotice } from "./CookieNotice";
 import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
-import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
+import { NAV_ANCHORS, NavbarProvider } from "./NavbarContext";
+import { useNavbar, useNavbarAnchor } from "./navbarHooks";
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
-import { TransitionCurtainProvider, useTransitionCurtain } from "./TransitionCurtain";
+import { TransitionCurtainProvider } from "./TransitionCurtain";
+import { useTransitionCurtain } from "./transitionCurtainContext";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
 import { SiteFooter } from "./SiteFooter";

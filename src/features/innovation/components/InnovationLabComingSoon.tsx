@@ -7,7 +7,8 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { EASE_SPRING_SUBTLE_CSS } from "@/shared/motion/easing";
 import { Reveal } from "@/shared/components/Reveal";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 const UPCOMING_PILLARS = [

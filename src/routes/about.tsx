@@ -7,7 +7,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { CONTENT } from "@/shared/content";
 import { Reveal } from "@/shared/components/Reveal";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { JourneyTimeline } from "@/features/about/components/JourneyTimeline";
 import { BackgroundReveal } from "@/features/about/components/BackgroundReveal";
 import { HeroGallery } from "@/features/about/components/HeroGallery";

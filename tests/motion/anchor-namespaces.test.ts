@@ -79,7 +79,7 @@ test("every anchor id is registered in NAV_ANCHORS, none left as bare strings", 
   const calls = sources.flatMap((src, i) =>
     [...src.matchAll(/useNavbarAnchor\(([^,)]+)/g)]
       // The hook's own definition and its import are not call sites.
-      .filter(() => !files[i]!.endsWith("NavbarContext.tsx"))
+      .filter(() => !files[i]!.endsWith("navbarHooks.ts"))
       .map((m) => `${files[i]!.slice(SRC.length + 1)}: ${m[1]!.trim()}`),
   );
 

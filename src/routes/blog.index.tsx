@@ -15,7 +15,8 @@ import { BlogYearRail } from "@/features/blog/components/BlogYearRail";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 const PAGE_SIZE = 9;
 const CATEGORY_PATTERN = /^[A-Za-z0-9 &-]{1,60}$/;

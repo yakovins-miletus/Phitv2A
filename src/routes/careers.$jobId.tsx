@@ -24,7 +24,8 @@ import { messageFromError } from "@/shared/api/errors";
 import { pageHead } from "@/shared/seo";
 import { MONO, TRACKING } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { useSubmitContactMessage } from "@/features/contact/api";
 
 /**

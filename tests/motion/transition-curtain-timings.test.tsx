@@ -10,7 +10,8 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import { hasReducedMotionListener, prefersReducedMotion } from "motion-dom";
-import { TransitionCurtainProvider, useTransitionCurtain } from "@/shared/components/TransitionCurtain";
+import { TransitionCurtainProvider } from "@/shared/components/TransitionCurtain";
+import { useTransitionCurtain } from "@/shared/components/transitionCurtainContext";
 import { mockReducedMotion, renderWithProviders } from "../test-utils";
 
 function setTestReducedMotion(reduce: boolean) {

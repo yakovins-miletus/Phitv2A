@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { homeSection } from "@/shared/sections";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";

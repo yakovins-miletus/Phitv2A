@@ -6,7 +6,8 @@ import GearIcon from "@mui/icons-material/Settings";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { Reveal } from "@/shared/components/Reveal";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 interface ServicesHeroHeaderProps {
   selectedCategory?: string;

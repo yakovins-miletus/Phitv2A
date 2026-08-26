@@ -17,8 +17,8 @@ import {
 import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
 import { heroTotalHeight } from "@/shared/motion/heroPin";
 import { useReducedMotion } from "@/shared/motion";
-import { getLenis } from "./SmoothScroll";
-import { useNavbar } from "./NavbarContext";
+import { getLenis } from "./smoothScrollControls";
+import { useNavbar } from "./navbarHooks";
 
 gsap.registerPlugin(ScrollTrigger);
 

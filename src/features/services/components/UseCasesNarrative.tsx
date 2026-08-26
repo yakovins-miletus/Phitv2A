@@ -18,7 +18,8 @@ import { SignalDiagram } from "@/shared/components/diagrams/SignalDiagram";
 import { PipelineDiagram } from "@/shared/components/diagrams/PipelineDiagram";
 import { FollowTheSunDiagram } from "@/shared/components/diagrams/FollowTheSunDiagram";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 gsap.registerPlugin(ScrollTrigger);
 

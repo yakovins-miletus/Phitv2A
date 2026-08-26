@@ -23,7 +23,8 @@ import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { pageHead } from "@/shared/seo";
 import { MONO, DISPLAY_FONT, BODY_FONT, TYPE_SCALE, LINE_HEIGHT, TRACKING } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 export const Route = createFileRoute("/careers/")({
   head: () =>

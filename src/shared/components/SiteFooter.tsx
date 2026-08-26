@@ -19,7 +19,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { alpha } from "@mui/material/styles";
 
 import { RouterLink, RouterButton } from "@/shared/components/RouterLink";
-import { useTransitionCurtain } from "@/shared/components/TransitionCurtain";
+import { useTransitionCurtain } from "@/shared/components/transitionCurtainContext";
 import { LogoParticleField } from "@/shared/components/LogoParticleField";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";

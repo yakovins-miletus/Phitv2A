@@ -6,7 +6,8 @@ import { ReachMap } from "@/shared/components/ReachMap";
 import { SectionLede } from "@/shared/components/SectionLede";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { homeSection } from "@/shared/sections";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 /**
  * Global Reach — the closing beat of Act I.

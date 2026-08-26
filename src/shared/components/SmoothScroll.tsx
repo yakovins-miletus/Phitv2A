@@ -8,9 +8,6 @@ import { LENIS_SMOOTH_DURATION, scrollEase } from "@/shared/motion/scrollSpeed";
 import { publishScrollTriggerRefresh } from "@/shared/motion/scrollTriggerBridge";
 import { setActiveLenis, getLenis } from "./smoothScrollControls";
 
-// Re-export for backward compatibility
-export { getLenis, stopLenis, startLenis } from "./smoothScrollControls";
-
 gsap.registerPlugin(ScrollTrigger);
 
 /** GSAP's own lagSmoothing defaults, restored when Lenis tears down. */
