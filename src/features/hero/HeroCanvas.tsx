@@ -45,7 +45,7 @@ import {
 import { loadLogoMask } from "./heroLogoMask";
 import {
   HORIZON,
-  VIEW_FIT,
+  calcViewScale,
   drawPlaneFrame,
   getLogoScreenBox,
   type PlaneInteraction,
@@ -227,7 +227,7 @@ export function HeroCanvas({
         flatten,
         width / 2,
         height * HORIZON,
-        Math.min(width, height) / (PLANE_SIZE * VIEW_FIT),
+        calcViewScale(width, height),
         tiltCurrent.x * TILT_AMOUNT * interaction.strength,
         tiltCurrent.y * TILT_AMOUNT * interaction.strength,
       );

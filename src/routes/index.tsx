@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
+import { GroundTransitionBuffer } from "@/shared/components/ground/GroundTransitionBuffer";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -120,19 +121,19 @@ function HomePage() {
             position: "relative",
             zIndex: 2,
             mt: "-100vh",
-            bgcolor: "background.default",
-            borderTopLeftRadius: { xs: 28, md: 48 },
-            borderTopRightRadius: { xs: 28, md: 48 },
           }}
         >
           <MissionStatement />
+          <GroundTransitionBuffer />
           <GlobalMarketsStatement />
 
+          <GroundTransitionBuffer />
           {/* Operating Pillars — establishing shot now lives inside its own
               SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
           <OperatingPillars />
         </Box>
 
+        <GroundTransitionBuffer />
         {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
             via SectionBeat, which renders `bare` because `use-cases`
             declares `ownsPin: true` in HOME_SECTIONS (sections.ts). The pin
@@ -184,12 +185,14 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
+          <GroundTransitionBuffer />
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
               entirely — a half-screen title card left nothing for the
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
+          <GroundTransitionBuffer />
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own
               SectionBeat, which renders `id="reach"`, `aria-label="Global
@@ -200,6 +203,7 @@ function HomePage() {
               put them. */}
           <ReachSection />
 
+          <GroundTransitionBuffer />
           {/* Closing beat — operational footprint / horizon gateway. Mini
               Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,
               which drives it on one timeline. Directly follows Reach now that

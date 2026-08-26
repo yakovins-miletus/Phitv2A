@@ -24,10 +24,16 @@ import { RGB_GOLD, RGB_STEEL, type Rgb } from "./heroPalette";
 
 /** Grid cell base dimension in pixels. */
 export const GRID_CELL = 42;
-/** The scene plane is 22x22 cells. */
-export const GRID_CELLS = 22;
-/** Plane extent in px — the local coordinate space every scene object is authored in. */
+/** Core cluster dimensions: 22x22 cells. */
+export const CORE_GRID_CELLS = 22;
+/** Plane margin padding cells on each side to accommodate outer application nodes. */
+export const PLANE_MARGIN_CELLS = 4;
+/** The expanded scene plane is 30x30 cells. */
+export const GRID_CELLS = CORE_GRID_CELLS + 2 * PLANE_MARGIN_CELLS;
+/** Plane extent in px (1260px at 30 cells * 42px). */
 export const PLANE_SIZE = GRID_CELLS * GRID_CELL;
+/** Offset in plane coordinates to keep the 22x22 core cluster centered on the 30x30 plane (168px). */
+export const GRID_OFFSET = PLANE_MARGIN_CELLS * GRID_CELL;
 /** CSS `perspective` on the old scene container. */
 export const PERSPECTIVE = 1600;
 
@@ -62,9 +68,9 @@ export interface Point2 {
 export type CubeType = "gold" | "navy";
 
 export interface CubeSpec {
-  /** Column on the grid. */
+  /** Column on the grid (0..21). */
   c: number;
-  /** Row on the grid. */
+  /** Row on the grid (0..21). */
   r: number;
   /** Extrusion height in px at full 3D. */
   h: number;
@@ -106,15 +112,42 @@ export interface ServiceNodeSpec {
 }
 
 /**
- * The four elevated service nodes. The old code positioned them by top-left corner at
- * `n * GRID_CELL - 30` with `size = 60`, i.e. centred on the grid intersection.
+ * The four elevated service nodes, re-centered on the expanded plane via GRID_OFFSET.
  */
 export const SERVICE_NODE_SIZE = 60;
 export const SERVICE_NODES: readonly ServiceNodeSpec[] = [
-  { cx: 5 * GRID_CELL, cy: 5 * GRID_CELL, elevation: 28, icon: "activity" },
-  { cx: 17 * GRID_CELL, cy: 5 * GRID_CELL, elevation: 28, icon: "code" },
-  { cx: 5 * GRID_CELL, cy: 17 * GRID_CELL, elevation: 28, icon: "package" },
-  { cx: 17 * GRID_CELL, cy: 17 * GRID_CELL, elevation: 28, icon: "shield" },
+  { cx: 5 * GRID_CELL + GRID_OFFSET, cy: 5 * GRID_CELL + GRID_OFFSET, elevation: 28, icon: "activity" },
+  { cx: 17 * GRID_CELL + GRID_OFFSET, cy: 5 * GRID_CELL + GRID_OFFSET, elevation: 28, icon: "code" },
+  { cx: 5 * GRID_CELL + GRID_OFFSET, cy: 17 * GRID_CELL + GRID_OFFSET, elevation: 28, icon: "package" },
+  { cx: 17 * GRID_CELL + GRID_OFFSET, cy: 17 * GRID_CELL + GRID_OFFSET, elevation: 28, icon: "shield" },
+] as const;
+
+/* ── Outer application nodes ── */
+
+export type AppType = "analytics" | "trading" | "pipeline" | "risk" | "execution" | "telemetry";
+
+export interface ApplicationNodeSpec {
+  readonly id: string;
+  readonly label: string;
+  readonly cx: number;
+  readonly cy: number;
+  readonly elevation: number;
+  readonly appType: AppType;
+}
+
+export const APPLICATION_NODE_SIZE = 52;
+
+/**
+ * Purely decorative application nodes situated on the outer margin ring representing developed applications.
+ * Symmetrically placed around the 30x30 cell plane.
+ */
+export const APPLICATION_NODES: readonly ApplicationNodeSpec[] = [
+  { id: "app-alpha", label: "Alpha Analytics", cx: 2 * GRID_CELL, cy: 2 * GRID_CELL, elevation: 22, appType: "analytics" },
+  { id: "app-dma", label: "Direct Market Access", cx: 28 * GRID_CELL, cy: 2 * GRID_CELL, elevation: 22, appType: "trading" },
+  { id: "app-pipeline", label: "Data Pipeline", cx: 2 * GRID_CELL, cy: 28 * GRID_CELL, elevation: 22, appType: "pipeline" },
+  { id: "app-risk", label: "Risk Fortress", cx: 28 * GRID_CELL, cy: 28 * GRID_CELL, elevation: 22, appType: "risk" },
+  { id: "app-router", label: "Order Router", cx: 15 * GRID_CELL, cy: 1 * GRID_CELL, elevation: 20, appType: "execution" },
+  { id: "app-telemetry", label: "Telemetry Hub", cx: 15 * GRID_CELL, cy: 29 * GRID_CELL, elevation: 20, appType: "telemetry" },
 ] as const;
 
 /* ───────────────────────────── Signal circuits ───────────────────────────── */
@@ -137,21 +170,69 @@ export interface SignalLoop {
 function buildSignalLoops(): SignalLoop[] {
   const half = GRID_CELL / 2;
 
-  // Four service nodes framing the central P logo.
-  const quant = { x: 5 * GRID_CELL, y: 5 * GRID_CELL };
-  const fullstack = { x: 17 * GRID_CELL, y: 5 * GRID_CELL };
-  const ops = { x: 17 * GRID_CELL, y: 17 * GRID_CELL };
-  const data = { x: 5 * GRID_CELL, y: 17 * GRID_CELL };
+  // Four service nodes framing the central P logo, centered via GRID_OFFSET.
+  const quant = { x: 5 * GRID_CELL + GRID_OFFSET, y: 5 * GRID_CELL + GRID_OFFSET };
+  const fullstack = { x: 17 * GRID_CELL + GRID_OFFSET, y: 5 * GRID_CELL + GRID_OFFSET };
+  const ops = { x: 17 * GRID_CELL + GRID_OFFSET, y: 17 * GRID_CELL + GRID_OFFSET };
+  const data = { x: 5 * GRID_CELL + GRID_OFFSET, y: 17 * GRID_CELL + GRID_OFFSET };
 
-  const outerTL = { x: half, y: half };
-  const outerTR = { x: 21 * GRID_CELL + half, y: half };
-  const outerBR = { x: 21 * GRID_CELL + half, y: 21 * GRID_CELL + half };
-  const outerBL = { x: half, y: 21 * GRID_CELL + half };
+  const outerTL = { x: half + GRID_OFFSET, y: half + GRID_OFFSET };
+  const outerTR = { x: 21 * GRID_CELL + half + GRID_OFFSET, y: half + GRID_OFFSET };
+  const outerBR = { x: 21 * GRID_CELL + half + GRID_OFFSET, y: 21 * GRID_CELL + half + GRID_OFFSET };
+  const outerBL = { x: half + GRID_OFFSET, y: 21 * GRID_CELL + half + GRID_OFFSET };
 
-  const midTL = { x: GRID_CELL + half, y: GRID_CELL + half };
-  const midTR = { x: 20 * GRID_CELL + half, y: GRID_CELL + half };
-  const midBR = { x: 20 * GRID_CELL + half, y: 20 * GRID_CELL + half };
-  const midBL = { x: GRID_CELL + half, y: 20 * GRID_CELL + half };
+  const midTL = { x: GRID_CELL + half + GRID_OFFSET, y: GRID_CELL + half + GRID_OFFSET };
+  const midTR = { x: 20 * GRID_CELL + half + GRID_OFFSET, y: GRID_CELL + half + GRID_OFFSET };
+  const midBR = { x: 20 * GRID_CELL + half + GRID_OFFSET, y: 20 * GRID_CELL + half + GRID_OFFSET };
+  const midBL = { x: GRID_CELL + half + GRID_OFFSET, y: 20 * GRID_CELL + half + GRID_OFFSET };
+
+  // Outer application nodes
+  const appAlpha = { x: 2 * GRID_CELL, y: 2 * GRID_CELL };
+  const appDma = { x: 28 * GRID_CELL, y: 2 * GRID_CELL };
+  const appPipeline = { x: 2 * GRID_CELL, y: 28 * GRID_CELL };
+  const appRisk = { x: 28 * GRID_CELL, y: 28 * GRID_CELL };
+  const appRouter = { x: 15 * GRID_CELL, y: 1 * GRID_CELL };
+  const appTelemetry = { x: 15 * GRID_CELL, y: 29 * GRID_CELL };
+
+  // Out-and-back closed circuit waypoints: [start, ...waypoints, start]
+  const spurNW = [
+    quant,
+    { x: 2 * GRID_CELL, y: 5 * GRID_CELL + GRID_OFFSET },
+    appAlpha,
+    { x: 2 * GRID_CELL, y: 5 * GRID_CELL + GRID_OFFSET },
+    quant,
+  ];
+  const spurNE = [
+    fullstack,
+    { x: 28 * GRID_CELL, y: 5 * GRID_CELL + GRID_OFFSET },
+    appDma,
+    { x: 28 * GRID_CELL, y: 5 * GRID_CELL + GRID_OFFSET },
+    fullstack,
+  ];
+  const spurSW = [
+    data,
+    { x: 2 * GRID_CELL, y: 17 * GRID_CELL + GRID_OFFSET },
+    appPipeline,
+    { x: 2 * GRID_CELL, y: 17 * GRID_CELL + GRID_OFFSET },
+    data,
+  ];
+  const spurSE = [
+    ops,
+    { x: 28 * GRID_CELL, y: 17 * GRID_CELL + GRID_OFFSET },
+    appRisk,
+    { x: 28 * GRID_CELL, y: 17 * GRID_CELL + GRID_OFFSET },
+    ops,
+  ];
+  const spurNorth = [
+    { x: 15 * GRID_CELL, y: 5 * GRID_CELL + GRID_OFFSET },
+    appRouter,
+    { x: 15 * GRID_CELL, y: 5 * GRID_CELL + GRID_OFFSET },
+  ];
+  const spurSouth = [
+    { x: 15 * GRID_CELL, y: 17 * GRID_CELL + GRID_OFFSET },
+    appTelemetry,
+    { x: 15 * GRID_CELL, y: 17 * GRID_CELL + GRID_OFFSET },
+  ];
 
   const raw = [
     // Loop 1: inner quad orbiting the P logo through the four icon centres.
@@ -162,6 +243,18 @@ function buildSignalLoops(): SignalLoop[] {
     { waypoints: [midTL, midTR, midBR, midBL, midTL], color: RGB_STEEL, pulseOffsets: [0.25, 0.75] },
     // Loop 3: outer grid boundary.
     { waypoints: [outerTL, outerTR, outerBR, outerBL, outerTL], color: RGB_GOLD, pulseOffsets: [0.1, 0.6] },
+    // Loop 4: out-and-back spur to Alpha Analytics (NW)
+    { waypoints: spurNW, color: RGB_GOLD, pulseOffsets: [0.15, 0.65] },
+    // Loop 5: out-and-back spur to Direct Market Access (NE)
+    { waypoints: spurNE, color: RGB_STEEL, pulseOffsets: [0.35, 0.85] },
+    // Loop 6: out-and-back spur to Data Pipeline (SW)
+    { waypoints: spurSW, color: RGB_STEEL, pulseOffsets: [0.2, 0.7] },
+    // Loop 7: out-and-back spur to Risk Fortress (SE)
+    { waypoints: spurSE, color: RGB_GOLD, pulseOffsets: [0.4, 0.9] },
+    // Loop 8: out-and-back spur to Order Router (North)
+    { waypoints: spurNorth, color: RGB_GOLD, pulseOffsets: [0.05, 0.55] },
+    // Loop 9: out-and-back spur to Telemetry Hub (South)
+    { waypoints: spurSouth, color: RGB_STEEL, pulseOffsets: [0.3, 0.8] },
   ] as const;
 
   return raw.map((loop) => {

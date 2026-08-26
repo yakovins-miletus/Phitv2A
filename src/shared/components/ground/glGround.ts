@@ -95,7 +95,7 @@ void main() {
  * per-tile hashed-reveal language (still visually a "tile wipe", not a
  * crossfade) while making the flipped tiles small enough to read as texture
  * grain instead of discrete squares. */
-const TILE_SIZE_CSS_PX = 20;
+const TILE_SIZE_CSS_PX = 200;
 
 export interface GlGround {
   /** `progress` is 0 at `from`, 1 at `to`, ramping between them as the caller

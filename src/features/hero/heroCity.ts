@@ -36,10 +36,10 @@ import { GRID_CELL, PLANE_SIZE, type Rgb } from "./heroScene";
  */
 export const DOT_STEP = GRID_CELL / 2;
 
-/** 44. */
+/** 60 dots per axis across the 1260px expanded plane at DOT_STEP=21. */
 export const DOTS_PER_AXIS = Math.round(PLANE_SIZE / DOT_STEP);
 
-/** 1,936 — inside the ~2,000-dot budget where 2D canvas is rasterisation-bound, not JS-bound. */
+/** 3,600 dots across the full expanded lattice. */
 export const DOT_COUNT = DOTS_PER_AXIS * DOTS_PER_AXIS;
 
 /**

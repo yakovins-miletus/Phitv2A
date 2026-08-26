@@ -484,9 +484,9 @@ export function SectionBeat({
           ? { flexDirection: "column", alignItems: "stretch", justifyContent: "center" }
           : { alignItems: "center" }),
         py: bare ? 0 : { xs: 6, md: 10 },
-        // Transparent by design: GroundLayer paints the surface behind every
-        // section and moves it with scroll.
-        bgcolor: "transparent",
+        // Set opaque background based on the section's ground. The pixel wipe
+        // transition will now only be visible in the dedicated buffer sections.
+        bgcolor: section.ground ? GROUNDS[section.ground].bg : "transparent",
         color: surface ? surface.fg : undefined,
         borderTop: surface ? 0 : muted ? 1 : 0,
         borderBottom: surface ? 0 : muted ? 1 : 0,
