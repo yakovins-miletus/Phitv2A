@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
-import { GroundTransitionBuffer } from "@/shared/components/ground/GroundTransitionBuffer";
+import { PixelTransitionSection } from "@/shared/components/ground/PixelTransitionSection";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -24,25 +24,15 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 // bundle even with autoCodeSplitting, so anything imported here ships to every
 // visitor. Scroll wiring lives in <SmoothScroll /> and inside the section
 // components, which ride the lazy home chunk.
-//
-// CapabilityRack ("four disciplines" capability grid) and the PEOPLE-act
-// sections (DailyLifeSection, CandidatesAndCareersSection,
-// TestimonialsSection, BlogSection) no longer mount here —
-// PRD-home-client-focus §2b/§2c removed the duplicated capability grid and
-// relocated the talent/culture narrative to /about. CapabilityRack itself is
-// untouched and still exists for a future /services usage; the four
-// relocated sections now live in routes/about.tsx with their own
-// SectionBeat orders — see ABOUT_SECTIONS in shared/sections.ts.
-//
-// CurtainTransition (the row-slat reveal into the deep-navy PEOPLE finale)
-// and the NOIR.navyField dark wrapper existed purely to hand off into
+
 // Blog + ClosingShelf. With Blog relocated to /about, ClosingShelf now
 // follows ReachSection directly and paints its own "field" ground via
 // GroundLayer, so neither is needed here any more — CurtainTransition moved
 // to about.tsx, immediately ahead of the relocated BlogSection, preserving
 // the same visual handoff for the content it was built for.
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(
+  {
   head: () =>
     pageHead(
       "Phitopolis — FinTech Engineering & Quantitative R&D",
@@ -121,19 +111,29 @@ function HomePage() {
             position: "relative",
             zIndex: 2,
             mt: "-100vh",
+            bgcolor: "background.default",
+            borderTopLeftRadius: { xs: 28, md: 48 },
+            borderTopRightRadius: { xs: 28, md: 48 },
           }}
         >
           <MissionStatement />
-          <GroundTransitionBuffer />
-          <GlobalMarketsStatement />
-
-          <GroundTransitionBuffer />
-          {/* Operating Pillars — establishing shot now lives inside its own
-              SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
-          <OperatingPillars />
         </Box>
 
-        <GroundTransitionBuffer />
+        {/* ── Pixel Transition: hero-mission (panel) → global-markets (deep) ── */}
+        <PixelTransitionSection from="panel" to="deep" />
+
+        <GlobalMarketsStatement />
+
+        {/* ── Pixel Transition: global-markets (deep) → hero-pillars (void) ── */}
+        <PixelTransitionSection from="deep" to="void" />
+
+        {/* Operating Pillars — establishing shot now lives inside its own
+            SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
+        <OperatingPillars />
+
+        {/* ── Pixel Transition: hero-pillars (void) → use-cases (panel) ── */}
+        <PixelTransitionSection from="void" to="panel" />
+
         {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
             via SectionBeat, which renders `bare` because `use-cases`
             declares `ownsPin: true` in HOME_SECTIONS (sections.ts). The pin
@@ -185,14 +185,18 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          <GroundTransitionBuffer />
+          {/* ── Pixel Transition: use-cases (panel) → process (deep) ── */}
+          <PixelTransitionSection from="panel" to="deep" />
+
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
               entirely — a half-screen title card left nothing for the
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
-          <GroundTransitionBuffer />
+          {/* ── Pixel Transition: process (deep) → reach (white) ── */}
+          <PixelTransitionSection from="deep" to="white" />
+
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own
               SectionBeat, which renders `id="reach"`, `aria-label="Global
@@ -203,7 +207,9 @@ function HomePage() {
               put them. */}
           <ReachSection />
 
-          <GroundTransitionBuffer />
+          {/* ── Pixel Transition: reach (white) → closing (field) ── */}
+          <PixelTransitionSection from="white" to="field" />
+
           {/* Closing beat — operational footprint / horizon gateway. Mini
               Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,
               which drives it on one timeline. Directly follows Reach now that
@@ -215,4 +221,3 @@ function HomePage() {
     </>
   );
 }
-

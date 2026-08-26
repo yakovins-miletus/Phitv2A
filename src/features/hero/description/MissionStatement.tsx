@@ -121,11 +121,6 @@ export function MissionStatement() {
     <SectionBeat
       section={homeSection("hero-mission")}
       background={<DeferredServiceGlobe />}
-      sx={{
-        borderTopLeftRadius: { xs: 28, md: 48 },
-        borderTopRightRadius: { xs: 28, md: 48 },
-        overflow: "hidden",
-      }}
     >
       {/* Foreground Content.
        *
