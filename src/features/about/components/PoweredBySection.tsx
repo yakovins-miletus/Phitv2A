@@ -13,186 +13,24 @@ import { Reveal } from "@/shared/components/Reveal";
 import { RevealLines } from "@/shared/components/reveal/RevealLines";
 import { FONT, MONO } from "@/shared/theme/theme";
 import { NOIR, TECH_CAT_ACCENTS } from "@/shared/theme/palette";
+import {
+  LOCAL_TECHS,
+  ROW1_TECHS,
+  ROW2_TECHS,
+  ROW3_TECHS,
+  TECH_SLUGS,
+} from "@/shared/content/techStack";
 
 import { MetaLabel } from "./MetaLabel";
 
 // ── Tech Stack / Powered By Section ──
-
-const TECH_SLUGS: Record<string, string> = {
-  "Anthropic Claude": "anthropic",
-  LangChain: "langchain",
-  "Hugging Face": "huggingface",
-  PyTorch: "pytorch",
-  TensorFlow: "tensorflow",
-  Ollama: "ollama",
-  CrewAI: "crewai",
-  MLflow: "mlflow",
-  "Weights & Biases": "weightsandbiases",
-  "scikit-learn": "scikitlearn",
-  Python: "python",
-  FastAPI: "fastapi",
-  "Node.js": "nodedotjs",
-  React: "react",
-  TypeScript: "typescript",
-  "Next.js": "nextdotjs",
-  GraphQL: "graphql",
-  Celery: "celery",
-  Docker: "docker",
-  Kubernetes: "kubernetes",
-  Terraform: "terraform",
-  GCP: "googlecloud",
-  Nginx: "nginx",
-  Prometheus: "prometheus",
-  Grafana: "grafana",
-  PostgreSQL: "postgresql",
-  Redis: "redis",
-  MongoDB: "mongodb",
-  Kafka: "apachekafka",
-  Snowflake: "snowflake",
-  "Apache Spark": "apachespark",
-  Airflow: "apacheairflow",
-  Go: "go",
-  Rust: "rust",
-  Java: "openjdk",
-  "Vue.js": "vuedotjs",
-  Angular: "angular",
-  Svelte: "svelte",
-  Django: "django",
-  "Spring Boot": "springboot",
-  Flutter: "flutter",
-  Laravel: "laravel",
-  ".NET": "dotnet",
-  AWS: "amazonaws",
-  Azure: "microsoftazure",
-  "GitHub Actions": "githubactions",
-  Ansible: "ansible",
-  Elasticsearch: "elasticsearch",
-  Cassandra: "apachecassandra",
-  ClickHouse: "clickhouse",
-  dbt: "dbt",
-  RabbitMQ: "rabbitmq",
-  Supabase: "supabase",
-  Firebase: "firebase",
-  DynamoDB: "amazondynamodb",
-  OpenAI: "openai",
-  Jupyter: "jupyter",
-  ONNX: "onnx",
-  Pandas: "pandas",
-  NumPy: "numpy",
-  Polars: "polars",
-  Gemini: "googlegemini",
-  JavaScript: "javascript",
-  "Express.js": "express",
-  "React Native": "react",
-  Swift: "swift",
-  Kotlin: "kotlin",
-  Vite: "vite",
-  NestJS: "nestjs",
-  "Tailwind CSS": "tailwindcss",
-  Datadog: "datadog",
-  Helm: "helm",
-  Sentry: "sentry",
-  MySQL: "mysql",
-  Neo4j: "neo4j",
-  BigQuery: "googlebigquery"
-};
-
-const ROW1_TECHS = [
-  { name: "Anthropic Claude", cat: "ai" },
-  { name: "Docker", cat: "infra" },
-  { name: "PostgreSQL", cat: "data" },
-  { name: "JavaScript", cat: "dev" },
-  { name: "LangChain", cat: "ai" },
-  { name: "Kubernetes", cat: "infra" },
-  { name: "Redis", cat: "data" },
-  { name: "Express.js", cat: "dev" },
-  { name: "Hugging Face", cat: "ai" },
-  { name: "Terraform", cat: "infra" },
-  { name: "MongoDB", cat: "data" },
-  { name: "Vue.js", cat: "dev" },
-  { name: "PyTorch", cat: "ai" },
-  { name: "GCP", cat: "infra" },
-  { name: "Kafka", cat: "data" },
-  { name: "Angular", cat: "dev" },
-  { name: "TensorFlow", cat: "ai" },
-  { name: "Nginx", cat: "infra" },
-  { name: "Snowflake", cat: "data" },
-  { name: "Svelte", cat: "dev" },
-  { name: "Gemini", cat: "ai" },
-  { name: "Django", cat: "dev" },
-  { name: "Prometheus", cat: "infra" },
-  { name: "Apache Spark", cat: "data" },
-  { name: "Laravel", cat: "dev" }
-];
-
-const ROW2_TECHS = [
-  { name: "Ollama", cat: "ai" },
-  { name: "AWS", cat: "infra" },
-  { name: "Airflow", cat: "data" },
-  { name: "Python", cat: "dev" },
-  { name: "CrewAI", cat: "ai" },
-  { name: "Azure", cat: "infra" },
-  { name: "Elasticsearch", cat: "data" },
-  { name: "FastAPI", cat: "dev" },
-  { name: "MLflow", cat: "ai" },
-  { name: "GitHub Actions", cat: "infra" },
-  { name: "Cassandra", cat: "data" },
-  { name: "Node.js", cat: "dev" },
-  { name: "Weights & Biases", cat: "ai" },
-  { name: "Ansible", cat: "infra" },
-  { name: "ClickHouse", cat: "data" },
-  { name: "React", cat: "dev" },
-  { name: "OpenAI", cat: "ai" },
-  { name: "Grafana", cat: "infra" },
-  { name: "dbt", cat: "data" },
-  { name: "TypeScript", cat: "dev" },
-  { name: "Datadog", cat: "infra" },
-  { name: "RabbitMQ", cat: "data" },
-  { name: "Celery", cat: "dev" },
-  { name: "Spring Boot", cat: "dev" },
-  { name: ".NET", cat: "dev" }
-];
-
-const ROW3_TECHS = [
-  { name: "Jupyter", cat: "ai" },
-  { name: "Helm", cat: "infra" },
-  { name: "Supabase", cat: "data" },
-  { name: "Next.js", cat: "dev" },
-  { name: "ONNX", cat: "ai" },
-  { name: "Sentry", cat: "infra" },
-  { name: "Firebase", cat: "data" },
-  { name: "GraphQL", cat: "dev" },
-  { name: "Pandas", cat: "ai" },
-  { name: "Polars", cat: "data" },
-  { name: "DynamoDB", cat: "data" },
-  { name: "React Native", cat: "dev" },
-  { name: "NumPy", cat: "ai" },
-  { name: "MySQL", cat: "data" },
-  { name: "Vite", cat: "dev" },
-  { name: "scikit-learn", cat: "ai" },
-  { name: "Neo4j", cat: "data" },
-  { name: "NestJS", cat: "dev" },
-  { name: "BigQuery", cat: "data" },
-  { name: "Tailwind CSS", cat: "dev" },
-  { name: "Go", cat: "dev" },
-  { name: "Rust", cat: "dev" },
-  { name: "Java", cat: "dev" },
-  { name: "Swift", cat: "dev" },
-  { name: "Kotlin", cat: "dev" },
-  { name: "Flutter", cat: "dev" }
-];
+// Data (TECH_SLUGS, ROW1/2/3_TECHS, LOCAL_TECHS) lives in
+// @/shared/content/techStack so HeroWordWall can reuse the same curated
+// list without duplicating it.
 
 /** Re-exported from the palette; `dev`/`infra`/`data` used to be Tailwind
     violet-400 / blue-400 / emerald-400 sitting next to a brand-gold `ai`. */
 const TECH_CAT_COLORS = TECH_CAT_ACCENTS;
-
-const LOCAL_TECHS: Record<string, string> = {
-  "AWS": "/logos/tech/aws.svg",
-  "Azure": "/logos/tech/azure.svg",
-  "dbt": "/logos/tech/dbt.svg",
-  "DynamoDB": "/logos/tech/dynamodb.svg",
-  "OpenAI": "/logos/tech/openai.svg"
-};
 
 const TechCard = React.memo(({ tech, activeCat }: { tech: { name: string; cat: string }; activeCat: string | null }) => {
   const localPath = LOCAL_TECHS[tech.name];

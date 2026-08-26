@@ -32,40 +32,24 @@ import {
 } from "motion/react";
 import { useReducedMotion } from "@/shared/motion";
 import { NOIR } from "@/shared/theme/palette";
+import {
+  HERO_TECH_COLUMN_1,
+  HERO_TECH_COLUMN_2,
+  HERO_TECH_COLUMN_3,
+} from "@/shared/content/techStack";
 
-/** Service names and disciplines, pulled from content.ts where suitable */
-const WORD_COLUMN_1 = [
-  "QUANTITATIVE",
-  "RESEARCH",
-  "SYSTEMS",
-  "CLOUD-NATIVE",
-  "SIGNAL",
-  "LATENCY",
-  "ENGINEERING",
-  "MATHEMATICS",
-];
-
-const WORD_COLUMN_2 = [
-  "INFRASTRUCTURE",
-  "ALGORITHMS",
-  "STATISTICS",
-  "24/7 COVERAGE",
-  "DATA SCIENCE",
-  "OPERATIONS",
-  "SECURITY",
-  "RELIABILITY",
-];
-
-const WORD_COLUMN_3 = [
-  "MACHINE LEARNING",
-  "MODELING",
-  "PIPELINES",
-  "DISTRIBUTED",
-  "OPTIMIZATION",
-  "AUTOMATION",
-  "FINTECH",
-  "MANILA",
-];
+/**
+ * "Powered by" tech-stack names for the three drift columns, curated from
+ * the same source of truth as PoweredBySection (`@/shared/content/techStack`)
+ * so the hero and the /about section never drift out of sync. Rendered as
+ * plain text — no logos — because this layer sits in the LCP-critical hero
+ * path and PoweredBySection's icons are ~70 cross-origin Simple Icons CDN
+ * requests, which is not acceptable this early in the page lifecycle. See
+ * this file's top docblock for the full network-request rationale.
+ */
+const WORD_COLUMN_1 = HERO_TECH_COLUMN_1;
+const WORD_COLUMN_2 = HERO_TECH_COLUMN_2;
+const WORD_COLUMN_3 = HERO_TECH_COLUMN_3;
 
 interface HeroWordWallProps {
   /** Freeze the drift and stop its rAF loop. True whenever the wall is not on screen. */
