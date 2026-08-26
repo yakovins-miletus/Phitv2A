@@ -2,9 +2,10 @@ import { screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+import { Providers } from "@/app/providers";
 import { Preloader, PRELOADER_SESSION_KEY, type LoadSignal } from "@/shared/components/Preloader";
 import * as motion from "@/shared/motion";
-import { renderWithProviders } from "./test-utils";
+import { makeTestQueryClient, renderWithProviders } from "./test-utils";
 
 describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
   beforeEach(() => {
@@ -78,6 +79,98 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       expect(onStartExit).toHaveBeenCalledTimes(1);
       expect(onDone).toHaveBeenCalledTimes(1);
       expect(sessionStorage.getItem(PRELOADER_SESSION_KEY)).toBe("1");
+    });
+
+    it("reschedules the post-100-beat exit when `reduced` flips inside the 200ms window (post-100 timer race)", async () => {
+      // Reproduces the bug fixed alongside this test: the SETTLE + POST-100
+      // BEAT effect (Preloader.tsx) sets `completedAt100Ref.current = true`
+      // when it schedules the 200ms postBeatTimeout, but pre-fix never reset
+      // it. If `reduced` (or `triggerExit`, which itself depends on
+      // `[reduced, finish]`) changes identity before that timer fires, the
+      // effect re-runs: cleanup cancels the pending timer, and the re-entrant
+      // run falls into the dead `if (completedAt100Ref.current) return;`
+      // branch — triggerExit() never fires again on this path. Only the
+      // independent 2600ms BEAT_FAILSAFE_MS effect rescues it, which is why
+      // this test asserts a tight window well under that failsafe: a pass
+      // here proves the real exit path fired, not the failsafe.
+      let reducedVal: boolean | null = null;
+      vi.spyOn(motion, "useReducedMotion").mockImplementation(() => reducedVal);
+
+      let resolveSig!: () => void;
+      const sig = new Promise<void>((res) => {
+        resolveSig = res;
+      });
+
+      const onDone = vi.fn();
+      const onStartExit = vi.fn();
+
+      // Rerender through the same `<Providers>` root the initial render
+      // used. Calling `rerender(<Preloader .../>)` bare (as the "null ->
+      // false" test above does) swaps the root element type from
+      // `Providers` to `Preloader`, which makes React tear down and remount
+      // the whole tree instead of re-running effects on the same instance —
+      // that would reset every ref (including completedAt100Ref) and mask
+      // the exact race this test exists to catch. Keeping `Providers` in
+      // the tree on both renders keeps this an in-place update.
+      const queryClient = makeTestQueryClient();
+      const startTime = Date.now();
+      const { rerender } = renderWithProviders(
+        <Preloader
+          onDone={onDone}
+          onStartExit={onStartExit}
+          warmup={[{ label: "RACE", promise: sig }]}
+        />,
+        queryClient
+      );
+
+      // Let the IN beat + pre-roll entrance timer elapse first, so
+      // `entranceDone` is true before the warmup completes — the SETTLE
+      // effect early-returns while `!entranceDone` and would never schedule
+      // the post-100 timer we're about to race.
+      await new Promise((r) => setTimeout(r, 700));
+
+      // Complete the warmup inside act(): isComplete flips true, and the
+      // SETTLE effect schedules the 200ms postBeatTimeout + latches
+      // completedAt100Ref.
+      act(() => {
+        resolveSig();
+      });
+      await screen.findByText("100%");
+
+      // Still inside the 200ms window: flip `reduced` (null -> false) and
+      // rerender. This changes both `reduced` itself and `triggerExit`
+      // (dependent on `[reduced, finish]`) in the SETTLE effect's deps,
+      // forcing the exact re-run this test targets. Note `reduced` becomes
+      // `false`, not `true` — so unlike the null->true test above,
+      // `triggerExit` does NOT take the reduced-motion fast path and instead
+      // runs the full ~0.58s (`OUT_DURATION_S`) mask-reveal animation before
+      // calling `finish()`, which is why the assertion below budgets for
+      // that animation rather than using a bare ~500ms window.
+      reducedVal = false;
+      rerender(
+        <Providers queryClient={queryClient}>
+          <Preloader
+            onDone={onDone}
+            onStartExit={onStartExit}
+            warmup={[{ label: "RACE", promise: sig }]}
+          />
+        </Providers>
+      );
+
+      // Tight window: comfortably covers the real path (200ms post-100 beat
+      // + ~580ms exit animation + scheduling slack ~= 1s) while staying well
+      // clear of BEAT_FAILSAFE_MS (2600ms measured from mount) — a pass
+      // proves the rescheduled post-100 timer fired, not the failsafe.
+      await waitFor(
+        () => {
+          expect(onStartExit).toHaveBeenCalled();
+          expect(onDone).toHaveBeenCalled();
+        },
+        { timeout: 1500 }
+      );
+
+      const elapsed = Date.now() - startTime;
+      expect(elapsed).toBeLessThan(2200);
     });
   });
 

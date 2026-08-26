@@ -357,7 +357,19 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
       // We've hit 100%. Mark it and wait for the post-100 beat before exiting.
       completedAt100Ref.current = true;
       const postBeatTimeout = window.setTimeout(triggerExit, POST_100_BEAT_MS);
-      return () => window.clearTimeout(postBeatTimeout);
+      return () => {
+        window.clearTimeout(postBeatTimeout);
+        // Reset the latch on cleanup: this ref means "a post-100 timer is
+        // currently pending", not "completion was ever seen". If `reduced`
+        // (or `triggerExit`, itself dependent on `[reduced, finish]`) changes
+        // identity before the timer fires, this effect re-runs — resetting
+        // here lets it correctly reschedule instead of falling into the
+        // `if (completedAt100Ref.current) return;` dead branch below. A
+        // redundant reschedule after triggerExit has already fired is
+        // harmless: triggerExit/finish are idempotent via
+        // exitStartedRef/isDoneRef.
+        completedAt100Ref.current = false;
+      };
     }
 
     if (completedAt100Ref.current) {
