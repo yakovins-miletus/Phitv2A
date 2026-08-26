@@ -36,13 +36,19 @@ import { GROUNDS, type GroundName } from "@/shared/theme/grounds";
  */
 export type Transition = { kind: "cut" } | { kind: "wipe"; band: number };
 
-/** Default wipe band. Same distance the old global `BLEND_PX` used — long
- *  enough to read as a transition, short enough that a section still holds a
- *  stable colour while it's read. Boundaries that need a narrower runway (a
- *  short, single-beat section that can't afford this much runway without
- *  spilling into its neighbours) declare their own `band` instead of using
- *  this default — see `buildGroundStops`. */
-export const DEFAULT_BAND = 560;
+/** Default wipe band, in scroll px.
+ *
+ * Was 560 (the old global `BLEND_PX`), sized for a plain CSS crossfade where
+ * a long ramp just means a long, smooth colour drift. The WebGL renderer's
+ * per-tile hashed reveal (`glGround.ts`) pays a different cost for a long
+ * band: it's the scroll distance over which the page sits in a half-flipped,
+ * scattered-tile state, and at 560px that state lingers long enough to read
+ * as a rendering glitch rather than a transition. 220 resolves the wipe over
+ * roughly a third of the scroll distance — still long enough to see it as a
+ * dissolve, short enough that you rarely land mid-wipe. Boundaries that need
+ * a narrower runway still declare their own `band` instead of using this
+ * default — see `buildGroundStops`. */
+export const DEFAULT_BAND = 220;
 
 export interface GroundStop {
   /** DOM id of the section element this stop is anchored to. */

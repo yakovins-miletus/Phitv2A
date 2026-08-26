@@ -84,11 +84,18 @@ void main() {
   outColor = vec4(base, 1.0);
 }`;
 
-/** Tile size, in CSS pixels, before DPR scaling. Matches the retired DOM-based
- *  `PixelWipe`'s `BASE_PIXEL_SIZE` for visual continuity of "this is the
- *  site's tile-wipe visual language" now that the effect lives in the shader
- *  instead of a route-transition overlay. */
-const TILE_SIZE_CSS_PX = 64;
+/** Tile size, in CSS pixels, before DPR scaling.
+ *
+ * The retired DOM-based `PixelWipe`'s `BASE_PIXEL_SIZE` was 64 — right for a
+ * one-off route-transition overlay playing over the whole viewport at once,
+ * but now that every section boundary plays the same wipe (see the file
+ * header), a mid-wipe frame sits on screen far more often, and 64px tiles at
+ * that frequency read as a grid of broken/half-rendered blocks rather than a
+ * dissolve, especially over light grounds. Shrinking to 20 keeps the same
+ * per-tile hashed-reveal language (still visually a "tile wipe", not a
+ * crossfade) while making the flipped tiles small enough to read as texture
+ * grain instead of discrete squares. */
+const TILE_SIZE_CSS_PX = 20;
 
 export interface GlGround {
   /** `progress` is 0 at `from`, 1 at `to`, ramping between them as the caller
