@@ -61,6 +61,23 @@ const CertBadge = React.memo(({ cert }: { cert: CertBadgeData }) => (
 ));
 CertBadge.displayName = "CertBadge";
 
+// With 4 rows instead of 2, each row holds far fewer badges (~4 vs ~8), so a
+// plain doubled copy of the row's items can be narrower than the viewport —
+// the marquee would run out of content mid-loop and visibly jump/gap at the
+// seam. REPEAT_COUNT repeats the row's items enough times to comfortably
+// exceed any viewport width, and the wrap divisor below MUST match it: one
+// full loop period is `scrollWidth / REPEAT_COUNT`, so the offset has to wrap
+// there, not at a hardcoded `/2`. Changing one without the other reintroduces
+// the visible jump.
+const REPEAT_COUNT = 4;
+
+// Number of counter-moving marquee rows; data-driven split below reads this
+// rather than a hardcoded 2-way slice.
+const MARQUEE_ROWS = 4;
+
+// Alternating direction/speed per row index so no two rows sync up visually.
+const ROW_SPEEDS_PPS = [26, 20, 23, 17];
+
 function CertMarqueeRow({
   items,
   basePPS,
@@ -74,24 +91,24 @@ function CertMarqueeRow({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
-  const doubledItems = [...items, ...items];
+  const repeatedItems = Array.from({ length: REPEAT_COUNT }, () => items).flat();
 
   useAnimationFrame((_, delta) => {
     if (!running || !containerRef.current) return;
     const step = (basePPS * delta) / 1000 * (reverse ? -1 : 1);
     offsetRef.current += step;
 
-    const halfWidth = containerRef.current.scrollWidth / 2;
-    if (halfWidth <= 0) return;
-    if (offsetRef.current > halfWidth) offsetRef.current -= halfWidth;
-    if (offsetRef.current < 0) offsetRef.current += halfWidth;
+    const periodWidth = containerRef.current.scrollWidth / REPEAT_COUNT;
+    if (periodWidth <= 0) return;
+    if (offsetRef.current > periodWidth) offsetRef.current -= periodWidth;
+    if (offsetRef.current < 0) offsetRef.current += periodWidth;
     containerRef.current.style.transform = `translateX(-${offsetRef.current}px)`;
   });
 
   return (
     <Box sx={{ overflow: "hidden", py: 2 }}>
       <Box ref={containerRef} sx={{ display: "flex", alignItems: "center", willChange: "transform" }}>
-        {doubledItems.map((cert, idx) => (
+        {repeatedItems.map((cert, idx) => (
           <CertBadge key={`${cert.name}-${String(idx)}`} cert={cert} />
         ))}
       </Box>
@@ -123,10 +140,14 @@ export function CertificationsSection() {
     group.items.map((item) => ({ name: item.name, logo: item.logo, provider: group.provider })),
   );
 
-  // Split the flattened badge list across two counter-moving rows.
-  const mid = Math.ceil(allBadges.length / 2);
-  const rowA = allBadges.slice(0, mid);
-  const rowB = allBadges.slice(mid);
+  // Split the flattened badge list across MARQUEE_ROWS counter-moving rows.
+  // Round-robin (rather than a contiguous chunk-in-order split) keeps rows
+  // balanced even when the badge count isn't divisible by MARQUEE_ROWS (no
+  // empty trailing row), and as a bonus mixes providers within each row
+  // instead of clustering e.g. all 5 AWS badges into row 0.
+  const rows: CertBadgeData[][] = Array.from({ length: MARQUEE_ROWS }, (_, r) =>
+    allBadges.filter((_, i) => i % MARQUEE_ROWS === r),
+  );
 
   const running = onScreen && !reducedMotion;
 
@@ -189,8 +210,15 @@ export function CertificationsSection() {
         </Box>
       ) : (
         <Stack spacing={0}>
-          <CertMarqueeRow items={rowA} basePPS={26} running={running} />
-          <CertMarqueeRow items={rowB} basePPS={20} reverse running={running} />
+          {rows.map((row, idx) => (
+            <CertMarqueeRow
+              key={idx}
+              items={row}
+              basePPS={ROW_SPEEDS_PPS[idx % ROW_SPEEDS_PPS.length] ?? 20}
+              reverse={idx % 2 === 1}
+              running={running}
+            />
+          ))}
         </Stack>
       )}
     </Box>
