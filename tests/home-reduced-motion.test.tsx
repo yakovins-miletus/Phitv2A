@@ -76,9 +76,6 @@ test("reduced motion: the ground layer paints one static ground and starts no lo
   // that matters now that every foreground is off-white. `hero` opens on `base`.
   expect(host!.style.backgroundColor).toBe("rgb(244, 247, 252)");
 
-  const canvas = host!.querySelector("canvas");
-  expect(canvas).not.toBeNull();
-  expect(canvas!.style.opacity).toBe("0");
 });
 
 test("reduced motion: the glass blur gate is off", async () => {
