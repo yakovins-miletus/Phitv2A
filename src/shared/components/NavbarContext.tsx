@@ -28,8 +28,8 @@ export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch
  * Anchor ids now live here and useNavbarAnchor only accepts one of them.
  */
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  // Default navbar treatment is an island pill with blur background
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('island');
+  // Default navbar treatment
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('glassmorphism');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
 

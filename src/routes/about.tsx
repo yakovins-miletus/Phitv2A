@@ -72,6 +72,9 @@ export const Route = createFileRoute("/about")({
 function AboutPage() {
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
   const timelineAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TIMELINE, { dark: true });
+  const certsAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_CERTIFICATIONS, { dark: true });
+  const dailyLifeAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_DAILY_LIFE, { dark: true });
+  const blogAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_BLOG_SECTION, { dark: true });
 
   return (
     <>
@@ -219,7 +222,7 @@ function AboutPage() {
           <GraduateHallOfFameSection />
         </Box>
         
-        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+        <Box sx={{ mb: 0 }} ref={certsAnchorRef}>
           <SmoothSection>
             <CertificationsSection />
           </SmoothSection>
@@ -253,7 +256,7 @@ function AboutPage() {
             as the sheet's light `background.default` instead. Match
             `GROUNDS.deep.bg` (`NOIR.navyDeep`) explicitly, the same pattern
             the Blog/Academy Box below already uses. */}
-        <Box sx={{ bgcolor: NOIR.navyDeep, width: "100%", position: "relative", zIndex: 1, mb: { xs: 12, md: 20 } }}>
+        <Box ref={dailyLifeAnchorRef} sx={{ bgcolor: NOIR.navyDeep, width: "100%", position: "relative", zIndex: 1, mb: { xs: 12, md: 20 } }}>
           <SectionBeat
             section={aboutSection("daily-life")}
             establishing={<SeamEstablishingShot selfDriven={false} />}
@@ -288,7 +291,7 @@ function AboutPage() {
         {/* Deep Navy Dark Zone for the Intelligence Feed + Academy.
             Both sections share the navy ground so they flow seamlessly
             with no white gap between them and the footer. */}
-        <Box sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>
+        <Box ref={blogAnchorRef} sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>
           <BlogSection />
           <AcademySection />
         </Box>

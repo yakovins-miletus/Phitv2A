@@ -713,6 +713,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     : (isNotch 
                       ? "100vw" 
                       : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px"))),
+                minHeight: isIsland ? "54px !important" : undefined,
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -732,7 +733,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     : isNotch
                     ? NOIR.charcoal
                     : isIsland
-                    ? "rgba(255, 255, 255, 0.45)"
+                    ? "rgba(255, 255, 255, 0.5)"
                     : isOverDarkSection
                       ? "rgba(30, 30, 30, 0.28)"
                       : (derivedIsCompact ? NOIR.white : "transparent")),

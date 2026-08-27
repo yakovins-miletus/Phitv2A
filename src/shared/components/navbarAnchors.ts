@@ -23,8 +23,12 @@ export const NAV_ANCHORS = {
   ABOUT_HERO: 'about-hero',
   /** The About page's journey timeline. */
   ABOUT_TIMELINE: 'timeline',
+  /** The About page's certifications section. */
+  ABOUT_CERTIFICATIONS: 'about-certifications',
   /** The About page's values section. */
   ABOUT_VALUES: 'about-values',
+  /** The About page's daily life section. */
+  ABOUT_DAILY_LIFE: 'about-daily-life',
   /** The About page's academic pathways section. */
   ABOUT_ACADEMICS: 'about-academics',
   /** The immersive process section on the home page. */

@@ -74,7 +74,7 @@ const GRADUATE_COHORTS: Cohort[] = [
     badge: "AI AGENTS & PLATFORM",
     title: "2026 Batch 2 Tech Graduates",
     description: "Our latest cohort, extending web architecture, cloud-native pipelines, and AI agents for global systems.",
-    image: "/images/grads/2026B2Grads.webp",
+    image: "/images/grads/2026B2Grads.jpeg",
     highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
   },
 ];
