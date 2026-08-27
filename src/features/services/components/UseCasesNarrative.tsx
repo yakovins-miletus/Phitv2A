@@ -18,7 +18,8 @@ import { SignalDiagram } from "@/shared/components/diagrams/SignalDiagram";
 import { PipelineDiagram } from "@/shared/components/diagrams/PipelineDiagram";
 import { FollowTheSunDiagram } from "@/shared/components/diagrams/FollowTheSunDiagram";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -293,10 +294,10 @@ export function UseCasesNarrative() {
                                 fontFamily: MONO,
                                 fontSize: "0.68rem",
                                 letterSpacing: "0.12em",
-                                // goldDark on this gold-tinted chip measured
-                                // 1.85:1. goldInk is the same hue walked down
-                                // for text; the chip fill stays gold.
-                                color: NOIR.goldInk,
+                                // Bright gold as text on this gold-tinted
+                                // chip too — deliberate brand call, sub-AA
+                                // accepted (see tests/a11y-contrast.test.ts).
+                                color: NOIR.gold,
                                 fontWeight: 700,
                               }}
                             >

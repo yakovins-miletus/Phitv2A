@@ -43,8 +43,12 @@ const MARKERS = [
   // Sections touched by the reveal-choreography refactor. Without these the
   // pillars/position pair and the two orphan sections are unsampled, so a
   // threshold change there would not surface in the diff at all.
+  // WS-02 re-order: "#hero-position" (MarketPosition) is gone — the section
+  // was deleted outright. "#global-markets" is its replacement's sibling, the
+  // lifted global-markets statement that now opens this run.
+  "#global-markets",
   "#hero-pillars",
-  "#hero-position",
+  "#hero-mission",
   "#process",
   "#closing",
 ];

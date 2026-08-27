@@ -35,7 +35,8 @@ export const NOIR = {
   goldDark: "#E5B228",
   /** Brand gold walked down in lightness until it clears AA as TEXT on the
    *  light grounds. Measured: void 5.21:1, panel 5.34:1, white 5.59:1, against
-   *  gold's own 1.45 / 1.49 / 1.56.
+   *  gold's own 1.45 / 1.49 / 1.56. (Worst case across the glass-tinted light
+   *  surfaces `tests/a11y-contrast.test.ts` checks is 4.59:1, still ≥ AA_BODY.)
    *
    *  This token was retired once before, and the note above records why: half
    *  the call sites wrote the gold literally and never picked the bronze up, so
@@ -47,7 +48,32 @@ export const NOIR = {
    *    where `gold` itself measures 9:1 and up and should be used.
    *
    *  Everything outside that one role stays `gold`, so there is still exactly
-   *  one accent; this is the same accent made readable where it has to be read. */
+   *  one accent; this is the same accent made readable where it has to be read.
+   *
+   *  ── THE FULL RULE ──────────────────────────────────────────────────────
+   *
+   *  | Context                                                | Token      |
+   *  |---------------------------------------------------------|------------|
+   *  | Any ground — fills, borders, icons, decorative marks    | `gold`     |
+   *  | Text on a light ground (overlines, eyebrows, mailto     |            |
+   *  | links, active nav label, contained-button labels)       | `goldInk`  |
+   *  | Text on a dark ground (measures ≥9:1)                   | `gold`     |
+   *  | Large display type on light, ≥24px / ≥19px bold,        |            |
+   *  | decorative — case by case                                | `gold`     |
+   *
+   *  A logotype/wordmark ("IT" in PHITOPOLIS) is WCAG 1.4.3-exempt and stays
+   *  `gold` unconditionally on both grounds — it is not a text role for the
+   *  purposes of this table. */
+  /**
+   * @deprecated No longer the text token. The user made a deliberate brand
+   * call to use `gold` (#FFC72C) as the accent on every ground, including as
+   * TEXT on light grounds, accepting that it falls below the WCAG AA
+   * contrast floor there (see `tests/a11y-contrast.test.ts`, which pins the
+   * resulting ratio as a known, accepted value rather than a regression).
+   * This bronze walk-down is kept only so the token still resolves for any
+   * stray reference; do not use it in new code and do not reintroduce
+   * `dark ? gold : goldInk` branching — it's `gold` unconditionally now.
+   */
   goldInk: "#8C5F09",
   /** @deprecated Primary text on a *light* ground. On dark use `frost`. */
   ink: "#0A2A66", // Primary text uses Phitopolis Navy
@@ -131,6 +157,16 @@ export const NOIR = {
       tests/a11y-contrast.test.ts pins that sub-AA reading deliberately, the same
       way it pins the two broken white alphas. */
   live: "#3AA189",
+  /** Dark navy variant — lighter than navyInk, darker than navyField. */
+  navyDark: "#081F4D",
+  /** Charcoal grey — near-black for high-contrast text. */
+  charcoal: "#1E1E1E",
+  /** Very dark navy — darker than navyInk. */
+  midnightNavy: "#050D1B",
+  /** Blue-grey slate — neutral secondary text on dark grounds. */
+  slate: "#94A3B8",
+  /** Near-white with cool cast — lighter than frost. */
+  almostWhite: "#FAFBFD",
 } as const;
 
 /**

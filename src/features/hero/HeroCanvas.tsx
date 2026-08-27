@@ -42,13 +42,16 @@ import {
   project,
   unproject2D,
 } from "./heroScene";
-import { loadLogoMask } from "./heroLogoMask";
+import { getLogoAspect, loadLogoMask } from "./heroLogoMask";
 import {
   HORIZON,
-  VIEW_FIT,
+  calcClosureViewScale,
+  calcTightViewScale,
+  createPlaneRendererState,
   drawPlaneFrame,
   getLogoScreenBox,
   type PlaneInteraction,
+  type PlaneRendererState,
 } from "./heroPlaneRenderer";
 import {
   HIT_TEST_END,
@@ -69,16 +72,30 @@ const POINTER_LERP = 0.09;
 /** Maximum camera tilt contributed by the pointer, in radians (~11deg). */
 const TILT_AMOUNT = 0.19;
 
+export type HeroCanvasMode = "hero" | "closure";
+
 export interface HeroCanvasHandle {
   /** Push the pin's 0..1 progress. Cheap, synchronous, causes no render. */
   setProgress: (p: number) => void;
+  /** Push closure camera zoom progress (0..1 where 0=tight, 1=wide). */
+  setZoomProgress?: (p: number) => void;
+  /** Optional bounds query for P mark. */
+  getLogoBounds?: () => DOMRect | null;
 }
 
-interface HeroCanvasProps {
+export interface HeroCanvasProps {
   /** Imperative handle the scroll driver writes progress into. */
   handleRef: RefObject<HeroCanvasHandle | null>;
+  /** Operating mode: "hero" (top hero, default) or "closure" (bottom closure lattice). */
+  mode?: HeroCanvasMode;
   /** Initial progress, used for the first paint and for the static fallback frame. */
   initialProgress?: number;
+  /** Initial zoom progress (0..1) for closure mode. */
+  initialZoomProgress?: number;
+  /** Zoom progress (0..1) for closure mode. */
+  zoomProgress?: number;
+  /** Whether to draw the 3D extruded P logo. Defaults to true in "hero", false in "closure". */
+  showLogo?: boolean;
   /**
    * The `#hero` container. The frame loop publishes its lerped pointer here as
    * `--hp-mx` / `--hp-my` every frame, so the dawn ground can read cursor
@@ -96,21 +113,43 @@ interface HeroCanvasProps {
   activeNode?: number | null;
   /** Callback fired when a service node (0..3) is clicked on canvas. */
   onNodeSelect?: (index: number) => void;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function HeroCanvas({
   handleRef,
+  mode = "hero",
   initialProgress = 0,
+  initialZoomProgress,
+  zoomProgress,
+  showLogo,
   varsHostRef,
   activeNode = null,
   onNodeSelect,
+  className,
+  style,
 }: HeroCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progressRef = useRef(initialProgress);
+  const zoomProgressRef = useRef(initialZoomProgress ?? zoomProgress ?? 0);
+  const rendererStateRef = useRef<PlaneRendererState>(createPlaneRendererState());
+
+  useEffect(() => {
+    if (zoomProgress !== undefined) {
+      zoomProgressRef.current = zoomProgress;
+    }
+  }, [zoomProgress]);
+
   const activeNodeRef = useRef<number | null>(activeNode);
   useEffect(() => {
     activeNodeRef.current = activeNode;
   }, [activeNode]);
+
+  const onNodeSelectRef = useRef<((index: number) => void) | undefined>(onNodeSelect);
+  useEffect(() => {
+    onNodeSelectRef.current = onNodeSelect;
+  }, [onNodeSelect]);
   const reduced = useReducedMotion();
   const lowPower = useIsLowPowerDevice();
   // Gates affordances, never cost. A pointer-type change (hybrid devices) must
@@ -120,12 +159,28 @@ export function HeroCanvas({
   // Static means: paint one frame, never animate. Both reduced motion and
   // low-power devices take this path.
   const isStatic = reduced === true || lowPower;
+  const effectiveShowLogo = showLogo ?? (mode === "hero");
 
   useImperativeHandle(
     handleRef,
     () => ({
       setProgress: (p: number) => {
         progressRef.current = p;
+      },
+      setZoomProgress: (p: number) => {
+        zoomProgressRef.current = p;
+      },
+      getLogoBounds: () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return null;
+        const box = getLogoScreenBox(rendererStateRef.current);
+        if (!box) return null;
+        const rect = canvas.getBoundingClientRect();
+        const cx = rect.left + box.x * rect.width;
+        const by = rect.top + box.y * rect.height;
+        const w = box.w * rect.width;
+        const h = w * getLogoAspect();
+        return new DOMRect(cx - w / 2, by - h, w, h);
       },
     }),
     [],
@@ -173,7 +228,7 @@ export function HeroCanvas({
     const publishLogoBox = () => {
       const host = varsHostRef?.current;
       if (!host) return;
-      const box = getLogoScreenBox();
+      const box = getLogoScreenBox(rendererStateRef.current);
       if (!box) return;
       if (
         Math.abs(box.x - lastLogoBox.x) < 0.0005 &&
@@ -222,12 +277,19 @@ export function HeroCanvas({
      * agrees with what is on screen. Kept in one place precisely because a
      * disagreement here is invisible until the cursor lights the wrong buildings.
      */
+    const getEffectiveScale = (w: number, h: number) => {
+      if (mode === "closure") {
+        return calcClosureViewScale(w, h, zoomProgressRef.current);
+      }
+      return calcTightViewScale(w, h);
+    };
+
     const buildCamera = (flatten: number) =>
       makeCamera(
         flatten,
         width / 2,
         height * HORIZON,
-        Math.min(width, height) / (PLANE_SIZE * VIEW_FIT),
+        getEffectiveScale(width, height),
         tiltCurrent.x * TILT_AMOUNT * interaction.strength,
         tiltCurrent.y * TILT_AMOUNT * interaction.strength,
       );
@@ -256,14 +318,27 @@ export function HeroCanvas({
      */
     const paintStill = () => {
       if (width === 0 || height === 0) return;
-      const progress = isStatic ? 0 : progressRef.current;
-      drawPlaneFrame(ctx, heroFrameState(progress, false, CONTAINER_START), width, height, 0, undefined);
+      const progress = isStatic ? (mode === "closure" ? 1 : 0) : progressRef.current;
+      drawPlaneFrame(
+        ctx,
+        heroFrameState(progress, false, CONTAINER_START),
+        width,
+        height,
+        0,
+        undefined,
+        {
+          mode,
+          zoomProgress: isStatic && mode === "closure" ? 1 : zoomProgressRef.current,
+          showLogo: effectiveShowLogo,
+          rendererState: rendererStateRef.current,
+        },
+      );
       publishLogoBox();
     };
 
     const frame = (now: number) => {
       if (disposed) return;
-      if (!visible || document.hidden || progressRef.current >= CONTAINER_START) {
+      if (!visible || document.hidden || (mode === "hero" && progressRef.current >= CONTAINER_START)) {
         raf = 0;
         return;
       }
@@ -317,7 +392,20 @@ export function HeroCanvas({
         varsHostRef.current.style.setProperty("--hp-my", tiltCurrent.y.toFixed(4));
       }
 
-      drawPlaneFrame(ctx, state, width, height, elapsed, interaction);
+      drawPlaneFrame(
+        ctx,
+        state,
+        width,
+        height,
+        elapsed,
+        interaction,
+        {
+          mode,
+          zoomProgress: zoomProgressRef.current,
+          showLogo: effectiveShowLogo,
+          rendererState: rendererStateRef.current,
+        },
+      );
       publishLogoBox();
       raf = requestAnimationFrame(frame);
     };
@@ -406,7 +494,7 @@ export function HeroCanvas({
           interaction.rippleY = targetNode.cy;
           rippleAt = performance.now() - start;
         }
-        onNodeSelect?.(hoveredNode);
+        onNodeSelectRef.current?.(hoveredNode);
         return;
       }
       const rect = canvas.getBoundingClientRect();
@@ -475,8 +563,10 @@ export function HeroCanvas({
      */
     const restartPoll = window.setInterval(() => {
       if (disposed || isStatic) return;
-      if (raf === 0 && visible && !document.hidden && progressRef.current < CONTAINER_START) {
-        startLoop();
+      if (raf === 0 && visible && !document.hidden) {
+        if (mode === "closure" || progressRef.current < CONTAINER_START) {
+          startLoop();
+        }
       }
     }, 250);
 
@@ -493,13 +583,14 @@ export function HeroCanvas({
       canvas.removeEventListener("pointerleave", onPointerLeave);
       canvas.removeEventListener("click", onClick);
     };
-  }, [isStatic, pointerFine, varsHostRef]);
+  }, [isStatic, pointerFine, varsHostRef, mode, effectiveShowLogo]);
 
   return (
     <canvas
       ref={canvasRef}
       aria-hidden
-      data-testid="hero-canvas"
+      className={className}
+      data-testid={mode === "closure" ? "closure-canvas" : "hero-canvas"}
       style={{
         position: "absolute",
         inset: 0,
@@ -507,6 +598,7 @@ export function HeroCanvas({
         height: "100%",
         display: "block",
         pointerEvents: "none",
+        ...style,
       }}
     />
   );

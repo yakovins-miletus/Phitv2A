@@ -11,10 +11,12 @@ import type { BlogListParams, BlogSort } from "@/features/blog/api";
 import { BlogPostList } from "@/features/blog/components/BlogPostList";
 import { BlogToolbar } from "@/features/blog/components/BlogToolbar";
 import { BlogVideoHero } from "@/features/blog/components/BlogVideoHero";
+import { BlogYearRail } from "@/features/blog/components/BlogYearRail";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
 import { Section } from "@/shared/components/Section";
 import { pageHead } from "@/shared/seo";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 const PAGE_SIZE = 9;
 const CATEGORY_PATTERN = /^[A-Za-z0-9 &-]{1,60}$/;
@@ -31,6 +33,7 @@ interface BlogSearch {
   category?: string | undefined;
   q?: string | undefined;
   sort?: BlogSort | undefined;
+  year?: number | undefined;
 }
 
 function paramsFromSearch(search: BlogSearch): BlogListParams {
@@ -40,6 +43,7 @@ function paramsFromSearch(search: BlogSearch): BlogListParams {
     ...(search.category !== undefined ? { category: search.category } : {}),
     ...(search.q !== undefined ? { q: search.q } : {}),
     ...(search.sort !== undefined ? { sort: search.sort } : {}),
+    ...(search.year !== undefined ? { year: search.year } : {}),
   };
 }
 
@@ -61,11 +65,19 @@ export const Route = createFileRoute("/blog/")({
     // Canonical URLs omit the defaults ("newest", offset 0).
     const rawSort = search["sort"];
     const sort = isBlogSort(rawSort) && rawSort !== "newest" ? rawSort : undefined;
+    // Matches Heimdall's YearParam bound (`ge=1000, le=9999`) so a malformed
+    // deep link is dropped client-side instead of round-tripping to a 422.
+    const rawYear = search["year"];
+    const year =
+      typeof rawYear === "number" && Number.isInteger(rawYear) && rawYear >= 1000 && rawYear <= 9999
+        ? rawYear
+        : undefined;
     return {
       ...(offset !== undefined ? { offset } : {}),
       ...(category !== undefined ? { category } : {}),
       ...(q !== undefined ? { q } : {}),
       ...(sort !== undefined ? { sort } : {}),
+      ...(year !== undefined ? { year } : {}),
     };
   },
   head: () =>
@@ -106,6 +118,7 @@ function BlogPage() {
       ...(next.category !== undefined ? { category: next.category } : {}),
       ...(next.q !== undefined ? { q: next.q } : {}),
       ...(next.sort !== undefined && next.sort !== "newest" ? { sort: next.sort } : {}),
+      ...(next.year !== undefined ? { year: next.year } : {}),
     };
   };
 
@@ -145,20 +158,28 @@ function BlogPage() {
                   void navigate({ search: buildSearch({ sort }), replace: true });
                 }}
               />
-              <Box sx={{ mt: 4 }}>
-                <BlogPostList
-                  page={data}
-                  isRefreshing={page.isPlaceholderData}
-                  activeCategory={search.category ?? null}
-                  onCategoryChange={(category: string | null) => {
-                    void navigate({ search: buildSearch({ category: category ?? undefined }) });
-                  }}
-                  onPageChange={(pageNumber: number) => {
-                    const offset = (pageNumber - 1) * PAGE_SIZE;
-                    void navigate({ search: buildSearch({ offset }) });
-                  }}
-                />
-              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <BlogYearRail
+                activeYear={search.year ?? null}
+                onYearChange={(year: number | null) => {
+                  void navigate({ search: buildSearch({ year: year ?? undefined }) });
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 9 }}>
+              <BlogPostList
+                page={data}
+                isRefreshing={page.isPlaceholderData}
+                activeCategory={search.category ?? null}
+                onCategoryChange={(category: string | null) => {
+                  void navigate({ search: buildSearch({ category: category ?? undefined }) });
+                }}
+                onPageChange={(pageNumber: number) => {
+                  const offset = (pageNumber - 1) * PAGE_SIZE;
+                  void navigate({ search: buildSearch({ offset }) });
+                }}
+              />
             </Grid>
           </Grid>
         </Section>

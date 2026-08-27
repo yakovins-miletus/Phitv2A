@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { act, render } from "@testing-library/react";
-import { NAV_ANCHORS, NavbarProvider, useNavbar } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS, NavbarProvider } from "@/shared/components/NavbarContext";
+import { useNavbar } from "@/shared/components/navbarHooks";
 
 // `NavbarContext`'s `isOverDarkSection` used to be `darkAnchors.size > 0` — a plain
 // boolean OR across every currently-intersecting anchor. Two anchors registered at

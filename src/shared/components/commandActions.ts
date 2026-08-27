@@ -16,7 +16,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavbar, type NavbarMode } from "./NavbarContext";
+import type { NavbarMode } from "./NavbarContext";
+import { useNavbar } from "./navbarHooks";
 import { useReducedMotion } from "@/shared/motion";
 import { setHeroBgMode, type HeroBgMode } from "@/features/hero/heroBgModeStore";
 

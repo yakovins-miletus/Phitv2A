@@ -60,7 +60,6 @@ export function ReachMap() {
   const [activeCity, setActiveCity] = useState<string | null>(null);
 
   const land = theme.palette.primary.main;
-  const arc = NOIR.gold;
 
   const show = reduced === true || inView;
 
@@ -158,7 +157,7 @@ export function ReachMap() {
           </desc>
 
           {/* Clean Map Base Ground */}
-          <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill="#FAFBFD" />
+          <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill={NOIR.almostWhite} />
           {/* Subtle Ambient Ocean Grid */}
           <rect width={WORLD_MAP.width} height={WORLD_MAP.height} fill={`url(#sea-pattern-${uid})`} />
 
@@ -171,29 +170,30 @@ export function ReachMap() {
             strokeLinecap="round"
           />
 
-          {/* Glowing Optical Reach Arcs */}
+          {/* Reach Arcs: navy structure at rest, gold only while examined */}
           {REACH.filter((c) => !c.hideArc).map((city, index) => {
             const isHovered = activeCity === city.label;
             return (
               <g key={`arc-group-${city.label}`}>
-                {/* Background glow halo */}
+                {/* Background glow halo — only present on hover, when gold is meaningful */}
                 <motion.path
                   d={arcPath(HQ, city)}
                   fill="none"
-                  stroke={arc}
-                  strokeWidth={isHovered ? 4 : 2}
-                  strokeOpacity={isHovered ? 0.4 : 0.15}
+                  stroke={NOIR.gold}
+                  strokeWidth={isHovered ? 4 : 0}
+                  strokeOpacity={isHovered ? 0.4 : 0}
                   filter={`url(#arcGlow-${uid})`}
                   initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
                   animate={show ? { pathLength: 1 } : false}
                   transition={{ duration: 1, delay: index * 0.2, ease: "easeInOut" }}
                 />
-                {/* Foreground crisp golden line */}
+                {/* Foreground line: navy structure at rest, gold gradient on hover */}
                 <motion.path
                   d={arcPath(HQ, city)}
                   fill="none"
-                  stroke={`url(#arcGrad-${uid})`}
-                  strokeWidth={isHovered ? 2.5 : 1.75}
+                  stroke={isHovered ? `url(#arcGrad-${uid})` : NOIR.navyField}
+                  strokeOpacity={isHovered ? 1 : 0.45}
+                  strokeWidth={isHovered ? 2.5 : 1.25}
                   strokeDasharray={isHovered ? "none" : "6 3"}
                   initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
                   animate={show ? { pathLength: 1 } : false}
@@ -242,7 +242,7 @@ export function ReachMap() {
             />
           ))}
 
-          {/* Destination City Pin Vertices */}
+          {/* Destination City Pin Vertices: navy at rest, gold only while examined */}
           {REACH.map((city) => {
             const p = projectPoint(city.lon, city.lat);
             const isHovered = activeCity === city.label;
@@ -253,15 +253,17 @@ export function ReachMap() {
                   cy={p.y}
                   r={isHovered ? 6.5 : 5}
                   fill={NOIR.white}
-                  stroke={NOIR.goldDark}
-                  strokeWidth={isHovered ? 2.5 : 1.75}
-                  filter={`url(#arcGlow-${uid})`}
+                  stroke={isHovered ? NOIR.goldDark : NOIR.navyField}
+                  strokeWidth={isHovered ? 2.5 : 1.5}
+                  strokeOpacity={isHovered ? 1 : 0.6}
+                  filter={isHovered ? `url(#arcGlow-${uid})` : undefined}
                 />
                 <circle
                   cx={p.x}
                   cy={p.y}
                   r={isHovered ? 3 : 2}
-                  fill={NOIR.gold}
+                  fill={isHovered ? NOIR.gold : NOIR.navyField}
+                  fillOpacity={isHovered ? 1 : 0.6}
                 />
               </g>
             );
@@ -318,7 +320,7 @@ export function ReachMap() {
                     width: 4,
                     height: 4,
                     borderRadius: "50%",
-                    bgcolor: isHovered ? NOIR.goldLight : NOIR.gold,
+                    bgcolor: isHovered ? NOIR.goldLight : NOIR.navyField,
                   }}
                 />
                 <Box>

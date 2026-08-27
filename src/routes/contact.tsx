@@ -14,7 +14,8 @@ import { alpha } from "@mui/material/styles";
 
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 // Three steps, and the middle one used to undo the third: it promised
 // "immediate review" directly above "within 24 to 48 business hours". A reader
@@ -94,74 +95,56 @@ function ContactPage() {
           <ContactForm />
         </Grid>
 
-        {/* Inspector Panel Column */}
+        {/* Inspector Column */}
         <Grid size={{ xs: 12, md: 5 }} sx={{ display: "flex", flexDirection: "column" }}>
-          <Box
-            sx={{
-              height: "100%",
-              borderRadius: "24px",
-              overflow: "hidden",
-              border: `1px solid ${alpha(NOIR.ink, 0.12)}`,
-              bgcolor: "background.paper",
-              boxShadow: `0 20px 50px ${alpha(NOIR.ink, 0.06)}`,
-              p: { xs: 3.5, md: 4.5 },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <Stack spacing={3.5}>
-              {/* No eyebrow. It read "INQUIRY PROTOCOL", which is jargon for a
-                  contact page, and its replacement would have restated the
-                  heading directly below it word for word. */}
-              <Box>
-                <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
-                  What happens next
+          <Stack spacing={5} sx={{ height: "100%" }}>
+            {/* No eyebrow. It read "INQUIRY PROTOCOL", which is jargon for a
+                contact page, and its replacement would have restated the
+                heading directly below it word for word. */}
+            <Box>
+              <Typography variant="h3" component="h2" sx={{ fontWeight: 800, color: "text.primary" }}>
+                What happens next
+              </Typography>
+            </Box>
+
+            <NextStepsTimeline />
+
+            {/* Direct Reach Channels — quiet mono labels over plain links,
+                no nested surfaces. */}
+            <Stack spacing={2.5}>
+              <Typography
+                sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.caption, letterSpacing: "0.18em", textTransform: "uppercase", color: "text.secondary", fontWeight: 700 }}
+              >
+                Direct Channels
+              </Typography>
+
+              <Stack spacing={0.5}>
+                <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.caption, color: "text.secondary", fontWeight: 700 }}>
+                  GENERAL &amp; PARTNERSHIPS
                 </Typography>
-              </Box>
-
-              <NextStepsTimeline />
-
-              {/* Direct Reach Channels */}
-              <Stack spacing={2} sx={{ pt: 3, borderTop: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
-                <Typography
-                  sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.caption, letterSpacing: "0.18em", textTransform: "uppercase", color: "text.secondary", fontWeight: 700 }}
-                >
-                  Direct Channels
-                </Typography>
-
-                <Box sx={{ p: 2, borderRadius: "12px", bgcolor: `${alpha(NOIR.ink, 0.03)}`, border: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
-                  <Stack spacing={0.5}>
-                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "text.secondary", fontWeight: 700 }}>
-                      GENERAL &amp; PARTNERSHIPS
-                    </Typography>
-                    <Link href={`mailto:${CONTENT.contact.generalInquiries}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: TYPE_SCALE.subtitle1 }}>
-                      {CONTENT.contact.generalInquiries}
-                    </Link>
-                  </Stack>
-                </Box>
-
-                <Box sx={{ p: 2, borderRadius: "12px", bgcolor: `${alpha(NOIR.ink, 0.03)}`, border: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
-                  <Stack spacing={0.5}>
-                    <Typography variant="caption" sx={{ fontFamily: MONO, color: "text.secondary", fontWeight: 700 }}>
-                      CAREERS &amp; GRADUATE FELLOWSHIPS
-                    </Typography>
-                    <Link href={`mailto:${CONTENT.contact.careersEmail}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: TYPE_SCALE.subtitle1 }}>
-                      {CONTENT.contact.careersEmail}
-                    </Link>
-                  </Stack>
-                </Box>
+                <Link href={`mailto:${CONTENT.contact.generalInquiries}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: TYPE_SCALE.subtitle1 }}>
+                  {CONTENT.contact.generalInquiries}
+                </Link>
               </Stack>
 
-              {/* HQ Address Info */}
-              <Stack spacing={1} sx={{ pt: 2, borderTop: `1px solid ${alpha(NOIR.ink, 0.08)}` }}>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontSize: TYPE_SCALE.body2 }}>
-                  <strong>Phitopolis International Corp.</strong><br />
-                  27/F Ecotower, 32nd St. cor. 9th Ave., Bonifacio Global City, Taguig, Metro Manila, Philippines 1634
+              <Stack spacing={0.5}>
+                <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.caption, color: "text.secondary", fontWeight: 700 }}>
+                  CAREERS &amp; GRADUATE FELLOWSHIPS
                 </Typography>
+                <Link href={`mailto:${CONTENT.contact.careersEmail}`} underline="hover" color="primary" sx={{ fontWeight: 800, fontSize: TYPE_SCALE.subtitle1 }}>
+                  {CONTENT.contact.careersEmail}
+                </Link>
               </Stack>
             </Stack>
-          </Box>
+
+            {/* HQ Address Info */}
+            <Stack spacing={1}>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontSize: TYPE_SCALE.body2 }}>
+                <strong>Phitopolis International Corp.</strong><br />
+                27/F Ecotower, 32nd St. cor. 9th Ave., Bonifacio Global City, Taguig, Metro Manila, Philippines 1634
+              </Typography>
+            </Stack>
+          </Stack>
         </Grid>
       </Grid>
 

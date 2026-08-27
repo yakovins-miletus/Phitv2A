@@ -23,7 +23,8 @@ import { BrochureDrawer } from "@/shared/components/BrochureDrawer";
 import { pageHead } from "@/shared/seo";
 import { MONO, DISPLAY_FONT, BODY_FONT, TYPE_SCALE, LINE_HEIGHT, TRACKING } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 export const Route = createFileRoute("/careers/")({
   head: () =>
@@ -283,7 +284,7 @@ export function CareersIndexPage() {
                           "&:hover": {
                             bgcolor: isSelected ? "var(--accent-20)" : "var(--glass-fill-2)",
                             borderColor: isSelected ? "var(--accent-fg)" : "var(--glass-border-2)",
-                            color: isSelected ? "var(--accent-fg)" : "var(--text-1)",
+                            color: isSelected ? "var(--accent-ink)" : "var(--text-1)",
                           },
                           "&:focus-visible": {
                             outline: "2px solid var(--accent-fg)",
@@ -316,7 +317,7 @@ export function CareersIndexPage() {
                       fontFamily: MONO,
                       fontSize: TYPE_SCALE.micro,
                       letterSpacing: TRACKING.meta,
-                      color: "var(--accent-fg)",
+                      color: "var(--accent-ink)",
                       mb: 1,
                       textTransform: "uppercase",
                     }}
@@ -358,7 +359,7 @@ export function CareersIndexPage() {
                       fontSize: TYPE_SCALE.caption,
                       borderRadius: "var(--r-control)",
                       borderColor: "var(--accent-border)",
-                      color: "var(--accent-fg)",
+                      color: "var(--accent-ink)",
                       bgcolor: "var(--accent-15)",
                       "&:hover": {
                         bgcolor: "var(--accent-25)",
@@ -424,9 +425,9 @@ export function CareersIndexPage() {
                                 <Box
                                   sx={{
                                     borderRadius: "var(--r-card)",
-                                    bgcolor: isExpanded ? "var(--glass-fill-2)" : "var(--g-panel)",
+                                    bgcolor: "var(--g-panel)",
                                     border: "1px solid",
-                                    borderColor: isExpanded ? "var(--accent-border)" : "var(--glass-border-1)",
+                                    borderColor: "var(--glass-border-1)",
                                     boxShadow: isExpanded ? "var(--glass-shadow-2)" : "var(--glass-shadow-1)",
                                     transition: "background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out)",
                                     overflow: "hidden",
@@ -467,11 +468,11 @@ export function CareersIndexPage() {
                               },
                               "&:hover": {
                                 "& .job-title": {
-                                  color: "var(--accent-fg)",
+                                  color: "var(--accent-ink)",
                                 },
                                 "& .expand-indicator": {
                                   borderColor: "var(--accent-fg)",
-                                  color: "var(--accent-fg)",
+                                  color: "var(--accent-ink)",
                                 },
                               },
                             }}
@@ -555,10 +556,10 @@ export function CareersIndexPage() {
                                 px: 2,
                                 py: 0.8,
                                 borderRadius: "var(--r-pill)",
-                                bgcolor: isExpanded ? "var(--accent-15)" : "var(--glass-fill-2)",
+                                bgcolor: "var(--glass-fill-2)",
                                 border: "1px solid",
-                                borderColor: isExpanded ? "var(--accent-border)" : "var(--glass-border-1)",
-                                color: isExpanded ? "var(--accent-fg)" : "var(--text-2)",
+                                borderColor: isExpanded ? "var(--glass-border-2)" : "var(--glass-border-1)",
+                                color: isExpanded ? "var(--text-1)" : "var(--text-2)",
                                 fontFamily: MONO,
                                 fontSize: TYPE_SCALE.micro,
                                 fontWeight: 700,
@@ -601,47 +602,42 @@ export function CareersIndexPage() {
                                   sx={{
                                     px: { xs: 2.5, sm: 3, md: 3.5 },
                                     pb: { xs: 3, sm: 3.5, md: 4 },
-                                    pt: 1,
+                                    pt: 2.5,
                                     borderTop: "1px solid var(--glass-border-1)",
                                   }}
                                 >
-                                  {/* Datasheet Meta-Rail */}
+                                  {/* Datasheet Meta-Rail — no surface, mono label treatment carries it */}
                                   <Box
                                     sx={{
-                                      py: 1.5,
-                                      px: 2,
-                                      mb: 2.5,
-                                      borderRadius: "var(--r-control)",
-                                      bgcolor: "var(--glass-fill-2)",
-                                      border: "1px solid var(--glass-border-1)",
                                       display: "flex",
                                       flexWrap: "wrap",
-                                      gap: { xs: 1.5, md: 3 },
-                                      alignItems: "center",
+                                      gap: { xs: 1, md: 2.5 },
+                                      alignItems: "baseline",
+                                      mb: 3.5,
                                     }}
                                   >
-                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
-                                      DEPT // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.department.toUpperCase()}</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--text-3)" }}>
+                                      DEPT // <Box component="span" sx={{ color: "var(--text-1)", fontWeight: 700 }}>{position.department.toUpperCase()}</Box>
                                     </Typography>
                                     <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none" }}>|</Box>
-                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
-                                      LOC // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.location.toUpperCase()}</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--text-3)" }}>
+                                      LOC // <Box component="span" sx={{ color: "var(--text-1)", fontWeight: 700 }}>{position.location.toUpperCase()}</Box>
                                     </Typography>
                                     <Box component="span" sx={{ color: "var(--glass-border-2)", userSelect: "none", display: { xs: "none", sm: "inline" } }}>|</Box>
-                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--accent-fg)" }}>
-                                      TYPE // <Box component="span" sx={{ color: "var(--text-1)" }}>{position.type.toUpperCase()}</Box>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: TYPE_SCALE.micro, letterSpacing: TRACKING.meta, color: "var(--text-3)" }}>
+                                      TYPE // <Box component="span" sx={{ color: "var(--text-1)", fontWeight: 700 }}>{position.type.toUpperCase()}</Box>
                                     </Typography>
                                   </Box>
 
                                   {/* Summary Prose (45-75ch measure) */}
-                                  <Box sx={{ mb: 3 }}>
+                                  <Box sx={{ mb: 3.5 }}>
                                     <Typography
                                       sx={{
                                         fontFamily: MONO,
                                         fontSize: TYPE_SCALE.micro,
                                         letterSpacing: TRACKING.meta,
                                         color: "var(--text-3)",
-                                        mb: 1,
+                                        mb: 0.8,
                                         textTransform: "uppercase",
                                       }}
                                     >
@@ -661,14 +657,14 @@ export function CareersIndexPage() {
                                   </Box>
 
                                   {/* Tech Stack Chips */}
-                                  <Box sx={{ mb: 3.5 }}>
+                                  <Box sx={{ mb: 4 }}>
                                     <Typography
                                       sx={{
                                         fontFamily: MONO,
                                         fontSize: TYPE_SCALE.micro,
                                         letterSpacing: TRACKING.meta,
                                         color: "var(--text-3)",
-                                        mb: 1.2,
+                                        mb: 0.8,
                                         textTransform: "uppercase",
                                       }}
                                     >

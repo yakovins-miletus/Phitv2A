@@ -11,7 +11,8 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 import { homeSection } from "@/shared/sections";
 import { Reveal } from "@/shared/components/Reveal";
 import { ServiceVector } from "./ServiceDrawer";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 export function CapabilityRack() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_SERVICES, { dark: false });

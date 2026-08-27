@@ -6,37 +6,13 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { usePreloaderReady, useReducedMotion } from "@/shared/motion";
 import { LENIS_SMOOTH_DURATION, scrollEase } from "@/shared/motion/scrollSpeed";
 import { publishScrollTriggerRefresh } from "@/shared/motion/scrollTriggerBridge";
+import { setActiveLenis, getLenis } from "./smoothScrollControls";
 
 gsap.registerPlugin(ScrollTrigger);
 
 /** GSAP's own lagSmoothing defaults, restored when Lenis tears down. */
 const GSAP_LAG_THRESHOLD_MS = 500;
 const GSAP_LAG_ADJUSTED_MS = 33;
-
-// The live Lenis instance. Null whenever smoothing is off — and note that this
-// module is only ever imported by the lazy home chunk, so on every route other
-// than "/" it is null for the entire visit. That is by design (Lenis smoothing
-// is a home-page treatment), but it means the three accessors below are silent
-// no-ops elsewhere: CandidatesAndCareersSection's stopLenis/startLenis pairs
-// around its drawer do nothing off the home page. Documented rather than
-// "fixed", because hoisting SmoothScroll to the root would turn smoothing on
-// site-wide.
-let activeLenis: Lenis | null = null;
-
-/** The live Lenis instance, or null when smoothing is off (reduced motion,
- *  preloader still up, unmounted, or any route other than "/"). */
-export function getLenis(): Lenis | null {
-  return activeLenis;
-}
-
-/** Pause page scrolling under an overlay UI. No-op when Lenis isn't live. */
-export function stopLenis(): void {
-  activeLenis?.stop();
-}
-/** Resume after stopLenis. No-op when Lenis isn't live. */
-export function startLenis(): void {
-  activeLenis?.start();
-}
 
 // Published for AppShell, which is eager and must not import gsap. See
 // scrollTriggerBridge.ts. Module scope, matching the previous
@@ -66,7 +42,7 @@ export function SmoothScroll() {
     // explicitly enabled), so mobile momentum scroll already rides the
     // browser's native handling — no extra config needed there.
     const lenis = new Lenis({ duration: LENIS_SMOOTH_DURATION, easing: scrollEase });
-    activeLenis = lenis;
+    setActiveLenis(lenis);
     // Dev-only handle for the parity ladder in tests/e2e/. The probe must
     // drive Lenis rather than fight its rAF loop, or every recorded scroll
     // offset is whatever Lenis animated back to. Stripped from production.
@@ -103,10 +79,11 @@ export function SmoothScroll() {
       if (import.meta.env.DEV) {
         delete (window as unknown as { __lenis?: Lenis }).__lenis;
       }
+      const activeLenis = getLenis();
       if (activeLenis) {
         activeLenis.start();
         activeLenis.destroy();
-        activeLenis = null;
+        setActiveLenis(null);
       }
       gsap.ticker.remove(onTick);
       gsap.ticker.lagSmoothing(GSAP_LAG_THRESHOLD_MS, GSAP_LAG_ADJUSTED_MS);

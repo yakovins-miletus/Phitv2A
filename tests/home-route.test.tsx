@@ -36,17 +36,15 @@ test("home route loads via the router: hero, services, new visual sections", asy
     screen.getByRole("heading", { name: /our three operating pillars/i }),
   ).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
-  // Was "Elite Technical Talent". "Elite" was stripped in the 2026-08-09 copy pass:
-  // it is undisclaimable filler, and the sentence beneath it carries the real claim.
-  expect(screen.getByRole("heading", { name: "Technical Talent" })).toBeInTheDocument();
 
   // Beat 4 was cut: no leadership bio and no in-hero CTA.
   expect(screen.queryByText(/Founded by Filipina corporate leader/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/INITIATE TECHNICAL PARTNERSHIP/i)).not.toBeInTheDocument();
-  // The Wall St. pedigree survives, reframed as a market advantage.
-  expect(
-    screen.getByRole("heading", { name: "Wall St. & Banking Leadership" }),
-  ).toBeInTheDocument();
+  // WS-02: `MarketPosition` is deleted outright — it restated MissionStatement's
+  // job, and its differentiator headings ("Technical Talent", "Wall St. &
+  // Banking Leadership", "International Backing") no longer render anywhere
+  // on Home.
+  expect(screen.queryByRole("heading", { name: "Wall St. & Banking Leadership" })).not.toBeInTheDocument();
 
   // PRD-home-client-focus §2b: CapabilityRack (the "four disciplines" grid
   // duplicated from /services) no longer mounts on home — was previously

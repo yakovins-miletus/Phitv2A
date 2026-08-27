@@ -42,6 +42,14 @@ export interface ChapterDef {
  *  names what is on screen at each position instead. The phase constants in
  *  `heroScene.ts` (PHASE_FLATTEN_END, DWELL_END and friends) keep the
  *  engineering names; only these display strings changed. */
+// Partial reversal of the WS-02 re-order (explicit user decision):
+// MissionStatement ("who we are") moves back up to run right after the hero,
+// ahead of the global-markets claim, instead of as a support beat after
+// capability has been shown. `QUANTITATIVE R&D` now covers that whole
+// opening trio — hero, MissionStatement, and the lifted global-markets
+// statement — rather than hero+global-markets alone, so there is no longer a
+// separate "WHO WE ARE" chapter; `PRACTICE` still covers everything that
+// shows the work (pillars, use-cases, process).
 export const CHAPTERS: readonly ChapterDef[] = [
   { index: 0, label: "THE MARK", act: "services" },
   { index: 1, label: "THE GRID", act: "services" },
@@ -50,9 +58,8 @@ export const CHAPTERS: readonly ChapterDef[] = [
   { index: 4, label: "QUANTITATIVE R&D", act: "services" },
   { index: 5, label: "PRACTICE", act: "services" },
   { index: 6, label: "REACH", act: "services" },
-  // Closing beat (operational footprint / horizon gateway) is now the page's
-  // final chapter — it used to share chapter 9 ("SIGNAL") with `blog`, which
-  // has relocated to /about.
+  // Closing beat (operational footprint / horizon gateway) is still the
+  // page's final chapter.
   { index: 7, label: "HORIZON", act: "services" },
 ];
 
@@ -144,6 +151,14 @@ export const STAGE_ATTR = "data-stage-section";
  *  `daily-life`, `candidates`, `testimonials`, `blog` relocated to
  *  `ABOUT_SECTIONS` below (PRD-home-client-focus §US-2) — the talent/culture
  *  narrative now lives on /about instead of closing out the home page. */
+// Partial reversal of the WS-02 re-order (explicit user decision): mission
+// core belongs near the top again. Order now: hero -> MissionStatement (who
+// we are, right after the hero) -> global-markets (the claim) ->
+// OperatingPillars -> UseCases -> Process (what we build, and how) -> Reach
+// (scale as proof) -> Closing. The section that used to restate
+// MissionStatement's job is still deleted outright — that part of WS-02
+// stands. See "## Handoff to WS-17" in
+// docs/workstreams/ws-02-home-architecture.md for the prior reported order.
 export const HOME_SECTIONS: readonly SectionDef[] = [
   // ── SERVICES ──────────────────────────────────────────────────────────────
   { id: "hero-flatten", label: "Logo Flatten", chapter: 0, ground: "void" },
@@ -151,24 +166,26 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   { id: "hero-reveal", label: "Wordmark Reveal", chapter: 2, ground: "void" },
   { id: "hero-dwell", label: "Logo Dwell", chapter: 3, ground: "void" },
   { id: "hero", label: "Signal Core", chapter: 4, ground: "void" },
+  // Mission core, back up front: runs immediately after the hero again,
+  // ahead of the global-markets claim. It still lazy-mounts `ServiceGlobe`
+  // behind its own `useInView` gate (900px prefetch margin) — that gate is
+  // load-bearing regardless of where in the order the section sits, and
+  // firing earlier on scroll now is expected, not a regression — see
+  // MissionStatement.tsx.
   { id: "hero-mission", label: "Core Mission", chapter: 4, ground: "panel" },
+  // The lifted global-markets text blob (WS-02): its own full-viewport beat,
+  // now right after MissionStatement — the wager the rest of the page pays
+  // off. No establishing shot, no graphic; the words carry it.
+  { id: "global-markets", label: "The Global-Markets Wager", chapter: 4, ground: "deep" },
   {
     id: "hero-pillars",
     label: "Operating Pillars",
-    chapter: 4,
+    chapter: 5,
     choreo: "grow-left",
     ground: "void",
     establishScale: "major",
   },
-  {
-    id: "hero-position",
-    label: "Market Position",
-    chapter: 4,
-    choreo: "grow-right",
-    ground: "panel",
-    establishScale: "mini",
-  },
-  { id: "services", label: "Capabilities", chapter: 4, ground: "void", establishScale: "mini" },
+  { id: "services", label: "Capabilities", chapter: 5, ground: "void", establishScale: "mini" },
   {
     id: "use-cases",
     label: "Architectural Use-Cases",
@@ -197,6 +214,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     chapter: 7,
     choreo: "zoom-center",
     ground: "field",
+    ownsPin: true,
     noExitDim: true,
     establishScale: "mini",
     establishAlign: "left",

@@ -69,6 +69,32 @@ const IN_DURATION_S = 0.34;
 const OUT_DURATION_S = 0.58;
 
 /**
+ * Pre-roll beat: a short brand hold (wordmark, hairline) before the progress
+ * counter appears. This allows the number to arrive into an established frame
+ * instead of popping in immediately. The wordmark and hairline are visible
+ * during this beat; the counter (readout) delays its entrance.
+ *
+ * Target warm-cache intro duration: ~1.5s total
+ *  - 0.34s entrance (wordmark + hairline)
+ *  - 0.30s pre-roll hold (counter hidden)
+ *  - 0.58s exit (mask reveal)
+ *  - 0.20s post-100 beat (pause at 100% before exit)
+ *  - Paced progress easing across signals (0.5s per update)
+ *
+ * This 1.5s duration is deliberately modest: on a 200KB site it reads as
+ * considered, not as a stall. Lusion buys length with genuinely heavy WebGL;
+ * this site should not hide behind fabricated work.
+ */
+const PRE_ROLL_DURATION_S = 0.3;
+
+/**
+ * Post-100 beat: a brief pause after progress reaches 100% before the exit
+ * sequence (mask reveal) starts. This gives the "READY" state a moment to
+ * register visually before the site is revealed.
+ */
+const POST_100_BEAT_MS = 200;
+
+/**
  * Settle cap, and the one number that encodes the warm-up bargain.
  *
  * The previous revision capped settle at 800ms as part of a 1.5s total budget.
@@ -80,7 +106,8 @@ const OUT_DURATION_S = 0.58;
  * 1800ms is the compromise: long enough that a cold load usually completes the
  * warm-up, short enough that a stalled CDN costs under two seconds. Exit fires
  * the *instant* signals resolve, so a warm cache still leaves in ~450ms — the
- * cap is a ceiling, never a wall. Escape always skips.
+ * cap is a ceiling, never a wall. Escape always skips. The post-100 beat adds
+ * 200ms, so the new effective cap is ~2000ms before exit.
  */
 const MAX_SETTLE_MS = 1800;
 const BEAT_FAILSAFE_MS = 2600;
@@ -125,6 +152,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const onStartExitRef = useRef(onStartExit);
   const entranceStartedRef = useRef(false);
   const exitStartedRef = useRef(false);
+  const completedAt100Ref = useRef(false);
 
   useEffect(() => {
     onDoneRef.current = onDone;
@@ -280,33 +308,79 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
         { duration: 0.5, delay: 0.12, ease: EASE_OUT_EXPO },
       );
     }
+    // PRE-ROLL BEAT: delay the readout (progress counter) appearance until after
+    // the wordmark and hairline are established. This gives the counter room to
+    // appear into a stable frame rather than competing with the entrance.
     if (readoutRef.current) {
-      animate(readoutRef.current, { opacity: [0, 1] }, { duration: 0.3, delay: 0.22 });
+      animate(
+        readoutRef.current,
+        { opacity: [0, 1] },
+        { duration: 0.3, delay: 0.22 + PRE_ROLL_DURATION_S }
+      );
     }
 
-    const entranceTimer = window.setTimeout(() => setEntranceDone(true), IN_DURATION_S * 1000);
+    const entranceTimer = window.setTimeout(
+      () => setEntranceDone(true),
+      (IN_DURATION_S + PRE_ROLL_DURATION_S) * 1000
+    );
     return () => window.clearTimeout(entranceTimer);
   }, [reduced]);
 
-  // The fill is the progress bar. scaleX only — no width animation, no reflow.
+  // PACED PROGRESS: The fill is the progress bar. scaleX only — no width animation,
+  // no reflow. Duration increased from 0.28s to 0.5s to create a visible easing
+  // effect as the bar approaches its true value. The displayed percentage never
+  // exceeds the real resolved/total progress.
   useEffect(() => {
     if (fillRef.current) {
-      animate(fillRef.current, { scaleX: progressPercent / 100 }, { duration: 0.28, ease: "easeOut" });
+      animate(fillRef.current, { scaleX: progressPercent / 100 }, { duration: 0.5, ease: "easeOut" });
     }
   }, [progressPercent]);
 
-  // SETTLE. Leaves the instant the warm-up completes; the cap only bites when
-  // something is genuinely stuck.
+  // SETTLE + POST-100 BEAT. After entrance is done and warmup is complete,
+  // wait for a brief post-100 beat before starting the exit (mask reveal).
+  // The cap only bites when something is genuinely stuck.
   useEffect(() => {
     if (reduced === true) return;
     if (!entranceDone) return;
-    if (isComplete) {
+
+    if (forced) {
+      // Escape means skip, immediately — the post-100 beat is a grace note for
+      // a real completion, not something an impatient visitor should have to
+      // sit through. Bypass it entirely rather than letting `isComplete`
+      // (which is also true when forced) route Escape through the same delay
+      // as a natural finish.
       triggerExit();
       return;
     }
+
+    if (isComplete && !completedAt100Ref.current) {
+      // We've hit 100%. Mark it and wait for the post-100 beat before exiting.
+      completedAt100Ref.current = true;
+      const postBeatTimeout = window.setTimeout(triggerExit, POST_100_BEAT_MS);
+      return () => {
+        window.clearTimeout(postBeatTimeout);
+        // Reset the latch on cleanup: this ref means "a post-100 timer is
+        // currently pending", not "completion was ever seen". If `reduced`
+        // (or `triggerExit`, itself dependent on `[reduced, finish]`) changes
+        // identity before the timer fires, this effect re-runs — resetting
+        // here lets it correctly reschedule instead of falling into the
+        // `if (completedAt100Ref.current) return;` dead branch below. A
+        // redundant reschedule after triggerExit has already fired is
+        // harmless: triggerExit/finish are idempotent via
+        // exitStartedRef/isDoneRef.
+        completedAt100Ref.current = false;
+      };
+    }
+
+    if (completedAt100Ref.current) {
+      // Already scheduled the post-100 beat; don't re-enter this branch.
+      return;
+    }
+
+    // Not complete yet; wait for settle cap to fire.
     const settleTimeout = window.setTimeout(triggerExit, MAX_SETTLE_MS);
     return () => window.clearTimeout(settleTimeout);
-  }, [entranceDone, isComplete, reduced, triggerExit]);
+  }, [entranceDone, isComplete, forced, reduced, triggerExit]);
 
   // Unconditional. Nothing may leave this overlay mounted — not a rejected
   // animation, not a hung signal, not a suspended tab.

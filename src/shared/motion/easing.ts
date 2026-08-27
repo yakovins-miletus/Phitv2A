@@ -40,3 +40,7 @@ export const EASE_IN_OUT_QUART_CSS = css(EASE_IN_OUT_QUART);
  */
 export const EASE_SPRING_SOFT: CubicBezier = [0.34, 1.56, 0.64, 1];
 export const EASE_SPRING_SOFT_CSS = css(EASE_SPRING_SOFT);
+
+/** Subtle overshoot for interactive transforms. */
+export const EASE_SPRING_SUBTLE: CubicBezier = [0.175, 0.885, 0.32, 1.275];
+export const EASE_SPRING_SUBTLE_CSS = css(EASE_SPRING_SUBTLE);

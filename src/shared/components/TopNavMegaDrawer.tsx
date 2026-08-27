@@ -14,6 +14,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useLocation } from "@tanstack/react-router";
 
 import { MONO } from "@/shared/theme/theme";
+import { NOIR } from "@/shared/theme/palette";
 import {
   GROUP_ORDER,
   SIGNAL_TEXT,
@@ -24,66 +25,14 @@ import {
   type Group,
 } from "./commandActions";
 import { useHeroBgModeState } from "@/features/hero/heroBgModeStore";
-
-export interface NavSectionItem {
-  to: string;
-  label: string;
-  sub: string;
-  preview: string;
-  tag: string;
-}
-
-export const MEGA_NAV_ITEMS: NavSectionItem[] = [
-  {
-    to: "/",
-    label: "Home",
-    sub: "Signal Core & High-Performance Platforms",
-    preview: "/images/software-engineer-banner.webp",
-    tag: "01",
-  },
-  {
-    to: "/about",
-    label: "About",
-    sub: "Who We Are, Principles & Manila R&D Firm",
-    preview: "/images/AboutPageHero.webp",
-    tag: "02",
-  },
-  {
-    to: "/services",
-    label: "Services",
-    sub: "Full-Stack, Quant Research, Data & SRE Ops",
-    preview: "/images/quant-research-banner.webp",
-    tag: "03",
-  },
-  {
-    to: "/careers",
-    label: "Careers",
-    sub: "Graduate Fellowships & Paid R&D Internships",
-    preview: "/images/grads/FocusedProgramming.webp",
-    tag: "04",
-  },
-  {
-    to: "/blog",
-    label: "Blog",
-    sub: "Engineering Research & Tech Articles",
-    preview: "/images/ops-support-banner.webp",
-    tag: "05",
-  },
-  {
-    to: "/contact",
-    label: "Contact",
-    sub: "BGC Manila R&D Office",
-    preview: "/images/bgc-2.webp",
-    tag: "06",
-  },
-];
+import { MEGA_NAV_ITEMS, type NavSectionItem } from "./megaNavItems";
 
 interface TopNavMegaDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
-import { useTransitionCurtain } from "./TransitionCurtain";
+import { useTransitionCurtain } from "./transitionCurtainContext";
 
 const LISTBOX_ID = "drawer-cmdk-listbox";
 const optId = (id: string) => `drawer-cmdk-opt-${id}`;
@@ -244,7 +193,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "var(--accent)", display: { xs: "none", md: "block" } }} />
                 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, maxWidth: 600, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1.5, px: 2, py: 1, border: "1px solid rgba(255,255,255,0.1)", transition: "border-color 0.2s", "&:focus-within": { borderColor: "var(--accent)" } }}>
-                  <Typography component="span" aria-hidden sx={{ fontFamily: MONO, fontSize: 14, color: "var(--accent-fg)", lineHeight: 1 }}>
+                  <Typography component="span" aria-hidden sx={{ fontFamily: MONO, fontSize: 14, color: "var(--accent-ink)", lineHeight: 1 }}>
                     ❯
                   </Typography>
                   <InputBase
@@ -274,7 +223,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                     sx={{
                       fontFamily: MONO,
                       fontSize: 14,
-                      color: "#FFF",
+                      color: NOIR.white,
                       "& input::placeholder": { color: "rgba(255,255,255,0.4)", opacity: 1 },
                     }}
                   />
@@ -365,7 +314,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                 fontFamily: MONO,
                                 fontSize: { xs: "0.85rem", md: "1.1rem" },
                                 fontWeight: 800,
-                                color: (isSelected && !isCommandMode) ? "var(--accent-fg)" : "rgba(255, 255, 255, 0.4)",
+                                color: (isSelected && !isCommandMode) ? "var(--accent-ink)" : "rgba(255, 255, 255, 0.4)",
                                 transition: "color 0.25s ease",
                               }}
                             >
@@ -388,7 +337,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
 
                           <ArrowForwardIcon
                             sx={{
-                              color: "var(--accent-fg)",
+                              color: "var(--accent-ink)",
                               fontSize: "1.6rem",
                               opacity: (isSelected && !isCommandMode) ? 1 : 0,
                               transform: (isSelected && !isCommandMode) ? "translateX(0)" : "translateX(-16px)",
@@ -473,7 +422,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                       backgroundColor: selected ? "var(--accent-15)" : "transparent",
                                     }}
                                   >
-                                    <Typography sx={{ fontFamily: MONO, fontSize: 13, color: selected ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                                    <Typography sx={{ fontFamily: MONO, fontSize: 13, color: selected ? NOIR.white : "rgba(255,255,255,0.7)" }}>
                                       {cmd.label}
                                     </Typography>
                                     <Typography
@@ -482,9 +431,9 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                                         ...monoLabelSx,
                                         flexShrink: 0,
                                         color: copiedId === cmd.id
-                                          ? "var(--accent-fg)"
+                                          ? "var(--accent-ink)"
                                           : hint.active
-                                            ? "var(--accent-fg)"
+                                            ? "var(--accent-ink)"
                                             : selected
                                               ? "rgba(255,255,255,0.5)"
                                               : "rgba(255,255,255,0.3)",
@@ -505,12 +454,12 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                       <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.1)", px: 3, py: 2, bgcolor: "rgba(0,0,0,0.2)" }}>
                         <Box sx={{ display: "flex", justifyContent: "space-between", pb: 1 }}>
                           <Typography sx={monoLabelSx}>signal</Typography>
-                          <Typography sx={{ ...monoLabelSx, color: "var(--accent-fg)" }}>sim</Typography>
+                          <Typography sx={{ ...monoLabelSx, color: "var(--accent-ink)" }}>sim</Typography>
                         </Box>
                         <Box
                           component="pre"
                           aria-hidden
-                          sx={{ m: 0, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, color: "#FFF", whiteSpace: "pre-wrap", minHeight: "calc(3 * 1.7em)" }}
+                          sx={{ m: 0, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, color: NOIR.white, whiteSpace: "pre-wrap", minHeight: "calc(3 * 1.7em)" }}
                         >
                           {SIGNAL_TEXT.slice(0, signalChars)}
                         </Box>
@@ -573,7 +522,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                           variant="overline"
                           sx={{
                             fontFamily: MONO,
-                            color: "var(--accent-fg)",
+                            color: "var(--accent-ink)",
                             fontWeight: 800,
                             letterSpacing: "0.15em",
                             fontSize: "0.75rem",
@@ -584,7 +533,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                         <Typography variant="h3" sx={{ fontWeight: 800, fontSize: "2rem" }}>
                           {activeItem.sub}
                         </Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, color: "var(--accent-fg)" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, color: "var(--accent-ink)" }}>
                           <Typography sx={{ fontFamily: MONO, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.1em" }}>
                             NAVIGATE TO PAGE
                           </Typography>
@@ -617,7 +566,7 @@ export function TopNavMegaDrawer({ open, onClose }: TopNavMegaDrawerProps) {
                     ↑↓ NAVIGATE • ↵ EXECUTE
                   </Typography>
                 )}
-                <Typography variant="caption" sx={{ fontFamily: MONO, color: "var(--accent-fg)", fontSize: "0.72rem", fontWeight: 700 }}>
+                <Typography variant="caption" sx={{ fontFamily: MONO, color: "var(--accent-ink)", fontSize: "0.72rem", fontWeight: 700 }}>
                   PRESS [ESC] TO CLOSE
                 </Typography>
               </Box>

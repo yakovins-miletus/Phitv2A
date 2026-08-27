@@ -15,7 +15,7 @@ import {
   type Group,
 } from "./commandActions";
 
-import { useTransitionCurtain } from "./TransitionCurtain";
+import { useTransitionCurtain } from "./transitionCurtainContext";
 
 const LISTBOX_ID = "cmdk-listbox";
 const optId = (id: string) => `cmdk-opt-${id}`;

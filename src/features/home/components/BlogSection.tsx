@@ -16,7 +16,8 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 import { aboutSection } from "@/shared/sections";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 function formatDate(dateStr?: string | null): string {

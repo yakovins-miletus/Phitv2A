@@ -20,7 +20,7 @@ interface PhitopolisLogoProps {
 const PhitopolisLogo: React.FC<PhitopolisLogoProps> = ({
   className,
   style,
-  color = '#FFFFFF',
+  color = NOIR.white,
   accentColor = NOIR.gold,
   title = 'Phitopolis Logo',
 }) => {

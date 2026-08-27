@@ -188,12 +188,13 @@
      the affordance. On dark grounds the accent reads at 11:1 and links keep it. */
   --link-fg: #0a2a66; /* = NOIR.ink — 13.08:1 on panel */
 
-  /* The accent where it is TEXT and has to stay recognisably gold — an eyebrow,
-     a selected chip's label, an accented word in a heading. `--accent-fg` is
-     1.45:1 here, so those reads were failing. This is the same hue walked down
-     in lightness only: 5.21:1 on void, 5.34:1 on panel.
-     Fills, borders and icons keep `--accent`; this is text only. */
-  --accent-ink: #8c5f09; /* = NOIR.goldInk */
+  /* Deliberate brand call: bright gold is the accent on EVERY ground,
+     including as TEXT on light grounds. `--accent-fg` measures 1.45:1 here,
+     below WCAG AA — accepted knowingly (see tests/a11y-contrast.test.ts,
+     which pins this as a recorded, intentional value). `--accent-ink` now
+     equals `--accent-fg`; kept as a distinct variable only so existing
+     `var(--accent-ink)` call sites keep working without a rename. */
+  --accent-ink: #ffc72c; /* = NOIR.gold */
   --glass-accent-veil: linear-gradient(135deg, var(--accent-15) 0%, transparent 70%);
 
   /* ── Destructive ────────────────────────────────────────────────────────── */

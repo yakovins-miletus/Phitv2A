@@ -8,9 +8,10 @@ import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import { RouterLink } from "@/shared/components/RouterLink";
-import { useStagePresence } from "@/shared/components/StageSection";
+import { useStagePresence } from "@/shared/components/stage/stagePresence";
 import { STAGE_ATTR, setActiveSection } from "@/shared/sections";
-import { NAV_ANCHORS, useNavbar } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbar } from "@/shared/components/navbarHooks";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
 import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
@@ -24,18 +25,24 @@ const ACTIVE_NODE_DATA = [
   { tag: "NODE 04 // TEAM", label: "Global Infrastructure & Trading Operations Team" },
 ] as const;
 /**
- * The gunshot's drift wall — 24 photographs from the blog library, drifting behind a
- * perspective tilt. Replaces the two 50vh split panes that auto-panned here.
+ * The gunshot's drift wall — vertical columns of words, replacing the 24 photographs.
  *
- * Lazy for the same reason as the gallery above: it drags `driftWall.css` and ~2.4MB
- * of imagery, none of which a visitor who bounces off the first viewport should pay
- * for. Unlike the gallery it is not behind a toggle — it is on the default scroll
- * path — so the chunk is prefetched during idle (see the effect near the stage
- * latch), and only the *fetch* is deferred, never the decision.
+ * Lazy for the same reason as the gallery above: it drags ~driftWall-derived CSS, none
+ * of which a visitor who bounces off the first viewport should pay for. Unlike the
+ * gallery it is not behind a toggle — it is on the default scroll path — so the chunk
+ * is prefetched during idle (see the effect near the stage latch), and only the *fetch*
+ * is deferred, never the decision.
+ *
+ * VARIANT TOGGLE: change HeroWordWall.tsx line 33 USE_DIFFERENCE_BLEND to false to see
+ * VARIANT B (no difference blend, light text). Currently rendering VARIANT A.
  */
-const HeroImageWall = lazy(() =>
-  import("./HeroImageWall").then((m) => ({ default: m.HeroImageWall })),
+const HeroWordWall = lazy(() =>
+  import("./HeroWordWall").then((m) => ({ default: m.HeroWordWall })),
 );
+// Keep HeroImageWall import available for rollback; don't delete until WS-05 has taken the tiles.
+// const HeroImageWall = lazy(() =>
+//   import("./HeroImageWall").then((m) => ({ default: m.HeroImageWall })),
+// );
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import { DWELL_END } from "./heroPhases";
 import { HERO_WALL_TILES } from "./heroWallTiles";
@@ -156,7 +163,7 @@ const LINK_PILL_SX = {
   backdropFilter: "blur(16px) saturate(180%)",
   WebkitBackdropFilter: "blur(16px) saturate(180%)",
   boxShadow: "0 8px 24px rgba(10, 42, 102, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9)",
-  transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+  transition: `all 0.25s ${EASE_OUT_EXPO_CSS}`,
   "&, & *": {
     textDecoration: "none !important",
   },
@@ -644,12 +651,12 @@ export function HeroSignalCore() {
           px: 0,
         }}
       >
-        {/* The gunshot's imagery: a drift wall of blog photography, replacing the two
-            50vh split panes that used to auto-pan here. Latched, not gated on
-            `stage.gunshot` — see the `wallMounted` note above. */}
+        {/* The gunshot's imagery: a drift wall of vertical word columns, replacing the
+            photo tiles. Latched, not gated on `stage.gunshot` — see the `wallMounted`
+            note above. */}
         {wallMounted && (
           <Suspense fallback={null}>
-            <HeroImageWall paused={!stage.wallDrift} />
+            <HeroWordWall paused={!stage.wallDrift} />
           </Suspense>
         )}
 
@@ -943,7 +950,7 @@ export function HeroSignalCore() {
                 WebkitBackdropFilter: "blur(16px)",
                 pointerEvents: "auto",
                 cursor: "pointer",
-                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                transition: `all 0.3s ${EASE_OUT_EXPO_CSS}`,
               }}
               onClick={() => setSelectedNodeIndex(null)}
               title="Click to dismiss"
@@ -954,7 +961,7 @@ export function HeroSignalCore() {
                   height: 7,
                   borderRadius: "50%",
                   bgcolor: NOIR.gold,
-                  boxShadow: "0 0 8px #FFC72C",
+                  boxShadow: `0 0 8px ${NOIR.gold}`,
                 }}
               />
               <Typography
@@ -975,7 +982,7 @@ export function HeroSignalCore() {
                   fontFamily: SANS,
                   fontSize: { xs: "0.74rem", md: "0.8rem" },
                   fontWeight: 600,
-                  color: "#FFFFFF",
+                  color: NOIR.white,
                   letterSpacing: "-0.01em",
                   whiteSpace: "nowrap",
                 }}

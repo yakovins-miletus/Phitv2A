@@ -68,6 +68,15 @@ const GRADUATE_COHORTS: Cohort[] = [
     image: "/images/grads/2026B1Grads.webp",
     highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
   },
+  {
+    id: "2026-b2",
+    year: "2026 Batch 2",
+    badge: "AI AGENTS & PLATFORM",
+    title: "2026 Batch 2 Tech Graduates",
+    description: "Our latest cohort, extending web architecture, cloud-native pipelines, and AI agents for global systems.",
+    image: "/images/grads/2026B2Grads.jpeg",
+    highlights: ["AI Agents", "Modern Web Architecture", "DevOps Systems"],
+  },
 ];
 
 export function GraduateHallOfFameSection() {
@@ -103,11 +112,11 @@ export function GraduateHallOfFameSection() {
           <Stack spacing={2} sx={{ maxWidth: 840 }}>
             <Reveal>
               <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <EmojiEventsIcon sx={{ color: "var(--accent-fg)", fontSize: "1.2rem" }} />
+                <EmojiEventsIcon sx={{ color: "var(--accent-ink)", fontSize: "1.2rem" }} />
                 <Typography
                   variant="overline"
                   sx={{
-                    color: "var(--accent-fg)",
+                    color: "var(--accent-ink)",
                     fontWeight: 800,
                     letterSpacing: "0.2em",
                     fontSize: "0.85rem",
@@ -150,7 +159,7 @@ export function GraduateHallOfFameSection() {
                   sx={{
                     fontFamily: MONO,
                     fontWeight: 800,
-                    color: "#0A2A66",
+                    color: NOIR.navyField,
                     letterSpacing: "0.15em",
                     fontSize: "0.7rem",
                   }}
@@ -192,7 +201,7 @@ export function GraduateHallOfFameSection() {
                           fontFamily: MONO,
                           fontWeight: isActive ? 800 : 600,
                           fontSize: "0.78rem",
-                          color: isActive ? "#0A2A66" : "text.secondary",
+                          color: isActive ? NOIR.navyField : "text.secondary",
                         }}
                       >
                         {cohort.year}

@@ -13,10 +13,21 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  APPLICATION_NODES,
+  APPLICATION_NODE_SIZE,
+  APP_NODE_WIDTH,
+  APP_NODE_HEIGHT,
+  APP_NODE_RADIUS,
+  APP_NODE_ELEVATION,
+  CORE_GRID_CELLS,
   CUBE_POSITIONS,
   GRID_CELL,
+  GRID_CELLS,
+  GRID_OFFSET,
+  PLANE_MARGIN_CELLS,
   PLANE_SIZE,
   SERVICE_NODES,
+  SERVICE_NODE_SIZE,
   SIGNAL_LOOPS,
   heroFrameState,
   makeCamera,
@@ -33,12 +44,16 @@ import {
 } from "@/features/hero/heroPhases";
 
 describe("scene geometry", () => {
-  test("the cube field is unchanged: 16 cubes on a 22x22 grid of 42px cells", () => {
+  test("expanded plane geometry: 16 core cubes on a 30x30 grid (1260px at GRID_CELL=42)", () => {
     expect(GRID_CELL).toBe(42);
-    expect(PLANE_SIZE).toBe(924);
+    expect(CORE_GRID_CELLS).toBe(22);
+    expect(PLANE_MARGIN_CELLS).toBe(4);
+    expect(GRID_CELLS).toBe(30);
+    expect(PLANE_SIZE).toBe(1260);
+    expect(GRID_OFFSET).toBe(168);
     expect(CUBE_POSITIONS).toHaveLength(16);
 
-    // Every cube must sit inside the plane.
+    // Every cube must sit inside the core 22x22 range.
     for (const c of CUBE_POSITIONS) {
       expect(c.c).toBeGreaterThanOrEqual(0);
       expect(c.c).toBeLessThanOrEqual(21);
@@ -53,9 +68,10 @@ describe("scene geometry", () => {
     ]);
   });
 
-  test("the four service nodes stay on their grid intersections", () => {
+  test("the four service nodes are centered via GRID_OFFSET on their grid intersections", () => {
     expect(SERVICE_NODES).toHaveLength(4);
-    expect(SERVICE_NODES.map((n) => [n.cx / GRID_CELL, n.cy / GRID_CELL])).toEqual([
+    expect(SERVICE_NODE_SIZE).toBe(60);
+    expect(SERVICE_NODES.map((n) => [(n.cx - GRID_OFFSET) / GRID_CELL, (n.cy - GRID_OFFSET) / GRID_CELL])).toEqual([
       [5, 5],
       [17, 5],
       [5, 17],
@@ -64,8 +80,30 @@ describe("scene geometry", () => {
     for (const n of SERVICE_NODES) expect(n.elevation).toBe(28);
   });
 
-  test("three closed signal loops, each with two pulses", () => {
-    expect(SIGNAL_LOOPS).toHaveLength(3);
+  test("outer decorative application nodes are defined as flat rounded rectangles on the outer perimeter ring", () => {
+    expect(APPLICATION_NODES).toHaveLength(6);
+    expect(APP_NODE_WIDTH).toBe(104);
+    expect(APP_NODE_HEIGHT).toBe(58);
+    expect(APP_NODE_RADIUS).toBe(12);
+    expect(APP_NODE_ELEVATION).toBe(6);
+    expect(APPLICATION_NODE_SIZE).toBe(52);
+    for (const app of APPLICATION_NODES) {
+      expect(app.id).toBeTruthy();
+      expect(app.label).toBeTruthy();
+      expect(app.cx).toBeGreaterThanOrEqual(0);
+      expect(app.cx).toBeLessThanOrEqual(PLANE_SIZE);
+      expect(app.cy).toBeGreaterThanOrEqual(0);
+      expect(app.cy).toBeLessThanOrEqual(PLANE_SIZE);
+      expect(app.elevation).toBe(APP_NODE_ELEVATION);
+      expect(app.width).toBe(APP_NODE_WIDTH);
+      expect(app.height).toBe(APP_NODE_HEIGHT);
+      expect(app.radius).toBe(APP_NODE_RADIUS);
+      expect(["analytics", "trading", "pipeline", "risk", "execution", "telemetry"]).toContain(app.appType);
+    }
+  });
+
+  test("nine closed signal loops, each with two pulses and closed out-and-back circuits", () => {
+    expect(SIGNAL_LOOPS).toHaveLength(9);
     for (const loop of SIGNAL_LOOPS) {
       expect(loop.pulseOffsets).toHaveLength(2);
       expect(loop.totalL).toBeGreaterThan(0);
@@ -89,6 +127,39 @@ describe("scene geometry", () => {
     const ahead = pointAtLoopDistance(loop, loop.totalL - 10);
     expect(behind.x).toBeCloseTo(ahead.x, 6);
     expect(behind.y).toBeCloseTo(ahead.y, 6);
+  });
+
+  test("out-and-back signal loops reach outer application nodes and return to core", () => {
+    // Check loops 3..8 (the 6 spur loops)
+    for (let i = 3; i < 9; i++) {
+      const loop = SIGNAL_LOOPS[i]!;
+      expect(loop.waypoints.length).toBeGreaterThanOrEqual(3);
+      const start = loop.waypoints[0]!;
+      const end = loop.waypoints[loop.waypoints.length - 1]!;
+      expect(start.x).toBe(end.x);
+      expect(start.y).toBe(end.y);
+
+      // Midpoint along the loop's length is at the outer turnaround
+      const mid = pointAtLoopDistance(loop, loop.totalL / 2);
+      expect(mid.x).toBeGreaterThanOrEqual(0);
+      expect(mid.x).toBeLessThanOrEqual(PLANE_SIZE);
+      expect(mid.y).toBeGreaterThanOrEqual(0);
+      expect(mid.y).toBeLessThanOrEqual(PLANE_SIZE);
+    }
+  });
+
+  test("outer application nodes are centered symmetrically around plane center", () => {
+    const center = PLANE_SIZE / 2;
+    let sumX = 0;
+    let sumY = 0;
+    for (const app of APPLICATION_NODES) {
+      sumX += app.cx;
+      sumY += app.cy;
+    }
+    const avgX = sumX / APPLICATION_NODES.length;
+    const avgY = sumY / APPLICATION_NODES.length;
+    expect(avgX).toBeCloseTo(center, 4);
+    expect(avgY).toBeCloseTo(center, 4);
   });
 });
 

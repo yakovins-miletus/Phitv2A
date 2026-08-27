@@ -16,12 +16,13 @@ import { JobDetailsDrawer } from "@/shared/components/JobDetailsDrawer";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
 import { aboutSection } from "@/shared/sections";
-import { startLenis, stopLenis } from "@/shared/components/SmoothScroll";
+import { startLenis, stopLenis } from "@/shared/components/smoothScrollControls";
 import { useReducedMotion } from "@/shared/motion";
 import { NOIR } from "@/shared/theme/palette";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { MONO } from "@/shared/theme/theme";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 /**
  * Card backgrounds, served from 1200px derivatives rather than the originals.
@@ -272,7 +273,7 @@ export function CandidatesAndCareersSection() {
                               fontFamily: MONO,
                               fontSize: "0.62rem",
                               bgcolor: "rgba(255, 255, 255, 0.15)",
-                              color: "#ffffff",
+                              color: NOIR.white,
                               border: "1px solid rgba(255, 255, 255, 0.45)",
                               borderRadius: 1,
                               height: "20px",
@@ -301,10 +302,10 @@ export function CandidatesAndCareersSection() {
                     </Stack>
                   </Box>
 
-                  {/* Slat Title (inverted 90deg when inactive, rotates back on active).
-                      Rotation is a transform, so it stays within the
-                      transform/opacity-only rule even though it is not a
-                      SectionBeat reveal. */}
+                  {/* Slat Title — flat in every state (WS-16 #6 removes the
+                      rotate(-90deg)/rotate(0deg) inactive/active geometry).
+                      Only size/weight now signal the active card; treatment
+                      otherwise matches the description text below it. */}
                   <Typography
                     variant="h4"
                     component="h3"
@@ -312,13 +313,11 @@ export function CandidatesAndCareersSection() {
                       fontWeight: 800,
                       fontSize: { xs: "1.25rem", sm: "1.4rem", md: isActive ? "1.65rem" : "1.25rem" },
                       lineHeight: 1.2,
-                      whiteSpace: isMobile ? "normal" : isActive ? "normal" : "nowrap",
-                      transform: isMobile ? "none" : isActive ? "rotate(0deg)" : "rotate(-90deg)",
-                      transformOrigin: "left bottom",
+                      whiteSpace: "normal",
                       position: isMobile ? "relative" : "absolute",
-                      bottom: isMobile ? "auto" : isActive ? "0px" : "15px",
-                      left: isMobile ? "auto" : isActive ? "0px" : "calc(50% - 8px)",
-                      right: isMobile ? "auto" : isActive ? "24px" : "auto",
+                      bottom: isMobile ? "auto" : "0px",
+                      left: isMobile ? "auto" : "0px",
+                      right: isMobile ? "auto" : "24px",
                       transition: titleTransition,
                     }}
                   >

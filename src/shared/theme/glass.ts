@@ -112,7 +112,7 @@ export function glass(options: GlassOptions = {}): SxProps<Theme> {
     borderColor: accent ? "var(--accent-border)" : "var(--glass-border-1)",
     borderRadius: RADIUS[radius],
     boxShadow: SHADOW[elevation],
-    color: accent ? "var(--accent-fg)" : "var(--text-1)",
+    color: accent ? "var(--accent-ink)" : "var(--text-1)",
   };
 
   if (rim) {

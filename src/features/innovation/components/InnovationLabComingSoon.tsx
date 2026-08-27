@@ -5,8 +5,10 @@ import { Flask, Cpu, HardDrives, TerminalWindow } from "@phosphor-icons/react";
 
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
+import { EASE_SPRING_SUBTLE_CSS } from "@/shared/motion/easing";
 import { Reveal } from "@/shared/components/Reveal";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 const UPCOMING_PILLARS = [
@@ -53,7 +55,7 @@ function PillarCard({ pillar }: { pillar: typeof UPCOMING_PILLARS[0] }) {
         flexDirection: "column",
         textAlign: "left",
         boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
-        transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        transition: `all 0.4s ${EASE_SPRING_SUBTLE_CSS}`,
         pointerEvents: "auto",
         "&:hover": {
           transform: "scale(1.05)",

@@ -19,7 +19,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { alpha } from "@mui/material/styles";
 
 import { RouterLink, RouterButton } from "@/shared/components/RouterLink";
-import { useTransitionCurtain } from "@/shared/components/TransitionCurtain";
+import { useTransitionCurtain } from "@/shared/components/transitionCurtainContext";
 import { LogoParticleField } from "@/shared/components/LogoParticleField";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
@@ -86,7 +86,7 @@ export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProp
       ref={footerAnchorRef}
       sx={{
         bgcolor: NOIR.navyDeep,
-        color: "#FFFFFF",
+        color: NOIR.white,
         pt: { xs: 6, md: 8 },
         pb: { xs: 4, md: 6 },
         mt: "auto",

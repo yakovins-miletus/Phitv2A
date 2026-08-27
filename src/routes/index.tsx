@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
+import { PixelTransitionSection } from "@/shared/components/ground/PixelTransitionSection";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -12,7 +13,7 @@ import { homeSection } from "@/shared/sections";
 import { SuperHeroSequence } from "@/features/hero/SuperHeroSequence";
 import { MissionStatement } from "@/features/hero/description/MissionStatement";
 import { OperatingPillars } from "@/features/hero/description/OperatingPillars";
-import { MarketPosition } from "@/features/hero/description/MarketPosition";
+import { GlobalMarketsStatement } from "@/features/home/components/GlobalMarketsStatement";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
 import { ClosingShelf } from "@/features/home/components/ClosingShelf";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
@@ -23,25 +24,15 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 // bundle even with autoCodeSplitting, so anything imported here ships to every
 // visitor. Scroll wiring lives in <SmoothScroll /> and inside the section
 // components, which ride the lazy home chunk.
-//
-// CapabilityRack ("four disciplines" capability grid) and the PEOPLE-act
-// sections (DailyLifeSection, CandidatesAndCareersSection,
-// TestimonialsSection, BlogSection) no longer mount here —
-// PRD-home-client-focus §2b/§2c removed the duplicated capability grid and
-// relocated the talent/culture narrative to /about. CapabilityRack itself is
-// untouched and still exists for a future /services usage; the four
-// relocated sections now live in routes/about.tsx with their own
-// SectionBeat orders — see ABOUT_SECTIONS in shared/sections.ts.
-//
-// CurtainTransition (the row-slat reveal into the deep-navy PEOPLE finale)
-// and the NOIR.navyField dark wrapper existed purely to hand off into
+
 // Blog + ClosingShelf. With Blog relocated to /about, ClosingShelf now
 // follows ReachSection directly and paints its own "field" ground via
 // GroundLayer, so neither is needed here any more — CurtainTransition moved
 // to about.tsx, immediately ahead of the relocated BlogSection, preserving
 // the same visual handoff for the content it was built for.
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(
+  {
   head: () =>
     pageHead(
       "Phitopolis — FinTech Engineering & Quantitative R&D",
@@ -102,7 +93,18 @@ function HomePage() {
           <SuperHeroSequence />
         </Box>
 
-        {/* 02-04. Parallax overlay sheet */}
+        {/* 02. Parallax overlay sheet
+         *
+         * Partial reversal of the WS-02 re-order (explicit user decision):
+         * mission core is back up front, running immediately after the hero
+         * and ahead of the global-markets claim. `MissionStatement` used to
+         * run here too, alongside a second identity section that has since
+         * been deleted outright (it restated MissionStatement's job) — that
+         * deletion still stands, only the ordering reverted. It still
+         * lazy-mounts `ServiceGlobe` behind its own `useInView` gate; see
+         * MissionStatement.tsx. GlobalMarketsStatement follows with the
+         * claim, alone on its own screen, and OperatingPillars follows that
+         * with what the claim means in practice. */}
         <Box
           data-act="services"
           sx={{
@@ -115,15 +117,22 @@ function HomePage() {
           }}
         >
           <MissionStatement />
-
-          {/* Operating Pillars — establishing shot now lives inside its own
-              SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
-          <OperatingPillars />
-
-          {/* Market Position — establishing shot now lives inside its own
-              SectionBeat, driven on one timeline. See MarketPosition.tsx. */}
-          <MarketPosition />
         </Box>
+
+        {/* ── Pixel Transition: hero-mission (panel) → global-markets (deep) ── */}
+        <PixelTransitionSection from="panel" to="deep" />
+
+        <GlobalMarketsStatement />
+
+        {/* ── Pixel Transition: global-markets (deep) → hero-pillars (void) ── */}
+        <PixelTransitionSection from="deep" to="void" />
+
+        {/* Operating Pillars — establishing shot now lives inside its own
+            SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
+        <OperatingPillars />
+
+        {/* ── Pixel Transition: hero-pillars (void) → use-cases (panel) ── */}
+        <PixelTransitionSection from="void" to="panel" />
 
         {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
             via SectionBeat, which renders `bare` because `use-cases`
@@ -163,24 +172,30 @@ function HomePage() {
          * HOME_COMPACT had recorded on first entry — the navbar read light
          * over sections registered dark.
          *
-         * Every section this box wraps now has its own dedicated anchor (see
+         * Every section that needs one has its own dedicated anchor (see
          * NavbarContext.tsx's NAV_ANCHORS and this file's per-section Boxes
          * below), so the giant catch-all is redundant, not just buggy — it's
-         * been removed rather than resized. The one stretch it also used to
-         * cover — hero-mission/hero-pillars/hero-position, before this box
-         * even starts — needs no anchor at all: with nothing registered,
-         * `isOverDarkSection` resolves to false (see NavbarContext.tsx), which
-         * is exactly correct for those light-ground sections.
+         * been removed rather than resized. The stretches with no anchor at
+         * all — global-markets/hero-mission/hero-pillars/use-cases, all
+         * before this box starts — need none: with nothing registered,
+         * `isOverDarkSection` resolves to false (see NavbarContext.tsx),
+         * which is exactly correct for light-ground sections.
          *
          * PEOPLE-act sections (daily-life, candidates, testimonials, blog)
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
+          {/* ── Pixel Transition: use-cases (panel) → process (deep) ── */}
+          <PixelTransitionSection from="panel" to="deep" />
+
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
               entirely — a half-screen title card left nothing for the
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
+
+          {/* ── Pixel Transition: process (deep) → reach (white) ── */}
+          <PixelTransitionSection from="deep" to="white" />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own
@@ -191,6 +206,9 @@ function HomePage() {
               gone; it existed only because SectionBeat had nowhere else to
               put them. */}
           <ReachSection />
+
+          {/* ── Pixel Transition: reach (white) → closing (field) ── */}
+          <PixelTransitionSection from="white" to="field" />
 
           {/* Closing beat — operational footprint / horizon gateway. Mini
               Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,
@@ -203,4 +221,3 @@ function HomePage() {
     </>
   );
 }
-

@@ -18,7 +18,7 @@ export function EcotowerMap() {
         borderRadius: "16px",
         overflow: "hidden",
         border: "1px solid rgba(10, 42, 102, 0.12)",
-        bgcolor: "#FFFFFF",
+        bgcolor: NOIR.white,
         boxShadow: "0 12px 32px rgba(10, 42, 102, 0.06)",
         position: "relative",
       }}
@@ -28,7 +28,7 @@ export function EcotowerMap() {
         sx={{
           px: 3,
           py: 2,
-          bgcolor: "#FFFFFF",
+          bgcolor: NOIR.white,
           borderBottom: "1px solid rgba(10, 42, 102, 0.08)",
           display: "flex",
           alignItems: "center",
@@ -38,7 +38,7 @@ export function EcotowerMap() {
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center">
-          <PlaceIcon sx={{ fontSize: 20, color: "var(--accent-fg)" }} />
+          <PlaceIcon sx={{ fontSize: 20, color: "var(--accent-ink)" }} />
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: NOIR.navyField }}>
               Phitopolis Headquarters · 27/F Ecotower

@@ -29,7 +29,7 @@ import type { Rgb } from "./groundStops";
  * it can be driven from the existing GSAP ticker instead of a second loop.
  */
 
-const VERT = `#version 300 es
+export const GROUND_VERT = `#version 300 es
 precision highp float;
 // Fullscreen triangle-pair from gl_VertexID: no attribute buffers, no VAO uploads.
 const vec2 POS[4] = vec2[4](vec2(-1.,-1.), vec2(1.,-1.), vec2(-1.,1.), vec2(1.,1.));
@@ -40,7 +40,7 @@ void main() {
   gl_Position = vec4(p, 0.0, 1.0);
 }`;
 
-const FRAG = `#version 300 es
+export const GROUND_FRAG = `#version 300 es
 precision highp float;
 
 in vec2 vUv;
@@ -84,11 +84,12 @@ void main() {
   outColor = vec4(base, 1.0);
 }`;
 
-/** Tile size, in CSS pixels, before DPR scaling. Matches the retired DOM-based
- *  `PixelWipe`'s `BASE_PIXEL_SIZE` for visual continuity of "this is the
- *  site's tile-wipe visual language" now that the effect lives in the shader
- *  instead of a route-transition overlay. */
-const TILE_SIZE_CSS_PX = 64;
+// Keep local aliases for backward compatibility within this file.
+const VERT = GROUND_VERT;
+const FRAG = GROUND_FRAG;
+
+/** Tile size, in CSS pixels, before DPR scaling. */
+export const TILE_SIZE_CSS_PX = 200;
 
 export interface GlGround {
   /** `progress` is 0 at `from`, 1 at `to`, ramping between them as the caller
@@ -100,7 +101,7 @@ export interface GlGround {
   readonly canvas: HTMLCanvasElement;
 }
 
-function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader | null {
+export function compileShader(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader | null {
   const sh = gl.createShader(type);
   if (!sh) return null;
   gl.shaderSource(sh, src);
@@ -115,7 +116,7 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLSh
 /** sRGB byte → linear float, so the blend happens in linear light. Mixing two
  *  colours in gamma space darkens the midpoint; this is why the CSS fallback and
  *  the shader can look subtly different mid-transition. */
-function toLinear(c: Rgb): [number, number, number] {
+export function toLinear(c: Rgb): [number, number, number] {
   const f = (v: number) => {
     const s = v / 255;
     return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
@@ -141,8 +142,8 @@ export function createGlGround(canvas: HTMLCanvasElement, grain = 0.012): GlGrou
   });
   if (!gl) return null;
 
-  const vs = compile(gl, gl.VERTEX_SHADER, VERT);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
+  const vs = compileShader(gl, gl.VERTEX_SHADER, VERT);
+  const fs = compileShader(gl, gl.FRAGMENT_SHADER, FRAG);
   if (!vs || !fs) return null;
 
   const prog = gl.createProgram();

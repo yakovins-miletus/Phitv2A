@@ -12,7 +12,8 @@ import MemoryIcon from "@mui/icons-material/Memory";
 
 import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
-import { NAV_ANCHORS, useNavbarAnchor } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 export function InnovationHero() {
@@ -82,11 +83,11 @@ export function InnovationHero() {
         <Stack spacing={3.5} sx={{ maxWidth: 880 }}>
           <Reveal>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}>
-              <ScienceIcon sx={{ color: "var(--accent-fg)", fontSize: "1.3rem" }} />
+              <ScienceIcon sx={{ color: "var(--accent-ink)", fontSize: "1.3rem" }} />
               <Typography
                 variant="overline"
                 sx={{
-                  color: "var(--accent-fg)",
+                  color: "var(--accent-ink)",
                   fontWeight: 800,
                   letterSpacing: "0.2em",
                   fontSize: "0.85rem",
@@ -141,7 +142,7 @@ export function InnovationHero() {
                 sx={{
                   bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "#0A2A66",
+                  color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",
@@ -155,7 +156,7 @@ export function InnovationHero() {
                 sx={{
                   bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "#0A2A66",
+                  color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",
@@ -169,7 +170,7 @@ export function InnovationHero() {
                 sx={{
                   bgcolor: "rgba(244, 247, 252, 0.95)",
                   backdropFilter: "blur(12px)",
-                  color: "#0A2A66",
+                  color: NOIR.navyField,
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",

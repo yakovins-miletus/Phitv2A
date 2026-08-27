@@ -160,7 +160,7 @@ export function NotFoundPage() {
             fontFamily: FONT,
             fontSize: { xs: "1.6rem", sm: "2.2rem", md: "2.8rem" },
             fontWeight: 800,
-            color: "#FFFFFF",
+            color: NOIR.white,
             letterSpacing: "-0.02em",
             mb: 1.5,
           }}
@@ -170,7 +170,7 @@ export function NotFoundPage() {
         <Typography
           variant="body1"
           sx={{
-            color: alpha("#FFFFFF", 0.6),
+            color: alpha(NOIR.white, 0.6),
             maxWidth: 480,
             mx: "auto",
             fontSize: { xs: "0.95rem", md: "1.05rem" },
@@ -223,8 +223,8 @@ export function NotFoundPage() {
             endIcon={<ArrowForwardIcon />}
             onClick={() => router.navigate({ to: "/contact" })}
             sx={{
-              borderColor: alpha("#FFFFFF", 0.3),
-              color: "#FFFFFF",
+              borderColor: alpha(NOIR.white, 0.3),
+              color: NOIR.white,
               fontWeight: 600,
               px: 4,
               py: 1.4,
@@ -256,7 +256,7 @@ export function NotFoundPage() {
             fontFamily: MONO,
             fontSize: "0.68rem",
             letterSpacing: "0.2em",
-            color: alpha("#FFFFFF", 0.2),
+            color: alpha(NOIR.white, 0.2),
             textTransform: "uppercase",
           }}
         >

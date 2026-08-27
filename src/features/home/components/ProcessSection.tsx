@@ -4,7 +4,8 @@ import Typography from "@mui/material/Typography";
 import { CONTENT } from "@/shared/content";
 import { ProcessDiagram } from "@/shared/components/diagrams/ProcessDiagram";
 import { NOIR } from "@/shared/theme/palette";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { homeSection } from "@/shared/sections";
 

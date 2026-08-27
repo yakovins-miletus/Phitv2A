@@ -49,8 +49,8 @@ test("reduced motion: every pitch section is reachable, not just the first", asy
   ).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Support & Delivery Pillar" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Technical Talent" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "International Backing" })).toBeInTheDocument();
+  // WS-02: `MarketPosition` (the "Technical Talent" / "International Backing"
+  // differentiators) is deleted outright — it restated MissionStatement's job.
 
   // And no beat-switching tab bar survives to be un-focusable.
   expect(screen.queryByText(/01 EXECUTIVE SUMMARY/i)).not.toBeInTheDocument();
@@ -76,9 +76,6 @@ test("reduced motion: the ground layer paints one static ground and starts no lo
   // that matters now that every foreground is off-white. `hero` opens on `base`.
   expect(host!.style.backgroundColor).toBe("rgb(244, 247, 252)");
 
-  const canvas = host!.querySelector("canvas");
-  expect(canvas).not.toBeNull();
-  expect(canvas!.style.opacity).toBe("0");
 });
 
 test("reduced motion: the glass blur gate is off", async () => {

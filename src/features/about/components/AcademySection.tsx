@@ -1,16 +1,24 @@
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 
 import { Reveal } from "@/shared/components/Reveal";
 import { RouterButton } from "@/shared/components/RouterLink";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 
-const TRACKS = [
+// WS-16 #7: the two tracks used to be plain side-by-side cards, each with its
+// own border/fill — exactly the containerization WS-01 removed sitewide. They
+// are re-framed here as "halls" inside one built structure (a masthead/crest
+// over a shared portico), not as bordered boxes: no per-hall fill or border,
+// just a hairline `Divider` between them and a shared cornice rule above.
+const HALLS = [
   {
+    numeral: "I",
     label: "Graduate Program",
     tag: "FULL-TIME",
     description:
@@ -20,6 +28,7 @@ const TRACKS = [
     statLabel: "since 2023",
   },
   {
+    numeral: "II",
     label: "Internship Program",
     tag: "PART-TIME / OJT",
     description:
@@ -44,31 +53,65 @@ export function AcademySection() {
       }}
     >
       <Container maxWidth="xl">
-        <Stack spacing={{ xs: 10, md: 14 }}>
-          {/* Header */}
+        {/* The structure: a masthead (crest + inscription) sits over a
+            portico of two halls, closed by a single doorway (the CTA). One
+            continuous built form top-to-bottom, not stacked components. */}
+        <Box
+          sx={{
+            border: "1px solid rgba(255,255,255,0.14)",
+            borderRadius: { xs: 3, md: 4 },
+            overflow: "hidden",
+          }}
+        >
+          {/* ── Masthead: crest + inscription, the "pediment" of the house ── */}
           <Reveal>
-            <Stack spacing={2} sx={{ maxWidth: 680 }}>
+            <Stack
+              spacing={3}
+              alignItems="center"
+              sx={{
+                textAlign: "center",
+                px: { xs: 4, md: 10 },
+                pt: { xs: 6, md: 9 },
+                pb: { xs: 5, md: 7 },
+                background:
+                  "linear-gradient(180deg, rgba(255,199,44,0.06) 0%, rgba(255,199,44,0) 70%)",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  border: `1.5px solid ${NOIR.gold}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <AccountBalanceIcon sx={{ color: NOIR.gold, fontSize: "1.9rem" }} />
+              </Box>
               <Typography
                 variant="overline"
                 sx={{
                   fontFamily: MONO,
                   fontWeight: 800,
                   fontSize: "0.75rem",
-                  letterSpacing: "0.22em",
+                  letterSpacing: "0.28em",
                   color: NOIR.gold,
                 }}
               >
-                // PHITOPOLIS ACADEMY
+                PHITOPOLIS ACADEMY
               </Typography>
               <Typography
                 variant="h2"
                 component="h2"
                 sx={{
                   fontWeight: 800,
-                  fontSize: { xs: "2.1rem", md: "2.8rem" },
+                  fontSize: { xs: "2.1rem", md: "2.9rem" },
                   lineHeight: 1.15,
                   letterSpacing: "-0.02em",
                   color: "common.white",
+                  maxWidth: 720,
                 }}
               >
                 Learn by{" "}
@@ -83,105 +126,124 @@ export function AcademySection() {
                   color: "rgba(255,255,255,0.6)",
                   lineHeight: 1.7,
                   fontSize: "1.05rem",
-                  maxWidth: 560,
+                  maxWidth: 520,
                 }}
               >
-                Two structured pathways — for graduates and undergraduates — to grow inside a
+                Two structured halls — for graduates and undergraduates — to grow inside a
                 production-grade R&D firm from day one.
               </Typography>
             </Stack>
           </Reveal>
 
-          {/* Two tracks */}
-          <Grid container spacing={{ xs: 4, md: 6 }}>
-            {TRACKS.map((track, i) => (
-              <Grid key={track.label} size={{ xs: 12, md: 6 }}>
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.14)" }} />
+
+          {/* ── The two halls: one portico, divided by a hairline column,
+              never two independently bordered/filled cards. ── */}
+          <Grid container>
+            {HALLS.map((hall, i) => (
+              <Grid key={hall.label} size={{ xs: 12, md: 6 }}>
                 <Reveal delay={i * 0.1}>
-                  <Stack spacing={3} sx={{ height: "100%" }}>
-                    {/* Image */}
-                    <Box
-                      sx={{
-                        width: "100%",
-                        aspectRatio: "16/9",
-                        borderRadius: 3,
-                        overflow: "hidden",
-                        position: "relative",
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        decoding="async"
-                        loading="lazy"
-                        src={track.image}
-                        alt={track.label}
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                          filter: "brightness(0.85)",
-                        }}
-                      />
-                      {/* Tag pill */}
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 16,
-                          left: 16,
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: "100px",
-                          bgcolor: NOIR.gold,
-                          display: "inline-flex",
-                        }}
-                      >
+                  <Box
+                    sx={{
+                      height: "100%",
+                      p: { xs: 4, md: 6 },
+                      borderLeft: {
+                        xs: "none",
+                        md: i === 1 ? "1px solid rgba(255,255,255,0.14)" : "none",
+                      },
+                      borderTop: {
+                        xs: i === 1 ? "1px solid rgba(255,255,255,0.14)" : "none",
+                        md: "none",
+                      },
+                    }}
+                  >
+                    <Stack spacing={3}>
+                      {/* Hall numeral, inscribed rather than boxed */}
+                      <Stack direction="row" spacing={1.5} alignItems="baseline">
                         <Typography
                           sx={{
                             fontFamily: MONO,
-                            fontSize: "0.65rem",
                             fontWeight: 800,
-                            letterSpacing: "0.14em",
-                            color: NOIR.navyField,
+                            fontSize: "0.85rem",
+                            letterSpacing: "0.18em",
+                            color: NOIR.gold,
                           }}
                         >
-                          {track.tag}
+                          HALL {hall.numeral}
                         </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Text */}
-                    <Stack spacing={1.5}>
-                      <Stack direction="row" spacing={2} alignItems="baseline">
                         <Typography
-                          variant="h4"
-                          component="h3"
-                          sx={{ fontWeight: 800, color: "common.white", fontSize: { xs: "1.3rem", md: "1.55rem" } }}
+                          sx={{
+                            fontFamily: MONO,
+                            fontWeight: 700,
+                            fontSize: "0.68rem",
+                            letterSpacing: "0.14em",
+                            color: "rgba(255,255,255,0.4)",
+                          }}
                         >
-                          {track.label}
+                          {hall.tag}
                         </Typography>
-                        <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
-                          <Typography sx={{ fontFamily: MONO, fontWeight: 800, fontSize: "0.85rem", color: NOIR.gold }}>
-                            {track.stat}
-                          </Typography>
-                          <Typography sx={{ fontFamily: MONO, fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>
-                            {track.statLabel}
-                          </Typography>
-                        </Box>
                       </Stack>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.7, fontSize: "0.97rem" }}
+
+                      {/* Image, framed rather than boxed — a doorway, not a card */}
+                      <Box
+                        sx={{
+                          width: "100%",
+                          aspectRatio: "16/9",
+                          borderRadius: 3,
+                          overflow: "hidden",
+                        }}
                       >
-                        {track.description}
-                      </Typography>
+                        <Box
+                          component="img"
+                          decoding="async"
+                          loading="lazy"
+                          src={hall.image}
+                          alt={hall.label}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                            filter: "brightness(0.85)",
+                          }}
+                        />
+                      </Box>
+
+                      <Stack spacing={1.5}>
+                        <Stack direction="row" spacing={2} alignItems="baseline" flexWrap="wrap">
+                          <Typography
+                            variant="h4"
+                            component="h3"
+                            sx={{ fontWeight: 800, color: "common.white", fontSize: { xs: "1.3rem", md: "1.55rem" } }}
+                          >
+                            {hall.label}
+                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+                            <Typography sx={{ fontFamily: MONO, fontWeight: 800, fontSize: "0.85rem", color: NOIR.gold }}>
+                              {hall.stat}
+                            </Typography>
+                            <Typography sx={{ fontFamily: MONO, fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>
+                              {hall.statLabel}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.7, fontSize: "0.97rem" }}
+                        >
+                          {hall.description}
+                        </Typography>
+                      </Stack>
                     </Stack>
-                  </Stack>
+                  </Box>
                 </Reveal>
               </Grid>
             ))}
           </Grid>
 
-          {/* CTA */}
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.14)" }} />
+
+          {/* ── The doorway: the one CTA out of the house ── */}
           <Reveal delay={0.15}>
             <Box
               sx={{
@@ -190,8 +252,7 @@ export function AcademySection() {
                 alignItems: { xs: "flex-start", sm: "center" },
                 justifyContent: "space-between",
                 gap: 4,
-                pt: { xs: 4, md: 6 },
-                borderTop: "1px solid rgba(255,255,255,0.08)",
+                p: { xs: 4, md: 6 },
               }}
             >
               <Stack spacing={0.5}>
@@ -227,7 +288,7 @@ export function AcademySection() {
               </RouterButton>
             </Box>
           </Reveal>
-        </Stack>
+        </Box>
       </Container>
     </Box>
   );

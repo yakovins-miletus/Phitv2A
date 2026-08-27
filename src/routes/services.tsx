@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { servicesQuery } from "@/features/services/api";
@@ -114,33 +113,25 @@ function ServicesPage() {
   const services = useQuery(servicesQuery());
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  // Real API failure with nothing cached to fall back to — the CMS list, unlike
-  // FALLBACK_SERVICES, is genuinely empty here rather than just unfetched yet.
-  if (services.isError && services.data === undefined) {
+  // Genuinely empty case: successful response with zero services published.
+  if (services.isSuccess && services.data.length === 0) {
     return (
       <Section>
-        <Stack spacing={2} sx={{ maxWidth: 640, mx: "auto", width: "100%" }}>
-          <Typography variant="overline" color="primary">
-            Services
-          </Typography>
-          <Typography variant="h2" component="h1">
-            Capabilities aren&apos;t available right now.
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Please refresh, or check back shortly.
-          </Typography>
-        </Stack>
+        <ServicesHeroHeader
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
+        <Typography variant="body1" color="text.secondary" sx={{ py: 6, textAlign: "center" }}>
+          No services are currently published.
+        </Typography>
+        <TechStackSection />
       </Section>
     );
   }
 
   const list = services.data ?? FALLBACK_SERVICES;
   const filtered = list.filter((s) => matchCategory(s, selectedCategory));
-  // Was: falling back to the unfiltered `list` whenever a category matched
-  // nothing, which silently showed every service while the header still
-  // claimed one category was selected. An honest empty state beats a display
-  // that contradicts its own filter chip.
-  const showEmptyState = list.length === 0 || filtered.length === 0;
+  const showEmptyState = filtered.length === 0;
 
   return (
     <Section>
@@ -150,9 +141,7 @@ function ServicesPage() {
       />
       {showEmptyState ? (
         <Typography variant="body1" color="text.secondary" sx={{ py: 6, textAlign: "center" }}>
-          {list.length === 0
-            ? "No services are available right now."
-            : "No services match this category."}
+          No services match this category.
         </Typography>
       ) : (
         <DetailedServiceList services={filtered} />

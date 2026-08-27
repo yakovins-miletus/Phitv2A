@@ -217,6 +217,11 @@ export const CONTENT = {
       { label: "Accountancy", pct: 5 },
       { label: "Other", pct: 5 },
     ],
+    // Eleven alma maters, carried over from the legacy data. `intl: true`
+    // marks the two international schools (WS-16 #2b) so the talent section
+    // can give them their own labelled sub-group instead of mixing them in
+    // with the nine Philippine schools — the separation is itself a
+    // credibility signal.
     schools: [
       { name: "U. of the Philippines", abbr: "UP", logo: "/logos/schools/up.png" },
       { name: "Ateneo de Manila", abbr: "ADMU", logo: "/logos/schools/admu.png" },
@@ -227,8 +232,8 @@ export const CONTENT = {
       { name: "Adamson", abbr: "Adamson", logo: "/logos/schools/adamson.webp" },
       { name: "U. of Mindanao", abbr: "UMind", logo: "/logos/schools/mindanao.webp" },
       { name: "AIM", abbr: "AIM", logo: "/logos/schools/aim.webp" },
-      { name: "Brunel", abbr: "Brunel", logo: "/logos/schools/brunel.webp" },
-      { name: "Sophia", abbr: "Sophia", logo: "/logos/schools/sophia.webp" },
+      { name: "Brunel", abbr: "Brunel", logo: "/logos/schools/brunel.webp", intl: true },
+      { name: "Sophia", abbr: "Sophia", logo: "/logos/schools/sophia.webp", intl: true },
     ],
   },
   /** Professional certifications, grouped by provider — insight, not a badge wall. */

@@ -193,7 +193,7 @@ export const components: Components<Theme> = {
         style: {
           ...surface("var(--accent-15)"),
           border: "1px solid var(--accent-border)",
-          color: "var(--accent-fg)",
+          color: "var(--accent-ink)",
           boxShadow: "none",
           "@media (hover: hover)": {
             "&:hover": {
@@ -279,24 +279,14 @@ export const components: Components<Theme> = {
   },
 
   MuiCard: {
-    // Every bare <Card> becomes glass without touching its call site.
-    defaultProps: { elevation: 0, variant: "glass" },
+    // A bare <Card> is flat: no tint, no border, no shadow, no hover transform.
+    // Containment is opt-in via `variant="glass"` (see MuiPaper above), never
+    // inherited. Padding stays — flat is not unspaced.
+    defaultProps: { elevation: 0 },
     styleOverrides: {
       root: {
-        // The old override set `border: 1px solid divider` and an opaque
-        // `background.paper` here. Both are now the variant's job — leaving them
-        // would double the hairline and paint an opaque fill under the tint.
         padding: "24px",
         transition: T_GLASS,
-        "@media (hover: hover)": {
-          "&:hover": {
-            // Border opacity doubles (0.15 -> 0.30), the shadow deepens, and the
-            // surface scales a hair. Subtle by construction: 1.01, not 1.05.
-            borderColor: "var(--glass-border-2)",
-            boxShadow: "var(--glass-shadow-3)",
-            transform: "scale(1.01)",
-          },
-        },
         ...NO_TRANSFORM_ON_REDUCE,
       },
     },
@@ -356,7 +346,7 @@ export const components: Components<Theme> = {
         "&.MuiChip-colorPrimary, &.MuiChip-colorSecondary": {
           ...surface("var(--accent-15)"),
           borderColor: "var(--accent-border)",
-          color: "var(--accent-fg)",
+          color: "var(--accent-ink)",
         },
       },
     },
@@ -430,7 +420,7 @@ export const components: Components<Theme> = {
     styleOverrides: {
       root: {
         color: "var(--text-3)",
-        "&.Mui-focused": { color: "var(--accent-fg)" },
+        "&.Mui-focused": { color: "var(--accent-ink)" },
         "&.Mui-error": { color: "var(--danger-fg)" },
       },
     },
@@ -556,7 +546,7 @@ export const components: Components<Theme> = {
         "&:hover": { backgroundColor: "var(--glass-fill-2)" },
         "&.Mui-selected, &.Mui-selected:hover": {
           backgroundColor: "var(--accent-15)",
-          color: "var(--accent-fg)",
+          color: "var(--accent-ink)",
         },
       },
     },
@@ -622,7 +612,7 @@ export const components: Components<Theme> = {
 
   MuiCircularProgress: {
     styleOverrides: {
-      colorPrimary: { color: "var(--accent-fg)" },
+      colorPrimary: { color: "var(--accent-ink)" },
     },
   },
 

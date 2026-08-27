@@ -14,7 +14,8 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { BEAT_START, refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { useReducedMotion } from "@/shared/motion";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 gsap.registerPlugin(ScrollTrigger);
 

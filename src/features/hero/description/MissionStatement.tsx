@@ -65,12 +65,21 @@ function DeferredServiceGlobe() {
   );
 }
 
-// Follows the section registry rather than naming a ground twice — see the same
-// note in MarketPosition.tsx.
+// Follows the section registry rather than naming a ground twice.
 const GROUND = GROUNDS[homeSection("hero-mission").ground ?? "deep"];
 
 /**
- * Act I, beat 1 — the claim.
+ * Support beat — who we are, once capability has already been shown.
+ *
+ * WS-02 re-order: this used to open the identity run (four sections of
+ * "who we are" before anything resembling a service). It now runs *after*
+ * Operating Pillars, Use-Cases, and Process — the claims those sections make
+ * are already on the table, so this section's job changed from "first
+ * impression" to "credibility for a claim already earned". Its own 68ch exec-
+ * summary paragraph (`CONTENT.hero.salesPitch.execSummary`) moved out into
+ * its own full-viewport `GlobalMarketsStatement` beat, positioned right after
+ * the hero — see that component's doc for why the words needed the whole
+ * screen.
  *
  * One of three sections that replaced a four-beat slide deck. The deck switched
  * `display: none` between beats inside a single centred 1140px flex box wrapping a
@@ -106,7 +115,7 @@ const GROUND = GROUNDS[homeSection("hero-mission").ground ?? "deep"];
  * it stops turning under `prefers-reduced-motion`.
  */
 export function MissionStatement() {
-  const { heroLine, execSummary, cta } = CONTENT.hero.salesPitch;
+  const { heroLine, cta } = CONTENT.hero.salesPitch;
 
   return (
     <SectionBeat
@@ -139,10 +148,6 @@ export function MissionStatement() {
           }}
         >
           {heroLine.subheading}
-        </Typography>
-
-        <Typography sx={{ lineHeight: 1.65, color: GROUND.muted, maxWidth: "68ch" }}>
-          {execSummary}
         </Typography>
 
         <Box sx={{ mt: { xs: 5, md: 6 } }}>
@@ -241,9 +246,10 @@ function titleWithKeyedTail(title: string) {
   return (
     <>
       {head}{" "}
-      {/* goldInk, not gold: this renders at 96px on the light ground, where
-          gold measures 1.45:1 against the 3:1 large-text floor. */}
-      <Box component="span" sx={{ color: NOIR.goldInk }}>
+      {/* Bright gold, deliberately, even though this renders at 96px on the
+          light ground where gold measures 1.45:1 against the 3:1 large-text
+          floor — accepted brand call, see tests/a11y-contrast.test.ts. */}
+      <Box component="span" sx={{ color: NOIR.gold }}>
         {tail}
       </Box>
     </>

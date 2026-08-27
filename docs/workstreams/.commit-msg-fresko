@@ -1,0 +1,27 @@
+docs: decompose the compiled frontend brief into 13 independent workstreams
+
+Splits one compiled list of concerns — six pages, the design system,
+performance, and the site intro — into workstream files that can each be
+executed independently without two files editing the same source file.
+
+Every file declares an `Owner files:` header; no source path appears in two
+files. Four shared-file boundaries are documented in the README.
+
+Five premises in the original brief were corrected against source:
+
+- The preloader is not broken; progress is real (Preloader.tsx:148-168).
+- The "background strips" blamed for lag are an image-load fallback
+  (OperatingPillars.tsx:99-110), not a perf cost.
+- Rasterising the SVG diagrams would regress size, sharpness and theming.
+- goldInk is a WCAG accommodation, not a mistake — gold on white is ~1.6:1.
+  NOIR.gold has 187 call sites to goldInk's 10.
+- Blog year navigation never existed; it is a new build needing a backend
+  change (WS-09, Heimdall repo).
+
+Two traps recorded for executors: tests/a11y-contrast.test.ts:216 pins a
+failing ratio as passing, so fixing the accent breaks a green test; and lint
+has been red since 2026-08-02 with 30 errors (WS-14 clears it).
+
+Docs only. No source changed.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

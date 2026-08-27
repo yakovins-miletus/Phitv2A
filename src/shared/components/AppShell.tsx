@@ -21,9 +21,11 @@ import { CommandPalette } from "./CommandPalette";
 import { CookieNotice } from "./CookieNotice";
 import { FloatingIdOverlay } from "./FloatingIdOverlay";
 
-import { NAV_ANCHORS, NavbarProvider, useNavbar, useNavbarAnchor } from "./NavbarContext";
+import { NAV_ANCHORS, NavbarProvider } from "./NavbarContext";
+import { useNavbar, useNavbarAnchor } from "./navbarHooks";
 import { Preloader, PRELOADER_SESSION_KEY } from "./Preloader";
-import { TransitionCurtainProvider, useTransitionCurtain } from "./TransitionCurtain";
+import { TransitionCurtainProvider } from "./TransitionCurtain";
+import { useTransitionCurtain } from "./transitionCurtainContext";
 import type { LoadSignal } from "./Preloader";
 import { TopNavMegaDrawer } from "./TopNavMegaDrawer";
 import { SiteFooter } from "./SiteFooter";
@@ -157,6 +159,13 @@ const SECTION_MANIFEST: readonly string[] = [
   "/images/grads/FocusedProgramming.webp",
   "/images/blog/ateneo-career-talk-2025/01.webp",
   "/images/blog/csr-activity-repainting-community-spaces/01.webp",
+  // WS-13: About page hero gallery tiles (real assets, not dummy load)
+  "/images/hero-wall/phitopolis-datathon-2k25-the-grads-all-star-showdown-02.webp",
+  "/images/hero-wall/inspiring-the-next-generation-of-quants-our-talks-at-the-google-developers-student-club-dlsu-01.webp",
+  "/images/hero-wall/phitopolis-external-talk-01.webp",
+  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
+  "/images/hero-wall/likhapolis-pagbibigay-kulay-at-saya-02.webp",
+  "/images/hero-wall/csr-activity-repainting-community-spaces-01.webp",
 ];
 
 function preloadAsset(url: string): Promise<void> {
@@ -646,23 +655,19 @@ const NAV_SOLID_AFTER_PX = 50;
           position="fixed"
           elevation={0}
           sx={{
-            // Opts the header out of the page-recede/arrive treatment in
-            // viewTransitions.css. Without a name of its own it's part of the
-            // single `root` snapshot and recedes/scales/wipes with everything
-            // else on every navigation; a stable name pulls it into its own
-            // view-transition group, which viewTransitions.css then pins
-            // static and on top (see the `site-header` rules there) so it
-            // reads as chrome that was never part of the transition, not
-            // "chrome that happens to sit still."
-            viewTransitionName: "site-header",
+            // viewTransitionName: "site-header" is temporarily removed because it breaks backdrop-filter in Chromium.
+            // Standard mode is a genuinely solid bar, not a glass treatment
+            // in disguise — brand navy over dark sections, white/panel over
+            // light ones, a hairline border, no backdrop blur. Glass mode
+            // (isGlass) is untouched and still fully translucent/blurred.
             bgcolor: isGlass
               ? "transparent"
               : isStandard
               ? (isOverDarkSection
-                ? "rgba(30, 30, 30, 0.45)"
-                : "rgba(255, 255, 255, 0.55)")
+                ? NOIR.navyField
+                : NOIR.white)
               : "transparent",
-            backdropFilter: isGlass ? "none" : (isStandard ? "blur(20px) saturate(160%)" : "none"),
+            backdropFilter: "none",
             borderBottom: isStandard
               ? (isOverDarkSection
                 ? "1px solid rgba(255, 255, 255, 0.12)"
@@ -708,6 +713,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     : (isNotch 
                       ? "100vw" 
                       : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px"))),
+                minHeight: isIsland ? "54px !important" : undefined,
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -725,13 +731,22 @@ const NAV_SOLID_AFTER_PX = 50;
                   : (isMinimal
                     ? "transparent"
                     : isNotch
-                    ? "#1E1E1E"
+                    ? NOIR.charcoal
                     : isIsland
-                    ? "rgba(255, 255, 255, 0.65)"
+                    ? "rgba(255, 255, 255, 0.5)"
                     : isOverDarkSection
                       ? "rgba(30, 30, 30, 0.28)"
-                      : (derivedIsCompact ? "#FFFFFF" : "transparent")),
+                      : (derivedIsCompact ? NOIR.white : "transparent")),
                 backdropFilter: isStandardOrGlass
+                  ? "none"
+                  : (isMinimal
+                    ? "none"
+                    : isIsland
+                    ? "blur(20px) saturate(160%)"
+                    : isOverDarkSection
+                      ? "blur(16px) saturate(140%)"
+                      : "none"),
+                WebkitBackdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
                     ? "none"
@@ -770,7 +785,7 @@ const NAV_SOLID_AFTER_PX = 50;
                       : isImmersive
                         ? "6px 24px"
                         : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" }))),
-                boxShadow: isIsland ? "0 8px 32px rgba(0,0,0,0.08)" : "none",
+                boxShadow: isIsland ? "0 4px 12px rgba(0,0,0,0.06)" : "none",
                 display: "flex",
                 justifyContent: isNotch ? "center" : "center",
                 alignItems: "center",
@@ -838,7 +853,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   borderRadius: "8px",
                 }}
               >
-                <Box sx={{ color: onDark ? "#FFFFFF" : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
+                <Box sx={{ color: onDark ? NOIR.white : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
                     style={{ height: (isStandardOrGlass || isIsland) ? 18 : 24, width: 'auto', transition: "height 0.4s ease" }}
                     color="currentColor"
@@ -854,7 +869,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: onDark ? "#FFFFFF" : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
+                      sx={{ color: onDark ? NOIR.white : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
@@ -907,19 +922,18 @@ const NAV_SOLID_AFTER_PX = 50;
                           fontWeight: 700,
                           letterSpacing: "0.08em",
                           textDecoration: "none !important",
-                          // Gold as nav-item TEXT only on dark grounds, where it
-                          // measures 9.4:1 to 12:1. On light grounds it is 1.49:1,
-                          // well under AA, so active and hover resolve to navy and
-                          // the gold underline below carries the brand signal
-                          // instead. The wordmark keeps gold on both grounds: WCAG
-                          // 1.4.3 exempts logotypes, a nav item is not exempt.
+                          // Bright gold as nav-item TEXT on both grounds — a
+                          // deliberate brand call. On dark it measures 9.4:1
+                          // to 12:1; on light it's 1.49:1, well under AA, and
+                          // that's accepted (see tests/a11y-contrast.test.ts)
+                          // rather than routed through a bronze walk-down.
                           color: isActive
-                            ? (onDark ? NOIR.gold : NOIR.navyField)
+                            ? NOIR.gold
                             : (onDark ? "rgba(255,255,255,0.7)" : "text.secondary"),
                           transition: "color 0.3s ease",
                           position: "relative",
                           "&:hover": {
-                            color: onDark ? NOIR.gold : NOIR.navyField,
+                            color: NOIR.gold,
                             textDecoration: "none !important",
                           },
                         }}
@@ -1041,7 +1055,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   transition: "all 0.2s ease",
                   "&:hover": { color: "primary.main", bgcolor: "action.hover", paddingLeft: 2 }
                 }}
-                activeProps={{ sx: { color: "var(--accent-fg)" } }}
+                activeProps={{ sx: { color: "var(--accent-ink)" } }}
               >
                 {item.label}
               </RouterLink>

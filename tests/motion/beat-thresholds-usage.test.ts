@@ -20,7 +20,6 @@ const REVEAL_FILES = [
   "shared/components/stage/SectionBeat.tsx",
   "features/hero/description/MissionStatement.tsx",
   "features/hero/description/OperatingPillars.tsx",
-  "features/hero/description/MarketPosition.tsx",
   "features/services/components/CapabilityRack.tsx",
   "features/home/components/ProcessSection.tsx",
   "features/home/components/ReachSection.tsx",

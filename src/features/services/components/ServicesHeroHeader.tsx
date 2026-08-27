@@ -6,7 +6,8 @@ import GearIcon from "@mui/icons-material/Settings";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { Reveal } from "@/shared/components/Reveal";
-import { useNavbarAnchor, NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
 interface ServicesHeroHeaderProps {
   selectedCategory?: string;
@@ -145,7 +146,7 @@ export function ServicesHeroHeader({
                         fontSize: "0.76rem",
                         fontWeight: isActive ? 800 : 600,
                         letterSpacing: "0.04em",
-                        color: isActive ? "#FFFFFF" : NOIR.navyField,
+                        color: isActive ? NOIR.white : NOIR.navyField,
                         bgcolor: isActive ? NOIR.navyField : "transparent",
                         border: isActive ? `1px solid ${NOIR.navyField}` : "1px solid transparent",
                         borderRadius: "6px",
