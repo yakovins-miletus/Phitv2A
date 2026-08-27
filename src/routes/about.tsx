@@ -13,6 +13,7 @@ import { JourneyTimeline } from "@/features/about/components/JourneyTimeline";
 import { BackgroundReveal } from "@/features/about/components/BackgroundReveal";
 import { HeroGallery } from "@/features/about/components/HeroGallery";
 import { SmoothSection } from "@/features/about/components/SmoothSection";
+import { MissionSection } from "@/features/about/components/MissionSection";
 import { PoweredBySection } from "@/features/about/components/PoweredBySection";
 import { GraduateHallOfFameSection } from "@/features/about/components/GraduateHallOfFameSection";
 import { CertificationsSection } from "@/features/about/components/CertificationsSection";
@@ -71,10 +72,14 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_HERO, { dark: true });
+  const valuesAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_VALUES, { dark: false });
   const timelineAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TIMELINE, { dark: true });
   const certsAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_CERTIFICATIONS, { dark: true });
   const dailyLifeAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_DAILY_LIFE, { dark: true });
+  const candidatesAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_CANDIDATES, { dark: false });
+  const testimonialsAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TESTIMONIALS, { dark: false });
   const blogAnchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_BLOG_SECTION, { dark: true });
+
 
   return (
     <>
@@ -194,21 +199,25 @@ function AboutPage() {
           flexDirection: "column",
         }}
       >
+        <Box sx={{ mb: { xs: 12, md: 16 } }}>
+          <SmoothSection>
+            <MissionSection />
+          </SmoothSection>
+        </Box>
+
         <Box sx={{ mb: { xs: 12, md: 20 } }}>
           <SmoothSection>
             <PoweredBySection />
           </SmoothSection>
         </Box>
         
-        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+        <Box sx={{ mb: { xs: 12, md: 20 } }} ref={valuesAnchorRef}>
           <PrinciplesValuesShowcase />
         </Box>
         
-        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+        <Box sx={{ mb: { xs: 12, md: 20 } }} ref={timelineAnchorRef}>
           <SmoothSection>
-            <Box ref={timelineAnchorRef}>
-              <JourneyTimeline />
-            </Box>
+            <JourneyTimeline />
           </SmoothSection>
         </Box>
         
@@ -270,28 +279,21 @@ function AboutPage() {
             and `data-act="people"` directly (from the `candidates`
             SectionDef) — the wrapper `<section id="careers-sequence">` that
             used to carry those attributes is gone. */}
-        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+        <Box sx={{ mb: { xs: 12, md: 20 } }} ref={candidatesAnchorRef}>
           <CandidatesAndCareersSection />
         </Box>
 
         {/* Same consolidation as above: `testimonials`'s SectionBeat now
             carries `aria-label="Hear From Our People"` and
             `data-act="people"` itself. */}
-        <TestimonialsSection />
+        <Box ref={testimonialsAnchorRef}>
+          <TestimonialsSection />
+        </Box>
 
-        {/* Dynamic Row-by-Row Curtain Transition into Deep Navy Blog beat —
-            moved here from routes/index.tsx (see that file's comment): it
-            handed off into Blog + ClosingShelf together on home, and
-            ClosingShelf stayed on home, so the curtain now leads only into
-            the relocated Blog. */}
-        <Suspense fallback={null}>
-          <CurtainTransition rows={12} />
-        </Suspense>
-
-        {/* Deep Navy Dark Zone for the Intelligence Feed + Academy.
-            Both sections share the navy ground so they flow seamlessly
-            with no white gap between them and the footer. */}
         <Box ref={blogAnchorRef} sx={{ bgcolor: NOIR.navyField, width: "100%", position: "relative", zIndex: 1 }}>
+          <Suspense fallback={null}>
+            <CurtainTransition rows={12} />
+          </Suspense>
           <BlogSection />
           <AcademySection />
         </Box>

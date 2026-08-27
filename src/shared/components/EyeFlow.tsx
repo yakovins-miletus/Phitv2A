@@ -30,7 +30,9 @@ const RESIZE_DEBOUNCE_MS = 150;
 
 const ACT_GROUPS: readonly { act: Act; chapters: readonly (typeof CHAPTERS)[number][] }[] = (
   Object.keys(ACT_LABELS) as Act[]
-).map((act) => ({ act, chapters: CHAPTERS.filter((c) => c.act === act) }));
+)
+  .map((act) => ({ act, chapters: CHAPTERS.filter((c) => c.act === act) }))
+  .filter((group) => group.chapters.length > 0);
 
 export function EyeFlow() {
   /**

@@ -73,14 +73,14 @@ const STRIP_TILES: readonly { readonly id: string; readonly src: string; readonl
     alt: "The Phitopolis team gathered to unveil the new office",
   },
   {
-    id: "likhapolis",
-    src: "/images/hero-wall/likhapolis-pagbibigay-kulay-at-saya-02.webp",
-    alt: "Team members with community art from the Likhapolis event",
+    id: "data-ops-training",
+    src: "/images/hero-wall/data-ops-training-in-clark-pampanga-04.webp",
+    alt: "Team members attending a Data Ops training session in Clark, Pampanga",
   },
   {
-    id: "csr-repaint",
-    src: "/images/hero-wall/csr-activity-repainting-community-spaces-01.webp",
-    alt: "A volunteer repainting a community space during a CSR activity",
+    id: "dataops-immersion",
+    src: "/images/hero-wall/immersion-in-dataops-a-journey-behind-the-scenes-of-data-operations-01.webp",
+    alt: "A behind-the-scenes look at the team immersed in data operations",
   },
 ] as const;
 
@@ -181,7 +181,6 @@ function PrimaryImage() {
       initial={{ opacity: 0, scale: 0.95, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 1.3, ease: EASE_OUT_EXPO, delay: 0.1 }}
-      whileHover={{ scale: 1.02 }}
       sx={{
         gridColumn: { xs: "1 / -1", sm: "1 / 8" },
         gridRow: { xs: "auto", sm: "1 / 3" },
@@ -190,7 +189,6 @@ function PrimaryImage() {
         overflow: "hidden",
         border: `2.5px solid ${NOIR.gold}`,
         minHeight: { xs: 320, sm: "auto" },
-        transition: `transform 0.4s ${EASE_SPRING_SUBTLE_CSS}`,
       }}
     >
       <Box

@@ -37,6 +37,8 @@ export const NAV_ANCHORS = {
   BLOG_HERO: 'blog-hero',
   /** The About page's blog section (relocated from home — PRD-home-client-focus §US-2). */
   ABOUT_BLOG_SECTION: 'about-blog-section',
+  /** Home page: the global-markets wager beat. Navy ground (deep), navbar must go dark. */
+  GLOBAL_MARKETS: 'global-markets',
   /** The Home page's closing shelf — navy ground, so the navbar must go light. */
   HOME_CLOSING: 'home-closing',
   /** AppShell's footer, on every route. */

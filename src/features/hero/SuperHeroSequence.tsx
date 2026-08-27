@@ -36,8 +36,8 @@ const ACTIVE_NODE_DATA = [
  * VARIANT TOGGLE: change HeroWordWall.tsx line 33 USE_DIFFERENCE_BLEND to false to see
  * VARIANT B (no difference blend, light text). Currently rendering VARIANT A.
  */
-const HeroWordWall = lazy(() =>
-  import("./HeroWordWall").then((m) => ({ default: m.HeroWordWall })),
+const HeroNodeNetwork = lazy(() =>
+  import("./HeroNodeNetwork").then((m) => ({ default: m.HeroNodeNetwork })),
 );
 // Keep HeroImageWall import available for rollback; don't delete until WS-05 has taken the tiles.
 // const HeroImageWall = lazy(() =>
@@ -656,7 +656,7 @@ export function HeroSignalCore() {
             note above. */}
         {wallMounted && (
           <Suspense fallback={null}>
-            <HeroWordWall paused={!stage.wallDrift} />
+            <HeroNodeNetwork paused={!stage.wallDrift} />
           </Suspense>
         )}
 
@@ -732,11 +732,11 @@ export function HeroSignalCore() {
                   textShadow: "0 2px 14px rgba(6, 24, 59, 0.55)",
                 }}
               >
-                YEARS OF EXCELLENCE
+                YEARS OF MASTERY
               </Typography>
             </Box>
 
-            {/* Bottom Text: GENERATIONS OF COMPETITIVENESS */}
+            {/* Bottom Text: GENERATIONS OF DEVELOPMENT */}
             <Box
               ref={flankBottomRef}
               sx={{
@@ -766,7 +766,7 @@ export function HeroSignalCore() {
                   textShadow: "0 2px 14px rgba(6, 24, 59, 0.55)",
                 }}
               >
-                GENERATIONS OF COMPETITIVENESS
+                GENERATIONS OF DEVELOPMENT
               </Typography>
               <Box sx={{ width: 40, height: "1px", bgcolor: NOIR.gold, opacity: 0.85 }} />
             </Box>

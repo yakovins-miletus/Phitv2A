@@ -16,8 +16,8 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 import { aboutSection } from "@/shared/sections";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
-import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+
+
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 function formatDate(dateStr?: string | null): string {
@@ -92,7 +92,7 @@ function SideArticleCard({
             opacity: 0.16,
             filter: `drop-shadow(0 0 16px rgba(${NOIR.goldRgb}, 0.25))`,
           },
-          "&:hover .blogcard-thumb, &:focus-visible .blogcard-thumb": { transform: "scale(1.08)" },
+
           "&:hover .blogcard-title, &:focus-visible .blogcard-title": { color: NOIR.frost },
           "&:hover .blogcard-arrow, &:focus-visible .blogcard-arrow": { transform: "translateX(4px)" },
         }}
@@ -150,8 +150,6 @@ function SideArticleCard({
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                transition: `transform 0.8s ${EASE_OUT_EXPO_CSS}`,
-                transform: "scale(1)",
               }}
             />
           </Box>
@@ -226,7 +224,6 @@ export function BlogSection() {
   const page = useQuery(blogPostsQuery({ limit: 4, offset: 0 }));
   const posts = page.data?.items ?? FALLBACK_BLOG_PAGE.items;
   const navigate = useNavigate();
-  const anchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_BLOG_SECTION, { dark: true });
 
   const [featuredHovered, setFeaturedHovered] = useState(false);
 
@@ -250,7 +247,6 @@ export function BlogSection() {
       }
     >
       <Box
-        ref={anchorRef}
         sx={{
           minHeight: "85vh",
           display: "flex",
@@ -337,8 +333,6 @@ export function BlogSection() {
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
-                      transition: `transform 1s ${EASE_OUT_EXPO_CSS}`,
-                      transform: featuredHovered ? "scale(1.05)" : "scale(1)",
                     }}
                   />
                 )}
