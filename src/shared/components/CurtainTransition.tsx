@@ -40,7 +40,7 @@ export function CurtainTransition({ rows = 6 }: CurtainTransitionProps) {
         {
           scaleX: 1,
           duration: 0.85,
-          stagger: 0.08,
+          stagger: { each: 0.08, from: "end" },
           ease: "power3.inOut",
           scrollTrigger: {
             trigger: containerRef.current,
@@ -59,7 +59,7 @@ export function CurtainTransition({ rows = 6 }: CurtainTransitionProps) {
       aria-hidden="true"
       sx={{
         width: "100%",
-        height: { xs: 80, md: 120 },
+        height: "50vh",
         position: "relative",
         overflow: "hidden",
         display: "flex",

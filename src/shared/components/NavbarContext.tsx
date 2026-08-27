@@ -28,10 +28,8 @@ export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch
  * Anchor ids now live here and useNavbarAnchor only accepts one of them.
  */
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  // Default navbar treatment is a standard solid bar, not glassmorphism —
-  // deliberate user decision (2026-08). Glass mode is still available via
-  // the command palette / navbar-mode override, just not the default.
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('standard');
+  // Default navbar treatment is an island pill with blur background
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('island');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
 

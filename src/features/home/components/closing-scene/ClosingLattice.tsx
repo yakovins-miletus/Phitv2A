@@ -1,16 +1,16 @@
 /**
  * Closing Lattice with Scroll-Driven Zoom
  *
- * Wraps the IsometricLattice in scroll-driven animation that causes zero React
- * re-renders. Uses GSAP ScrollTrigger to map scroll progress to lattice scale
- * via the imperative handle.
+ * Replaces the SVG IsometricTechLattice with an independent instance of HeroCanvas
+ * in "closure" mode. Starts tightly zoomed at p=0 with the opening headline
+ * "We create exciting technologies", and zooms out on scroll (p -> 1) to reveal
+ * all 6 outer application nodes, 9 signal loops, and the final Call-To-Action (CTA).
  *
- * Gated behind useInView + Suspense, matching the ServiceGlobe pattern in
- * MissionStatement.tsx.
+ * Micro-choreography runs with zero React re-renders via GSAP ScrollTrigger and
+ * CSS custom properties.
  */
 
-import { useRef, Suspense, lazy } from "react";
-import { useInView } from "motion/react";
+import { useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { Link } from "@tanstack/react-router";
@@ -23,93 +23,59 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
-
-import type { IsometricLatticeHandle } from "./IsometricTechLattice";
+import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
+import { sectionOrder } from "@/shared/sections";
+import { HeroCanvas, type HeroCanvasHandle } from "@/features/hero/HeroCanvas";
 
 // Register ScrollTrigger plugin once at module load
 gsap.registerPlugin(ScrollTrigger);
 
-// Lazy-load the lattice component so it doesn't enter the eager home chunk
-const IsometricLattice = lazy(
-  () =>
-    import("./IsometricTechLattice").then((m) => ({
-      default: m.IsometricLattice,
-    })),
-);
-
-/** How early the lattice chunk starts fetching, in px below the fold. */
-const LATTICE_PREFETCH_MARGIN = "0px 0px 600px 0px";
-
-/**
- * Scroll-driven lattice with zoom animation.
- *
- * The lattice is rendered at a reduced scale under reduced-motion; otherwise,
- * it starts at full scale and zooms out as you scroll through the section.
- * The parentRef is used to position the scroll trigger; the latticeRef is
- * updated via the imperative handle on scroll.
- */
-function DeferredClosingLattice({
-  latticeRef,
-}: {
-  latticeRef: React.RefObject<IsometricLatticeHandle | null>;
-}) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
-  const near = useInView(sentinelRef, {
-    once: true,
-    margin: LATTICE_PREFETCH_MARGIN,
-  });
-
-  return (
-    <>
-      <div
-        ref={sentinelRef}
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-        }}
-      />
-      {near ? (
-        <Suspense fallback={<Box sx={{ aspectRatio: "4 / 3", bgcolor: NOIR.navyField }} />}>
-          <IsometricLattice ref={latticeRef} reduced={reduced === true} />
-        </Suspense>
-      ) : null}
-    </>
-  );
-}
-
 /**
  * Main closing lattice section.
  *
- * Replaces ClosingShelf's four polaroid frames with an isometric tech-stack
- * lattice that zooms out to reveal the supporting structure as you scroll.
- *
- * Preserves the CTAs to /contact and /careers.
+ * Hosts the secondary isometric canvas with pinned scroll-driven zoom-out and
+ * choreographed opening headline and CTA transitions.
  */
 export function ClosingLatticeSection() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const latticeRef = useRef<IsometricLatticeHandle>(null);
+  const closureHandleRef = useRef<HeroCanvasHandle>(null);
   const reduced = useReducedMotion();
 
-  // Scroll-driven zoom animation: lattice zooms out (scale 1 to 0.5) as section scrolls
+  // Scroll-driven zoom animation: canvas zooms out from tight (p=0) to wide (p=1) over 2.5vh pin
   useGSAP(
     () => {
       // Skip if reduced motion is enabled or container not yet mounted
       if (reduced === true || !containerRef.current) return;
 
-      // Create scroll-driven zoom effect
+      const el = containerRef.current;
+
       const scrollTrigger = ScrollTrigger.create({
-        trigger: containerRef.current,
-        start: "top bottom",
-        end: "bottom top",
+        trigger: el,
+        pin: true,
+        start: "top top",
+        end: () => `+=${String(window.innerHeight * 2.5)}`,
         scrub: SCROLL_SPEED,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        refreshPriority: refreshPriorityFor(sectionOrder("closing")),
         onUpdate: (self) => {
-          // Map scroll progress (0 to 1) to scale (1 to 0.5)
-          // Progress 0: full scale (1), Progress 1: half scale (0.5)
-          const scale = 1 - self.progress * 0.5;
-          latticeRef.current?.setScale(scale);
+          const p = self.progress;
+
+          // Camera Zoom: tight zoom at p in [0.0, 0.10], ramps to wide view at p in [0.10, 0.85]
+          const zoomProgress = p <= 0.10 ? 0 : p >= 0.85 ? 1 : (p - 0.10) / 0.75;
+          closureHandleRef.current?.setZoomProgress?.(zoomProgress);
+          closureHandleRef.current?.setProgress(p);
+
+          // Opening Headline: hold at 1.0 for p in [0.0, 0.10], fades out 1.0 -> 0.0 for p in [0.10, 0.45]
+          const headlineOpacity = p <= 0.10 ? 1 : p >= 0.45 ? 0 : (0.45 - p) / 0.35;
+
+          // Final CTA Card: 0.0 for p in [0.0, 0.45], fades in 0.0 -> 1.0 for p in [0.45, 0.85]
+          const ctaOpacity = p <= 0.45 ? 0 : p >= 0.85 ? 1 : (p - 0.45) / 0.40;
+          const ctaPointer = p >= 0.65 ? "auto" : "none";
+
+          el.style.setProperty("--closure-headline-opacity", headlineOpacity.toFixed(3));
+          el.style.setProperty("--closure-cta-opacity", ctaOpacity.toFixed(3));
+          el.style.setProperty("--closure-cta-pointer", ctaPointer);
         },
       });
 
@@ -117,81 +83,162 @@ export function ClosingLatticeSection() {
         scrollTrigger.kill();
       };
     },
-    { dependencies: [reduced] },
+    { scope: containerRef, dependencies: [reduced] },
   );
 
   return (
     <Box
+      ref={containerRef}
+      data-testid="closing-lattice-section"
       sx={{
         position: "relative",
         width: "100%",
-        bgcolor: NOIR.navyField,
-        color: NOIR.frost,
-        py: { xs: 8, md: 12 },
+        height: "100vh",
+        minHeight: { xs: 580, md: 680 },
+        bgcolor: "#FFFFFF",
+        color: NOIR.navyField,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
         px: { xs: 2, md: 4 },
       }}
     >
-      {/* The deferred lattice */}
+      {/* 1. Background Isometric HeroCanvas in Closure Mode */}
       <Box
-        ref={containerRef}
         sx={{
-          position: "relative",
+          position: "absolute",
+          inset: 0,
           width: "100%",
-          maxWidth: { xs: "100%", md: "900px" },
-          mx: "auto",
-          mb: { xs: 8, md: 12 },
-          aspectRatio: { xs: "1 / 1", md: "4 / 3" },
+          height: "100%",
+          pointerEvents: "none",
         }}
       >
-        <DeferredClosingLattice latticeRef={latticeRef} />
+        <HeroCanvas
+          handleRef={closureHandleRef}
+          mode="closure"
+          showLogo={true}
+          initialZoomProgress={reduced ? 1 : 0}
+        />
       </Box>
 
-      {/* Statement and CTAs */}
+      {/* 2. Opening Headline (p: 0.0 -> 0.45) */}
       <Box
+        aria-hidden={reduced ? true : undefined}
+        style={{
+          opacity: reduced ? 0 : "var(--closure-headline-opacity, 1)",
+          display: reduced ? "none" : "block",
+        }}
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", md: "center" },
-          gap: 4,
           position: "relative",
-          bgcolor: NOIR.navyField,
-          p: { xs: 4, md: 6 },
-          borderRadius: "20px",
-          border: "none",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          maxWidth: { xs: "100%", md: "900px" },
+          zIndex: 4,
+          textAlign: "center",
+          pointerEvents: "none",
+          px: 3,
+          maxWidth: "800px",
           mx: "auto",
         }}
       >
         <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: { xs: "0.72rem", md: "0.82rem" },
+            fontWeight: 800,
+            letterSpacing: "0.20em",
+            textTransform: "uppercase",
+            color: NOIR.gold,
+            mb: 1.5,
+          }}
+        >
+          CAPABILITY // PLATFORM
+        </Typography>
+        <Typography
           variant="h2"
           component="h2"
           sx={{
-            fontSize: { xs: "2rem", md: "3.5rem" },
-            lineHeight: 1.15,
-            letterSpacing: "-0.02em",
-            fontWeight: 700,
-            maxWidth: "24ch",
-            color: NOIR.white,
+            fontSize: { xs: "2.2rem", sm: "3.5rem", md: "4.5rem" },
+            lineHeight: 1.1,
+            letterSpacing: "-0.03em",
+            fontWeight: 800,
+            color: NOIR.navyField,
+            textShadow: "0 4px 28px rgba(255, 255, 255, 0.85)",
           }}
         >
-          {CONTENT.closing.statement}
+          We create exciting technologies
         </Typography>
+      </Box>
 
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+      {/* 3. Final Statement and CTA Overlay (p: 0.45 -> 0.85) */}
+      <Box
+        style={{
+          opacity: reduced ? 1 : "var(--closure-cta-opacity, 0)",
+          pointerEvents: (reduced ? "auto" : "var(--closure-cta-pointer, none)") as React.CSSProperties["pointerEvents"],
+        }}
+        sx={{
+          position: "absolute",
+          bottom: { xs: 24, sm: 36, md: 48 },
+          right: { xs: "auto", md: 48 },
+          left: { xs: "50%", md: "auto" },
+          transform: { xs: "translateX(-50%)", md: "none" },
+          width: { xs: "calc(100% - 32px)", md: "auto" },
+          maxWidth: { xs: "560px", md: "640px" },
+          zIndex: 6,
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          justifyContent: "space-between",
+          alignItems: { xs: "flex-start", sm: "center" },
+          gap: { xs: 2.5, md: 3 },
+          p: { xs: 3, sm: 3.5, md: 4 },
+          borderRadius: "24px",
+          bgcolor: "rgba(6, 18, 38, 0.92)",
+          border: "1px solid rgba(6, 18, 38, 0.18)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        <Box sx={{ maxWidth: { xs: "100%", sm: "340px", md: "380px" } }}>
+          <Typography
+            variant="h3"
+            component="h3"
+            sx={{
+              fontSize: { xs: "1.35rem", sm: "1.75rem", md: "2.1rem" },
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
+              fontWeight: 700,
+              color: NOIR.white,
+              mb: 1,
+            }}
+          >
+            {CONTENT.closing.statement}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: { xs: "0.72rem", md: "0.80rem" },
+              color: NOIR.frost,
+              opacity: 0.8,
+            }}
+          >
+            Direct line to our technical leadership and quantitative engineering directors.
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", width: { xs: "100%", sm: "auto" } }}>
           <Box
             component={Link}
             to="/contact"
             sx={{
               display: "inline-flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: 1.5,
-              px: 4,
-              py: 2,
+              px: 3.5,
+              py: 1.75,
               bgcolor: "transparent",
               color: NOIR.white,
-              border: `1px solid rgba(255,255,255,0.3)`,
+              border: "1px solid rgba(255, 255, 255, 0.35)",
               fontFamily: MONO,
               fontSize: "0.78rem",
               fontWeight: 800,
@@ -204,7 +251,7 @@ export function ClosingLatticeSection() {
               "&:hover": {
                 borderColor: NOIR.white,
                 transform: "scale(1.02)",
-                bgcolor: "rgba(255,255,255,0.05)",
+                bgcolor: "rgba(255, 255, 255, 0.08)",
               },
             }}
           >
@@ -216,10 +263,11 @@ export function ClosingLatticeSection() {
             sx={{
               display: "inline-flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: 1.5,
-              px: 4,
-              py: 2,
-              bgcolor: NOIR.white,
+              px: 3.5,
+              py: 1.75,
+              bgcolor: NOIR.gold,
               color: NOIR.navyField,
               fontFamily: MONO,
               fontSize: "0.78rem",
@@ -231,7 +279,7 @@ export function ClosingLatticeSection() {
               whiteSpace: "nowrap",
               transition: "transform 0.2s ease, background-color 0.2s ease",
               "&:hover": {
-                bgcolor: NOIR.gold,
+                bgcolor: NOIR.white,
                 transform: "scale(1.02)",
               },
             }}

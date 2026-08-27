@@ -15,6 +15,10 @@ import { describe, expect, test } from "vitest";
 import {
   APPLICATION_NODES,
   APPLICATION_NODE_SIZE,
+  APP_NODE_WIDTH,
+  APP_NODE_HEIGHT,
+  APP_NODE_RADIUS,
+  APP_NODE_ELEVATION,
   CORE_GRID_CELLS,
   CUBE_POSITIONS,
   GRID_CELL,
@@ -76,8 +80,12 @@ describe("scene geometry", () => {
     for (const n of SERVICE_NODES) expect(n.elevation).toBe(28);
   });
 
-  test("outer decorative application nodes are defined on the outer perimeter ring", () => {
+  test("outer decorative application nodes are defined as flat rounded rectangles on the outer perimeter ring", () => {
     expect(APPLICATION_NODES).toHaveLength(6);
+    expect(APP_NODE_WIDTH).toBe(104);
+    expect(APP_NODE_HEIGHT).toBe(58);
+    expect(APP_NODE_RADIUS).toBe(12);
+    expect(APP_NODE_ELEVATION).toBe(6);
     expect(APPLICATION_NODE_SIZE).toBe(52);
     for (const app of APPLICATION_NODES) {
       expect(app.id).toBeTruthy();
@@ -86,7 +94,10 @@ describe("scene geometry", () => {
       expect(app.cx).toBeLessThanOrEqual(PLANE_SIZE);
       expect(app.cy).toBeGreaterThanOrEqual(0);
       expect(app.cy).toBeLessThanOrEqual(PLANE_SIZE);
-      expect(app.elevation).toBeGreaterThanOrEqual(18);
+      expect(app.elevation).toBe(APP_NODE_ELEVATION);
+      expect(app.width).toBe(APP_NODE_WIDTH);
+      expect(app.height).toBe(APP_NODE_HEIGHT);
+      expect(app.radius).toBe(APP_NODE_RADIUS);
       expect(["analytics", "trading", "pipeline", "risk", "execution", "telemetry"]).toContain(app.appType);
     }
   });

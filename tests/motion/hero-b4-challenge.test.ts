@@ -12,7 +12,8 @@ import { describe, expect, test } from "vitest";
 
 import {
   APPLICATION_NODES,
-  APPLICATION_NODE_SIZE,
+  APP_NODE_WIDTH,
+  APP_NODE_HEIGHT,
   CUBE_POSITIONS,
   GRID_CELL,
   GRID_CELLS,
@@ -150,16 +151,17 @@ describe("Empirical Challenge: 2. 2D Projection Bounds & Screen Containment", ()
       let restMinSy = Infinity, restMaxSy = -Infinity;
 
       for (const app of APPLICATION_NODES) {
-        const half = APPLICATION_NODE_SIZE / 2;
+        const halfW = (app.width ?? APP_NODE_WIDTH) / 2;
+        const halfH = (app.height ?? APP_NODE_HEIGHT) / 2;
         const corners = [
-          [app.cx - half, app.cy - half, 0],
-          [app.cx + half, app.cy - half, 0],
-          [app.cx + half, app.cy + half, 0],
-          [app.cx - half, app.cy + half, 0],
-          [app.cx - half, app.cy - half, app.elevation],
-          [app.cx + half, app.cy - half, app.elevation],
-          [app.cx + half, app.cy + half, app.elevation],
-          [app.cx - half, app.cy + half, app.elevation],
+          [app.cx - halfW, app.cy - halfH, 0],
+          [app.cx + halfW, app.cy - halfH, 0],
+          [app.cx + halfW, app.cy + halfH, 0],
+          [app.cx - halfW, app.cy + halfH, 0],
+          [app.cx - halfW, app.cy - halfH, app.elevation],
+          [app.cx + halfW, app.cy - halfH, app.elevation],
+          [app.cx + halfW, app.cy + halfH, app.elevation],
+          [app.cx - halfW, app.cy + halfH, app.elevation],
         ] as const;
 
         for (const [x, y, z] of corners) {
@@ -254,28 +256,28 @@ describe("Empirical Challenge: 2. 2D Projection Bounds & Screen Containment", ()
     }
 
     // Alpha Analytics (NW) -> far left of diamond
-    expect(bounds["app-alpha"]?.sx).toBe(225);
-    expect(bounds["app-alpha"]?.sy).toBe(438);
+    expect(bounds["app-alpha"]?.sx).toBe(227);
+    expect(bounds["app-alpha"]?.sy).toBe(447);
 
     // Direct Market Access (NE) -> top apex of diamond
     expect(bounds["app-dma"]?.sx).toBe(720);
-    expect(bounds["app-dma"]?.sy).toBe(214);
+    expect(bounds["app-dma"]?.sy).toBe(222);
 
     // Risk Fortress (SE) -> far right of diamond
-    expect(bounds["app-risk"]?.sx).toBe(1215);
-    expect(bounds["app-risk"]?.sy).toBe(438);
+    expect(bounds["app-risk"]?.sx).toBe(1213);
+    expect(bounds["app-risk"]?.sy).toBe(447);
 
     // Data Pipeline (SW) -> bottom apex of diamond
     expect(bounds["app-pipeline"]?.sx).toBe(720);
-    expect(bounds["app-pipeline"]?.sy).toBe(815);
+    expect(bounds["app-pipeline"]?.sy).toBe(824);
 
     // Order Router (North)
     expect(bounds["app-router"]?.sx).toBe(486);
-    expect(bounds["app-router"]?.sy).toBe(306);
+    expect(bounds["app-router"]?.sy).toBe(313);
 
     // Telemetry Hub (South)
-    expect(bounds["app-telemetry"]?.sx).toBe(1028);
-    expect(bounds["app-telemetry"]?.sy).toBe(615);
+    expect(bounds["app-telemetry"]?.sx).toBe(1027);
+    expect(bounds["app-telemetry"]?.sy).toBe(623);
   });
 
   test("Mobile (390x844): projected nodes at rest p=0 scale proportionally to viewport width", () => {
@@ -288,22 +290,22 @@ describe("Empirical Challenge: 2. 2D Projection Bounds & Screen Containment", ()
 
     // Exact calibrated coordinate expectations
     expect(bounds["app-alpha"]?.sx).toBe(33);
-    expect(bounds["app-alpha"]?.sy).toBe(418);
+    expect(bounds["app-alpha"]?.sy).toBe(421);
 
     expect(bounds["app-dma"]?.sx).toBe(195);
-    expect(bounds["app-dma"]?.sy).toBe(333);
+    expect(bounds["app-dma"]?.sy).toBe(335);
 
     expect(bounds["app-risk"]?.sx).toBe(357);
-    expect(bounds["app-risk"]?.sy).toBe(418);
+    expect(bounds["app-risk"]?.sy).toBe(421);
 
     expect(bounds["app-pipeline"]?.sx).toBe(195);
-    expect(bounds["app-pipeline"]?.sy).toBe(519);
+    expect(bounds["app-pipeline"]?.sy).toBe(522);
 
     expect(bounds["app-router"]?.sx).toBe(112);
-    expect(bounds["app-router"]?.sy).toBe(371);
+    expect(bounds["app-router"]?.sy).toBe(373);
 
     expect(bounds["app-telemetry"]?.sx).toBe(286);
-    expect(bounds["app-telemetry"]?.sy).toBe(471);
+    expect(bounds["app-telemetry"]?.sy).toBe(473);
 
     // DMA (NE) and Pipeline (SW) are vertically aligned with center origin (sx = 195)
     expect(bounds["app-dma"]?.sx).toBe(195);

@@ -133,21 +133,29 @@ export interface ApplicationNodeSpec {
   readonly cy: number;
   readonly elevation: number;
   readonly appType: AppType;
+  readonly width?: number;
+  readonly height?: number;
+  readonly radius?: number;
 }
 
+/** Outer application node dimensions (large, flat rounded rectangles). */
+export const APP_NODE_WIDTH = 104;
+export const APP_NODE_HEIGHT = 58;
+export const APP_NODE_RADIUS = 12;
+export const APP_NODE_ELEVATION = 6;
 export const APPLICATION_NODE_SIZE = 52;
 
 /**
  * Purely decorative application nodes situated on the outer margin ring representing developed applications.
- * Symmetrically placed around the 30x30 cell plane.
+ * Rendered as large, flat, low-profile rounded rectangles (104x58px, 6px elevation) and symmetrically placed around (630, 630).
  */
 export const APPLICATION_NODES: readonly ApplicationNodeSpec[] = [
-  { id: "app-alpha", label: "Alpha Analytics", cx: 2 * GRID_CELL, cy: 2 * GRID_CELL, elevation: 22, appType: "analytics" },
-  { id: "app-dma", label: "Direct Market Access", cx: 28 * GRID_CELL, cy: 2 * GRID_CELL, elevation: 22, appType: "trading" },
-  { id: "app-pipeline", label: "Data Pipeline", cx: 2 * GRID_CELL, cy: 28 * GRID_CELL, elevation: 22, appType: "pipeline" },
-  { id: "app-risk", label: "Risk Fortress", cx: 28 * GRID_CELL, cy: 28 * GRID_CELL, elevation: 22, appType: "risk" },
-  { id: "app-router", label: "Order Router", cx: 15 * GRID_CELL, cy: 1 * GRID_CELL, elevation: 20, appType: "execution" },
-  { id: "app-telemetry", label: "Telemetry Hub", cx: 15 * GRID_CELL, cy: 29 * GRID_CELL, elevation: 20, appType: "telemetry" },
+  { id: "app-alpha", label: "Alpha Analytics", cx: 2 * GRID_CELL, cy: 2 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "analytics", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-dma", label: "Direct Market Access", cx: 28 * GRID_CELL, cy: 2 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "trading", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-pipeline", label: "Data Pipeline", cx: 2 * GRID_CELL, cy: 28 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "pipeline", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-risk", label: "Risk Fortress", cx: 28 * GRID_CELL, cy: 28 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "risk", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-router", label: "Order Router", cx: 15 * GRID_CELL, cy: 1 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "execution", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-telemetry", label: "Telemetry Hub", cx: 15 * GRID_CELL, cy: 29 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "telemetry", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
 ] as const;
 
 /* ───────────────────────────── Signal circuits ───────────────────────────── */

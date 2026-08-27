@@ -214,6 +214,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     chapter: 7,
     choreo: "zoom-center",
     ground: "field",
+    ownsPin: true,
     noExitDim: true,
     establishScale: "mini",
     establishAlign: "left",

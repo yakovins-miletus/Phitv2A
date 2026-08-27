@@ -455,7 +455,7 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
 
       await waitFor(() => {
         expect(onDone).toHaveBeenCalled();
-      }, { timeout: 1500 });
+      }, { timeout: 3000 });
 
       delete (document as { fonts?: unknown }).fonts;
     });

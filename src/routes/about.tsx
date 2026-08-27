@@ -189,32 +189,41 @@ function AboutPage() {
           pb: 0,
           display: "flex",
           flexDirection: "column",
-          gap: { xs: 12, md: 20 },
         }}
       >
-        <SmoothSection>
-          <PoweredBySection />
-        </SmoothSection>
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <SmoothSection>
+            <PoweredBySection />
+          </SmoothSection>
+        </Box>
         
-        <PrinciplesValuesShowcase />
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <PrinciplesValuesShowcase />
+        </Box>
         
-        <SmoothSection>
-          <Box ref={timelineAnchorRef}>
-            <JourneyTimeline />
-          </Box>
-        </SmoothSection>
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <SmoothSection>
+            <Box ref={timelineAnchorRef}>
+              <JourneyTimeline />
+            </Box>
+          </SmoothSection>
+        </Box>
         
-        <SmoothSection>
-          <TalentSection />
-        </SmoothSection>
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <SmoothSection>
+            <TalentSection />
+          </SmoothSection>
+        </Box>
 
-
-
-        <GraduateHallOfFameSection />
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <GraduateHallOfFameSection />
+        </Box>
         
-        <SmoothSection>
-          <CertificationsSection />
-        </SmoothSection>
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <SmoothSection>
+            <CertificationsSection />
+          </SmoothSection>
+        </Box>
 
         {/* ── Talent/culture narrative (relocated from home) ──────────────
             Relative order preserved exactly as it was on the home page:
@@ -244,7 +253,7 @@ function AboutPage() {
             as the sheet's light `background.default` instead. Match
             `GROUNDS.deep.bg` (`NOIR.navyDeep`) explicitly, the same pattern
             the Blog/Academy Box below already uses. */}
-        <Box sx={{ bgcolor: NOIR.navyDeep, width: "100%", position: "relative", zIndex: 1 }}>
+        <Box sx={{ bgcolor: NOIR.navyDeep, width: "100%", position: "relative", zIndex: 1, mb: { xs: 12, md: 20 } }}>
           <SectionBeat
             section={aboutSection("daily-life")}
             establishing={<SeamEstablishingShot selfDriven={false} />}
@@ -258,7 +267,9 @@ function AboutPage() {
             and `data-act="people"` directly (from the `candidates`
             SectionDef) — the wrapper `<section id="careers-sequence">` that
             used to carry those attributes is gone. */}
-        <CandidatesAndCareersSection />
+        <Box sx={{ mb: { xs: 12, md: 20 } }}>
+          <CandidatesAndCareersSection />
+        </Box>
 
         {/* Same consolidation as above: `testimonials`'s SectionBeat now
             carries `aria-label="Hear From Our People"` and
@@ -271,7 +282,7 @@ function AboutPage() {
             ClosingShelf stayed on home, so the curtain now leads only into
             the relocated Blog. */}
         <Suspense fallback={null}>
-          <CurtainTransition rows={6} />
+          <CurtainTransition rows={12} />
         </Suspense>
 
         {/* Deep Navy Dark Zone for the Intelligence Feed + Academy.

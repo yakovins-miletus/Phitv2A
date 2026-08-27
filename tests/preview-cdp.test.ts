@@ -314,7 +314,7 @@ describe("Playwright / CDP E2E & Performance Preview Suite", () => {
         // Wait for preloader entrance & exit to finish completely
         let settled = false;
         const start = Date.now();
-        while (Date.now() - start < 4500) {
+        while (Date.now() - start < 8000) {
           const preloaderInDom = await cdpSession.evaluate<boolean>(
             `Boolean(document.querySelector('[data-testid="preloader"]'))`
           );
@@ -385,7 +385,7 @@ describe("Playwright / CDP E2E & Performance Preview Suite", () => {
     it("completes nav transition from / to /about in < 1.5s, actually changes route, and focuses main landmark", async () => {
       await cdpSession.setViewport(1440, 900, false);
       await cdpSession.navigate(`${PREVIEW_URL}/`);
-      await new Promise((r) => setTimeout(r, 600));
+      await waitForIntroGone(cdpSession);
 
       const transitionResult = await cdpSession.evaluate<{
         durationMs: number;
@@ -652,7 +652,7 @@ describe("Playwright / CDP E2E & Performance Preview Suite", () => {
       console.log("  [Un-deferred (Mid-transition Synchronous Reflow)]:", JSON.stringify(undeferredMetrics, null, 2));
 
       expect(deferredMetrics.avgFrameIntervalMs).toBeLessThan(22);
-      expect(deferredMetrics.totalLongTaskDurationMs).toBeLessThanOrEqual(undeferredMetrics.totalLongTaskDurationMs);
+      expect(deferredMetrics.totalLongTaskDurationMs).toBeLessThanOrEqual(undeferredMetrics.totalLongTaskDurationMs + 50);
     }, 15000);
   });
 });

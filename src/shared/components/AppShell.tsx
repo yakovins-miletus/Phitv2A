@@ -655,15 +655,7 @@ const NAV_SOLID_AFTER_PX = 50;
           position="fixed"
           elevation={0}
           sx={{
-            // Opts the header out of the page-recede/arrive treatment in
-            // viewTransitions.css. Without a name of its own it's part of the
-            // single `root` snapshot and recedes/scales/wipes with everything
-            // else on every navigation; a stable name pulls it into its own
-            // view-transition group, which viewTransitions.css then pins
-            // static and on top (see the `site-header` rules there) so it
-            // reads as chrome that was never part of the transition, not
-            // "chrome that happens to sit still."
-            viewTransitionName: "site-header",
+            // viewTransitionName: "site-header" is temporarily removed because it breaks backdrop-filter in Chromium.
             // Standard mode is a genuinely solid bar, not a glass treatment
             // in disguise — brand navy over dark sections, white/panel over
             // light ones, a hairline border, no backdrop blur. Glass mode
@@ -740,11 +732,20 @@ const NAV_SOLID_AFTER_PX = 50;
                     : isNotch
                     ? NOIR.charcoal
                     : isIsland
-                    ? "rgba(255, 255, 255, 0.65)"
+                    ? "rgba(255, 255, 255, 0.45)"
                     : isOverDarkSection
                       ? "rgba(30, 30, 30, 0.28)"
                       : (derivedIsCompact ? NOIR.white : "transparent")),
                 backdropFilter: isStandardOrGlass
+                  ? "none"
+                  : (isMinimal
+                    ? "none"
+                    : isIsland
+                    ? "blur(20px) saturate(160%)"
+                    : isOverDarkSection
+                      ? "blur(16px) saturate(140%)"
+                      : "none"),
+                WebkitBackdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
                     ? "none"
@@ -783,7 +784,7 @@ const NAV_SOLID_AFTER_PX = 50;
                       : isImmersive
                         ? "6px 24px"
                         : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" }))),
-                boxShadow: isIsland ? "0 8px 32px rgba(0,0,0,0.08)" : "none",
+                boxShadow: isIsland ? "0 4px 12px rgba(0,0,0,0.06)" : "none",
                 display: "flex",
                 justifyContent: isNotch ? "center" : "center",
                 alignItems: "center",

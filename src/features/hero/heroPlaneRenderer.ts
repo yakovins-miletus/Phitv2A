@@ -34,7 +34,10 @@
 import {
   PERSPECTIVE,
   APPLICATION_NODES,
-  APPLICATION_NODE_SIZE,
+  APP_NODE_WIDTH,
+  APP_NODE_HEIGHT,
+  APP_NODE_RADIUS,
+  APP_NODE_ELEVATION,
   CUBE_POSITIONS,
   GRID_CELL,
   GRID_OFFSET,
@@ -382,8 +385,22 @@ const FIELD_TIER_FILL: readonly string[] = (() => {
 })();
 
 /* ── Preallocated per-frame buffers — zero allocation in the frame path. ── */
-const fieldStretchCurrent = new Float32Array(FIELD_COUNT);
-const fieldStretchTarget = new Float32Array(FIELD_COUNT);
+export interface PlaneRendererState {
+  fieldStretchCurrent: Float32Array;
+  fieldStretchTarget: Float32Array;
+  logoScreenBox: { x: number; y: number; w: number; visible: boolean };
+}
+
+export function createPlaneRendererState(): PlaneRendererState {
+  return {
+    fieldStretchCurrent: new Float32Array(FIELD_COUNT),
+    fieldStretchTarget: new Float32Array(FIELD_COUNT),
+    logoScreenBox: { x: 0.5, y: 0.6, w: 0.22, visible: false },
+  };
+}
+
+const defaultPlaneRendererState = createPlaneRendererState();
+
 const fieldMarkSX = new Float32Array(FIELD_COUNT);
 const fieldMarkSY = new Float32Array(FIELD_COUNT);
 const fieldMarkR = new Float32Array(FIELD_COUNT);
@@ -407,7 +424,11 @@ const rectBuf = new Int32Array(4);
  * The ripple is the one thing that must sweep the whole field — its crest can be
  * anywhere — gated on `rippleAge >= 0` so it costs nothing between clicks.
  */
-function applyCursor(interaction: PlaneInteraction | undefined): void {
+function applyCursor(
+  interaction: PlaneInteraction | undefined,
+  rendererState: PlaneRendererState = defaultPlaneRendererState,
+): void {
+  const { fieldStretchTarget, fieldStretchCurrent } = rendererState;
   fieldStretchTarget.fill(0);
 
   const lit = interaction !== undefined && interaction.pointerActive && interaction.strength > 0;
@@ -451,7 +472,12 @@ function applyCursor(interaction: PlaneInteraction | undefined): void {
  * marks, sized down to this field's `FIELD_ALPHA_TIERS` (no colour ramp to cross,
  * so there is only one axis to bucket on).
  */
-function drawDotField(ctx: CanvasRenderingContext2D, cam: Camera): void {
+function drawDotField(
+  ctx: CanvasRenderingContext2D,
+  cam: Camera,
+  rendererState: PlaneRendererState = defaultPlaneRendererState,
+): void {
+  const { fieldStretchCurrent } = rendererState;
   fieldBucketCount.fill(0);
   for (let i = 0; i < FIELD_COUNT; i++) {
     const stretch = fieldStretchCurrent[i]!;
@@ -626,6 +652,7 @@ function drawSignals(
   cam: Camera,
   state: HeroFrameState,
   elapsed: number,
+  mode: "hero" | "closure" = "hero",
 ): void {
   if (state.signalOpacity <= 0.01) return;
 
@@ -633,7 +660,9 @@ function drawSignals(
   ctx.globalAlpha = state.signalOpacity;
   ctx.lineCap = "round";
 
-  for (const loop of SIGNAL_LOOPS) {
+  const loopCount = mode === "hero" ? 3 : SIGNAL_LOOPS.length;
+  for (let i = 0; i < loopCount; i++) {
+    const loop = SIGNAL_LOOPS[i]!;
     if (loop.totalL === 0) continue;
 
     for (const offset of loop.pulseOffsets) {
@@ -658,7 +687,7 @@ function drawSignals(
       ctx.stroke();
 
       // Pulses light nearby service and application nodes as they pass.
-      drawNodeGlow(ctx, cam, headPt.x, headPt.y, loop.color);
+      drawNodeGlow(ctx, cam, headPt.x, headPt.y, loop.color, mode);
     }
   }
 
@@ -671,6 +700,7 @@ function drawNodeGlow(
   px: number,
   py: number,
   color: Rgb,
+  mode: "hero" | "closure" = "hero",
 ): void {
   // Proximity glow on 4 primary service nodes
   for (let i = 0; i < SERVICE_NODES.length; i++) {
@@ -693,25 +723,30 @@ function drawNodeGlow(
     ctx.fill();
   }
 
-  // Proximity glow on outer application nodes
-  for (let i = 0; i < APPLICATION_NODES.length; i++) {
-    const node = APPLICATION_NODES[i]!;
-    const dist = Math.hypot(px - node.cx, py - node.cy);
-    if (dist >= 90) continue;
+  // Proximity glow on outer application nodes (closure mode only)
+  if (mode !== "hero") {
+    for (let i = 0; i < APPLICATION_NODES.length; i++) {
+      const node = APPLICATION_NODES[i]!;
+      const dist = Math.hypot(px - node.cx, py - node.cy);
+      if (dist >= 90) continue;
 
-    const intensity = (1 - dist / 90) * 0.38;
-    if (intensity <= 0.01) continue;
+      const intensity = (1 - dist / 90) * 0.38;
+      if (intensity <= 0.01) continue;
 
-    const p = project(cam, node.cx, node.cy, node.elevation);
-    const r = 42 * cam.scale;
-    const g = ctx.createRadialGradient(p.sx, p.sy, 8 * cam.scale, p.sx, p.sy, r);
-    g.addColorStop(0, rgba(color, intensity * 0.8));
-    g.addColorStop(0.4, rgba(color, intensity * 0.25));
-    g.addColorStop(1, rgba(color, 0));
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(p.sx, p.sy, r, 0, TAU);
-    ctx.fill();
+      const isGold = node.appType === "analytics" || node.appType === "risk" || node.appType === "execution";
+      const glowColor = isGold ? RGB_GOLD : RGB_STEEL;
+
+      const p = project(cam, node.cx, node.cy, node.elevation);
+      const r = 54 * cam.scale;
+      const g = ctx.createRadialGradient(p.sx, p.sy, 10 * cam.scale, p.sx, p.sy, r);
+      g.addColorStop(0, rgba(glowColor, intensity * 0.85));
+      g.addColorStop(0.4, rgba(glowColor, intensity * 0.28));
+      g.addColorStop(1, rgba(glowColor, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.sx, p.sy, r, 0, TAU);
+      ctx.fill();
+    }
   }
 }
 
@@ -955,9 +990,6 @@ function drawNodeIcon(
   }
 }
 
-/** Corner radius of an outer application node's rounded slab faces. */
-const APP_NODE_RADIUS = 12;
-
 /* ── Outer application nodes ── */
 
 function collectApplicationNode(
@@ -968,38 +1000,47 @@ function collectApplicationNode(
   state: HeroFrameState,
   interaction?: PlaneInteraction,
 ): void {
-  const half = APPLICATION_NODE_SIZE / 2;
-  const x0 = spec.cx - half;
-  const y0 = spec.cy - half;
-  const x1 = spec.cx + half;
-  const y1 = spec.cy + half;
+  const w = spec.width ?? APP_NODE_WIDTH;
+  const h = spec.height ?? APP_NODE_HEIGHT;
+  const radius = spec.radius ?? APP_NODE_RADIUS;
+  const elevation = spec.elevation ?? APP_NODE_ELEVATION;
+
+  const halfW = w / 2;
+  const halfH = h / 2;
+  const x0 = spec.cx - halfW;
+  const y0 = spec.cy - halfH;
+  const x1 = spec.cx + halfW;
+  const y1 = spec.cy + halfH;
 
   const lit = interaction !== undefined && interaction.pointerActive && interaction.strength > 0;
   const falloff = lit ? cursorFalloff(spec.cx - interaction.lightX, spec.cy - interaction.lightY, CURSOR_RADIUS) : 0;
   const stretch = lit && falloff > 0 ? skylineStretch(falloff, interaction.strength, interaction.velocity) : 0;
   const highlight = falloff * (interaction?.strength ?? 0) * 0.32;
 
-  const ez = Math.max(0, spec.elevation * (1 - state.flatten) * (1 + stretch * 0.22));
+  const isGold = spec.appType === "analytics" || spec.appType === "risk" || spec.appType === "execution";
+  const accentRgb = isGold ? RGB_GOLD : RGB_STEEL;
+
+  const ez = Math.max(0, elevation * (1 - state.flatten) * (1 + stretch * 0.22));
   const centre = project(cam, spec.cx, spec.cy, ez);
 
   out.push({
     depth: centre.depth,
     draw: () => {
       if (state.sideOpacity > 0.01) {
-        blitShadow(ctx, cam, spec.cx, spec.cy, APPLICATION_NODE_SIZE * 1.5, state.sideOpacity * 0.85);
+        blitShadow(ctx, cam, spec.cx, spec.cy, Math.max(w, h) * 0.85, state.sideOpacity * 0.8);
       }
 
-      // Stacked rounded slabs extrusion for the application node
-      if (state.sideOpacity > 0.01 && ez > 1) {
+      // Stacked rounded slabs extrusion for the application node (flat low-profile plate)
+      if (state.sideOpacity > 0.01 && ez > 0.5) {
         ctx.globalAlpha = state.sideOpacity;
-        const numSlabs = Math.max(2, Math.round(10 * (1 - state.flatten)));
+        const numSlabs = Math.max(2, Math.round(5 * (1 - state.flatten)));
         for (let i = 0; i < numSlabs; i++) {
           const z = (i / (numSlabs - 1)) * ez;
           const ratio = i / (numSlabs - 1);
           const r = Math.min(255, Math.round(6 + (12 - 6) * ratio + highlight * 20));
           const g = Math.min(255, Math.round(14 + (28 - 14) * ratio + highlight * 30));
           const b = Math.min(255, Math.round(36 + (60 - 36) * ratio + highlight * 25));
-          traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, APP_NODE_RADIUS);
+          traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, z, radius);
           ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
           ctx.fill();
         }
@@ -1007,19 +1048,28 @@ function collectApplicationNode(
       }
 
       if (state.topOpacity > 0.01) {
-        const top = ez + 3.5;
+        const top = ez + 2.0;
         ctx.globalAlpha = state.topOpacity;
 
-        traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, top, APP_NODE_RADIUS);
-        ctx.fillStyle = shade(RGB_NAVY, -0.58 + highlight * 0.35);
+        traceRoundedPlaneRect(ctx, cam, x0, y0, x1, y1, top, radius);
+        ctx.fillStyle = shade(RGB_NAVY, -0.62 + highlight * 0.35);
         ctx.fill();
 
-        // Subtle gold boundary stroke
+        // Crisp luminous border (gold for analytics/risk/execution, steel for trading/pipeline/telemetry)
         ctx.lineWidth = 1.8 * cam.scale;
-        ctx.strokeStyle = rgba(RGB_GOLD, 0.85);
+        ctx.strokeStyle = rgba(accentRgb, 0.9);
         ctx.stroke();
 
-        drawAppNodeIcon(ctx, cam, spec.cx, spec.cy, top, spec.appType);
+        // Subtle ambient glow edge
+        if (state.sideOpacity > 0.05) {
+          ctx.save();
+          ctx.lineWidth = 4.0 * cam.scale;
+          ctx.strokeStyle = rgba(accentRgb, Math.min(1, (0.16 + highlight * 0.35) * state.sideOpacity));
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        drawAppNodeIcon(ctx, cam, spec.cx, spec.cy, top, spec.appType, accentRgb);
         ctx.globalAlpha = 1;
       }
     },
@@ -1036,9 +1086,10 @@ function drawAppNodeIcon(
   cy: number,
   z: number,
   appType: AppType,
+  accentColor: Rgb = RGB_GOLD,
 ): void {
-  // 24x24 viewBox rendered at 24px on plane
-  const u = 24 / 24;
+  // 24x24 viewBox rendered at 26px on plane
+  const u = 26 / 24;
   const toPlane = (vx: number, vy: number) => ({ x: cx + (vx - 12) * u, y: cy + (vy - 12) * u });
 
   const strokes: Record<AppType, readonly (readonly (readonly [number, number])[])[]> = {
@@ -1077,8 +1128,8 @@ function drawAppNodeIcon(
     ],
   };
 
-  ctx.lineWidth = 1.9 * u * cam.scale;
-  ctx.strokeStyle = rgba(RGB_GOLD, 0.95);
+  ctx.lineWidth = 2.0 * u * cam.scale;
+  ctx.strokeStyle = rgba(accentColor, 0.95);
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
 
@@ -1107,6 +1158,7 @@ function drawSceneObjects(
   state: HeroFrameState,
   interaction?: PlaneInteraction,
   elapsed: number = 0,
+  mode: "hero" | "closure" = "hero",
 ): void {
   if (state.flat) return;
   drawables.length = 0;
@@ -1114,8 +1166,10 @@ function drawSceneObjects(
   for (let i = 0; i < SERVICE_NODES.length; i++) {
     collectNode(drawables, ctx, cam, SERVICE_NODES[i]!, state, interaction, elapsed, i);
   }
-  for (const appNode of APPLICATION_NODES) {
-    collectApplicationNode(drawables, ctx, cam, appNode, state, interaction);
+  if (mode !== "hero") {
+    for (const appNode of APPLICATION_NODES) {
+      collectApplicationNode(drawables, ctx, cam, appNode, state, interaction);
+    }
   }
   drawables.sort((a, b) => a.depth - b.depth);
   for (const item of drawables) item.draw();
@@ -1359,28 +1413,13 @@ const P_LAYER_STEP = 1.8;
 const P_MAX_LAYERS = 16;
 
 /**
- * The P's last-drawn screen box, as fractions of the canvas — `SuperHeroSequence.tsx`'s
- * DOM chrome (the mode badge, the motto) has no other way to know where the mark is.
- *
- * A module-scope mutable record rather than a returned object, matching this file's
- * zero-allocation-in-the-frame-path rule: `getLogoScreenBox()` hands back the same
- * object every call, and `drawLogo` only ever mutates its fields.
- *
- * `null` until the first frame with a loaded logo image draws — `HeroCanvas.tsx` treats
- * that as "hold the CSS default", not as an error.
+ * Read-only view of the P's current screen box, as fractions of the canvas
+ * (`x`/`y` the mark's centre-x and ground-contact-y, `w` its width). `null` if
+ * nothing has drawn a logo frame yet.
  */
-const logoScreenBox: { x: number; y: number; w: number; visible: boolean } = {
-  x: 0.5,
-  y: 0.6,
-  w: 0.22,
-  visible: false,
-};
-
-/** Read-only view of the P's current screen box, as fractions of the canvas
- *  (`x`/`y` the mark's centre-x and ground-contact-y, `w` its width). `null` if
- *  nothing has drawn a logo frame yet. */
-export function getLogoScreenBox(): { x: number; y: number; w: number } | null {
-  return logoScreenBox.visible ? logoScreenBox : null;
+export function getLogoScreenBox(rendererState?: PlaneRendererState): { x: number; y: number; w: number } | null {
+  const box = rendererState?.logoScreenBox ?? defaultPlaneRendererState.logoScreenBox;
+  return box.visible ? box : null;
 }
 
 /**
@@ -1398,10 +1437,18 @@ export function getLogoScreenBox(): { x: number; y: number; w: number } | null {
  * hard-centred the mark at `width / 2` and dropped `moveLeft` on the floor. This
  * mark was never the one that forgot it.
  */
-function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameState, w: number, h: number): void {
+function drawLogo(
+  ctx: CanvasRenderingContext2D,
+  cam: Camera,
+  state: HeroFrameState,
+  w: number,
+  h: number,
+  rendererState: PlaneRendererState = defaultPlaneRendererState,
+): void {
   const image = getLogoImage();
+  const box = rendererState.logoScreenBox;
   if (!image || state.logoHidden) {
-    logoScreenBox.visible = false;
+    box.visible = false;
     return;
   }
 
@@ -1470,12 +1517,12 @@ function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameSt
     // the screenshot at rest, not derived — a margin, same spirit as the
     // logo mask's own asymmetric bounds.
     const bottom = project(cam, cx, cy + lh * 0.62, 0);
-    logoScreenBox.x = centre.sx / w;
-    logoScreenBox.y = bottom.sy / h;
-    logoScreenBox.w = (lw * cam.scale) / w;
-    logoScreenBox.visible = true;
+    box.x = centre.sx / w;
+    box.y = bottom.sy / h;
+    box.w = (lw * cam.scale) / w;
+    box.visible = true;
   } else {
-    logoScreenBox.visible = false;
+    box.visible = false;
   }
 
   // Ground contact shadow beneath the 3D mark while the scene still has depth: a
@@ -1563,26 +1610,52 @@ function drawLogo(ctx: CanvasRenderingContext2D, cam: Camera, state: HeroFrameSt
 /* ═══════════════════════════════════ Entry ═══════════════════════════════════ */
 
 /**
- * Horizontal and vertical fit divisors for the expanded 1260px plane (30x30 cells).
+ * Horizontal and vertical fit divisors for tight framing (Top Hero) vs wide framing (Closure fully zoomed-out).
  *
- * - `VIEW_FIT_X = 1.85`: Accounts for the 45° Z-rotation expanding the plane's horizontal
- *   span by √2 (1260 * √2 ≈ 1782px) plus outer application node footprints and padding.
- * - `VIEW_FIT_Y = 1.40`: Accounts for the 55° X-tilt and perspective divide expansion
- *   (k ≈ 1.35–1.48) on foreground nodes (Data Pipeline / Telemetry Hub).
- * - `VIEW_FIT = 1.40`: Exported default for backward compatibility with tests/consumers.
+ * - `TIGHT_FIT_X = 1.36`, `TIGHT_FIT_Y = 1.05`: Frames the inner 22x22 core cluster and ensures outer nodes remain off-screen.
+ * - `WIDE_FIT_X = 1.85`, `WIDE_FIT_Y = 1.40`: Frames the full 30x30 scene for 100% viewport containment of outer nodes.
+ * - `VIEW_FIT_X / VIEW_FIT_Y / VIEW_FIT`: Exported defaults for backward compatibility.
  */
-export const VIEW_FIT_X = 1.85;
-export const VIEW_FIT_Y = 1.40;
-export const VIEW_FIT = 1.40;
+export const TIGHT_FIT_X = 1.36;
+export const TIGHT_FIT_Y = 1.05;
+export const WIDE_FIT_X = 1.85;
+export const WIDE_FIT_Y = 1.40;
+export const VIEW_FIT_X = WIDE_FIT_X;
+export const VIEW_FIT_Y = WIDE_FIT_Y;
+export const VIEW_FIT = WIDE_FIT_Y;
 
 /**
- * Responsive view scale calculation that guarantees 100% viewport containment
- * across portrait (mobile/tablet) and landscape (desktop/ultrawide) viewports.
+ * Tight view scale calculation (Top Hero and Closure section at progress=0).
  */
-export function calcViewScale(w: number, h: number): number {
+export function calcTightViewScale(w: number, h: number): number {
   if (w <= 0 || h <= 0) return 0;
-  return Math.min(w / VIEW_FIT_X, h / VIEW_FIT_Y) / PLANE_SIZE;
+  return Math.min(w / TIGHT_FIT_X, h / TIGHT_FIT_Y) / PLANE_SIZE;
 }
+
+/**
+ * Wide view scale calculation that guarantees 100% viewport containment of all outer nodes.
+ */
+export function calcWideViewScale(w: number, h: number): number {
+  if (w <= 0 || h <= 0) return 0;
+  return Math.min(w / WIDE_FIT_X, h / WIDE_FIT_Y) / PLANE_SIZE;
+}
+
+/**
+ * Interpolated camera scale for closure zoom-out across scroll progress p in [0, 1].
+ * Strictly decreasing in p from calcTightViewScale at p=0 to calcWideViewScale at p=1.
+ */
+export function calcClosureViewScale(w: number, h: number, p: number): number {
+  if (w <= 0 || h <= 0) return 0;
+  const clampedP = Math.max(0, Math.min(1, p));
+  const tight = calcTightViewScale(w, h);
+  const wide = calcWideViewScale(w, h);
+  return tight * (1 - clampedP) + wide * clampedP;
+}
+
+/**
+ * Backward compatibility alias for calcWideViewScale.
+ */
+export const calcViewScale = calcWideViewScale;
 
 /**
  * Where the plane's centre sits vertically in the viewport, as a fraction of its
@@ -1591,6 +1664,14 @@ export function calcViewScale(w: number, h: number): number {
  * there is invisible until the cursor lights the wrong part of the scene.
  */
 export const HORIZON = 0.5;
+
+export interface DrawPlaneOptions {
+  mode?: "hero" | "closure";
+  zoomProgress?: number;
+  showLogo?: boolean;
+  viewScale?: number;
+  rendererState?: PlaneRendererState;
+}
 
 /**
  * Paint one frame of the plane.
@@ -1613,11 +1694,21 @@ export function drawPlaneFrame(
   h: number,
   elapsed: number,
   interaction?: PlaneInteraction,
+  options?: DrawPlaneOptions,
 ): void {
   ctx.clearRect(0, 0, w, h);
   if (w <= 0 || h <= 0) return;
 
-  const viewScale = calcViewScale(w, h);
+  const mode = options?.mode ?? "hero";
+  const zoomProgress = options?.zoomProgress ?? 0;
+  const viewScale =
+    options?.viewScale ??
+    (mode === "closure"
+      ? calcClosureViewScale(w, h, zoomProgress)
+      : calcTightViewScale(w, h));
+
+  const rState = options?.rendererState ?? defaultPlaneRendererState;
+
   const cam = makeCamera(
     state.flatten,
     w / 2,
@@ -1627,11 +1718,17 @@ export function drawPlaneFrame(
     interaction?.tiltY ?? 0,
   );
 
-  applyCursor(interaction);
+  applyCursor(interaction, rState);
 
   drawStreets(ctx, cam, state);
-  drawDotField(ctx, cam);
-  drawSignals(ctx, cam, state, elapsed);
-  drawSceneObjects(ctx, cam, state, interaction, elapsed);
-  drawLogo(ctx, cam, state, w, h);
+  drawDotField(ctx, cam, rState);
+  drawSignals(ctx, cam, state, elapsed, mode);
+  drawSceneObjects(ctx, cam, state, interaction, elapsed, mode);
+
+  const shouldDrawLogo = options?.showLogo ?? (mode === "hero");
+  if (shouldDrawLogo) {
+    drawLogo(ctx, cam, state, w, h, rState);
+  } else {
+    rState.logoScreenBox.visible = false;
+  }
 }

@@ -7,7 +7,8 @@ import { describe, expect, test } from "vitest";
 
 import {
   APPLICATION_NODES,
-  APPLICATION_NODE_SIZE,
+  APP_NODE_WIDTH,
+  APP_NODE_HEIGHT,
   CUBE_POSITIONS,
   GRID_CELL,
   GRID_CELLS,
@@ -22,8 +23,15 @@ import {
 } from "@/features/hero/heroScene";
 import {
   HORIZON,
+  TIGHT_FIT_X,
+  TIGHT_FIT_Y,
+  WIDE_FIT_X,
+  WIDE_FIT_Y,
   VIEW_FIT_X,
   VIEW_FIT_Y,
+  calcClosureViewScale,
+  calcTightViewScale,
+  calcWideViewScale,
   calcViewScale,
 } from "@/features/hero/heroPlaneRenderer";
 
@@ -133,16 +141,17 @@ describe("Challenger 3 Empirical Stress Suite: Viewport Bounds Containment Acros
 
       // 1. Application nodes (all 8 box corners)
       for (const app of APPLICATION_NODES) {
-        const half = APPLICATION_NODE_SIZE / 2;
+        const halfW = (app.width ?? APP_NODE_WIDTH) / 2;
+        const halfH = (app.height ?? APP_NODE_HEIGHT) / 2;
         const corners = [
-          [app.cx - half, app.cy - half, 0],
-          [app.cx + half, app.cy - half, 0],
-          [app.cx + half, app.cy + half, 0],
-          [app.cx - half, app.cy + half, 0],
-          [app.cx - half, app.cy - half, app.elevation],
-          [app.cx + half, app.cy - half, app.elevation],
-          [app.cx + half, app.cy + half, app.elevation],
-          [app.cx - half, app.cy + half, app.elevation],
+          [app.cx - halfW, app.cy - halfH, 0],
+          [app.cx + halfW, app.cy - halfH, 0],
+          [app.cx + halfW, app.cy + halfH, 0],
+          [app.cx - halfW, app.cy + halfH, 0],
+          [app.cx - halfW, app.cy - halfH, app.elevation],
+          [app.cx + halfW, app.cy - halfH, app.elevation],
+          [app.cx + halfW, app.cy + halfH, app.elevation],
+          [app.cx - halfW, app.cy + halfH, app.elevation],
         ] as const;
 
         for (const [x, y, z] of corners) {
@@ -311,4 +320,53 @@ describe("Challenger 3 Empirical Stress Suite: Scaling Function Robustness", () 
     // Above critical ratio, it is bounded by height: scale == (h / 1.40) / 1260
     expect(scaleAbove).toBeCloseTo((h / VIEW_FIT_Y) / PLANE_SIZE, 6);
   });
+
+  test("camera fit divisors constants are locked", () => {
+    expect(TIGHT_FIT_X).toBe(1.36);
+    expect(TIGHT_FIT_Y).toBe(1.05);
+    expect(WIDE_FIT_X).toBe(1.85);
+    expect(WIDE_FIT_Y).toBe(1.40);
+  });
+
+  test("tight scale exceeds wide scale (zoom ratio >= 1.30x) across all standard viewports", () => {
+    const viewports = [
+      { w: 320, h: 640 },
+      { w: 390, h: 844 },
+      { w: 768, h: 1024 },
+      { w: 1440, h: 900 },
+      { w: 1920, h: 1080 },
+    ];
+
+    for (const vp of viewports) {
+      const tight = calcTightViewScale(vp.w, vp.h);
+      const wide = calcWideViewScale(vp.w, vp.h);
+      expect(tight).toBeGreaterThan(wide);
+      expect(tight / wide).toBeGreaterThanOrEqual(1.30);
+    }
+  });
+
+  test("closure camera scale at progress=1 is strictly smaller than at progress=0 (zoom-out requirement)", () => {
+    const viewports = [
+      { name: "Mobile Small", w: 320, h: 640 },
+      { name: "Mobile Standard", w: 390, h: 844 },
+      { name: "Tablet Portrait", w: 768, h: 1024 },
+      { name: "Desktop", w: 1440, h: 900 },
+      { name: "Wide Desktop", w: 1920, h: 1080 },
+    ];
+
+    for (const vp of viewports) {
+      const scaleAtZero = calcClosureViewScale(vp.w, vp.h, 0);
+      const scaleAtOne = calcClosureViewScale(vp.w, vp.h, 1);
+
+      // Explicit acceptance criteria assertion: scale at 1.0 < scale at 0.0
+      expect(
+        scaleAtOne,
+        `Closure camera scale at progress=1 must be strictly less than at progress=0 for ${vp.name}`
+      ).toBeLessThan(scaleAtZero);
+
+      expect(scaleAtZero).toBeCloseTo(calcTightViewScale(vp.w, vp.h), 6);
+      expect(scaleAtOne).toBeCloseTo(calcWideViewScale(vp.w, vp.h), 6);
+    }
+  });
 });
+

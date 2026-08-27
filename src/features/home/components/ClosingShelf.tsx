@@ -39,8 +39,8 @@ export function ClosingShelf() {
       sx={{
         position: "relative",
         zIndex: 1,
-        bgcolor: NOIR.navyField,
-        color: NOIR.frost,
+        bgcolor: "#FFFFFF",
+        color: NOIR.navyField,
         overflow: "hidden",
         p: 0,
       }}
