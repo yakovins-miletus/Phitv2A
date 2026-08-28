@@ -39,7 +39,7 @@ export const NAV_ANCHORS = {
   ABOUT_BLOG_SECTION: 'about-blog-section',
   /** Home page: the global-markets wager beat. Navy ground (deep), navbar must go dark. */
   GLOBAL_MARKETS: 'global-markets',
-  /** The Home page's closing shelf — navy ground, so the navbar must go light. */
+  /** The Home page's closing shelf — light (white) ground, so the navbar must go dark-chrome. */
   HOME_CLOSING: 'home-closing',
   /** AppShell's footer, on every route. */
   SITE_FOOTER: 'site-footer',

@@ -4,68 +4,22 @@ import { useRef } from "react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { NOIR } from "@/shared/theme/palette";
-import { MONO, TYPE_SCALE, TRACKING } from "@/shared/theme/theme";
+import { MONO } from "@/shared/theme/theme";
 
-/**
- * Deterministic pseudo-random generator (mulberry32) — the noise trace below
- * must look like sampled series data, not a hand-drawn zigzag, but it also
- * has to render identically on every pass (SSR/CSR parity, snapshot tests,
- * re-theme). `Math.random()` would satisfy neither. Fixed seed, pure
- * function of `i`, computed once at module scope.
- */
-function mulberry32(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s + 0x6d2b79f5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// Multi-point stochastic walk for clean raw market series (centered on baseline y=95)
+const RAW_TICKS: Array<[number, number]> = [
+  [30, 95], [42, 112], [54, 82], [66, 118], [78, 74], [90, 108],
+  [102, 98], [114, 124], [126, 80], [138, 110], [150, 90], [162, 116],
+  [174, 84], [186, 104], [198, 92], [210, 112], [222, 88], [234, 98],
+];
 
-// ---------------------------------------------------------------------------
-// Noise: a mean-reverting random walk sampled at many points, so it reads as
-// real market-data density (many small irregular steps) rather than a six
-// point zigzag. Mean reversion keeps it inside the lane instead of drifting
-// off into the gate at an arbitrary height.
-// ---------------------------------------------------------------------------
-const NOISE_X0 = 24;
-const NOISE_X1 = 148;
-const NOISE_SAMPLES = 46;
-const NOISE_BASELINE = 108;
-const NOISE_BAND = 32;
+const RAW_PATH = RAW_TICKS.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x} ${y}`).join(" ");
 
-function buildNoisePath(): string {
-  const rand = mulberry32(0x51a5_bea7);
-  let y = NOISE_BASELINE;
-  const pts: Array<[number, number]> = [];
-  for (let i = 0; i <= NOISE_SAMPLES; i += 1) {
-    const x = NOISE_X0 + (i / NOISE_SAMPLES) * (NOISE_X1 - NOISE_X0);
-    y += (rand() - 0.5) * 20;
-    y = NOISE_BASELINE + (y - NOISE_BASELINE) * 0.8; // pull back toward the lane
-    y = Math.max(NOISE_BASELINE - NOISE_BAND, Math.min(NOISE_BASELINE + NOISE_BAND, y));
-    pts.push([x, y]);
-  }
-  return pts.map(([x, py], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${py.toFixed(1)}`).join(" ");
-}
+// Model gate converging bars
+const BARS = [0.85, 0.45, 0.65, 0.35, 0.55, 0.25] as const;
 
-const NOISE_PATH = buildNoisePath();
-const NOISE_EXIT_Y = Number(NOISE_PATH.split(" ").slice(-1)[0]);
-
-// ---------------------------------------------------------------------------
-// Model gate: a windowed operation that narrows a wide, volatile distribution
-// down to a stable one. Six bars, hand-set (not random — the shape itself is
-// the point) so each is visibly closer to the centreline than the last.
-// ---------------------------------------------------------------------------
-const GATE_X = 172;
-const GATE_Y = 62;
-const GATE_W = 66;
-const GATE_H = 86;
-const GATE_CX = GATE_X + GATE_W / 2;
-const GATE_CY = GATE_Y + GATE_H / 2;
-
-const GATE_BAR_HEIGHTS = [0.92, 0.27, 0.68, 0.4, 0.56, 0.48] as const;
-const GATE_BAR_GAP = GATE_W / GATE_BAR_HEIGHTS.length;
+// Smooth predictive signal trajectory rising into upper right
+const SIGNAL_PATH = "M 280 95 C 330 95, 370 65, 410 45 S 460 28, 480 22";
 
 export function SignalDiagram() {
   const reduced = useReducedMotion();
@@ -73,147 +27,174 @@ export function SignalDiagram() {
   const inView = useInView(rootRef, { once: true, amount: 0.2 });
   const show = reduced === true || inView;
 
-  const labelStyle = {
-    fontFamily: MONO,
-    fontSize: TYPE_SCALE.micro,
-    letterSpacing: TRACKING.meta,
-    textTransform: "uppercase" as const,
-  };
-
   return (
     <Box
       ref={rootRef}
-      sx={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", p: { xs: 1, md: 2 } }}
+      sx={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        py: 1,
+      }}
     >
       <svg
-        viewBox="0 0 400 200"
+        viewBox="0 0 520 200"
         preserveAspectRatio="xMidYMid meet"
         width="100%"
         height="100%"
         role="img"
-        aria-label="Noise, model, signal. A dense, irregular noise trace narrows through a windowed model gate — six bars converging toward a stable centre — and a single smooth signal line rises out of it."
+        aria-label="Clean signal extraction graph: raw noise passing through model gate into resolved predictive signal."
         style={{ display: "block", maxHeight: 320 }}
       >
-        {/* Noise: dense sampled trace, read first, left to right */}
+        <defs>
+          <linearGradient id="signalGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(255, 199, 44, 0.4)" />
+            <stop offset="100%" stopColor="#FFC72C" />
+          </linearGradient>
+        </defs>
+
+        {/* ── 1. Minimal Background Coordinate Grid ── */}
+        <g opacity={0.1}>
+          <line x1="30" y1="35" x2="490" y2="35" stroke="#FFFFFF" strokeWidth="0.75" strokeDasharray="4 4" />
+          <line x1="30" y1="95" x2="490" y2="95" stroke="#FFFFFF" strokeWidth="0.75" />
+          <line x1="30" y1="155" x2="490" y2="155" stroke="#FFFFFF" strokeWidth="0.75" strokeDasharray="4 4" />
+
+          <line x1="130" y1="15" x2="130" y2="165" stroke="#FFFFFF" strokeWidth="0.75" strokeDasharray="3 4" />
+          <line x1="260" y1="15" x2="260" y2="165" stroke="#FFFFFF" strokeWidth="0.75" strokeDasharray="3 4" />
+          <line x1="390" y1="15" x2="390" y2="165" stroke="#FFFFFF" strokeWidth="0.75" strokeDasharray="3 4" />
+        </g>
+
+        {/* ── 2. Raw Noise Stream ── */}
         <motion.path
-          d={NOISE_PATH}
+          d={RAW_PATH}
           fill="none"
-          stroke={NOIR.navyField}
-          strokeWidth={1.25}
+          stroke="rgba(255, 255, 255, 0.55)"
+          strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={reduced ? false : { pathLength: 0, opacity: 0.85 }}
-          animate={show ? { pathLength: 1, opacity: 0.85 } : false}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-        />
-        <text x={NOISE_X0} y={NOISE_BASELINE - NOISE_BAND - 10} style={{ ...labelStyle, fill: NOIR.navyField, opacity: 0.65 }}>
-          noise
-        </text>
-
-        {/* Bridge from noise into the gate */}
-        <motion.line
-          x1={NOISE_X1}
-          y1={NOISE_EXIT_Y}
-          x2={GATE_X}
-          y2={GATE_CY}
-          stroke={NOIR.navyField}
-          strokeWidth={1.25}
           initial={reduced ? false : { pathLength: 0 }}
           animate={show ? { pathLength: 1 } : false}
-          transition={{ duration: 0.3, delay: 0.55, ease: "easeOut" }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
         />
 
-        {/* Model gate: the window that narrows the distribution */}
-        <motion.g
-          initial={reduced ? false : { opacity: 0 }}
-          animate={show ? { opacity: 1 } : false}
-          transition={{ duration: 0.2, delay: 0.68 }}
-        >
+        {/* Connector from Noise to Gate */}
+        <motion.line
+          x1={234}
+          y1={98}
+          x2={248}
+          y2={95}
+          stroke="rgba(255, 255, 255, 0.4)"
+          strokeWidth={1.5}
+          initial={reduced ? false : { pathLength: 0 }}
+          animate={show ? { pathLength: 1 } : false}
+          transition={{ duration: 0.2, delay: 0.55 }}
+        />
+
+        {/* ── 3. Minimal Model Filter Gate ── */}
+        <g transform="translate(248, 38)">
+          {/* Outer Gate Frame */}
           <rect
-            x={GATE_X}
-            y={GATE_Y}
-            width={GATE_W}
-            height={GATE_H}
-            fill="none"
-            stroke={NOIR.navyField}
-            strokeWidth={1.25}
-            opacity={0.55}
+            x="0"
+            y="0"
+            width="24"
+            height="114"
+            rx="3"
+            fill="rgba(10, 42, 102, 0.5)"
+            stroke="rgba(255, 255, 255, 0.3)"
+            strokeWidth="1.2"
           />
-          {/* Centreline the bars converge toward — the "narrowing" target */}
-          <line
-            x1={GATE_X + 4}
-            y1={GATE_CY}
-            x2={GATE_X + GATE_W - 4}
-            y2={GATE_CY}
-            stroke={NOIR.navyField}
-            strokeWidth={0.75}
-            strokeDasharray="2 3"
-            opacity={0.35}
-          />
-          {GATE_BAR_HEIGHTS.map((h, i) => {
-            const barH = h * (GATE_H - 16);
-            const barX = GATE_X + GATE_BAR_GAP * i + GATE_BAR_GAP * 0.5;
-            const barW = GATE_BAR_GAP * 0.5;
+
+          {/* Center Reference Line */}
+          <line x1="0" y1="57" x2="24" y2="57" stroke={NOIR.gold} strokeWidth="1.2" opacity={0.7} />
+
+          {/* Converging Bars */}
+          {BARS.map((h, i) => {
+            const barH = h * 90;
+            const barX = 3.5 + i * 3;
             return (
               <motion.rect
-                key={`bar-${String(i)}`}
-                x={barX - barW / 2}
-                width={barW}
-                y={GATE_CY - barH / 2}
+                key={i}
+                x={barX}
+                y={57 - barH / 2}
+                width={2}
                 height={barH}
                 rx={1}
-                fill={NOIR.navyField}
-                opacity={0.32 + i * 0.09}
+                fill="rgba(255, 255, 255, 0.75)"
                 initial={reduced ? false : { scaleY: 0 }}
                 animate={show ? { scaleY: 1 } : false}
-                transition={{ duration: 0.35, delay: 0.8 + i * 0.07, ease: "easeOut" }}
+                transition={{ duration: 0.3, delay: 0.6 + i * 0.05, ease: "easeOut" }}
                 style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
               />
             );
           })}
-        </motion.g>
-        <text x={GATE_CX} y={GATE_Y + GATE_H + 18} textAnchor="middle" style={{ ...labelStyle, fill: NOIR.navyField, opacity: 0.65 }}>
-          model
-        </text>
+        </g>
 
-        {/* Bridge from the gate into the resolved signal */}
+        {/* Connector from Gate to Signal */}
         <motion.line
-          x1={GATE_X + GATE_W}
-          y1={GATE_CY}
-          x2={252}
-          y2={GATE_CY - 8}
-          stroke={NOIR.navyField}
-          strokeWidth={1.25}
-          opacity={0.55}
+          x1={272}
+          y1={95}
+          x2={280}
+          y2={95}
+          stroke="rgba(255, 199, 44, 0.6)"
+          strokeWidth={2}
           initial={reduced ? false : { pathLength: 0 }}
           animate={show ? { pathLength: 1 } : false}
-          transition={{ duration: 0.25, delay: 1.35, ease: "easeOut" }}
+          transition={{ duration: 0.15, delay: 0.9 }}
         />
 
-        {/* Signal: the one element that carries meaning — gold, and gold alone */}
+        {/* ── 4. Resolved Signal ── */}
         <motion.path
-          d="M 252 100 C 280 84 296 52 322 44 C 344 37 360 30 380 26"
+          d={SIGNAL_PATH}
           fill="none"
-          stroke="var(--accent-ink)"
-          strokeWidth={2.5}
+          stroke="url(#signalGradient)"
+          strokeWidth={3}
           strokeLinecap="round"
+          style={{ filter: "drop-shadow(0 0 8px rgba(255, 199, 44, 0.7))" }}
           initial={reduced ? false : { pathLength: 0 }}
           animate={show ? { pathLength: 1 } : false}
-          transition={{ duration: 0.5, delay: 1.55, ease: "easeInOut" }}
+          transition={{ duration: 0.7, delay: 1.0, ease: "easeInOut" }}
         />
+
+        {/* Signal Endpoint Node */}
         <motion.circle
-          cx={380}
-          cy={26}
-          r={2.75}
-          fill="var(--accent-ink)"
-          initial={reduced ? false : { opacity: 0, scale: 0 }}
-          animate={show ? { opacity: 1, scale: 1 } : false}
-          transition={{ duration: 0.25, delay: 2.0, ease: "easeOut" }}
-          style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
+          cx={480}
+          cy={22}
+          r={4.5}
+          fill={NOIR.gold}
+          style={{ filter: "drop-shadow(0 0 10px #FFC72C)" }}
+          initial={reduced ? false : { scale: 0 }}
+          animate={show ? { scale: 1 } : false}
+          transition={{ duration: 0.25, delay: 1.6, ease: "easeOut" }}
         />
-        <text x={296} y={70} style={{ ...labelStyle, fill: "var(--accent-ink)" }}>
-          signal
-        </text>
+
+        {/* ── 5. Standardized Bottom Alignment for ALL THREE Labels ── */}
+        <g fontFamily={MONO} fontSize="11" letterSpacing="0.2em" fontWeight="700">
+          <text
+            x="130"
+            y="186"
+            textAnchor="middle"
+            fill="rgba(255, 255, 255, 0.65)"
+          >
+            NOISE
+          </text>
+          <text
+            x="260"
+            y="186"
+            textAnchor="middle"
+            fill="rgba(255, 255, 255, 0.65)"
+          >
+            MODEL
+          </text>
+          <text
+            x="390"
+            y="186"
+            textAnchor="middle"
+            fill={NOIR.gold}
+          >
+            SIGNAL
+          </text>
+        </g>
       </svg>
     </Box>
   );

@@ -83,6 +83,7 @@ import {
   skylineStretch,
 } from "./heroPointer";
 import { getLogoAspect, getLogoImage } from "./heroLogoMask";
+import { drawLogoConverge } from "./heroLogoParticles";
 
 const TAU = Math.PI * 2;
 
@@ -1444,6 +1445,7 @@ function drawLogo(
   w: number,
   h: number,
   rendererState: PlaneRendererState = defaultPlaneRendererState,
+  mode: "hero" | "closure" = "hero",
 ): void {
   const image = getLogoImage();
   const box = rendererState.logoScreenBox;
@@ -1480,7 +1482,17 @@ function drawLogo(
   // (progress 0.86 → 0.89, see `pExitProgress` in heroVars.ts) there is nothing
   // on screen for DOM chrome to anchor against, so the screen box below stops
   // publishing rather than reporting a stale position under an invisible mark.
-  const pOpacity = Math.max(0, 1 - state.pexit);
+  //
+  // Closure mode never runs that phase of the sequence — `pexit`/`atenter` are
+  // hero-only fields on the shared `HeroFrameState`, and the closure scroll
+  // handler clamps its own progress well before they'd ever go nonzero. But
+  // `HeroCanvas.tsx`'s static/reduced-motion path hardcodes `progress = 1` for
+  // closure specifically to land the P in its settled (flattened, panned)
+  // resting frame — which happens to sit squarely inside the hero's own
+  // container-transform window. Gating on `mode` here, not just relying on
+  // the caller to keep `pexit`/`atenter` at 0, is what actually prevents the
+  // P fading out and a ghost gold "AT" glyph fading in behind it.
+  const pOpacity = mode === "closure" ? 1 : Math.max(0, 1 - state.pexit);
 
   // Publish the mark's screen box for `SuperHeroSequence.tsx`'s DOM chrome
   // (`getLogoScreenBox`, above).
@@ -1563,11 +1575,31 @@ function drawLogo(
   const layers = Math.max(1, Math.min(P_MAX_LAYERS, Math.round(lift / P_LAYER_STEP)));
   const layerSprites = ensureLogoLayers(image);
 
-  // P exit animation: drop down & fade out (pexit: 0 -> 1). Ported unchanged.
-  // `pOpacity` itself is computed above, alongside the screen-box publish.
-  if (pOpacity > 0.001) {
-    const pDropY = state.pexit * 60;
-    const pScale = 1 - state.pexit * 0.15;
+  // Closure mode only: while the P is mid-pan (0 < moveLeft < 1 — exactly the
+  // window between the flatten finishing and the pan settling), the mark
+  // converges from scattered particles into its solid form instead of the
+  // ordinary layered blit below. Before the pan starts and once it settles,
+  // it's the same solid mark as ever — this is a transition effect for the
+  // move itself, not a permanent replacement of the mark (unlike the footer's
+  // `LogoParticleField`, which stays particles). `flatten` is already 1
+  // throughout this window (`PHASE_FLATTEN_END` < pan start), so there is no
+  // 3D depth to preserve — a flat, screen-space draw is the correct one.
+  const isConverging = mode === "closure" && state.moveLeft > 0 && state.moveLeft < 1;
+
+  if (pOpacity > 0.001 && isConverging) {
+    const centre = project(cam, cx, cy, 0);
+    const drew = drawLogoConverge(ctx, centre.sx, centre.sy, lw * cam.scale, state.moveLeft);
+    if (!drew) {
+      // Image not decoded yet (shouldn't happen in practice — closure mode
+      // never mounts before `loadLogoMask` resolves — but fall back to the
+      // solid mark rather than drawing nothing).
+      drawImageOnPlane(ctx, cam, image, cx, cy, 0, lw, lh);
+    }
+  } else if (pOpacity > 0.001) {
+    // P exit animation: drop down & fade out (pexit: 0 -> 1). Ported unchanged.
+    // `pOpacity` itself is computed above, alongside the screen-box publish.
+    const pDropY = mode === "closure" ? 0 : state.pexit * 60;
+    const pScale = mode === "closure" ? 1 : 1 - state.pexit * 0.15;
     ctx.save();
     for (let i = 0; i < layers; i++) {
       const z = (i / Math.max(1, layers)) * lift;
@@ -1588,7 +1620,7 @@ function drawLogo(
   // the exact same centre coordinates. Ported unchanged, including the shadow —
   // `shadowBlur` here is the pre-lattice renderer's own text-legibility shadow, not
   // a new blur layer this rebuild introduced.
-  if (state.atenter > 0.001) {
+  if (mode !== "closure" && state.atenter > 0.001) {
     const atOpacity = state.atenter;
     const atSlideY = (1 - state.atenter) * -60;
     const atScale = 0.85 + state.atenter * 0.15;
@@ -1727,7 +1759,7 @@ export function drawPlaneFrame(
 
   const shouldDrawLogo = options?.showLogo ?? (mode === "hero");
   if (shouldDrawLogo) {
-    drawLogo(ctx, cam, state, w, h, rState);
+    drawLogo(ctx, cam, state, w, h, rState, mode);
   } else {
     rState.logoScreenBox.visible = false;
   }

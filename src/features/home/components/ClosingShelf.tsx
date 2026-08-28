@@ -22,7 +22,7 @@ import { NOIR } from "@/shared/theme/palette";
  * CTAs to /contact and /careers are preserved in ClosingLatticeSection.
  */
 export function ClosingShelf() {
-  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_CLOSING, { dark: true });
+  const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_CLOSING, { dark: false });
 
   return (
     <SectionBeat
@@ -30,10 +30,8 @@ export function ClosingShelf() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
-          title="In"
-          titleAccent="closing"
+          title="In closing"
           tracer="Direct line to our technical leadership and quantitative engineering directors."
-          dark
         />
       }
       sx={{

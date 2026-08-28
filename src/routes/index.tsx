@@ -146,10 +146,10 @@ function HomePage() {
           section={homeSection("use-cases")}
           establishing={
             <MiniEstablishingShot
-              category="APPLIED ARCHITECTURES"
-              title="Real-World"
-              titleAccent="Applications"
-              tracer="End-to-end telemetry and architectural breakdowns of institutional deployments across global venues."
+              category="PROVEN PRODUCTION PLATFORMS"
+              title="Engineered & Proven"
+              titleAccent="At Global Scale"
+              tracer="Mission-critical platforms architected, delivered, and relied upon continuously by tier-one financial institutions worldwide."
               selfDriven={false}
             />
           }

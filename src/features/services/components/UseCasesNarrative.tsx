@@ -31,21 +31,21 @@ const DIAGRAMS: Record<string, ComponentType> = {
 
 
 
-/** Card emerge & center focus wrapper: emerges from bottom and scales up when centered */
+/** Card emerge & center focus wrapper: emerges from bottom and smoothly settles */
 function CardEmerge({ children, disabled }: { children: ReactNode; disabled: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.5 });
+  const inView = useInView(ref, { amount: 0.4 });
 
   return (
     <motion.div
       ref={ref}
-      initial={disabled ? false : { opacity: 0.35, y: 60, scale: 0.88 }}
+      initial={disabled ? false : { opacity: 0.4, y: 40, scale: 0.94 }}
       animate={{
-        opacity: disabled || inView ? 1 : 0.35,
-        y: disabled || inView ? 0 : 60,
-        scale: disabled || inView ? 1.02 : 0.88,
+        opacity: disabled || inView ? 1 : 0.4,
+        y: disabled || inView ? 0 : 40,
+        scale: disabled || inView ? 1 : 0.94,
       }}
-      transition={{ duration: 0.75, ease: EASE_OUT_EXPO }}
+      transition={{ duration: 0.65, ease: EASE_OUT_EXPO }}
       style={{
         display: "flex",
         flexGrow: 1,
@@ -62,7 +62,7 @@ function CardEmerge({ children, disabled }: { children: ReactNode; disabled: boo
 }
 
 /** End-of-track dwell as a fraction of the main scrub */
-const PAUSE = 0.1;
+const PAUSE = 0.25;
 
 export function UseCasesNarrative() {
   const wrap = useRef<HTMLDivElement>(null);
@@ -77,32 +77,7 @@ export function UseCasesNarrative() {
       /**
        * The two `x` values that put the FIRST card's centre on the viewport's
        * centre at the start of the pin, and the LAST card's centre there at the
-       * end — measured from the DOM rather than assumed from vw math.
-       *
-       * The travel used to be `scrollWidth - innerWidth`, which moves the track
-       * until its own right edge (including the `pr` trailing pad) is flush with
-       * the viewport's right edge. That only centres the last card if `pr`
-       * happens to equal exactly half the viewport width minus half the card
-       * width, which silently drifted true whenever the cards' width, count, or
-       * the `Stack` gap changed. Measuring `.snap-slide` positions directly
-       * makes both ends self-correct for any future width/gap/count change, and
-       * removes the need for `px`/`pr` to be load-bearing — they now only have
-       * to be "wide enough," not exact.
-       *
-       * Deliberately expressed as a tween on `x`, NOT as leading padding: a
-       * measured `paddingLeft` changes the track's own layout, so the very
-       * measurement that produced it shifts on the next read and the correction
-       * compounds — that inflated the pin's `end` (and with it the pin-spacer)
-       * by ~2000px, leaving a long blank stretch after the cards had scrolled
-       * past. `x` moves the track without touching layout, so every measurement
-       * below is taken against a geometry that never moves.
-       *
-       * `getBoundingClientRect`, not `offsetLeft`: MUI's `Stack` and `Box` don't
-       * reliably share an `offsetParent` with `track.current` (that depends on
-       * which ancestor has `position` set). Taking BOTH rects in the same call
-       * and subtracting also cancels whatever `x` is currently applied, so these
-       * stay correct when ScrollTrigger re-measures mid-scroll on refresh —
-       * which a viewport-relative read would not.
+       * end — computed via pure offsetLeft to remain completely unaffected by transforms.
        */
       const centres = () => {
         const trackEl = track.current;
@@ -111,16 +86,13 @@ export function UseCasesNarrative() {
         const first = slides[0];
         const last = slides[slides.length - 1];
         if (!first || !last) return { start: 0, end: 0, travel: 0 };
-        const trackRect = trackEl.getBoundingClientRect();
-        const centreFromTrackLeft = (el: HTMLElement) => {
-          const r = el.getBoundingClientRect();
-          return r.left - trackRect.left + r.width / 2;
-        };
+        
         const half = window.innerWidth / 2;
-        const start = half - centreFromTrackLeft(first);
-        const end = half - centreFromTrackLeft(last);
-        // Travel reduces to `lastCentre - firstCentre` — the distance between
-        // the outer two cards, independent of viewport width and of both pads.
+        const firstCentre = first.offsetLeft + first.offsetWidth / 2;
+        const lastCentre = last.offsetLeft + last.offsetWidth / 2;
+        
+        const start = half - firstCentre;
+        const end = half - lastCentre;
         return { start, end, travel: start - end };
       };
       if (centres().travel <= 0) return;
@@ -131,21 +103,8 @@ export function UseCasesNarrative() {
           start: "top top",
           end: () => `+=${String(centres().travel * (1 + PAUSE))}`,
           pin: true,
-          // SCRUB POLICY (beatThresholds.ts): legitimate here because this is
-          // a pin whose progress IS the timeline position, not an
-          // entrance/recede event.
           scrub: SCROLL_SPEED,
           invalidateOnRefresh: true,
-          // Page-order refresh priority. ScrollTrigger refreshes the HIGHEST
-          // `refreshPriority` first (see beatThresholds.ts for the sort math),
-          // and `refreshPriorityFor` maps page order onto a descending positive
-          // scale — so a smaller `order` refreshes earlier. `sectionOrder`
-          // reads this section's position straight out of `HOME_SECTIONS`
-          // (PRD-home-client-focus §US-5 AC-1) rather than a hand-copied
-          // number, so it automatically matches the `order` the `SectionBeat`
-          // that wraps this component in `bare` mode resolves to — see
-          // routes/index.tsx. Its spacer shifts everything below it, so it
-          // must resolve before those sections measure.
           refreshPriority: refreshPriorityFor(sectionOrder("use-cases")),
         },
       });
@@ -160,7 +119,7 @@ export function UseCasesNarrative() {
         },
       );
 
-      // Add a slight pause at the end
+      // Dwell at the final centered card before unpinning
       tl.to({}, { duration: PAUSE });
     },
     { scope: wrap, dependencies: [reduce] },
@@ -190,29 +149,294 @@ export function UseCasesNarrative() {
           height: vertical ? "auto" : "100dvh",
           alignItems: vertical ? "stretch" : "center",
           width: vertical ? "auto" : "max-content",
-          // Purely cosmetic breathing room on both ends now — `centres()` above
-          // measures the first and last cards directly and drives the track
-          // with `x`, so neither pad is load-bearing for centring and neither
-          // has to be tuned to any card-width/gap arithmetic. Do NOT reintroduce
-          // a measured leading pad here: changing layout to centre a card makes
-          // the next measurement of that same card move (see `centres()`).
-          px: { xs: 3, md: 10 },
-          pr: vertical ? undefined : { xs: 3, md: 10 },
+          px: { xs: 3, md: 8 },
+          pr: vertical ? undefined : { xs: 6, md: 16 },
           py: vertical ? { xs: 6, md: 10 } : 0,
           willChange: vertical ? undefined : "transform",
         }}
       >
         <Stack
           direction={vertical ? "column" : "row"}
-          spacing={vertical ? 8 : { md: 12, lg: 16 }}
+          spacing={vertical ? 8 : { md: 10, lg: 14 }}
           alignItems="stretch"
           sx={{ position: "relative", maxWidth: vertical ? 760 : "none", mx: vertical ? "auto" : 0 }}
         >
-
-
           {/* Use Case Slides */}
           {CONTENT.useCases.map((uc) => {
             const Diagram = DIAGRAMS[uc.id];
+
+            // Bespoke luxury Swiss editorial layout for Use Cases 01, 02, and 03
+            const BESPOKE_SPECS: Record<
+              string,
+              {
+                caseTag: string;
+                specs: Array<{ num: string; name: string }>;
+                consoleTag: string;
+                busTag: string;
+              }
+            > = {
+              "uc-1": {
+                caseTag: "CASE 01 // QUANTITATIVE R&D",
+                specs: [
+                  { num: "01", name: "High-Frequency Market Sampling" },
+                  { num: "02", name: "Multi-Factor Noise Filtering" },
+                  { num: "03", name: "Out-of-Sample Alpha Validation" },
+                ],
+                consoleTag: "SIGNAL EXTRACTION",
+                busTag: "L2 FEED",
+              },
+              "uc-2": {
+                caseTag: "CASE 02 // DISTRIBUTED SYSTEMS",
+                specs: [
+                  { num: "01", name: "Multi-Region Ingestion Mesh" },
+                  { num: "02", name: "Zero-Loss Event Stream Normalization" },
+                  { num: "03", name: "Sub-Millisecond Dissemination" },
+                ],
+                consoleTag: "EVENT STREAM PIPELINE",
+                busTag: "LIVE BUS",
+              },
+              "uc-3": {
+                caseTag: "CASE 03 // TECHNICAL OPERATIONS",
+                specs: [
+                  { num: "01", name: "24/7 Live Monitoring" },
+                  { num: "02", name: "Daily Shift Handover" },
+                  { num: "03", name: "Automated System Recovery" },
+                ],
+                consoleTag: "GLOBAL OPERATIONS",
+                busTag: "24/7 LIVE",
+              },
+            };
+
+            const bespoke = BESPOKE_SPECS[uc.id];
+
+            if (bespoke) {
+              return (
+                <Box
+                  key={uc.id}
+                  className="snap-slide"
+                  sx={{
+                    width: vertical ? 1 : { xs: "90vw", sm: "85vw", md: "76vw", lg: "70vw" },
+                    maxWidth: vertical ? "none" : 1100,
+                    display: "flex",
+                  }}
+                >
+                  <CardEmerge disabled={vertical}>
+                    {/* Outer Bezel */}
+                    <Box
+                      sx={{
+                        p: "1px",
+                        borderRadius: { xs: "24px", md: "32px" },
+                        background:
+                          "linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(10, 42, 102, 0.14) 45%, rgba(255, 199, 44, 0.25) 100%)",
+                        boxShadow:
+                          "0 24px 48px -12px rgba(10, 42, 102, 0.12), 0 8px 24px -4px rgba(10, 42, 102, 0.06)",
+                        width: "100%",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Inner Surface */}
+                      <Box
+                        sx={{
+                          p: { xs: 3.5, sm: 4.5, md: 6 },
+                          borderRadius: { xs: "23px", md: "31px" },
+                          background:
+                            "linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 247, 252, 0.9) 100%)",
+                          backdropFilter: "var(--glass-filter)",
+                          WebkitBackdropFilter: "var(--glass-filter)",
+                          boxShadow:
+                            "inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 2px rgba(10, 42, 102, 0.03)",
+                          minHeight: { xs: 560, md: 660 },
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          width: "100%",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: { xs: "1fr", lg: "0.85fr 1.15fr" },
+                            gap: { xs: 5, md: 7 },
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
+                          {/* Left Column: Thesis & Architectural Specs */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              textAlign: "left",
+                              gap: 2.5,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 1,
+                                px: 1.5,
+                                py: 0.4,
+                                borderRadius: "9999px",
+                                border: "1px solid rgba(10, 42, 102, 0.15)",
+                                bgcolor: "rgba(10, 42, 102, 0.04)",
+                                width: "fit-content",
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontFamily: MONO,
+                                  fontSize: "0.7rem",
+                                  letterSpacing: "0.15em",
+                                  color: NOIR.navyField,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {bespoke.caseTag}
+                              </Typography>
+                            </Box>
+
+                            <Typography
+                              component="h3"
+                              sx={{
+                                fontFamily: DISPLAY_FONT,
+                                fontSize: { xs: "1.75rem", sm: "2.1rem", md: "2.6rem" },
+                                fontWeight: 800,
+                                lineHeight: 1.1,
+                                letterSpacing: "-0.025em",
+                                color: NOIR.navyField,
+                              }}
+                            >
+                              {uc.title}
+                            </Typography>
+
+                            <Typography
+                              sx={{
+                                color: "rgba(10, 42, 102, 0.78)",
+                                fontSize: { xs: "0.95rem", md: "1.08rem" },
+                                lineHeight: 1.6,
+                                pr: { md: 2 },
+                              }}
+                            >
+                              {uc.line}
+                            </Typography>
+
+                            {/* System Capabilities List */}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                pt: 2,
+                                borderTop: "1px solid rgba(10, 42, 102, 0.1)",
+                                gap: 1.5,
+                              }}
+                            >
+                              {bespoke.specs.map((spec) => (
+                                <Box
+                                  key={spec.num}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1.5,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontFamily: MONO,
+                                      fontSize: "0.72rem",
+                                      color: NOIR.gold,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {spec.num}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "0.92rem",
+                                      fontWeight: 600,
+                                      color: NOIR.navyField,
+                                    }}
+                                  >
+                                    {spec.name}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Box>
+                          </Box>
+
+                          {/* Right Column: High-Contrast Quantitative Telemetry Console (Enlarged) */}
+                          <Box
+                            sx={{
+                              p: { xs: 3, sm: 3.5, md: 4.5 },
+                              borderRadius: "1.75rem",
+                              bgcolor: NOIR.navyDeep,
+                              border: "1px solid rgba(255, 199, 44, 0.28)",
+                              boxShadow:
+                                "0 24px 50px -10px rgba(6, 24, 59, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.12)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 2.5,
+                              overflow: "hidden",
+                              width: "100%",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                pb: 1.5,
+                                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                              }}
+                            >
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                                <Box
+                                  sx={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: "50%",
+                                    bgcolor: NOIR.gold,
+                                    boxShadow: `0 0 8px ${NOIR.gold}`,
+                                  }}
+                                />
+                                <Typography
+                                  sx={{
+                                    fontFamily: MONO,
+                                    fontSize: "0.75rem",
+                                    letterSpacing: "0.18em",
+                                    color: "rgba(255, 255, 255, 0.75)",
+                                    textTransform: "uppercase",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {bespoke.consoleTag}
+                                </Typography>
+                              </Box>
+                              <Typography
+                                sx={{
+                                  fontFamily: MONO,
+                                  fontSize: "0.72rem",
+                                  letterSpacing: "0.14em",
+                                  color: NOIR.gold,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {bespoke.busTag}
+                              </Typography>
+                            </Box>
+
+                            {/* Diagram */}
+                            {Diagram && <Diagram />}
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </CardEmerge>
+                </Box>
+              );
+            }
+
+            // Default rendering for Use Case 03 (untouched)
             return (
               <Box
                 key={uc.id}
@@ -294,9 +518,6 @@ export function UseCasesNarrative() {
                                 fontFamily: MONO,
                                 fontSize: "0.68rem",
                                 letterSpacing: "0.12em",
-                                // Bright gold as text on this gold-tinted
-                                // chip too — deliberate brand call, sub-AA
-                                // accepted (see tests/a11y-contrast.test.ts).
                                 color: NOIR.gold,
                                 fontWeight: 700,
                               }}

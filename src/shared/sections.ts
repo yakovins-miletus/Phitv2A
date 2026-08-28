@@ -183,6 +183,8 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     chapter: 5,
     choreo: "grow-left",
     ground: "void",
+    ownsPin: true,
+    noExitDim: true,
     establishScale: "major",
   },
   { id: "services", label: "Capabilities", chapter: 5, ground: "void", establishScale: "mini" },

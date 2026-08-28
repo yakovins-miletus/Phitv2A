@@ -73,54 +73,14 @@ export function ReachMap() {
         width: 1,
         borderRadius: { xs: 3, md: 5 },
         overflow: "hidden",
-        bgcolor: "rgba(255, 255, 255, 0.96)",
+        bgcolor: NOIR.almostWhite,
         border: "1px solid rgba(10, 42, 102, 0.1)",
         boxShadow: "0 24px 64px -16px rgba(10, 42, 102, 0.08)",
       }}
     >
-      {/* Top Telemetry Strip */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          px: { xs: 2.5, md: 4 },
-          py: 1.5,
-          borderBottom: "1px solid rgba(10, 42, 102, 0.08)",
-          bgcolor: "rgba(10, 42, 102, 0.02)",
-        }}
-      >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: NOIR.live }} />
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.6875rem",
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              color: NOIR.navyField,
-              textTransform: "uppercase",
-            }}
-          >
-            GLOBAL CO-LOCATION TOPOLOGY // ACTIVE
-          </Typography>
-        </Stack>
-
-        <Typography
-          sx={{
-            fontFamily: MONO,
-            fontSize: "0.6875rem",
-            color: NOIR.mist,
-            letterSpacing: "0.12em",
-            display: { xs: "none", sm: "block" },
-          }}
-        >
-          DIRECT OPTICAL BACKBONE · UTC ROTATION
-        </Typography>
-      </Box>
 
       {/* SVG World Map Viewport */}
-      <Box sx={{ position: "relative", width: "100%" }}>
+      <Box sx={{ position: "relative", width: "100%", py: { xs: 4, md: 8 } }}>
         <svg
           viewBox={`0 0 ${String(WORLD_MAP.width)} ${String(WORLD_MAP.height)}`}
           width="100%"
@@ -420,93 +380,6 @@ export function ReachMap() {
             accentColor={NOIR.gold}
             style={{ width: "22px", height: "22px" }}
           />
-        </Box>
-      </Box>
-
-      {/* Bottom Telemetry Footer */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-          gap: 2,
-          p: { xs: 2, md: 3 },
-          borderTop: "1px solid rgba(10, 42, 102, 0.08)",
-          bgcolor: "rgba(10, 42, 102, 0.02)",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.625rem",
-              letterSpacing: "0.14em",
-              color: NOIR.mist,
-              textTransform: "uppercase",
-            }}
-          >
-            EXECUTION PRESENCE
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: NOIR.navyField,
-              mt: 0.25,
-            }}
-          >
-            US · UK · APAC HUBS
-          </Typography>
-        </Box>
-
-        <Box>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.625rem",
-              letterSpacing: "0.14em",
-              color: NOIR.mist,
-              textTransform: "uppercase",
-            }}
-          >
-            SYNCHRONIZED CADENCE
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: NOIR.navyField,
-              mt: 0.25,
-            }}
-          >
-            24/7 OVERNIGHT HANDOFF
-          </Typography>
-        </Box>
-
-        <Box>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.625rem",
-              letterSpacing: "0.14em",
-              color: NOIR.mist,
-              textTransform: "uppercase",
-            }}
-          >
-            HEADQUARTERS
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: NOIR.navyField,
-              mt: 0.25,
-            }}
-          >
-            BONIFACIO GLOBAL CITY, PH
-          </Typography>
         </Box>
       </Box>
     </Box>

@@ -124,7 +124,7 @@ export const CONTENT = {
         "We build resilient software and cloud infrastructure designed for complex, high-demand environments.",
     },
     reach: {
-      gunshot: "Established International Presence",
+      gunshot: "Reliable Engineering Delivered Globally",
       // No tracer. The map below states the presence better than a caption can,
       // and "Arcs denote clients and investors" was explaining the diagram
       // rather than saying anything about the business.
@@ -378,19 +378,19 @@ export const CONTENT = {
   process: {
     phases: [
       {
-        id: "discover-research",
-        name: "Discover & Research",
-        caption: "Frame the problem with our partners and prototype models against real data",
+        id: "2019-foundation",
+        name: "2019: The Foundation",
+        caption: "A small, focused engineering and research team laying the groundwork for resilient core infrastructure",
       },
       {
-        id: "build",
-        name: "Build",
-        caption: "Take validated prototypes and engineer them into production-grade systems",
+        id: "2022-expansion",
+        name: "2020-2025: The Expansion",
+        caption: "Integrating deep data architecture and 24/7 operations to scale alongside complex, high-demand datasets",
       },
       {
-        id: "operate",
-        name: "Operate",
-        caption: "Run and support what we built around the clock, as products our partners rely on",
+        id: "2026-powerhouse",
+        name: "2026: The Powerhouse",
+        caption: "Four unified disciplines—Research, Engineering, Data, and Ops—operating globally as a quantitative R&D partner",
       },
     ],
   },
@@ -487,8 +487,9 @@ export const CONTENT = {
    * claim at all.
    */
   closing: {
-    statement: "A Competitive R&D Firm Always Striving for Excellence",
-    farewell: "Join Our Team",
+    statement: "Built for the People Who Move Markets",
+    subline: "From quantitative research to production infrastructure — direct line to the team building it.",
+    farewell: "Start a Conversation",
     /** Frames on the shelf, largest first. Order is the render order. */
     shelf: [
       {

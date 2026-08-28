@@ -1,13 +1,20 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
 import { CONTENT } from "@/shared/content";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
-import { PillarsEstablishingShot } from "@/features/home/components/establishing/PillarsEstablishingShot";
-import { homeSection } from "@/shared/sections";
+import { homeSection, sectionOrder } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { NOIR } from "@/shared/theme/palette";
+import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
+import { useReducedMotion } from "@/shared/motion";
+import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const GROUND = GROUNDS[homeSection("hero-pillars").ground ?? "void"];
 
@@ -19,40 +26,228 @@ interface Pillar {
   alt: string;
 }
 
-/**
- * Left-to-right scrim: clear over the photo (the "highlight" side), dark
- * toward the copy (the "text" side) — the same navy-scrim recipe as
- * `BlogSection.tsx`'s featured-card treatment, rotated 90°. Four stops rather
- * than two so the handoff from photo to legible-text reads as a gradient, not
- * a visible seam.
- */
-const SCRIM = `linear-gradient(to right, rgba(${NOIR.navyInkRgb}, 0) 0%, rgba(${NOIR.navyInkRgb}, 0.25) 38%, rgba(${NOIR.navyInkRgb}, 0.88) 62%, rgba(${NOIR.navyInkRgb}, 0.95) 100%)`;
-
-/** On mobile the row is too narrow for a side-lit photo to read as anything
- *  but noise behind the text — the scrim goes almost fully dark instead, top
- *  to bottom, so the copy stays the point and the photo is texture, not a
- *  competing highlight. */
-const SCRIM_MOBILE = `linear-gradient(to bottom, rgba(${NOIR.navyInkRgb}, 0.55) 0%, rgba(${NOIR.navyInkRgb}, 0.93) 55%, rgba(${NOIR.navyInkRgb}, 0.97) 100%)`;
+const SCRIM = `linear-gradient(to right, rgba(${NOIR.navyInkRgb}, 0.15) 0%, rgba(${NOIR.navyInkRgb}, 0.5) 45%, rgba(${NOIR.navyInkRgb}, 0.94) 75%, rgba(${NOIR.navyInkRgb}, 0.98) 100%)`;
 
 export function OperatingPillars() {
   const { pillars } = CONTENT.hero.salesPitch as { pillars: readonly Pillar[] };
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const reduced = useReducedMotion();
+
+  useGSAP(
+    () => {
+      if (reduced || !wrapRef.current || !trackRef.current) return;
+
+      const track = trackRef.current;
+      const wrap = wrapRef.current;
+
+      const distance = track.scrollWidth - window.innerWidth;
+      if (distance <= 0) return;
+
+      const tween = gsap.to(track, {
+        x: -distance,
+        ease: "none",
+        scrollTrigger: {
+          trigger: wrap,
+          start: "top top",
+          end: () => `+=${distance + window.innerHeight * 0.4}`,
+          pin: true,
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+          refreshPriority: refreshPriorityFor(sectionOrder("hero-pillars")),
+          onUpdate: (self) => {
+            const idx = Math.min(
+              pillars.length - 1,
+              Math.floor(self.progress * pillars.length)
+            );
+            setActiveIndex(idx);
+          },
+        },
+      });
+
+      return () => {
+        tween.scrollTrigger?.kill();
+      };
+    },
+    { scope: wrapRef, dependencies: [reduced, pillars.length] }
+  );
 
   return (
     <SectionBeat
       section={homeSection("hero-pillars")}
-      establishing={<PillarsEstablishingShot selfDriven={false} />}
-      sx={{ minHeight: "auto", pt: 0, pb: { xs: 6, md: 10 } }}
+      sx={{ minHeight: "auto", p: 0 }}
     >
-      <Box sx={{ position: "relative", zIndex: 2, mt: { xs: 2, md: 3 } }}>
-        {pillars.map((pillar) => (
-          <PillarRow key={pillar.id} pillar={pillar} />
-        ))}
+      <Box
+        ref={wrapRef}
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: { xs: "auto", md: "100dvh" },
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          py: { xs: 8, md: 6 },
+          bgcolor: GROUND.bg,
+        }}
+      >
+        {/* Sticky Editorial Header */}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "1400px",
+            mx: "auto",
+            px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pb: 2,
+            borderBottom: "1px solid rgba(10, 42, 102, 0.12)",
+            zIndex: 10,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.72rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: NOIR.navyField,
+                fontWeight: 700,
+              }}
+            >
+              02 / OPERATING PILLARS
+            </Typography>
+            <Box
+              sx={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                bgcolor: NOIR.gold,
+              }}
+            />
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.68rem",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "text.secondary",
+                display: { xs: "none", sm: "block" },
+              }}
+            >
+              CORE DISCIPLINES
+            </Typography>
+          </Box>
+
+          {/* Active Pillar Counter */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: NOIR.navyField,
+                letterSpacing: "0.1em",
+              }}
+            >
+              {`0${activeIndex + 1}`}
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.75rem",
+                color: "rgba(10, 42, 102, 0.4)",
+              }}
+            >
+              / {`0${pillars.length}`}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Horizontal Card Track */}
+        <Box
+          ref={trackRef}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 4, md: 6, lg: 8 },
+            px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            py: { xs: 4, md: 2 },
+            width: { xs: "100%", md: "max-content" },
+            flexDirection: { xs: "column", md: "row" },
+            willChange: { md: "transform" },
+          }}
+        >
+          {pillars.map((pillar, idx) => (
+            <CinematicPillarCard
+              key={pillar.id}
+              pillar={pillar}
+              index={idx}
+              isActive={idx === activeIndex}
+            />
+          ))}
+        </Box>
+
+        {/* Bottom Status / Navigation Rail */}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "1400px",
+            mx: "auto",
+            px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            display: { xs: "none", md: "flex" },
+            alignItems: "center",
+            justifyContent: "space-between",
+            pt: 2,
+            borderTop: "1px solid rgba(10, 42, 102, 0.08)",
+            zIndex: 10,
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.65rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: "text.secondary",
+            }}
+          >
+            SCROLL TO EXPLORE DISCIPLINES
+          </Typography>
+
+          {/* Progress Dot Indicators */}
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+            {pillars.map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  width: i === activeIndex ? 24 : 6,
+                  height: 6,
+                  borderRadius: "3px",
+                  bgcolor: i === activeIndex ? NOIR.gold : "rgba(10, 42, 102, 0.15)",
+                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
       </Box>
     </SectionBeat>
   );
 }
 
-function PillarRow({ pillar }: { pillar: Pillar }) {
+function CinematicPillarCard({
+  pillar,
+  index,
+  isActive,
+}: {
+  pillar: Pillar;
+  index: number;
+  isActive: boolean;
+}) {
   const [imageFailed, setImageFailed] = useState(false);
   const showPlaceholder = !pillar.image || imageFailed;
 
@@ -60,33 +255,27 @@ function PillarRow({ pillar }: { pillar: Pillar }) {
     <Box
       sx={{
         position: "relative",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "100vw",
-        // Full-bleed photo band — was a contained 640px image beside text;
-        // now the photo IS the row, with a scrim under the copy rather than
-        // a separate boxed thumbnail. Fixed height (not sized to the copy)
-        // so a short pillar description can't leave the photo looking
-        // squashed or thin.
-        height: { xs: "60vh", md: "70vh" },
-        minHeight: { xs: 420, md: 520 },
+        width: { xs: "100%", sm: "85vw", md: "70vw", lg: "64vw" },
+        maxWidth: "960px",
+        height: { xs: "480px", md: "58vh" },
+        minHeight: "440px",
+        borderRadius: "1.75rem",
         overflow: "hidden",
-        borderTop: `1px solid rgba(${NOIR.whiteRgb}, 0.12)`,
-        "&:last-of-type": {
-          borderBottom: `1px solid rgba(${NOIR.whiteRgb}, 0.12)`,
-        },
+        bgcolor: NOIR.navyDeep,
+        border: "1px solid rgba(255, 255, 255, 0.12)",
+        boxShadow: isActive
+          ? "0 28px 60px -12px rgba(6, 24, 59, 0.35), 0 0 0 1px rgba(255, 199, 44, 0.3)"
+          : "0 16px 36px -8px rgba(6, 24, 59, 0.2)",
+        transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        flexShrink: 0,
       }}
     >
-      {/* Photograph, or the placeholder standing in for it. Absolutely
-          positioned full-bleed — `pillar.image` will resolve to a real
-          /images/pillars/{research,development,support}.webp once shot;
-          until then the diagonal wash below marks the frame as
-          intentionally empty rather than broken. */}
+      {/* Background Photography / Placeholder */}
       {!showPlaceholder ? (
         <Box
           component="img"
           src={pillar.image}
-          alt=""
+          alt={pillar.alt}
           onError={() => setImageFailed(true)}
           sx={{
             position: "absolute",
@@ -94,6 +283,8 @@ function PillarRow({ pillar }: { pillar: Pillar }) {
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            transform: isActive ? "scale(1.03)" : "scale(1)",
+            transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         />
       ) : (
@@ -102,83 +293,100 @@ function PillarRow({ pillar }: { pillar: Pillar }) {
           sx={{
             position: "absolute",
             inset: 0,
-            background: GROUND.dark
-              ? `repeating-linear-gradient(-45deg, rgba(${NOIR.goldRgb}, 0.05) 0px, rgba(${NOIR.goldRgb}, 0.05) 2px, transparent 2px, transparent 18px), ${NOIR.navyDeep}`
-              : `repeating-linear-gradient(-45deg, rgba(${NOIR.navyFieldRgb}, 0.05) 0px, rgba(${NOIR.navyFieldRgb}, 0.05) 2px, transparent 2px, transparent 18px), ${NOIR.void}`,
+            background: `repeating-linear-gradient(-45deg, rgba(${NOIR.goldRgb}, 0.04) 0px, rgba(${NOIR.goldRgb}, 0.04) 2px, transparent 2px, transparent 16px), ${NOIR.navyDeep}`,
           }}
         />
       )}
 
-      {/* Left-to-right (top-to-bottom on mobile) navy scrim — see SCRIM/
-          SCRIM_MOBILE above for the reasoning. */}
+      {/* Cinematic Navy Scrim */}
       <Box
         aria-hidden
         sx={{
           position: "absolute",
           inset: 0,
-          background: { xs: SCRIM_MOBILE, md: SCRIM },
+          background: SCRIM,
         }}
       />
 
-      {showPlaceholder && (
-        <Typography
-          role="img"
-          aria-label={pillar.alt}
-          sx={{
-            position: "absolute",
-            left: { xs: 24, md: 48 },
-            bottom: { xs: 24, md: 48 },
-            color: `rgba(${NOIR.goldRgb}, 0.55)`,
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          Image pending — {pillar.alt}
-        </Typography>
-      )}
-
-      {/* Copy, overlaid on the scrim's dark side. Always light text — this
-          sits on a photographic scrim now, not the section's flat ground,
-          so it no longer takes its color from `GROUND.fg`/`GROUND.muted`
-          the way the contained layout's copy did. */}
+      {/* Card Content & Typographic Layout */}
       <Box
         sx={{
           position: "relative",
-          zIndex: 1,
+          zIndex: 2,
           height: "100%",
-          maxWidth: 1320,
-          mx: "auto",
-          px: { xs: 3, sm: 4, md: 6 },
           display: "flex",
           flexDirection: "column",
-          justifyContent: { xs: "flex-end", md: "center" },
-          alignItems: "flex-end",
-          pb: { xs: 5, md: 0 },
+          justifyContent: "space-between",
+          p: { xs: 3.5, sm: 5, md: 6 },
         }}
       >
-        <Box sx={{ maxWidth: { xs: "100%", md: "48ch" }, textAlign: "left" }}>
+        {/* Top Card Bar: Numerical Index & Tag */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 1,
+              px: 1.75,
+              py: 0.5,
+              borderRadius: "9999px",
+              border: "1px solid rgba(255, 199, 44, 0.3)",
+              bgcolor: "rgba(6, 24, 59, 0.6)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontSize: "0.68rem",
+                color: NOIR.gold,
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+              }}
+            >
+              PILLAR // 0{index + 1}
+            </Typography>
+          </Box>
+
           <Typography
-            variant="h3"
+            sx={{
+              fontFamily: MONO,
+              fontSize: "0.65rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(255, 255, 255, 0.4)",
+            }}
+          >
+            PHITOPOLIS R&D
+          </Typography>
+        </Box>
+
+        {/* Bottom Card Content: Name & Detail */}
+        <Box
+          sx={{
+            maxWidth: { xs: "100%", md: "52ch" },
+            alignSelf: "flex-end",
+            textAlign: "left",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+          }}
+        >
+          <Typography
             component="h3"
             sx={{
-              fontWeight: 800,
-              color: NOIR.frost,
+              fontFamily: DISPLAY_FONT,
+              fontWeight: 700,
+              fontSize: { xs: "1.75rem", sm: "2.1rem", md: "2.4rem" },
+              lineHeight: 1.1,
               letterSpacing: "-0.02em",
-              fontSize: { xs: "1.5rem", md: "1.75rem" },
-              lineHeight: 1.25,
-              position: "relative",
-              display: "inline-block",
-              "&::after": {
-                content: '""',
-                display: "block",
-                width: "32px",
-                height: "2px",
-                backgroundColor: NOIR.gold,
-                mt: 1.2,
-                borderRadius: "1px",
-              },
+              color: "#FFFFFF",
             }}
           >
             {pillar.name}
@@ -186,11 +394,10 @@ function PillarRow({ pillar }: { pillar: Pillar }) {
 
           <Typography
             sx={{
-              color: `rgba(${NOIR.frostRgb}, 0.82)`,
-              lineHeight: 1.65,
-              fontSize: "1.05rem",
-              fontWeight: 400,
-              mt: 1.5,
+              fontSize: { xs: "0.95rem", md: "1.1rem" },
+              lineHeight: 1.6,
+              color: "rgba(255, 255, 255, 0.78)",
+              letterSpacing: "-0.01em",
             }}
           >
             {pillar.detail}
@@ -200,3 +407,4 @@ function PillarRow({ pillar }: { pillar: Pillar }) {
     </Box>
   );
 }
+

@@ -30,8 +30,8 @@ export function GlobalMarketsStatement() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.GLOBAL_MARKETS, { dark: true });
   const { execSummary } = CONTENT.hero.salesPitch;
   
-  // Split into the primary thesis hook and the institutional mechanism.
-  const [opening, ...rest] = execSummary.split(". ");
+  // Extract the explanatory follow-up text after the opening thesis.
+  const [, ...rest] = execSummary.split(". ");
   const explanation = rest.join(". ");
 
   return (
