@@ -71,6 +71,17 @@ export function ClosingLatticeSection() {
           const heroProgress = Math.min(p, PHASE_MOVE_END);
           closureHandleRef.current?.setProgress(heroProgress);
 
+          // Camera zoom-out is driven off the *unclamped* p, not heroProgress:
+          // it must keep pulling back through the whole scroll (revealing the
+          // outer application nodes + signal loops around the settled P and
+          // CTA), whereas heroProgress intentionally freezes at PHASE_MOVE_END
+          // to stop the P from advancing into the hero's later phases. Without
+          // this call, zoomProgressRef stays at its initialZoomProgress (0 for
+          // any non-reduced-motion visitor) for the entire section and the
+          // lattice never appears.
+          const zoomProgress = p <= 0.1 ? 0 : p >= 0.85 ? 1 : (p - 0.1) / 0.75;
+          closureHandleRef.current?.setZoomProgress?.(zoomProgress);
+
           // Intro + headline pan left in sync with the P's own leftward pan.
           // `textShift` is 0 for the entire flatten window (p<=0.20, P still
           // centred and transforming) and only starts moving once the P
