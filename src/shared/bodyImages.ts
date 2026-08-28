@@ -10,8 +10,40 @@
  */
 const IMAGE_PARAGRAPH = /^(?:\/(?!\/)|https:\/\/)\S+\.(?:png|jpe?g|webp|gif|avif)$/i;
 
+/**
+ * Reject anything with a query string or fragment.
+ *
+ * `\S+` is greedy, so `https://evil.example/track?id=victim&x=.png` matched the
+ * pattern above: the string still *ends* in `.png`, and the query rode along.
+ * That is an exfiltration channel — the URL is bound to an <img src>, so every
+ * visitor's IP, User-Agent and Referer reach an attacker-chosen host, with
+ * arbitrary attacker data in the query.
+ *
+ * No legitimate stored image path carries a query: Heimdall stores bare paths
+ * like `/images/blog/<slug>/01.png` and hosts no files of its own.
+ */
+const HAS_QUERY_OR_FRAGMENT = /[?#]/;
+
 export function isImageParagraph(paragraph: string): boolean {
-  return IMAGE_PARAGRAPH.test(paragraph);
+  return IMAGE_PARAGRAPH.test(paragraph) && !HAS_QUERY_OR_FRAGMENT.test(paragraph);
+}
+
+/**
+ * Validate a CMS-supplied `image_url` before binding it to an <img src>.
+ *
+ * Body paragraphs were already gated by `isImageParagraph`; `image_url` was not,
+ * and went straight through at six call sites. Heimdall does not authenticate
+ * writes at the network layer alone any more, but the field is still
+ * CMS-controlled data reaching a URL sink, and it should meet the same bar as
+ * the paragraphs beside it.
+ *
+ * Returns null when the value is unusable, so callers can fall back rather than
+ * emit a broken or hostile request.
+ */
+export function safeImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  return isImageParagraph(trimmed) ? trimmed : null;
 }
 
 /**
@@ -53,4 +85,36 @@ export function preferWebp(src: string): string {
 /** The original path, for an `onError` fallback after `preferWebp` has been applied. */
 export function originalFromWebp(src: string, original: string): string {
   return src === original ? src : original;
+}
+
+/**
+ * Resolve a CMS `image_url` into something actually renderable.
+ *
+ * Composes the two steps that must always happen together:
+ *   1. `safeImageUrl` — reject anything that is not a plain image path.
+ *   2. `preferWebp`   — rewrite `/images/**.png|.jpg` to its `.webp` twin.
+ *
+ * ── WHY BOTH ARE REQUIRED ────────────────────────────────────────────────────
+ *
+ * `public/images/blog/**` contains **only** `.webp` files — the PNG/JPG
+ * originals were removed once the migration in docs/blog-image-migration.md
+ * completed on this side. Heimdall still stores the original `.png` / `.jpg`
+ * paths, because the migration doc's step 1 (rewriting paths in stored post
+ * bodies) was deliberately never done: the stored value is a *reference*, and
+ * resolving it is the client's job.
+ *
+ * Consequence: binding `image_url` straight to an <img src> yields a 404 and a
+ * broken card. The article body already went through `preferWebp`; the list and
+ * hero cards did not, so every thumbnail on /blog and the homepage was broken.
+ *
+ * Returns `null` when the value is unusable. `fallback` is the un-rewritten path
+ * for an `onError` handler, so a missing twin degrades to the original rather
+ * than to a broken image.
+ */
+export function resolveImageUrl(
+  url: string | null | undefined,
+): { src: string; fallback: string } | null {
+  const safe = safeImageUrl(url);
+  if (safe === null) return null;
+  return { src: preferWebp(safe), fallback: safe };
 }

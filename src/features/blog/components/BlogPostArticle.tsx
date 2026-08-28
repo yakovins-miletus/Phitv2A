@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { BlogPost } from "../api";
-import { isImageParagraph, preferWebp } from "@/shared/bodyImages";
+import { isImageParagraph, preferWebp, resolveImageUrl } from "@/shared/bodyImages";
 
 /** Post bodies are plain text; blank lines separate paragraphs.
  *  React escapes everything — no HTML, no markdown, no XSS surface. The one
@@ -62,6 +62,9 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
 });
 
 export function BlogPostArticle({ post }: { post: BlogPost }) {
+  // Heimdall stores the original .png/.jpg path while only the .webp twin
+  // exists on disk, so the stored value must be resolved before it is bound.
+  const cover = resolveImageUrl(post.image_url);
   return (
     <Stack spacing={5} component="article" useFlexGap>
       <Stack spacing={1.5} sx={{ maxWidth: 760, mx: "auto", width: "100%" }}>
@@ -86,10 +89,17 @@ export function BlogPostArticle({ post }: { post: BlogPost }) {
           {post.excerpt}
         </Typography>
       </Stack>
-      {post.image_url === null || post.image_url === undefined ? null : (
+      {cover === null ? null : (
         <Box
           component="img" decoding="async"
-          src={post.image_url}
+          src={cover.src}
+          onError={(event) => {
+            // Only the .webp twin exists on disk for most stored paths, but if a
+            // twin is missing, degrade to the stored original rather than to a
+            // broken image.
+            const img = event.currentTarget as HTMLImageElement;
+            if (!img.src.endsWith(cover.fallback)) img.src = cover.fallback;
+          }}
           // BlogPostOut has no dedicated cover-image caption/alt field, so the
           // post title — real, sourced data — is the only honest alt available.
           alt={post.title}

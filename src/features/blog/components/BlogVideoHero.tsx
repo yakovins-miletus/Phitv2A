@@ -13,12 +13,16 @@ import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 import type { BlogPostSummary } from "../api";
+import { resolveImageUrl } from "@/shared/bodyImages";
 
 interface BlogVideoHeroProps {
   featuredPost?: BlogPostSummary | null | undefined;
 }
 
 export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
+  // Heimdall stores the original .png/.jpg path while only the .webp twin
+  // exists on disk, so the stored value must be resolved before it is bound.
+  const featuredImage = resolveImageUrl(featuredPost?.image_url);
   const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.BLOG_HERO, { dark: true });
   const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
   const navigate = useNavigate();
@@ -164,10 +168,17 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
                         aspectRatio: "16/9",
                       }}
                     >
-                      {featuredPost.image_url && (
+                      {featuredImage && (
                         <Box
                           component="img"
-                          src={featuredPost.image_url}
+                          src={featuredImage.src}
+                          onError={(event) => {
+                            // Only the .webp twin exists on disk for most stored paths, but if a
+                            // twin is missing, degrade to the stored original rather than to a
+                            // broken image.
+                            const img = event.currentTarget as HTMLImageElement;
+                            if (!img.src.endsWith(featuredImage.fallback)) img.src = featuredImage.fallback;
+                          }}
                           alt={featuredPost.title}
                           sx={{
                             position: "absolute",

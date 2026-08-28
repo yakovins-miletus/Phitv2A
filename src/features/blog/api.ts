@@ -99,9 +99,11 @@ export const blogYearsQuery = () =>
     ...CONTENT_FRESHNESS,
     queryKey: blogKeys.years(),
     queryFn: async (): Promise<BlogYearFacet[]> => {
-      const response = await fetch(
-        new URL("/api/v1/blog-posts/years", import.meta.env.VITE_API_URL),
-      );
+      // `import.meta.env.VITE_API_URL` is root-relative ("/") in production,
+      // so it can't be used as a `new URL()` base directly — resolve it
+      // against the current origin first, same as the shared api client does.
+      const apiBase = new URL(import.meta.env.VITE_API_URL, window.location.origin);
+      const response = await fetch(new URL("/api/v1/blog-posts/years", apiBase));
       if (!response.ok) {
         throw new Error(`Failed to load blog years (${String(response.status)})`);
       }

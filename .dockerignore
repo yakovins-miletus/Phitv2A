@@ -1,5 +1,5 @@
-# node_modules is reinstalled from yarn.lock inside the image. Copying the host's
-# is both slow and wrong — it carries darwin-arm64 binaries into a linux image.
+.git
+.gitignore
 node_modules
 
 # dist is produced by the build stage. A stale host dist/ copied in would be
@@ -7,22 +7,39 @@ node_modules
 dist
 dist-ssr
 
-.git
-.gitignore
-.DS_Store
-*.log
-
-.vscode
-.idea
-.claude
-.agents
-.codegraph
-.playwright-mcp
+# NOTE: public/ is ~70 MB and is deliberately NOT ignored — vite copies it into
+# dist/ verbatim, and the blog body-image convention resolves /images/blog/<slug>/*
+# from it. Ignoring it would build a site with every image 404ing.
 
 tests
 docs
 _archive
 public/_source
+.claude
+.agents
+.codegraph
+.vscode
+.idea
+.playwright-mcp
+deploy/ssl
 
-Dockerfile
-.dockerignore
+# Developer-local env files only.
+#
+# .env.production and .env.development are deliberately NOT excluded: they are
+# tracked, they are what Vite reads at build time, and every VITE_* value is
+# inlined into the client bundle — so they are public by definition and there is
+# nothing in them to protect. Excluding them would break the build for no gain.
+#
+# .env and .env.local are untracked and developer-owned, which is exactly where
+# someone might park a real credential. Those must never enter the build context.
+.env
+.env.local
+.env.*.local
+deploy/.env
+
+# Other deploy targets' configs; irrelevant inside the image.
+netlify.toml
+vercel.json
+
+*.log
+.DS_Store

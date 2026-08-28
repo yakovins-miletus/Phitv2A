@@ -10,6 +10,7 @@ import { RouterLink } from "@/shared/components/RouterLink";
 import { NOIR } from "@/shared/theme/palette";
 
 import type { BlogPostPage, BlogPostSummary } from "../api";
+import { resolveImageUrl } from "@/shared/bodyImages";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
@@ -25,6 +26,9 @@ interface BlogPostCardProps {
 }
 
 function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }: BlogPostCardProps) {
+  // Heimdall stores the original .png/.jpg path while only the .webp twin
+  // exists on disk, so the stored value must be resolved before it is bound.
+  const thumbnail = resolveImageUrl(post.image_url);
   return (
     <Box sx={{ position: "relative" }}>
       <Box sx={{ position: "relative" }}>
@@ -47,12 +51,19 @@ function BlogPostCard({ post, activeCategory, onCategoryChange, isHero = false }
             }
           }}
         >
-          {post.image_url ? (
+          {thumbnail ? (
             <Box sx={{ position: "absolute", inset: 0, zIndex: 0 }}>
               <Box
                 component="img"
                 decoding="async"
-                src={post.image_url}
+                src={thumbnail.src}
+                onError={(event) => {
+                  // Only the .webp twin exists on disk for most stored paths, but if a
+                  // twin is missing, degrade to the stored original rather than to a
+                  // broken image.
+                  const img = event.currentTarget as HTMLImageElement;
+                  if (!img.src.endsWith(thumbnail.fallback)) img.src = thumbnail.fallback;
+                }}
                 alt={post.title}
                 loading="lazy"
                 sx={{
