@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main, uat-staging]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Types, lint, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: yarn
+
+      # yarn, not npm. package-lock.json was deleted because it had drifted 14
+      # package versions from yarn.lock, and `npm ci` failed outright on the
+      # @mui/lab peer conflict. yarn.lock is the only lockfile that describes a
+      # tree that works.
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Tests
+        run: yarn test
+
+      - name: Build
+        # `yarn build` is `tsc -b && vite build`. vite.config.ts's assertApiUrl()
+        # fails the production build on an empty or placeholder VITE_API_URL, so
+        # this also guards the stale-hostname regression that once broke every
+        # data-backed page at once.
+        env:
+          VITE_API_URL: /
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: yarn build
+
+  contract:
+    name: Generated API client is in sync with Heimdall
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+
+      # src/shared/api/schema.d.ts is GENERATED from Heimdall's OpenAPI document
+      # and committed. Nothing regenerated it, and it drifted: Heimdall grew a
+      # second honeypot field (`website_hp`) that Fresko's client never learned
+      # about. Harmless that time — the field defaults to "" — but it proves the
+      # contract can diverge silently, and a future *required* field would
+      # compile clean here and fail at runtime.
+      #
+      # Fetching Heimdall's live spec needs a running backend, which this job
+      # does not have. Instead, assert the committed artifact is internally
+      # consistent and has not been hand-edited into something openapi-fetch
+      # cannot use. Wire the cross-repo check up once both repos publish the
+      # spec as a release artifact — Heimdall's CI already uploads it.
+      - name: schema.d.ts parses and still declares the paths we call
+        run: |
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const src = readFileSync("src/shared/api/schema.d.ts", "utf8");
+            const required = [
+              "/api/v1/services",
+              "/api/v1/team",
+              "/api/v1/blog-posts",
+              "/api/v1/blog-posts/{slug}",
+              "/api/v1/innovation-posts",
+              "/api/v1/innovation-posts/{slug}",
+              "/api/v1/contact-messages",
+            ];
+            const missing = required.filter((p) => !src.includes(`"${p}"`));
+            if (missing.length) {
+              console.error("schema.d.ts is missing paths the app calls:", missing);
+              process.exit(1);
+            }
+            console.log(`OK — all ${required.length} called paths present`);
+          '
+
+      - name: Every endpoint the app calls is declared in the schema
+        # Catches the opposite drift: a call added to a feature api.ts against an
+        # endpoint the generated types do not know about.
+        run: |
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            import { readdirSync, statSync } from "node:fs";
+            import { join } from "node:path";
+            const schema = readFileSync("src/shared/api/schema.d.ts", "utf8");
+            const walk = (d) => readdirSync(d).flatMap((f) => {
+              const p = join(d, f);
+              return statSync(p).isDirectory() ? walk(p) : [p];
+            });
+            const calls = new Set();
+            for (const file of walk("src").filter((f) => /\.tsx?$/.test(f))) {
+              const body = readFileSync(file, "utf8");
+              for (const m of body.matchAll(/api\.(?:GET|POST|PUT|DELETE)\(\s*"([^"]+)"/g)) {
+                calls.add(m[1]);
+              }
+            }
+            const missing = [...calls].filter((p) => !schema.includes(`"${p}"`));
+            if (missing.length) {
+              console.error("called but not in schema.d.ts:", missing);
+              process.exit(1);
+            }
+            console.log(`OK — ${calls.size} distinct endpoints, all declared`);
+          '

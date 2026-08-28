@@ -1,0 +1,102 @@
+# Fresko UAT.
+#
+# Bring Heimdall up first (see Phitv2B-2/deploy/README.md) — this container
+# proxies to `heimdall-uat` by name over the shared network. It will still start
+# if Heimdall is down; API calls just 502 until it appears.
+#
+#     cd deploy
+#     ./make-cert.sh uat.phitopolis.io      # once
+#     cp .env.sample .env
+#     docker compose -f docker-compose.uat.yml up -d --build
+#
+# Explicit `name:` — Compose would otherwise derive the project name from the
+# directory, which is `deploy` here, in Phitv2B-2, and in phitopolis-revamp.
+name: phit-uat-fresko
+
+services:
+  fresko-uat:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        # Baked into the bundle at build time. Must stay `/` — Fresko is served
+        # from the same origin as its API. See the note in the Dockerfile.
+        VITE_API_URL: "${VITE_API_URL:-/}"
+        # Absolute origin for canonical/OG tags only (src/shared/seo.ts). Must be
+        # the UAT host — .env.production carries https://phitopolis.com, which is
+        # right for production and wrong here.
+        VITE_SITE_URL: "${VITE_SITE_URL:-https://uat.phitopolis.io}"
+    image: phit-uat-fresko:latest
+    container_name: phit-uat-fresko
+    environment:
+      # ":8443" side-by-side with revamp, "" when Fresko owns 443. Substituted
+      # into the HTTP->HTTPS redirect at container start. deploy/switch-443.sh
+      # sets this together with the port mapping below — they must always agree,
+      # or the redirect points at a port nothing is listening on.
+      PUBLIC_HTTPS_PORT: "${PUBLIC_HTTPS_PORT-:8443}"
+    ports:
+      # Defaults are the high ports: 80/443/8055 belong to the phitopolis-revamp
+      # stack. deploy/switch-443.sh overrides these to 80/443 to hand the
+      # standard ports to Fresko, and back again. The container always listens
+      # on 8080/8443 internally — nginx-unprivileged cannot bind a privileged
+      # port — so only the host-side mapping changes.
+      - "${FRESKO_HTTP_PORT:-8080}:8080"
+      - "${FRESKO_HTTPS_PORT:-8443}:8443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      # Long syntax, because this one needs an explicit mode. A tmpfs mounts
+      # root-owned by default and nginx-unprivileged runs as uid 101, so the
+      # entrypoint's envsubst step fails with "conf.d is not writable" and the
+      # rendered config never appears — nginx then starts with no server blocks
+      # at all and quietly serves nothing.
+      - type: tmpfs
+        target: /etc/nginx/conf.d
+        tmpfs:
+          mode: 01777
+    networks:
+      - phit-uat-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 256m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    logging:
+      # The host has no /etc/docker/daemon.json, so the daemon default is an
+      # UNBOUNDED json-file log per container. Capping it here avoids needing a
+      # daemon restart, which would bounce the live site.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      # Probes the HTTPS listener directly, with cert verification off.
+      #
+      # Probing :8080 does not work: that port only 301s to https://…:8443, wget
+      # follows the redirect, and the self-signed cert fails verification — so
+      # the container reported "unhealthy" while serving every request correctly.
+      # --no-check-certificate is right here specifically because the cert is
+      # known to be self-signed and the check never leaves the container.
+      test:
+        - CMD
+        - wget
+        - -q
+        - --spider
+        - --no-check-certificate
+        - https://127.0.0.1:8443/
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  phit-uat-net:
+    # Created out-of-band and shared with Heimdall's compose file, so the two
+    # repos deploy independently without either owning the other's network.
+    external: true

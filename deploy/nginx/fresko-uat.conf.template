@@ -1,0 +1,147 @@
+# Fresko — UAT. Containerised variant of deploy/nginx/fresko.conf.
+#
+# Same contract as the host-nginx version, three differences forced by UAT:
+#
+#   1. Runs inside nginx-unprivileged, so `root` is a container path, there is
+#      no brotli module, and the ports are >1024 (it never runs as root).
+#   2. Published on 8080/8443, not 80/443 — the phitopolis-revamp stack owns
+#      80/443/8055 on this box and must not be disturbed.
+#   3. Upstream is the `heimdall-uat` container over `phit-uat-net`, not
+#      127.0.0.1:8000.
+#
+# ── THE ONE THING THAT MUST NOT BE GOT WRONG ────────────────────────────────────
+#
+# `location /api/` MUST win over the SPA fallback. Fresko builds with
+# VITE_API_URL=/, so every API call is a same-origin request to /api/v1/... If the
+# proxy block is missing or the name fails to resolve into a proxy, those requests
+# fall through to /index.html and return **200 with an HTML body** — the client
+# then dies inside JSON.parse instead of surfacing a network error. That is much
+# harder to diagnose than a refused connection.
+#
+# nginx matches prefix locations longest-first regardless of file order, so /api/
+# beats /. The ordering below is for humans; do not "tidy" it by deleting the block.
+#
+# ── SECOND THING ────────────────────────────────────────────────────────────────
+#
+# Every location includes security-headers.conf. That is not redundancy: nginx
+# drops ALL inherited add_headers in any block that declares one of its own, and
+# every block here sets Cache-Control. See that file for the proof.
+
+# Docker's embedded DNS. Resolving heimdall-uat at request time through a
+# variable — rather than in a static `upstream` block — means this container
+# still boots when Heimdall is down. With a static upstream, nginx fails to start
+# on an unresolvable name and Fresko looks broken when only the API is missing.
+resolver 127.0.0.11 valid=10s;
+
+server {
+    listen 8080;
+    server_name _;
+
+    # The port must match whichever host port this container is published on.
+    # Hard-coding :8443 sent browsers to a dead port after a switch to 443.
+    # ${PUBLIC_HTTPS_PORT} is substituted at container start: ":8443" in
+    # side-by-side mode, empty when Fresko owns 443. Without this the
+    # redirect would send browsers to :8443 even after the switch.
+    return 301 https://$host${PUBLIC_HTTPS_PORT}$request_uri;
+}
+
+server {
+    listen 8443 ssl;
+    http2 on;
+    server_name _;
+
+    # Self-signed, matching the revamp stack's approach. Browsers will warn;
+    # that is accepted for UAT. Regenerate with deploy/make-cert.sh.
+    ssl_certificate     /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    # NOTE: deliberately no HSTS here. The cert is self-signed and this is a
+    # non-default port, so pinning the browser to HTTPS for this host would
+    # cause confusing failures elsewhere on the same hostname. HSTS belongs in
+    # fresko.conf, the real production config, where the cert is trusted.
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # `yarn build` emits a .br and a .gz beside every asset
+    # (vite-plugin-compression2). The nginx alpine images have no brotli module —
+    # enabling brotli_static fails `nginx -t` and the container will not start.
+    # So the .br files ship unused in UAT and gzip_static does the work. Both are
+    # on disk; do not turn gzip_static off too, or that build step is pure waste.
+    gzip_static on;
+
+    client_max_body_size 2m;
+    sendfile on;
+    tcp_nopush on;
+
+    # ── API: same-origin proxy to Heimdall ──────────────────────────────────────
+    # Read-only public endpoints plus the contact-form POST. Longest-prefix match
+    # means this wins over the `/` fallback below — see the note at the top.
+    location /api/ {
+        set $heimdall_upstream heimdall-uat:8000;
+        proxy_pass         http://$heimdall_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Connection        "";
+        proxy_read_timeout 30s;
+
+        include /etc/nginx/snippets/security-headers.conf;
+        # Never cache API responses at the edge; Heimdall owns freshness.
+        add_header Cache-Control "no-store" always;
+    }
+
+    # Heimdall's admin CRUD is reachable only through the loopback-published
+    # admin container in the Heimdall repo. Deny it here so a future change to
+    # the /api/ proxy cannot accidentally expose it.
+    #
+    # Since the auth rework this is defence in depth rather than the primary
+    # control — every admin route now requires an authenticated session — but
+    # there is still no reason for the public site to route to it at all.
+    location /api/v1/heimdall/ {
+        return 404;
+    }
+
+    # ── Static assets ───────────────────────────────────────────────────────────
+    # Content-hashed filenames, so they can be cached forever.
+    location /assets/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        expires 1y;
+        try_files $uri =404;
+    }
+
+    # Media is NOT content-hashed: long enough to matter, short enough that
+    # replacing a file actually takes effect. This is also where the blog
+    # body-image convention resolves — Heimdall stores /images/blog/<slug>/NN.png
+    # as a bare string and hosts no files itself, so these must exist in public/.
+    location ~* ^/(images|videos|logos|pdfs)/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=604800";
+        expires 7d;
+        try_files $uri =404;
+    }
+
+    location ~* \.(woff2?|ttf)$ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        expires 1y;
+        types { font/woff2 woff2; font/woff woff; font/ttf ttf; }
+    }
+
+    # ── SPA fallback ────────────────────────────────────────────────────────────
+    # TanStack Router owns the URL space; every unmatched path must serve the
+    # shell, or deep links like /blog/<slug> 404. The document itself is never
+    # cached, or a deploy never reaches anyone.
+    location / {
+        try_files $uri $uri/ /index.html;
+        include /etc/nginx/snippets/security-headers.conf;
+        # UAT is not the real site. Keep it out of search results.
+        add_header X-Robots-Tag "noindex, nofollow" always;
+        add_header Cache-Control "no-cache" always;
+    }
+}

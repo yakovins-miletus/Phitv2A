@@ -105,3 +105,124 @@ they 404 twice on every page load here. Set `VITE_ANALYTICS=on` to force them.
 - [ ] `curl -si https://<host>/api/v1/heimdall/admin/posts | head -1` → `404`
 - [ ] A deep link (`https://<host>/blog/<slug>`) loads directly, not just via in-app nav
 - [ ] Browser console is clean on `/` — no 404s, no SVG attribute errors
+
+---
+
+# UAT — the containerised variant
+
+Everything above describes the host-Nginx target. **UAT is deployed differently**,
+because the box already has a tenant.
+
+`phitopolis-revamp` runs a Docker Compose stack that owns **80, 443 and 8055**, and it
+is out of scope to modify. Host Nginx is installed but `inactive`/`disabled` — the
+ports belong to containers. So UAT mirrors that pattern instead of competing with it:
+Fresko builds into an `nginx:alpine` image and publishes on **8080/8443**.
+
+```
+EC2 ── 80 / 443 / 8055    phitopolis-revamp        ← untouched
+    ── 8080               fresko-uat  → 301 to :8443
+    ── 8443               fresko-uat  (TLS, self-signed)
+                             /       → /usr/share/nginx/html
+                             /api/   → heimdall-uat:8000
+                             /api/v1/heimdall/ → 404
+    ── 127.0.0.1:8081     heimdall-admin-ui        (Phitv2B-2, SSH tunnel only)
+    ── 127.0.0.1:8001     heimdall-uat direct      (debugging, typegen)
+
+    docker network: phit-uat-net  (external, shared by both repos' compose files)
+```
+
+Heimdall ships from **`Phitv2B-2`**, not from here. The two repos deploy independently
+and meet on `phit-uat-net`; neither needs a filesystem path into the other. **Bring
+Heimdall up first** — see `Phitv2B-2/deploy/README.md`.
+
+## Deploy
+
+```bash
+docker network create phit-uat-net
+```
+
+```bash
+cd deploy && ./make-cert.sh uat.phitopolis.io && cp .env.sample .env
+```
+
+```bash
+docker compose -f docker-compose.uat.yml up -d --build
+```
+
+## What changed from `fresko.conf`, and why
+
+`deploy/nginx/fresko-uat.conf` keeps the API-before-fallback ordering, the
+`/api/v1/heimdall/ → 404` block, every cache rule and the security headers. Four
+things differ:
+
+| | `fresko.conf` (host) | `fresko-uat.conf` (container) |
+|---|---|---|
+| `root` | `/var/www/fresko/dist` | `/usr/share/nginx/html` |
+| Upstream | `upstream heimdall { 127.0.0.1:8000 }` | `resolver 127.0.0.11` + `set $heimdall_upstream heimdall-uat:8000` |
+| Brotli | `brotli_static on` | **removed** — `nginx:alpine` has no brotli module and would fail `nginx -t` |
+| Redirect | `https://$host` | `https://$host:8443` |
+
+The variable-upstream trick is borrowed from `phitopolis-revamp/deploy/nginx.conf`. With
+a static `upstream` block, Nginx refuses to start if the name does not resolve — so a
+stopped Heimdall would take Fresko down with it. Resolving per-request turns that into a
+502 on `/api/` while the site itself still serves.
+
+## UAT checklist
+
+Self-signed cert, so `-k` throughout. Substitute the host you pointed the cert at.
+
+- [ ] `curl -s http://127.0.0.1:8001/health` → `ok`
+- [ ] `curl -sk https://<host>:8443/api/v1/services | head -c 40` → JSON, **not** `<!doctype html>`
+- [ ] `curl -sk -o /dev/null -w '%{http_code}\n' https://<host>:8443/api/v1/heimdall/admin/stats` → `404`
+- [ ] `curl -skI https://<host>:8443/index.html | grep -i cache-control` → `no-cache`
+- [ ] `curl -skI https://<host>:8443/blog/<slug> | head -1` → `200` (deep link serves the shell)
+- [ ] `curl -skI https://uat.phitopolis.io/ | head -1` → `200` — **the revamp stack must be unaffected**
+- [ ] Draft created in the admin UI is absent from `/blog`; publishing it makes it appear
+
+## Switching who owns 80/443
+
+The AWS security group only allows 80/443, so `uat.phitopolis.io:8443` is not
+reachable from a browser even though Fresko serves it correctly on the box. To
+demo Fresko at the clean `https://uat.phitopolis.io`, hand it the standard ports:
+
+```bash
+cd deploy && ./switch-443.sh fresko
+```
+
+```bash
+cd deploy && ./switch-443.sh revamp
+```
+
+```bash
+cd deploy && ./switch-443.sh status
+```
+
+`status` reads live Docker state rather than a stored flag, so it cannot drift.
+
+The script does **not** modify the phitopolis-revamp repository, image or config
+— it stops and starts that container and republishes Fresko's host ports, which
+is why it is reversible in both directions.
+
+**One consequence of `fresko` mode:** stopping the revamp web container also
+takes `directus.phitopolis.io` down, because that hostname is proxied through the
+same nginx. Directus itself keeps running and stays reachable on `:8055`; only
+the hostname goes away until you switch back.
+
+Because the container always listens on 8080/8443 internally (nginx-unprivileged
+cannot bind a privileged port), only the host-side mapping changes. The
+HTTP→HTTPS redirect is rendered from a template at container start via
+`${PUBLIC_HTTPS_PORT}`, so it targets `https://host` in 443 mode and
+`https://host:8443` otherwise. Those two settings must always change together —
+the script is what keeps them in step.
+
+## Known UAT limitations
+
+- **No dedicated DNS record.** `fresko.phitopolis.io` does not resolve. Fresko
+  rides `uat.phitopolis.io`, either on `:8443` (needs a security-group rule) or
+  on 443 via the switch above.
+- **Self-signed TLS** — browser warnings, same as the existing revamp UAT.
+- **`.br` files are built and not served** (no brotli module). `gzip_static` covers it;
+  the checklist item above that expects `content-encoding: br` applies to the host
+  target only.
+- **Heimdall has no authentication.** The admin surface is unreachable from the internet
+  by port binding alone. That is a placement guarantee, not an access control.

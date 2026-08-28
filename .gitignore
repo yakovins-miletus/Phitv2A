@@ -23,5 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# UAT deployment secrets and generated certs
+deploy/ssl/
+deploy/.env
+
 # local-only source assets (video sources, not shipped)
 public/_source/
