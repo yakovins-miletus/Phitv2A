@@ -1,6 +1,33 @@
 # Handoff — Closing section rebuild (home page)
 
-**Created:** 2026-08-30 · **For:** a fresh session · **Status:** not started
+**Created:** 2026-08-30 · **Status:** DONE (2026-08-30, commit `b2b70e9`)
+
+## Resolution
+
+Rebuilt into three explicit render modes in `ClosingLattice.tsx`:
+- **Desktop scrub** (md+, not reduced): one pinned ScrollTrigger, CSS grid
+  (headline left / CTA right / canvas absolutely behind), **5 disjoint scrub
+  phases** — `settle P (0–0.28) → hold (0.28–0.42) → headline clears (0.42–0.58)
+  → gap → CTA reveals (0.60–0.82) → settled`. Headline & CTA opacity windows
+  never overlap; the CTA is in normal flow (no `--hp-px` anchor → no first-paint
+  snap — verified live: 0px shift across the pin, boxes never intersect at 10
+  sample points).
+- **Mobile static** (`down("md")`, not reduced): bespoke single-column stack
+  (compact canvas band → headline → full-width CTA), no ScrollTrigger.
+- **Reduced motion**: settled final frame; headline wrapper `display:none` +
+  `opacity:0`; CTA lit + interactive.
+
+Pin retuned `1.3vh → 2.0vh` (deliberate — `ladder-probe.js` `#closing` pin end
+moves). Eyebrow `CONTACT // PARTNERSHIP`. Single CTA → `/contact`. The 2 failing
+tests + the never-built parts of the suite (2.5vh, `/careers` link,
+`CAPABILITY // PLATFORM`, old phase math) realigned to the real design. Gate:
+typecheck clean, 478/478 tests, lint 0 errors.
+
+---
+
+_Original handoff below._
+
+**For:** a fresh session · **Status (orig):** not started
 
 ## Goal (user's words)
 
