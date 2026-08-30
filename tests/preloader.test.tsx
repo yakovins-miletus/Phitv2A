@@ -5,7 +5,7 @@ import { vi } from "vitest";
 import { Preloader } from "@/shared/components/Preloader";
 import * as motion from "@/shared/motion";
 
-import { renderWithProviders } from "./test-utils";
+import { mockReducedMotion, renderWithProviders } from "./test-utils";
 
 test("preloader ticks on real signals and reaches 100%", async () => {
   // jsdom: document.fonts is undefined and readyState is "complete", so zero
@@ -34,6 +34,52 @@ test("warm-up signals drive the bar and the ticking label", async () => {
   resolveSecond();
   expect(await screen.findByText("100%")).toBeInTheDocument();
   expect(screen.getByText("READY")).toBeInTheDocument();
+});
+
+test("a pending background signal does not hold the reveal", async () => {
+  mockReducedMotion(false);
+  const onDone = vi.fn();
+  const onStartExit = vi.fn();
+  const warmup = [
+    { label: "HERO_CRIT", promise: Promise.resolve() },
+    // never resolves — must not gate the exit
+    { label: "ROUTE_WARM", blocking: false, promise: new Promise<void>(() => {}) },
+    { label: "GLOBE", blocking: false, promise: new Promise<void>(() => {}) },
+  ];
+
+  renderWithProviders(
+    <Preloader onDone={onDone} onStartExit={onStartExit} warmup={warmup} />,
+  );
+
+  // Blocking tier (1/1) is done immediately, so the bar reads 100% and the
+  // reveal fires even though two background promises are still pending.
+  expect(await screen.findByText("100%")).toBeInTheDocument();
+  await waitFor(
+    () => {
+      expect(onStartExit).toHaveBeenCalled();
+      expect(onDone).toHaveBeenCalled();
+    },
+    { timeout: 2500 },
+  );
+});
+
+test("progressPercent reflects only the blocking signal set", async () => {
+  mockReducedMotion(false);
+  let resolveCrit!: () => void;
+  const warmup = [
+    { label: "CRIT", promise: new Promise<void>((r) => (resolveCrit = r)) },
+    { label: "BG_A", blocking: false, promise: new Promise<void>(() => {}) },
+    { label: "BG_B", blocking: false, promise: new Promise<void>(() => {}) },
+    { label: "BG_C", blocking: false, promise: new Promise<void>(() => {}) },
+  ];
+
+  renderWithProviders(<Preloader onDone={() => {}} warmup={warmup} />);
+  // 3 of 4 signals are background; the bar ignores them entirely.
+  expect(screen.getByText("00%")).toBeInTheDocument();
+
+  resolveCrit();
+  // 1/1 blocking resolved -> 100%, not 1/4.
+  expect(await screen.findByText("100%")).toBeInTheDocument();
 });
 
 test("Escape skips the preloader", async () => {

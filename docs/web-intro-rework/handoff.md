@@ -1,6 +1,35 @@
 # Handoff — Web intro rework (beat-sequenced, rectangular reveal)
 
-**Created:** 2026-08-30 · **For:** a fresh session · **Status:** not started
+**Created:** 2026-08-30 · **Status:** DONE (2026-08-30, commits `9b7ca58` + `5e16b0e`)
+
+## Resolution
+
+- **Beat model** (`Preloader.tsx`): `BEAT_S = 0.26s`, every duration a multiple.
+  Phase A opening (3 staggered beats, concurrent with the loading bar) → Phase B
+  loading (real-signal paced) → Phase C settle (`SETTLE_HOLD_MS` = 2 beats = 520ms
+  of stillness, replacing `POST_100_BEAT_MS`; skipped by Escape + the settle cap)
+  → Phase D reveal (`OUT_DURATION_S`, `onStartExit` fires at its start).
+  `BEAT_FAILSAFE_MS` 2600 → 3400, still an unconditional ceiling.
+- **Rectangular reveal**: the circular `radial-gradient` exit mask is now an
+  expanding rectangular hole (`clip-path` polygon frame, centre → past the
+  corners). `viewTransitions.css` `fresko-home-aperture` → `inset(50%) → inset(0)`
+  so the first-load intro and a home-nav arrival read identically.
+- **Hero serialisation** (`SuperHeroSequence.tsx`): the pinned ScrollTrigger's
+  `useGSAP` body early-returns until `useEntranceSettled()` (phase `"open"`), then
+  builds the SplitText/timeline/pin exactly once with a post-commit
+  `ScrollTrigger.refresh()`. Scrolling under the preloader can no longer advance
+  the hero timeline or write `--hp-*` vars.
+- 4 of the 22 preloader tests got wider timeouts / renamed constants, each with a
+  reason comment; no guarantee weakened. Gate: typecheck clean, 478/478, lint 0.
+
+The blocking/background signal-tier work (Phase B's "coordinate the blocking
+signal set") is the **preloader-full-preload** handoff's Phase 2c, done separately.
+
+---
+
+_Original handoff below._
+
+**For:** a fresh session · **Status (orig):** not started
 
 ## Goal (user's words)
 

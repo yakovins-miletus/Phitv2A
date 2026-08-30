@@ -105,6 +105,14 @@ const WORDMARK = "PHITOPOLIS";
 export interface LoadSignal {
   label: string;
   promise: Promise<unknown>;
+  /**
+   * Whether the reveal must wait on this signal. **Absent / `undefined` ===
+   * blocking** — so a bare `{ label, promise }` (fonts, and every pre-tier
+   * test) still gates the exit with zero changes. Set `blocking: false` for
+   * warm-work that should keep running silently without holding the overlay:
+   * route precompiles, the three.js chunk, deep-scroll / other-route imagery.
+   */
+  blocking?: boolean;
 }
 
 function collectFontSignals(): LoadSignal[] {
@@ -122,7 +130,7 @@ interface PreloaderProps {
 export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const reduced = useReducedMotion();
   const [signals] = useState<LoadSignal[]>(() => [...collectFontSignals(), ...(warmup ?? [])]);
-  const [resolved, setResolved] = useState(0);
+  const [blockingResolved, setBlockingResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("");
   const [forced, setForced] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
@@ -161,20 +169,31 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     onDoneRef.current();
   }, []);
 
-  const total = Math.max(signals.length, 1);
+  // The reveal gates on the *blocking* tier only (fonts + the landing route's
+  // above-fold-critical assets). Background signals — route precompiles, the
+  // three.js chunk, deep imagery — keep resolving silently and never hold the
+  // overlay; the failsafe and MAX_SETTLE_MS stay absolute regardless.
+  const blockingCount = signals.reduce((n, s) => (s.blocking === false ? n : n + 1), 0);
+  const blockingTotal = Math.max(blockingCount, 1);
+  const allBackground = signals.length > 0 && blockingCount === 0;
   const progressPercent =
-    forced || signals.length === 0 ? 100 : Math.min(100, Math.round((resolved / total) * 100));
+    forced || signals.length === 0 || allBackground
+      ? 100
+      : Math.min(100, Math.round((blockingResolved / blockingTotal) * 100));
   const isComplete = progressPercent >= 100 || forced;
 
   // Real signals only. Nothing here is on a timer pretending to be progress.
+  // The bar (progressPercent) tracks the blocking set — what gates is what the
+  // reader sees — while `lastLabel` still ticks off every signal, blocking or
+  // not, so the status line reflects all the work genuinely in flight.
   useEffect(() => {
     if (signals.length === 0) return;
     let mounted = true;
     signals.forEach((sig) => {
       const tick = () => {
         if (!mounted) return;
-        setResolved((prev) => prev + 1);
         setLastLabel(sig.label);
+        if (sig.blocking !== false) setBlockingResolved((prev) => prev + 1);
       };
       sig.promise.then(tick).catch(tick);
     });

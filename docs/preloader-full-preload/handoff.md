@@ -1,6 +1,38 @@
 # Handoff — Full home + about preload (no scroll-triggered pop-in)
 
-**Created:** 2026-08-30 · **For:** a fresh session · **Status:** not started
+**Created:** 2026-08-30 · **Status:** DONE (2026-08-30, `chore/phase0-stabilize-baseline`)
+
+## Resolution
+
+- **Signal tiers** (`LoadSignal.blocking?: boolean`, absent === blocking): the
+  reveal's Phase-C settle gate + progress bar now track only the **blocking**
+  set (fonts + the landing route's above-fold-critical assets). Background
+  signals — `WARM_ROUTES` route precompiles, the ServiceGlobe three.js chunk,
+  lower/other-route imagery — keep warming without ever holding the overlay.
+  `MAX_SETTLE_MS` / `BEAT_FAILSAFE_MS` unchanged, still absolute.
+- **Route-aware manifest**: `resolveRouteManifest(pathname)` in `AppShell.tsx`.
+  `/` blocks on just `phitopolis_logo_hero.svg` (the only network image the
+  default hero fetches — the rest it draws is canvas/SVG/CSS, so
+  `HOME_BACKGROUND_IMAGES` is empty) and background-warms the ServiceGlobe chunk.
+  `/about` blocks on its hero bg + primary photo + first 3 gallery strip tiles.
+  Other landing routes block on fonts + their own route chunk only. Paths
+  filesystem- and component-verified.
+- **No video signal**: `useVideoBg` is hard-coded `false` in
+  `SuperHeroSequence.tsx` → `HERO_BG_VIDEO` is dead code. Documented; a
+  `blocking:false` range-fetch is the noted re-enable path.
+- **Zero-network-on-scroll**: confirmed structurally — the home below-fold is
+  canvas/SVG/CSS, nothing raster to race; a manual scroll of `/` fired zero
+  image/video requests. The rigorous `tests/preview-cdp.test.ts` pass + LCP
+  re-measure remain a maintainer step. The "decoded asset store" option was
+  evaluated and is **not needed**.
+- +7 tests (`tests/warmup-manifest.test.ts` new; 2 in `preloader.test.tsx`).
+  Gate: typecheck clean, **485/485**, lint 0.
+
+---
+
+## Goal (user's words)  _(original handoff below)_
+
+**For:** a fresh session · **Status (orig):** not started
 
 ## Goal (user's words)
 
