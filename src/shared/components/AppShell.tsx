@@ -755,7 +755,12 @@ const NAV_DARK = {
   const isAnyIsland = isIsland || isIslandV2;
 
   // The dark mode should accurately reflect the anchors, even at the top.
-  const onDark = (isNotch || isOverDarkSection) && !isAnyIsland;
+  // island / island-v2 used to be exempt (their pill was "always-light"); they
+  // now take the dark-mode treatment too — a deep-navy pill + inverted text —
+  // so the chrome stays legible over the VideoPageHero bands and dark home
+  // sections in every mode.
+  const onDark = isNotch || isOverDarkSection;
+  const islandOnDark = isAnyIsland && isOverDarkSection;
   const isImmersive = effectiveMode === "immersive";
   const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
 
@@ -887,7 +892,9 @@ const NAV_DARK = {
                     : isNotch
                     ? NOIR.charcoal
                     : isAnyIsland
-                    ? (isIslandV2 ? "rgba(255, 255, 255, 0.42)" : "rgba(255, 255, 255, 0.5)")
+                    ? (islandOnDark
+                      ? NAV_DARK.surface
+                      : (isIslandV2 ? "rgba(255, 255, 255, 0.42)" : "rgba(255, 255, 255, 0.5)"))
                     : isOverDarkSection
                       ? NAV_DARK.surface
                       : (derivedIsCompact ? NOIR.white : "transparent")),
@@ -941,11 +948,11 @@ const NAV_DARK = {
                       : isImmersive
                         ? "6px 24px"
                         : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" })))),
-                boxShadow: isIslandV2
-                  ? "0 2px 8px rgba(0,0,0,0.05)"
-                  : (isAnyIsland
-                    ? "0 4px 12px rgba(0,0,0,0.06)"
-                    : (isOverDarkSection && !isStandardOrGlass && !isMinimal ? NAV_DARK.shadow : "none")),
+                boxShadow: isAnyIsland
+                  ? (islandOnDark
+                    ? NAV_DARK.shadow
+                    : (isIslandV2 ? "0 2px 8px rgba(0,0,0,0.05)" : "0 4px 12px rgba(0,0,0,0.06)"))
+                  : (isOverDarkSection && !isStandardOrGlass && !isMinimal ? NAV_DARK.shadow : "none"),
                 display: "flex",
                 justifyContent: isNotch ? "center" : "center",
                 alignItems: "center",
@@ -965,7 +972,10 @@ const NAV_DARK = {
               {isAnyIsland && (
                 <SpecularFx
                   baseColor={NOIR.white}
-                  baseOpacity={1}
+                  // A full-strength white stroke reads as a crisp glass edge on
+                  // the light pill; on the dark pill it would glare, so it drops
+                  // to a soft rim-light instead.
+                  baseOpacity={islandOnDark ? 0.5 : 1}
                   intensity={0}
                   followMouse={false}
                   speed={0}

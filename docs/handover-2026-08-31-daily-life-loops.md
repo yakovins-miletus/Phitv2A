@@ -60,6 +60,29 @@ Encoder (for re-cuts): `ffmpeg -ss <t> -t <dur> -i daily-life.mp4 -an -vf "scale
   and the three video-loop routes (loops are background-only, never `blocking`,
   trailing-slash tolerant).
 
+## Follow-up 4 — 2026-08-31 (island / island-v2 dark mode)
+
+User: "I want island and island-v2 to have this dark mode as well."
+
+They were the deliberate exception (`onDark = (… ) && !isAnyIsland`). Removed
+that carve-out and added `islandOnDark = isAnyIsland && isOverDarkSection`:
+
+- `onDark` now covers island too → wordmark / logo / nav links / Contact / menu
+  invert to white over a dark section (still dark text on the light pill
+  otherwise).
+- The pill surface takes `NAV_DARK.surface` (`rgba(6,24,59,.74)`) when
+  `islandOnDark`, keeping its `blur(20px)` and 100px radius.
+- Box-shadow deepens to `NAV_DARK.shadow` (was `0 4px 12px rgba(0,0,0,.06)`).
+- The `SpecularFx` pill rim drops `baseOpacity` 1 → 0.5 over dark (a
+  full-strength white stroke glares on navy; it becomes a soft rim-light).
+
+Verified in the pane via forced state (`__od` + `__mode=` toggles, since the
+sandbox suspends IntersectionObserver): both island and island-v2 render the
+deep-navy pill + white text + gold active + soft rim + shadow over the
+`VideoPageHero` bands.
+
+`yarn typecheck` clean · `yarn lint` 0 errors (33 warnings) · 487/487 · build clean.
+
 ## Follow-up 3 — 2026-08-31 (adaptive dark-mode navbar)
 
 User: "make the navbar dynamic or adaptive when it has a dark section
