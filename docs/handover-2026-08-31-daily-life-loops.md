@@ -60,6 +60,65 @@ Encoder (for re-cuts): `ffmpeg -ss <t> -t <dur> -i daily-life.mp4 -an -vf "scale
   and the three video-loop routes (loops are background-only, never `blocking`,
   trailing-slash tolerant).
 
+## Follow-up 2 — 2026-08-31 (unified headers + video re-encode)
+
+User feedback: the loops looked pixelated, and the three page headers should
+share one look.
+
+### Video re-encode
+
+The first cut was 900w / 20fps / x264 crf 33 / vp9 crf 33 with an aggressive
+`hqdn3d=2:1:2:2` — soft *and* blocky. Re-cut from `daily-life.mp4` at:
+
+| File | Segment | Note |
+|---|---|---|
+| `daily-life-blog-loop.*` | `14.7`–`21.3` | World Plaza lobby, camera settled |
+| `daily-life-careers-loop.*` | `195`–`202` | graduate cohort at the window (unchanged) |
+| `daily-life-services-loop.*` | `43.5`–`51.5` | **world-clocks wall — NEW YORK / LONDON / HONG KONG** |
+
+New encoder (native 1280w, letterbox cropped, gentle sharpen):
+`ffmpeg -ss <t> -t <dur> -i daily-life.mp4 -an -vf "crop=1280:650:0:36,fps=24,unsharp=5:5:0.42:5:5:0.0,hqdn3d=1.5:1.5:4:4" -c:v libx264 -crf 24 -preset veryslow -pix_fmt yuv420p -movflags +faststart out.mp4`
+(webm: `-c:v libvpx-vp9 -crf 34..35 -b:v 0`). The source has a ~36px top / ~34px
+bottom letterbox throughout (`cropdetect` → `crop=1280:650:0:36`); cropping it
+gives a clean ~1.97:1 frame with no black edges under `objectFit:cover`.
+Sizes now ~0.9–1.0 MB per encoding (was ~170–355 KB but visibly degraded).
+
+### Unified header — `VideoPageHero`
+
+New `src/shared/components/VideoPageHero.tsx` — the single cinematic header for
+**/blog, /careers, /services**. Full-bleed dark stage (`72vh` / `82vh`), gated
+`daily-life` loop under a two-part scrim (vertical fade to near-black at the
+base + a left wash), content pinned bottom-left in the standard `xl` container:
+accent tick + mono eyebrow → display headline → optional lead → optional slot
+(`children`) → optional desktop `aside` column. Anchor always `dark: true`;
+every text layer `Reveal`-wrapped on the shared stagger. Adds no motion of its
+own (`useBackgroundVideo` + `Reveal` own it).
+
+- **`BlogVideoHero.tsx`** — now a thin wrapper over `VideoPageHero`; the featured
+  post becomes the `aside` (compact card, `lg`+ only).
+- **`careers.index.tsx`** — inline `CareersVideoHero` collapses to a
+  `<VideoPageHero headingComponent="p">` call; the register `<h1>` stays the
+  page heading. Gained a `lead` line.
+- **`ServicesHeroHeader.tsx`** — was a light-ground image/video band inside
+  `<Section>`; now a full-bleed dark `VideoPageHero` (new `SERVICES_HERO`
+  anchor, `dark`). The category filter moved out to a new light-ground
+  `ServicesCategoryFilter.tsx` rendered above the service list in
+  `services.tsx`. `SERVICES_PAGE` anchor moved to a `<Box>` wrapping the light
+  content only.
+- **`navbarAnchors.ts`** — `SERVICES_HERO: 'services-hero'`.
+- **`AppShell.tsx`** — warm lists drop the `.mp4` (Safari-only fallback;
+  top-of-page hero fetches it on arrival) — now `webm` + poster only, ~halving
+  the cold-load warm cost at the new file sizes.
+- **`tests/anchor-namespaces.test.ts`** — `VideoPageHero.tsx` excluded from the
+  "no bare-string anchor" scan (it forwards a typed `NavAnchorId` prop).
+- **`tests/warmup-manifest.test.ts`** — asserts poster + webm warmed, mp4 not.
+
+Gate: `yarn typecheck` clean · `yarn lint` 0 errors (33 warnings) ·
+`yarn vitest run` 487/487 · `yarn build` clean. Preview pane (all 3 routes):
+unified layout confirmed at desktop + mobile, navbar inverts to light chrome
+over each band, single `<h1>` per page, 0 console errors. Services loop opens
+on the world-clocks wall.
+
 ## Verification done
 
 - `yarn typecheck` clean · `yarn lint` 0 errors (33 pre-existing warnings) ·

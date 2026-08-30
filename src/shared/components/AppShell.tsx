@@ -164,24 +164,23 @@ const ABOUT_BACKGROUND_IMAGES: readonly string[] = [
   "/images/hero-wall/immersion-in-dataops-a-journey-behind-the-scenes-of-data-operations-01.webp",
 ];
 
-/** Decorative hero-background loops (`useBackgroundVideo` on each route's hero).
- *  Both encodings are warmed so the `<video>` plays from cache the moment its
- *  IntersectionObserver arms — the hero sits at the top of each page, so it is
- *  wanted immediately. Background tier: never holds the intro reveal. mp4 +
- *  webm together are ~0.4–0.6 MB per route. */
+/** Decorative hero-background loops (`VideoPageHero` on each route's hero).
+ *  The poster (always shown) and the `webm` are warmed so the `<video>` plays
+ *  from cache the moment its IntersectionObserver arms — the hero sits at the
+ *  top of each page, so it is wanted immediately. The `mp4` fallback is left
+ *  out: only Safari/iOS uses it, and there the top-of-page hero fetches it via
+ *  the gate on arrival anyway. Background tier: never holds the intro reveal.
+ *  ~0.9–1.8 MB per route (1280w / crf 24). */
 const BLOG_VIDEO_LOOP: readonly string[] = [
   "/videos/daily-life-blog-loop.webm",
-  "/videos/daily-life-blog-loop.mp4",
   "/videos/daily-life-blog-loop-poster.jpg",
 ];
 const CAREERS_VIDEO_LOOP: readonly string[] = [
   "/videos/daily-life-careers-loop.webm",
-  "/videos/daily-life-careers-loop.mp4",
   "/videos/daily-life-careers-loop-poster.jpg",
 ];
 const SERVICES_VIDEO_LOOP: readonly string[] = [
   "/videos/daily-life-services-loop.webm",
-  "/videos/daily-life-services-loop.mp4",
   "/videos/daily-life-services-loop-poster.jpg",
 ];
 

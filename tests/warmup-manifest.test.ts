@@ -48,8 +48,11 @@ describe("resolveRouteManifest — route-aware warm-up manifest", () => {
     ] as const) {
       const m = resolveRouteManifest(path);
       expect(m.blocking).toEqual([]);
+      // poster + webm are warmed; the mp4 fallback is deliberately left out
+      // (Safari-only, and the top-of-page hero fetches it on arrival anyway).
       expect(m.background).toContain(`/videos/daily-life-${stem}-loop.webm`);
-      expect(m.background).toContain(`/videos/daily-life-${stem}-loop.mp4`);
+      expect(m.background).toContain(`/videos/daily-life-${stem}-loop-poster.jpg`);
+      expect(m.background).not.toContain(`/videos/daily-life-${stem}-loop.mp4`);
     }
     // A video loop is never a reveal-gating asset on any route.
     for (const path of ["/", "/about", "/blog", "/careers", "/services", "/contact"]) {

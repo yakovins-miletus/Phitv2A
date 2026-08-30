@@ -76,6 +76,10 @@ export const NAV_ANCHORS = {
   /** The /careers route's dark cinematic video band, above the light register
    *  header — the navbar must go light-chrome over it. */
   CAREERS_HERO: 'careers-hero',
+  /** The /services route's dark cinematic video hero, above the light service
+   *  list — same unified `VideoPageHero` treatment as CAREERS_HERO / BLOG_HERO,
+   *  so the navbar must go light-chrome over it. */
+  SERVICES_HERO: 'services-hero',
   /** The /blog listing page's content area (sidebar + toolbar + post grid),
    *  below BLOG_HERO. Light ground. */
   BLOG_LISTING: 'blog-listing',
