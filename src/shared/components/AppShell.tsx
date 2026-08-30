@@ -700,6 +700,21 @@ function AppShellInner({ children }: { children: ReactNode }) {
  *  Small on purpose: those routes have no pinned hero to sit over. */
 const NAV_SOLID_AFTER_PX = 50;
 
+/** The "dark mode" navbar surface — used by every non-island mode whenever a
+ *  `data-ground="dark"` anchor is current (`isOverDarkSection`). A single
+ *  cohesive treatment instead of the old per-mode grab-bag (murky
+ *  `rgba(30,30,30,0.28)` on glass/compact, flat navy on standard): a deep
+ *  brand-navy pane, a real blur, a light hairline, and a soft lift — so over a
+ *  dark hero the bar reads as a deliberate dark-mode chrome, not an accident. */
+const NAV_DARK = {
+  surface: `rgba(${NOIR.navyDeepRgb}, 0.74)`,
+  /** Opaque fallback for the genuinely-solid `standard` mode. */
+  surfaceSolid: NOIR.navyDeep,
+  blur: "blur(18px) saturate(140%)",
+  hairline: "1px solid rgba(255, 255, 255, 0.14)",
+  shadow: "0 8px 32px rgba(0, 0, 0, 0.28)",
+} as const;
+
   const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
@@ -732,9 +747,15 @@ const NAV_SOLID_AFTER_PX = 50;
   const isStandard = effectiveMode === "standard";
   const isStandardOrGlass = isStandard || isGlass;
   const isIsland = effectiveMode === "island";
-  
+  // island-v2: island, tightened. Same content as island (logo + wordmark +
+  // nav + Contact + menu) but a narrower, shorter pill, less padding, smaller
+  // type, lighter chrome — the compact/minimal take. Shares the island pill
+  // treatment (blur, radius, rim, always-light) via `isAnyIsland`.
+  const isIslandV2 = effectiveMode === "island-v2";
+  const isAnyIsland = isIsland || isIslandV2;
+
   // The dark mode should accurately reflect the anchors, even at the top.
-  const onDark = (isNotch || isOverDarkSection) && !isIsland;
+  const onDark = (isNotch || isOverDarkSection) && !isAnyIsland;
   const isImmersive = effectiveMode === "immersive";
   const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
 
@@ -787,17 +808,17 @@ const NAV_SOLID_AFTER_PX = 50;
               ? "transparent"
               : isStandard
               ? (isOverDarkSection
-                ? NOIR.navyField
+                ? NAV_DARK.surfaceSolid
                 : NOIR.white)
               : "transparent",
             backdropFilter: "none",
             borderBottom: isStandard
               ? (isOverDarkSection
-                ? "1px solid rgba(255, 255, 255, 0.12)"
+                ? NAV_DARK.hairline
                 : "1px solid rgba(0, 0, 0, 0.08)")
               : "none",
             boxShadow: isStandard
-              ? (isOverDarkSection ? "0 4px 30px rgba(0,0,0,0.15)" : "0 2px 20px rgba(0,0,0,0.03)")
+              ? (isOverDarkSection ? NAV_DARK.shadow : "0 2px 20px rgba(0,0,0,0.03)")
               : "none",
             pt: isNotch || isStandardOrGlass ? 0 : 1,
             pointerEvents: showPreloader ? "none" : (isStandardOrGlass ? "auto" : "none"),
@@ -806,7 +827,10 @@ const NAV_SOLID_AFTER_PX = 50;
             transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s ${EASE_OUT_EXPO_CSS}, border-color 0.6s ${EASE_OUT_EXPO_CSS}, box-shadow 0.6s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
-          {/* Glassmorphism Background layer (fades out at bottom) */}
+          {/* Glassmorphism Background layer (fades out at bottom). Over a dark
+              section it takes the shared `NAV_DARK` treatment — deep navy pane,
+              stronger blur, a light hairline seam — so glass mode gets the same
+              deliberate dark-mode chrome as the other modes. */}
           {isGlass && (
             <Box
               sx={{
@@ -816,10 +840,12 @@ const NAV_SOLID_AFTER_PX = 50;
                 right: 0,
                 bottom: 0,
                 zIndex: -1,
-                backdropFilter: "blur(12px) saturate(120%)",
-                WebkitBackdropFilter: "blur(12px) saturate(120%)",
-                bgcolor: isOverDarkSection ? "rgba(30, 30, 30, 0.25)" : "rgba(255, 255, 255, 0.4)",
-                transition: `background-color 0.6s ${EASE_OUT_EXPO_CSS}`,
+                backdropFilter: isOverDarkSection ? NAV_DARK.blur : "blur(12px) saturate(120%)",
+                WebkitBackdropFilter: isOverDarkSection ? NAV_DARK.blur : "blur(12px) saturate(120%)",
+                bgcolor: isOverDarkSection ? NAV_DARK.surface : "rgba(255, 255, 255, 0.4)",
+                borderBottom: isOverDarkSection ? NAV_DARK.hairline : "1px solid transparent",
+                boxShadow: isOverDarkSection ? NAV_DARK.shadow : "none",
+                transition: `background-color 0.6s ${EASE_OUT_EXPO_CSS}, border-color 0.6s ${EASE_OUT_EXPO_CSS}, box-shadow 0.6s ${EASE_OUT_EXPO_CSS}`,
               }}
             />
           )}
@@ -829,14 +855,19 @@ const NAV_SOLID_AFTER_PX = 50;
               sx={{
                 position: "relative",
                 width: "100%",
-                maxWidth: isMinimal 
-                  ? "100vw" 
-                  : (isStandardOrGlass 
-                    ? "1536px" 
-                    : (isNotch 
-                      ? "100vw" 
-                      : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px"))),
-                minHeight: isIsland ? "54px !important" : undefined,
+                // island-v2 is island, tightened: a narrower pill, shorter, less
+                // padding, smaller type. Same content (logo + wordmark + nav +
+                // Contact + menu) — just denser and lighter-weight chrome.
+                maxWidth: isMinimal
+                  ? "100vw"
+                  : (isIslandV2
+                    ? { xs: "1000px", xl: "1200px" }
+                    : (isStandardOrGlass
+                    ? "1536px"
+                    : (isNotch
+                      ? "100vw"
+                      : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px")))),
+                minHeight: isIslandV2 ? "46px !important" : (isIsland ? "54px !important" : undefined),
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -855,28 +886,28 @@ const NAV_SOLID_AFTER_PX = 50;
                     ? "transparent"
                     : isNotch
                     ? NOIR.charcoal
-                    : isIsland
-                    ? "rgba(255, 255, 255, 0.5)"
+                    : isAnyIsland
+                    ? (isIslandV2 ? "rgba(255, 255, 255, 0.42)" : "rgba(255, 255, 255, 0.5)")
                     : isOverDarkSection
-                      ? "rgba(30, 30, 30, 0.28)"
+                      ? NAV_DARK.surface
                       : (derivedIsCompact ? NOIR.white : "transparent")),
                 backdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
                     ? "none"
-                    : isIsland
+                    : isAnyIsland
                     ? "blur(20px) saturate(160%)"
                     : isOverDarkSection
-                      ? "blur(16px) saturate(140%)"
+                      ? NAV_DARK.blur
                       : "none"),
                 WebkitBackdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
                     ? "none"
-                    : isIsland
+                    : isAnyIsland
                     ? "blur(20px) saturate(160%)"
                     : isOverDarkSection
-                      ? "blur(16px) saturate(140%)"
+                      ? NAV_DARK.blur
                       : "none"),
                 // No CSS `border` here any more — island used to draw a flat
                 // 1px rgba(255,255,255,0.4) line, but `borderRadius` below had
@@ -898,17 +929,23 @@ const NAV_SOLID_AFTER_PX = 50;
                     ? "0px 0px 24px 24px"
                     : isImmersive
                       ? "28px"
-                      : (isIsland || derivedIsCompact ? "100px" : "0px")),
+                      : (isAnyIsland || derivedIsCompact ? "100px" : "0px")),
                 padding: isMinimal
                   ? { xs: "4px 32px", md: "4px 72px" }
-                  : (isStandardOrGlass
+                  : (isIslandV2
+                    ? { xs: "0px 14px", md: "0px 20px" }
+                    : (isStandardOrGlass
                     ? { xs: "4px 16px", sm: "4px 24px" }
                     : (isNotch
                       ? "2px 20px"
                       : isImmersive
                         ? "6px 24px"
-                        : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" }))),
-                boxShadow: isIsland ? "0 4px 12px rgba(0,0,0,0.06)" : "none",
+                        : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" })))),
+                boxShadow: isIslandV2
+                  ? "0 2px 8px rgba(0,0,0,0.05)"
+                  : (isAnyIsland
+                    ? "0 4px 12px rgba(0,0,0,0.06)"
+                    : (isOverDarkSection && !isStandardOrGlass && !isMinimal ? NAV_DARK.shadow : "none")),
                 display: "flex",
                 justifyContent: isNotch ? "center" : "center",
                 alignItems: "center",
@@ -925,7 +962,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   no pointer-follow) - a full-width nav bar sweeping a
                   highlight on every mouse move would be a bigger motion cue
                   than this chrome should make. */}
-              {isIsland && (
+              {isAnyIsland && (
                 <SpecularFx
                   baseColor={NOIR.white}
                   baseOpacity={1}
@@ -951,7 +988,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   justifyContent: "space-between",
                   alignItems: "center",
                   mx: "auto",
-                  px: isMinimal ? 0 : 0,
+                  px: 0,
                 }}
               >
               <RouterLink
@@ -963,12 +1000,12 @@ const NAV_SOLID_AFTER_PX = 50;
                     navigateWithCurtain("/");
                   }
                 }}
-                sx={{ 
-                  textDecoration: "none", 
-                  flexShrink: 0, 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 1,
+                sx={{
+                  textDecoration: "none",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: isIslandV2 ? 0.75 : 1,
                   position: "relative",
                   overflow: "hidden",
                   p: 0.5,
@@ -978,7 +1015,7 @@ const NAV_SOLID_AFTER_PX = 50;
               >
                 <Box sx={{ color: onDark ? NOIR.white : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
-                    style={{ height: (isStandardOrGlass || isIsland) ? 18 : 24, width: 'auto', transition: "height 0.4s ease" }}
+                    style={{ height: isIslandV2 ? 15 : ((isStandardOrGlass || isIsland) ? 18 : 24), width: 'auto', transition: "height 0.4s ease" }}
                     color="currentColor"
                     accentColor={NOIR.gold}
                   />
@@ -992,7 +1029,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: onDark ? NOIR.white : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
+                      sx={{ color: onDark ? NOIR.white : "primary.main", fontWeight: 800, fontSize: isIslandV2 ? "0.8rem" : ((isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem"), letterSpacing: isIslandV2 ? "0.06em" : "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
@@ -1016,14 +1053,15 @@ const NAV_SOLID_AFTER_PX = 50;
                 </motion.div>
               </RouterLink>
 
-              {/* Central Navigation Items for Standard, Island, or Glassmorphism Mode */}
-              {(isStandardOrGlass || isIsland) && (
+              {/* Central Navigation Items for Standard / Island / Island-v2 /
+                  Glassmorphism. */}
+              {(isStandardOrGlass || isAnyIsland) && (
                 <Box
                   component="nav"
                   sx={{
                     display: { xs: "none", md: "flex" },
                     alignItems: "center",
-                    gap: 3.5,
+                    gap: isIslandV2 ? 2.25 : 3.5,
                   }}
                 >
                   {NAV_ITEMS.map((item) => {
@@ -1041,9 +1079,9 @@ const NAV_SOLID_AFTER_PX = 50;
                         }}
                         sx={{
                           fontFamily: MONO,
-                          fontSize: TYPE_SCALE.caption,
+                          fontSize: isIslandV2 ? "0.72rem" : TYPE_SCALE.caption,
                           fontWeight: 700,
-                          letterSpacing: "0.08em",
+                          letterSpacing: isIslandV2 ? "0.06em" : "0.08em",
                           textDecoration: "none !important",
                           // Bright gold as nav-item TEXT on both grounds — a
                           // deliberate brand call. On dark it measures 9.4:1
@@ -1093,7 +1131,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   the other two modes here so all three render this cluster
                   identically; home's own distinct treatment (logo size, no nav
                   items) is untouched — that's decided elsewhere, above. */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: isIslandV2 ? 1 : 1.5 }}>
                 <AnimatedContactButton
                   label="Contact"
                   isActive={onContactPage}
@@ -1101,19 +1139,19 @@ const NAV_SOLID_AFTER_PX = 50;
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
-                    height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px",
-                    fontSize: (isStandardOrGlass || isIsland || isMinimal) ? "0.72rem" : undefined,
-                    fontWeight: (isStandardOrGlass || isIsland || isMinimal) ? 700 : undefined,
-                    fontFamily: (isStandardOrGlass || isIsland || isMinimal) ? MONO : undefined,
-                    letterSpacing: (isStandardOrGlass || isIsland || isMinimal) ? "0.08em" : undefined,
-                    textTransform: (isStandardOrGlass || isIsland || isMinimal) ? "none" : undefined,
+                    height: (isStandardOrGlass || isAnyIsland || isMinimal) ? "24px" : "32px",
+                    fontSize: (isStandardOrGlass || isAnyIsland || isMinimal) ? "0.72rem" : undefined,
+                    fontWeight: (isStandardOrGlass || isAnyIsland || isMinimal) ? 700 : undefined,
+                    fontFamily: (isStandardOrGlass || isAnyIsland || isMinimal) ? MONO : undefined,
+                    letterSpacing: (isStandardOrGlass || isAnyIsland || isMinimal) ? "0.08em" : undefined,
+                    textTransform: (isStandardOrGlass || isAnyIsland || isMinimal) ? "none" : undefined,
                     // Was "2px 0px" - zero horizontal padding, so the specular
                     // rim (traced against this button's own border box) sat
                     // flush against the label glyphs with no breathing room.
                     // A little horizontal room keeps the rim from reading as
                     // "the border is touching the text".
-                    padding: (isStandardOrGlass || isIsland || isMinimal) ? "2px 8px" : undefined,
-                    minWidth: (isStandardOrGlass || isIsland || isMinimal) ? "auto" : undefined,
+                    padding: (isStandardOrGlass || isAnyIsland || isMinimal) ? "2px 8px" : undefined,
+                    minWidth: (isStandardOrGlass || isAnyIsland || isMinimal) ? "auto" : undefined,
                   }}
                 />
 
@@ -1125,7 +1163,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
                   noBorder={isStandardOrGlass || isIsland || isMinimal}
-                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isIsland || isMinimal) ? "32px" : "36px" }}
+                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isAnyIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isAnyIsland || isMinimal) ? "32px" : "36px" }}
                 />
 
                 {/* Mobile 3-Bar Menu Button */}
@@ -1136,7 +1174,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
                   noBorder={isStandardOrGlass || isIsland || isMinimal}
-                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isIsland || isMinimal) ? "32px" : "36px" }}
+                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isAnyIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isAnyIsland || isMinimal) ? "32px" : "36px" }}
                 />
               </Box>
               </Box>

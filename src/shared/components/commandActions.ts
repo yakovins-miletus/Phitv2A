@@ -40,6 +40,7 @@ export const COMMANDS = [
   { id: "sys-nav-minimal", group: "SYSTEM", label: "Navbar: Minimal Mode", keywords: "navbar minimal left logo padding margin 2xl default", run: { kind: "navbar-mode", mode: "minimal" } },
   { id: "sys-nav-dynamic", group: "SYSTEM", label: "Navbar: Dynamic Mode", keywords: "navbar auto dynamic", run: { kind: "navbar-mode", mode: "dynamic" } },
   { id: "sys-nav-island", group: "SYSTEM", label: "Navbar: Island Mode", keywords: "navbar island forced compact", run: { kind: "navbar-mode", mode: "island" } },
+  { id: "sys-nav-island-v2", group: "SYSTEM", label: "Navbar: Island v2 Mode", keywords: "navbar island v2 two compact minimal pill floating tiny small mark only", run: { kind: "navbar-mode", mode: "island-v2" } },
   { id: "sys-nav-immersive", group: "SYSTEM", label: "Navbar: Immersive Mode", keywords: "navbar immersive full", run: { kind: "navbar-mode", mode: "immersive" } },
   { id: "sys-nav-notch", group: "SYSTEM", label: "Navbar: Notch Mode", keywords: "navbar notch macbook camera capsule dark island", run: { kind: "navbar-mode", mode: "notch" } },
   { id: "sys-nav-standard", group: "SYSTEM", label: "Navbar: Standard Mode", keywords: "navbar standard wide stretch full top normal center nav items", run: { kind: "navbar-mode", mode: "standard" } },

@@ -5,7 +5,15 @@ import { NavbarContext } from './navbarHooks';
 // Re-export for backward compatibility
 export { NAV_ANCHORS, type NavAnchorId } from './navbarAnchors';
 
-export type NavbarMode = 'minimal' | 'dynamic' | 'island' | 'immersive' | 'notch' | 'standard' | 'glassmorphism';
+export type NavbarMode =
+  | 'minimal'
+  | 'dynamic'
+  | 'island'
+  | 'island-v2'
+  | 'immersive'
+  | 'notch'
+  | 'standard'
+  | 'glassmorphism';
 
 /**
  * Navbar anchors — the SECOND of the page's "what is on screen" registries, and
@@ -90,7 +98,7 @@ export function NavbarProvider({ children }: { children: React.ReactNode }) {
   const derivedIsCompact = useMemo(() => {
     if (overrideMode === 'immersive' || overrideMode === 'minimal') return false;
     if (overrideMode === 'dynamic') return isAutoCompact;
-    // island | notch share the bounded, backgrounded baseline —
+    // island | island-v2 | notch share the bounded, backgrounded baseline —
     // each layers its own shape/color overrides on top in AppShell.
     return true;
   }, [overrideMode, isAutoCompact]);

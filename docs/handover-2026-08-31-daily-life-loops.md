@@ -60,6 +60,41 @@ Encoder (for re-cuts): `ffmpeg -ss <t> -t <dur> -i daily-life.mp4 -an -vf "scale
   and the three video-loop routes (loops are background-only, never `blocking`,
   trailing-slash tolerant).
 
+## Follow-up 3 — 2026-08-31 (adaptive dark-mode navbar)
+
+User: "make the navbar dynamic or adaptive when it has a dark section
+underneath, like a dark mode navbar."
+
+The `isOverDarkSection` trigger + `onDark` text/logo/link inversion already
+existed, but the *surface* treatment was a per-mode grab-bag (murky
+`rgba(30,30,30,0.25–0.28)` on glass/compact, flat `navyField` on standard).
+Unified into one deliberate dark-mode chrome — **`NAV_DARK`** in `AppShell.tsx`:
+
+- surface `rgba(navyDeep, .74)` (`rgba(6,24,59,.74)`) — `surfaceSolid` = opaque
+  `navyDeep` for the genuinely-solid `standard` mode
+- `blur(18px) saturate(140%)`
+- `rgba(255,255,255,.14)` bottom hairline
+- `0 8px 32px rgba(0,0,0,.28)` lift
+
+Applied at: the `standard` `<AppBar>` bg/border/shadow, the `glassmorphism`
+backdrop layer (now also gets the hairline + shadow + stronger blur over dark),
+the compact/`dynamic` `<Toolbar>` bg + blur, and the compact box-shadow. The
+`island` / `island-v2` pills stay always-light by design (their `SpecularFx`
+rim system assumes a light ground) — `onDark` already excludes `isAnyIsland`.
+
+Drives the navbar over the three `VideoPageHero` bands and every dark home
+section. Verified via a forced-state build in the preview pane (the sandbox
+suspends `IntersectionObserver`, so `isOverDarkSection` can't self-trigger
+there): `standard` → solid `rgb(6,24,59)` bar + white hairline + shadow;
+`glassmorphism` → `rgba(6,24,59,.74)` + `blur(18px)`; wordmark/logo/links all
+invert to white, active + Contact + menu gold. The auto-trigger uses the same
+`useNavbarAnchor` wiring as the already-verified `careers-hero` / `blog-hero`
+anchors.
+
+Committed with the `island-v2` navbar mode (they interleave in `AppShell.tsx`
+and are one subsystem); the closing-lattice rework stays separate.
+`yarn typecheck` clean · `yarn lint` 0 errors (33 warnings) · 487/487 · build clean.
+
 ## Follow-up 2 — 2026-08-31 (unified headers + video re-encode)
 
 User feedback: the loops looked pixelated, and the three page headers should
