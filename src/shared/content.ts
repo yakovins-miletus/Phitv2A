@@ -55,9 +55,8 @@ export const CONTENT = {
           desc: "Smart, efficient, communicative technical talent operating alongside client teams globally.",
         },
       ],
-      // The three images below (/images/pillars/*.webp) are not yet in the repo.
-      // The component renders a styled placeholder until they arrive; see the
-      // generation brief in the plan file for the shot list.
+      // The three images below live in public/images/pillars/. OperatingPillars
+      // falls back to a styled CSS placeholder via onError if one fails to load.
       pillars: [
         {
           id: "01",

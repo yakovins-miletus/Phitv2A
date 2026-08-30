@@ -8,6 +8,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+import { SERVICES_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 interface ServicesHeroHeaderProps {
   selectedCategory?: string;
@@ -27,6 +28,7 @@ export function ServicesHeroHeader({
   onSelectCategory,
 }: ServicesHeroHeaderProps) {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.SERVICES_PAGE, { dark: false });
+  const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
   return (
     <Box
       ref={anchorRef}
@@ -44,6 +46,7 @@ export function ServicesHeroHeader({
     >
       {/* Background Hero Image with Careers-style Gradial Mask */}
       <Box
+        ref={containerRef}
         sx={{
           position: "absolute",
           inset: 0,
@@ -64,6 +67,35 @@ export function ServicesHeroHeader({
             opacity: 0.85,
           }}
         />
+        {/* Motion layer: the same slot as the still, fading in once decoded.
+            Under the white gradient mask it reads on the right side of the band. */}
+        <Box
+          component="video"
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster={SERVICES_LOOP.poster}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: { xs: "75% center", md: "60% center" },
+            opacity: shouldLoad && !posterOnly ? 0.85 : 0,
+            transition: "opacity 1.2s ease",
+          }}
+        >
+          {!posterOnly && shouldLoad && (
+            <>
+              <source src={SERVICES_LOOP.webm} type="video/webm" />
+              <source src={SERVICES_LOOP.mp4} type="video/mp4" />
+            </>
+          )}
+        </Box>
         <Box
           sx={{
             position: "absolute",

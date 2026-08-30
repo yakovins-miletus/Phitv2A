@@ -119,8 +119,6 @@ const WARM_ROUTES = [
  * what the component actually renders. Deliberately absent:
  *  - `/images/topHalfHero.webp` / `botHalfHero.webp` — the old split-pane hero,
  *    replaced by `HeroImageWall`; nothing renders them any more.
- *  - `/images/pillars/*.webp` (`OperatingPillars`) — do not exist on disk
- *    (`content.ts` notes this); warming 404s is worse than nothing.
  *  - The hero drift wall (`fetchPriority=low`, mounts ~60% into the hero pin).
  *  - `/videos/hero-night-to-dawn.*` + poster — gated behind `useVideoBg`, which
  *    is hard-coded `false` in `SuperHeroSequence.tsx`, so the video background
@@ -136,9 +134,15 @@ const WARM_ROUTES = [
  *  Everything else the hero draws is `<canvas>` / inline SVG / CSS. */
 const HOME_BLOCKING: readonly string[] = ["/phitopolis_logo_hero.svg"];
 
-/** Home below-fold is canvas / inline SVG / CSS — there is no raster imagery on
- *  the default `/` scroll path to warm. */
-const HOME_BACKGROUND_IMAGES: readonly string[] = [];
+/** Home below-fold raster: `OperatingPillars` (`#hero-pillars`, ~6 screens down)
+ *  renders three `<img>` backgrounds from `content.ts`. Warmed in the background
+ *  so they are cache-hot by the time the section scrolls in, without holding the
+ *  overlay. Everything else on the `/` path is canvas / inline SVG / CSS. */
+const HOME_BACKGROUND_IMAGES: readonly string[] = [
+  "/images/pillars/research.webp",
+  "/images/pillars/development.webp",
+  "/images/pillars/support.webp",
+];
 
 /** About hero, above the fold: the dusk-skyline background behind the headline
  *  (`BackgroundReveal` → `/images/about-hero-bg.webp`), the gold-framed primary
@@ -160,6 +164,27 @@ const ABOUT_BACKGROUND_IMAGES: readonly string[] = [
   "/images/hero-wall/immersion-in-dataops-a-journey-behind-the-scenes-of-data-operations-01.webp",
 ];
 
+/** Decorative hero-background loops (`useBackgroundVideo` on each route's hero).
+ *  Both encodings are warmed so the `<video>` plays from cache the moment its
+ *  IntersectionObserver arms — the hero sits at the top of each page, so it is
+ *  wanted immediately. Background tier: never holds the intro reveal. mp4 +
+ *  webm together are ~0.4–0.6 MB per route. */
+const BLOG_VIDEO_LOOP: readonly string[] = [
+  "/videos/daily-life-blog-loop.webm",
+  "/videos/daily-life-blog-loop.mp4",
+  "/videos/daily-life-blog-loop-poster.jpg",
+];
+const CAREERS_VIDEO_LOOP: readonly string[] = [
+  "/videos/daily-life-careers-loop.webm",
+  "/videos/daily-life-careers-loop.mp4",
+  "/videos/daily-life-careers-loop-poster.jpg",
+];
+const SERVICES_VIDEO_LOOP: readonly string[] = [
+  "/videos/daily-life-services-loop.webm",
+  "/videos/daily-life-services-loop.mp4",
+  "/videos/daily-life-services-loop-poster.jpg",
+];
+
 export interface RouteManifest {
   /** Reveal-gating assets for this landing route. */
   blocking: readonly string[];
@@ -171,14 +196,25 @@ export interface RouteManifest {
 }
 
 /** The per-landing-route asset split. Routes with no bespoke manifest
- *  (`/blog`, `/services`, `/contact`, …) block on fonts + their own
+ *  (`/contact`, `/innovation-hub`, …) block on fonts + their own
  *  already-loading route chunk only; everything else is background. */
-export function resolveRouteManifest(pathname: string): RouteManifest {
+export function resolveRouteManifest(rawPathname: string): RouteManifest {
+  // Router config may or may not keep a trailing slash; match either form.
+  const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
   if (pathname === "/") {
     return { blocking: HOME_BLOCKING, background: HOME_BACKGROUND_IMAGES, warmGlobe: true };
   }
   if (pathname === "/about") {
     return { blocking: ABOUT_BLOCKING, background: ABOUT_BACKGROUND_IMAGES, warmGlobe: false };
+  }
+  if (pathname === "/blog") {
+    return { blocking: [], background: BLOG_VIDEO_LOOP, warmGlobe: false };
+  }
+  if (pathname === "/careers") {
+    return { blocking: [], background: CAREERS_VIDEO_LOOP, warmGlobe: false };
+  }
+  if (pathname === "/services") {
+    return { blocking: [], background: SERVICES_VIDEO_LOOP, warmGlobe: false };
   }
   return { blocking: [], background: [], warmGlobe: false };
 }

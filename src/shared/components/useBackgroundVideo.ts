@@ -84,7 +84,7 @@ export function useBackgroundVideo(): BackgroundVideo {
   return { containerRef, videoRef, shouldLoad, posterOnly };
 }
 
-/** The decorative loop and its poster frame, shared by both hero backgrounds. */
+/** The original 12s decorative loop, still used by the Innovation hero backgrounds. */
 export const BACKGROUND_LOOP = {
   webm: "/videos/daily-life-loop.webm",
   mp4: "/videos/daily-life-loop.mp4",
@@ -92,18 +92,31 @@ export const BACKGROUND_LOOP = {
 } as const;
 
 /**
- * The Monolith hero's "video" background mode: an 8s night→dawn transition
- * baked into the footage itself (originally sourced from a 1280x720/1.3MB
- * master, transcoded down to a 960-wide loop — mp4 ~300KB, webm ~170KB,
- * poster ~35KB — small enough that this hook's IntersectionObserver
- * gate is a courtesy here rather than the load-bearing fix `BACKGROUND_LOOP`
- * needed). Same shape as `BACKGROUND_LOOP` so both plug into
- * `useBackgroundVideo()` identically; kept separate rather than folded into
- * it because the two loops serve different sections and have no reason to
- * change together.
+ * Per-surface loops cut from the same `daily-life` master (1280x720 / 251s), each
+ * a different ~7s moment, transcoded to a 880–900-wide loop (mp4 ~170–275KB,
+ * webm ~200–355KB, poster ~30KB) — small enough that the `useBackgroundVideo()`
+ * IntersectionObserver gate is a courtesy rather than the load-bearing fix.
+ * Same shape as {@link BACKGROUND_LOOP}. Warmed per-landing-route by the
+ * preloader manifest in `AppShell.tsx` (`resolveRouteManifest`).
+ *
+ *  - `BLOG_LOOP` — the film's opening: arrival through the World Plaza lobby.
+ *  - `CAREERS_LOOP` — a graduate cohort gathered around a screen at the window.
+ *  - `SERVICES_LOOP` — the world-clocks wall panning to engineers at their desks.
  */
-export const HERO_BG_VIDEO = {
-  webm: "/videos/hero-night-to-dawn.webm",
-  mp4: "/videos/hero-night-to-dawn.mp4",
-  poster: "/videos/hero-night-to-dawn-poster.jpg",
+export const BLOG_LOOP = {
+  webm: "/videos/daily-life-blog-loop.webm",
+  mp4: "/videos/daily-life-blog-loop.mp4",
+  poster: "/videos/daily-life-blog-loop-poster.jpg",
+} as const;
+
+export const CAREERS_LOOP = {
+  webm: "/videos/daily-life-careers-loop.webm",
+  mp4: "/videos/daily-life-careers-loop.mp4",
+  poster: "/videos/daily-life-careers-loop-poster.jpg",
+} as const;
+
+export const SERVICES_LOOP = {
+  webm: "/videos/daily-life-services-loop.webm",
+  mp4: "/videos/daily-life-services-loop.mp4",
+  poster: "/videos/daily-life-services-loop-poster.jpg",
 } as const;

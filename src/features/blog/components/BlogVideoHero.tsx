@@ -11,7 +11,7 @@ import { MONO } from "@/shared/theme/theme";
 import { Reveal } from "@/shared/components/Reveal";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
-import { BACKGROUND_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
+import { BLOG_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 import type { BlogPostSummary } from "../api";
 
 interface BlogVideoHeroProps {
@@ -50,7 +50,7 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
           loop
           playsInline
           preload="none"
-          poster={BACKGROUND_LOOP.poster}
+          poster={BLOG_LOOP.poster}
           sx={{
             position: "absolute",
             inset: 0,
@@ -61,8 +61,8 @@ export function BlogVideoHero({ featuredPost }: BlogVideoHeroProps) {
         >
           {!posterOnly && shouldLoad && (
             <>
-              <source src={BACKGROUND_LOOP.webm} type="video/webm" />
-              <source src={BACKGROUND_LOOP.mp4} type="video/mp4" />
+              <source src={BLOG_LOOP.webm} type="video/webm" />
+              <source src={BLOG_LOOP.mp4} type="video/mp4" />
             </>
           )}
         </Box>

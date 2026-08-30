@@ -25,6 +25,7 @@ import { MONO, DISPLAY_FONT, BODY_FONT, TYPE_SCALE, LINE_HEIGHT, TRACKING } from
 import { NOIR } from "@/shared/theme/palette";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+import { CAREERS_LOOP, useBackgroundVideo } from "@/shared/components/useBackgroundVideo";
 
 export const Route = createFileRoute("/careers/")({
   head: () =>
@@ -34,6 +35,106 @@ export const Route = createFileRoute("/careers/")({
     ),
   component: CareersIndexPage,
 });
+
+/**
+ * Dark cinematic band above the light "register" header — a ~7s loop cut from
+ * the `daily-life` film (a graduate cohort at the window). Gated by
+ * `useBackgroundVideo` (near-viewport, off-screen pause, reduced-motion / low
+ * power → poster only). The headline here is a `<p>`, not a heading: the page's
+ * real h1 stays in the register section below.
+ */
+function CareersVideoHero() {
+  const heroAnchorRef = useNavbarAnchor(NAV_ANCHORS.CAREERS_HERO, { dark: true });
+  const { containerRef, videoRef, shouldLoad, posterOnly } = useBackgroundVideo();
+
+  return (
+    <Box
+      ref={heroAnchorRef}
+      sx={{
+        position: "relative",
+        width: "100%",
+        minHeight: { xs: "50vh", md: "58vh" },
+        display: "flex",
+        alignItems: "flex-end",
+        overflow: "hidden",
+        bgcolor: NOIR.navyDeep,
+        color: "common.white",
+      }}
+    >
+      <Box
+        ref={containerRef}
+        aria-hidden
+        sx={{ position: "absolute", inset: 0, filter: "brightness(0.6) contrast(1.06)" }}
+      >
+        <Box
+          component="video"
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster={CAREERS_LOOP.poster}
+          sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        >
+          {!posterOnly && shouldLoad && (
+            <>
+              <source src={CAREERS_LOOP.webm} type="video/webm" />
+              <source src={CAREERS_LOOP.mp4} type="video/mp4" />
+            </>
+          )}
+        </Box>
+      </Box>
+
+      <Box
+        aria-hidden
+        sx={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(6,24,59,0.55) 0%, rgba(6,24,59,0.15) 40%, rgba(6,24,59,0.75) 100%)",
+        }}
+      />
+
+      <Box sx={{ position: "relative", zIndex: 1, width: "100%", px: { xs: 3, md: 8 }, py: { xs: 6, md: 9 } }}>
+        <Stack spacing={2} sx={{ maxWidth: "60ch" }}>
+          <Reveal>
+            <Typography
+              component="span"
+              sx={{
+                fontFamily: MONO,
+                fontSize: TYPE_SCALE.micro,
+                fontWeight: 700,
+                letterSpacing: TRACKING.meta,
+                color: "var(--accent-ink)",
+                textTransform: "uppercase",
+                textShadow: "0 2px 10px rgba(0,0,0,0.7)",
+              }}
+            >
+              CAREERS · PHITOPOLIS R&D MANILA
+            </Typography>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <Typography
+              component="p"
+              sx={{
+                fontFamily: DISPLAY_FONT,
+                fontWeight: 700,
+                fontSize: { xs: "2rem", sm: "2.8rem", md: "3.5rem" },
+                lineHeight: 1.08,
+                letterSpacing: TRACKING.display,
+                color: "common.white",
+                textShadow: "0 4px 24px rgba(0,0,0,0.7)",
+              }}
+            >
+              See a day here before you decide to spend years.
+            </Typography>
+          </Reveal>
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
 
 export function CareersIndexPage() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.CAREERS_PAGE, { dark: false });
@@ -70,6 +171,8 @@ export function CareersIndexPage() {
   };
 
   return (
+    <>
+    <CareersVideoHero />
     <Box
       ref={anchorRef}
       data-ground="light"
@@ -79,7 +182,7 @@ export function CareersIndexPage() {
         bgcolor: "var(--g-void)",
         background: "var(--g-page)",
         color: "var(--text-1)",
-        pt: { xs: 12, md: 16 },
+        pt: { xs: 6, md: 9 },
         pb: { xs: 10, md: 16 },
         position: "relative",
       }}
@@ -747,5 +850,6 @@ export function CareersIndexPage() {
         onClose={() => setBrochureOpen(false)}
       />
     </Box>
+    </>
   );
 }

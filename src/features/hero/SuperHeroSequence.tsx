@@ -14,7 +14,6 @@ import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbar } from "@/shared/components/navbarHooks";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
-import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
 
 const SANS = "Inter, system-ui, -apple-system, sans-serif";
 
@@ -226,116 +225,6 @@ export function HeroSignalCore() {
   const handleNodeSelect = (index: number) => {
     setSelectedNodeIndex((prev) => (prev === index ? null : index));
   };
-
-  /** Video is only meaningful over the Monolith room — the legacy 2D canvas
-   *  has no notion of a background mode at all. */
-  const useVideoBg = false; // Disabled to use ParallaxHeroBg instead
-  const {
-    containerRef: bgContainerRef,
-    videoRef: bgVideoRef,
-    shouldLoad: bgShouldLoad,
-    posterOnly: bgPosterOnly,
-  } = useBackgroundVideo();
-
-  /**
-   * Ref-based parallax — no React re-renders.
-   *
-   * The old `useState` approach fired `setVideoParallax` on every mousemove,
-   * which is a React setState at 60 fps — 60 commits/sec for a CSS transform
-   * that could have been a direct DOM write. This version stores the target in
-   * a ref, and a rAF loop smoothly interpolates the video element's transform
-   * directly, never touching React state.
-   */
-  const parallaxTarget = useRef({ x: 0, y: 0 });
-  const parallaxCurrent = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (!useVideoBg || reduced) return;
-
-    const onMove = (e: MouseEvent) => {
-      parallaxTarget.current.x = (e.clientX / window.innerWidth - 0.5) * -18;
-      parallaxTarget.current.y = (e.clientY / window.innerHeight - 0.5) * -18;
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-
-    let raf: number;
-    const tick = () => {
-      const cur = parallaxCurrent.current;
-      const tgt = parallaxTarget.current;
-      // Smooth lerp — 8% per frame ≈ 120ms settle at 60fps
-      cur.x += (tgt.x - cur.x) * 0.08;
-      cur.y += (tgt.y - cur.y) * 0.08;
-
-      const video = bgVideoRef.current;
-      if (video) {
-        video.style.transform =
-          `translate3d(${cur.x}px, ${cur.y}px, 0) scale(1.04)`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      cancelAnimationFrame(raf);
-    };
-  }, [useVideoBg, reduced, bgVideoRef]);
-
-  /**
-   * Ping-pong video playback.
-   *
-   * The hero video (`hero-night-to-dawn`) is an 8-second night→dawn
-   * transition. With `loop`, it hard-cuts from dawn back to night — a jarring
-   * snap. This effect lets the video play forward normally (the browser's
-   * native decoder handles it perfectly), then when it reaches the end,
-   * manually scrubs backward using rAF. For a ~300KB fully-buffered clip,
-   * backward seeking is instantaneous.
-   */
-  useEffect(() => {
-    if (!useVideoBg || reduced) return;
-    const video = bgVideoRef.current;
-    if (!video) return;
-
-    // Disable native loop — we own the playback direction
-    const el = video;
-    el.loop = false;
-
-    let direction: 1 | -1 = 1;
-    let rafId: number;
-    let lastTs = 0;
-
-    const step = (ts: number) => {
-      if (lastTs === 0) lastTs = ts;
-      const dt = Math.min((ts - lastTs) / 1000, 0.05); // cap at 50ms
-      lastTs = ts;
-
-      if (video.readyState >= 3 && video.duration > 0) {
-        if (direction === 1) {
-          // Forward: let native playback handle it, just watch for the end
-          if (video.currentTime >= video.duration - 0.08) {
-            direction = -1;
-            video.pause();
-          }
-        } else {
-          // Backward: manually scrub currentTime
-          const next = video.currentTime - dt;
-          if (next <= 0.08) {
-            video.currentTime = 0.08;
-            direction = 1;
-            void video.play().catch(() => {});
-          } else {
-            video.currentTime = next;
-          }
-        }
-      }
-
-      rafId = requestAnimationFrame(step);
-    };
-
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
-  }, [useVideoBg, reduced, bgVideoRef]);
-
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -874,51 +763,6 @@ export function HeroSignalCore() {
               background: `linear-gradient(180deg, ${NOIR.white} 0%, ${NOIR.void} 100%)`,
             }}
           />
-
-          {/* Video background mode: the baked night→dawn loop, filling the same
-              area the R3F canvas fills but sitting behind it — the canvas below
-              renders with a transparent clear colour and skips `SkyDome`/
-              `CloudSea` (see `PlaygroundCanvas.tsx`'s `hideSky`) so the mark and
-              its lighting draw on top of this rather than doubling up on it. */}
-          {useVideoBg && (
-            <Box
-              aria-hidden
-              ref={bgContainerRef}
-              sx={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 3,
-                opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
-                transition: "opacity 0.6s ease-out",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                component="video"
-                ref={bgVideoRef}
-                autoPlay
-                muted
-                playsInline
-                preload="none"
-                poster={HERO_BG_VIDEO.poster}
-                sx={{
-                  position: "absolute",
-                  inset: -20,
-                  width: "calc(100% + 40px)",
-                  height: "calc(100% + 40px)",
-                  objectFit: "cover",
-                  willChange: "transform",
-                }}
-              >
-                {bgShouldLoad && !bgPosterOnly && (
-                  <>
-                    <source src={HERO_BG_VIDEO.webm} type="video/webm" />
-                    <source src={HERO_BG_VIDEO.mp4} type="video/mp4" />
-                  </>
-                )}
-              </Box>
-            </Box>
-          )}
 
           {/* The city: streets, buildings, dawn shadows, signal pulses and the P
               mark's own district — one canvas, no DOM per scene object. */}

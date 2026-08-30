@@ -7,8 +7,14 @@ describe("resolveRouteManifest — route-aware warm-up manifest", () => {
     const m = resolveRouteManifest("/");
     expect(m.blocking).toContain("/phitopolis_logo_hero.svg");
     expect(m.warmGlobe).toBe(true);
-    // Home below-fold is canvas / SVG / CSS — no raster imagery to warm.
-    expect(m.background).toEqual([]);
+    // The one below-fold raster on `/`: OperatingPillars' three backgrounds,
+    // warmed in the background so they never extend the intro.
+    expect(m.background).toEqual([
+      "/images/pillars/research.webp",
+      "/images/pillars/development.webp",
+      "/images/pillars/support.webp",
+    ]);
+    expect(m.blocking).not.toEqual(expect.arrayContaining(["/images/pillars/research.webp"]));
   });
 
   it("home blocking tier stays tiny (preloaded in full, so it must be cheap)", () => {
@@ -28,17 +34,47 @@ describe("resolveRouteManifest — route-aware warm-up manifest", () => {
   it("does not warm home hero imagery when /blog is the landing route", () => {
     const m = resolveRouteManifest("/blog");
     expect(m.blocking).toEqual([]);
-    expect(m.background).toEqual([]);
     expect(m.warmGlobe).toBe(false);
     expect([...m.blocking, ...m.background]).not.toContain("/phitopolis_logo_hero.svg");
   });
 
-  it("never lists the non-existent OperatingPillars imagery or the retired split-pane hero", () => {
+  it("warms each route's hero video loop in the background tier only", () => {
+    for (const [path, stem] of [
+      ["/blog", "blog"],
+      ["/careers", "careers"],
+      ["/services", "services"],
+      ["/blog/", "blog"],
+      ["/careers/", "careers"],
+    ] as const) {
+      const m = resolveRouteManifest(path);
+      expect(m.blocking).toEqual([]);
+      expect(m.background).toContain(`/videos/daily-life-${stem}-loop.webm`);
+      expect(m.background).toContain(`/videos/daily-life-${stem}-loop.mp4`);
+    }
+    // A video loop is never a reveal-gating asset on any route.
+    for (const path of ["/", "/about", "/blog", "/careers", "/services", "/contact"]) {
+      expect(resolveRouteManifest(path).blocking.some((u) => u.endsWith(".mp4") || u.endsWith(".webm"))).toBe(
+        false,
+      );
+    }
+  });
+
+  it("never blocks on OperatingPillars imagery, and never lists the retired split-pane hero", () => {
     for (const path of ["/", "/about", "/services", "/contact"]) {
-      const all = [...resolveRouteManifest(path).blocking, ...resolveRouteManifest(path).background];
-      expect(all.some((u) => u.startsWith("/images/pillars/"))).toBe(false);
+      const m = resolveRouteManifest(path);
+      // Pillars imagery may be background-warmed on `/`, but must never gate a reveal.
+      expect(m.blocking.some((u) => u.startsWith("/images/pillars/"))).toBe(false);
+      const all = [...m.blocking, ...m.background];
       expect(all).not.toContain("/images/topHalfHero.webp");
       expect(all).not.toContain("/images/botHalfHero.webp");
+    }
+    // Pillars are only warmed on the home landing.
+    for (const path of ["/about", "/services", "/contact"]) {
+      const all = [
+        ...resolveRouteManifest(path).blocking,
+        ...resolveRouteManifest(path).background,
+      ];
+      expect(all.some((u) => u.startsWith("/images/pillars/"))).toBe(false);
     }
   });
 });

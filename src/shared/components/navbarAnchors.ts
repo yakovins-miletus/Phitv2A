@@ -73,6 +73,9 @@ export const NAV_ANCHORS = {
   SERVICES_PAGE: 'services-page',
   /** The /careers route. Same rationale as SERVICES_PAGE. */
   CAREERS_PAGE: 'careers-page',
+  /** The /careers route's dark cinematic video band, above the light register
+   *  header — the navbar must go light-chrome over it. */
+  CAREERS_HERO: 'careers-hero',
   /** The /blog listing page's content area (sidebar + toolbar + post grid),
    *  below BLOG_HERO. Light ground. */
   BLOG_LISTING: 'blog-listing',
