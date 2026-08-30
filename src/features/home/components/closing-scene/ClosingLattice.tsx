@@ -1,19 +1,28 @@
 /**
  * Closing Lattice
  *
- * Replaces the SVG IsometricTechLattice with an independent instance of HeroCanvas
- * in "closure" mode. The opening headline "We create exciting technologies" fades
- * in while the P mark pans left (sharing the top hero's own moveLeftProgress
- * timing), then the sequence stops driving the instant the P settles — no further
- * zoom-out — and the CTA fades in beside the settled P.
+ * The page's final beat: an independent instance of HeroCanvas in "closure"
+ * mode paints the P mark, which settles left-of-centre, the opening headline
+ * ("We create exciting technologies") resolves over it, then clears, and a
+ * single CTA card ("Start a Conversation" -> /contact) reveals in a disjoint
+ * phase afterwards. Headline and CTA never share an opacity window.
  *
- * Micro-choreography runs with zero React re-renders via GSAP ScrollTrigger and
- * CSS custom properties.
+ * Three render modes:
+ *   A. Desktop scrub  (md+ and not reduced) — one pinned ScrollTrigger, a CSS
+ *      grid (headline left, CTA right, canvas absolutely behind), 5 disjoint
+ *      scrub phases driven purely through `el.style.setProperty("--closure-*")`
+ *      with zero React re-renders.
+ *   B. Mobile static  (down("md"), not reduced) — bespoke single-column stack,
+ *      no ScrollTrigger, no scroll-driven fade (no pan -> nothing to fade).
+ *   C. Reduced motion (any width) — the settled final frame, headline wrapper
+ *      hidden, CTA lit and interactive immediately.
  */
 
 import { useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { Link } from "@tanstack/react-router";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -27,156 +36,179 @@ import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { sectionOrder } from "@/shared/sections";
 import { HeroCanvas, type HeroCanvasHandle } from "@/features/hero/HeroCanvas";
-import { PHASE_MOVE_END, moveLeftProgress } from "@/features/hero/heroPhases";
+import { PHASE_MOVE_END } from "@/features/hero/heroPhases";
 
 // Register ScrollTrigger plugin once at module load
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * Main closing lattice section.
+ * Closing scrub phase model — 5 DISJOINT phases across a 2.0vh pin.
  *
- * Hosts the secondary isometric canvas with pinned scroll-driven zoom-out and
- * choreographed opening headline and CTA transitions.
+ * Pin length was retuned from `innerHeight * 1.3` to `innerHeight * 2.0` to give
+ * the five discrete phases room (re-check `tests/e2e/ladder-probe.js` — the
+ * `#closing` pin end moves deliberately).
+ *
+ * | phase           | p range   | canvas heroProgress          | --closure-headline-opacity | --closure-cta-opacity      | --closure-cta-pointer |
+ * |-----------------|-----------|------------------------------|----------------------------|----------------------------|-----------------------|
+ * | 1 settle P      | 0.00–0.28 | (p/0.28)*PHASE_MOVE_END       | ramp 0→1 over [0.06,0.24]  | 0                          | none                  |
+ * | 2 hold          | 0.28–0.42 | PHASE_MOVE_END                | 1                          | 0                          | none                  |
+ * | 3 headline out  | 0.42–0.58 | PHASE_MOVE_END                | ramp 1→0 over [0.42,0.56]  | 0                          | none                  |
+ * | 4 CTA reveals   | 0.60–0.82 | PHASE_MOVE_END                | 0                          | ramp 0→1 over [0.60,0.80]  | auto at p≥0.66         |
+ * | 5 settled       | 0.82–1.00 | PHASE_MOVE_END                | 0                          | 1                          | auto                  |
+ *
+ * Disjointness: headline-opacity is 0 for all p ≥ 0.56 and cta-opacity is 0 for
+ * all p ≤ 0.60 — they are never both > 0.
  */
-export function ClosingLatticeSection() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const closureHandleRef = useRef<HeroCanvasHandle>(null);
-  const reduced = useReducedMotion();
+const CLOSING_PIN_VH = 2.0;
+const P_SETTLE_END = 0.28;
+const HEADLINE_IN_START = 0.06;
+const HEADLINE_IN_END = 0.24;
+const HEADLINE_OUT_START = 0.42;
+const HEADLINE_OUT_END = 0.56;
+const CTA_IN_START = 0.6;
+const CTA_IN_END = 0.8;
+const CTA_POINTER_AT = 0.66;
 
-  // Scroll-driven choreography: P pans left and settles, then holds — 1.3vh pin
-  useGSAP(
-    () => {
-      // Skip if reduced motion is enabled or container not yet mounted
-      if (reduced === true || !containerRef.current) return;
+const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));
 
-      const el = containerRef.current;
-
-      const scrollTrigger = ScrollTrigger.create({
-        trigger: el,
-        pin: true,
-        start: "top top",
-        end: () => `+=${String(window.innerHeight * 1.3)}`,
-        scrub: SCROLL_SPEED,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        refreshPriority: refreshPriorityFor(sectionOrder("closing")),
-        onUpdate: (self) => {
-          const p = self.progress;
-
-          // Clamp what the canvas sees at the P's own settle point
-          // (PHASE_MOVE_END, shared with the top hero's moveLeftProgress) so
-          // it never reaches the hero's later phases (gunshot/smoking/
-          // container-transform) — those would fade the P out and fade in a
-          // ghost "AT" glyph, which makes no sense in this scene.
-          const heroProgress = Math.min(p, PHASE_MOVE_END);
-          closureHandleRef.current?.setProgress(heroProgress);
-
-          // Intro + headline pan left in sync with the P's own leftward pan.
-          // `textShift` is 0 for the entire flatten window (p<=0.20, P still
-          // centred and transforming) and only starts moving once the P
-          // itself starts moving — so deriving both text fade-ins from this
-          // same value (instead of an independent p-based ramp) guarantees
-          // the text can never appear while it would overlap the P's own
-          // 3D->2D transform.
-          const textShift = moveLeftProgress(heroProgress);
-
-          // Fully visible by 60%/75% of the way through the pan (staggered so
-          // the headline reads as following the intro, not simultaneous).
-          const introOpacity = p > PHASE_MOVE_END
-            ? Math.max(0, 1 - (p - PHASE_MOVE_END) / 0.11)
-            : Math.min(1, textShift / 0.6);
-          const headlineOpacity = p > PHASE_MOVE_END
-            ? Math.max(0, 1 - (p - PHASE_MOVE_END) / 0.12)
-            : Math.min(1, Math.max(0, (textShift - 0.15) / 0.6));
-
-          // Final CTA fades in beside the settled P once the text has handed
-          // off, overlapping its fade-out so there is no dead gap.
-          const ctaOpacity = p <= 0.33 ? 0 : p <= 0.50 ? (p - 0.33) / 0.17 : 1;
-          const ctaPointer = p >= 0.44 ? "auto" : "none";
-
-          el.style.setProperty("--closure-intro-opacity", introOpacity.toFixed(3));
-          el.style.setProperty("--closure-headline-opacity", headlineOpacity.toFixed(3));
-          el.style.setProperty("--closure-textshift", textShift.toFixed(3));
-          el.style.setProperty("--closure-cta-opacity", ctaOpacity.toFixed(3));
-          el.style.setProperty("--closure-cta-pointer", ctaPointer);
-        },
-      });
-
-      return () => {
-        scrollTrigger.kill();
-      };
-    },
-    { scope: containerRef, dependencies: [reduced] },
-  );
-
+/**
+ * The CTA card — the last thing on the page and the primary conversion.
+ * Same navy-glass / gold-accent styling in every mode; the wrapper `style`
+ * (opacity + pointer-events) and the surrounding layout differ per mode.
+ */
+function ClosingCtaCard({
+  fullWidth = false,
+  style,
+}: {
+  fullWidth?: boolean;
+  style?: React.CSSProperties;
+}) {
   return (
     <Box
-      ref={containerRef}
-      data-testid="closing-lattice-section"
+      style={style}
       sx={{
         position: "relative",
-        width: "100%",
-        height: "100vh",
-        minHeight: { xs: 580, md: 680 },
-        bgcolor: "#FFFFFF",
-        color: NOIR.navyField,
-        overflow: "hidden",
+        width: fullWidth ? "100%" : "auto",
+        maxWidth: fullWidth ? 560 : 460,
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        px: { xs: 2, md: 4 },
+        alignItems: "flex-start",
+        gap: 2.5,
+        p: { xs: 3, sm: 3.5, md: 4.5 },
+        borderRadius: "28px",
+        bgcolor: "rgba(6, 18, 38, 0.94)",
+        border: "1px solid rgba(255, 199, 44, 0.22)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "0 24px 70px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 199, 44, 0.06) inset",
+        overflow: "hidden",
       }}
     >
-      {/* 1. Background Isometric HeroCanvas in Closure Mode */}
+      {/* Faint gold glow anchored to the top-left corner. */}
       <Box
+        aria-hidden
         sx={{
           position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
+          top: -60,
+          left: -60,
+          width: 220,
+          height: 220,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,199,44,0.16) 0%, rgba(255,199,44,0) 70%)",
           pointerEvents: "none",
         }}
+      />
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          fontFamily: MONO,
+          fontSize: "0.7rem",
+          fontWeight: 800,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: NOIR.gold,
+        }}
       >
-        <HeroCanvas
-          handleRef={closureHandleRef}
-          varsHostRef={containerRef}
-          mode="closure"
-          showLogo={true}
-          initialZoomProgress={reduced ? 1 : 0}
-        />
+        <Box sx={{ width: 16, height: "1px", bgcolor: NOIR.gold }} />
+        Let&apos;s Build Together
       </Box>
 
-      {/* 2. Opening Headline Sequence — pans left in sync with the P mark
-          (--closure-textshift, 0..1), then hands off to the CTA. */}
+      <Box>
+        <Typography
+          variant="h3"
+          component="h3"
+          sx={{
+            fontSize: { xs: "1.5rem", sm: "1.9rem", md: "2.25rem" },
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
+            fontWeight: 800,
+            color: NOIR.white,
+            mb: 1.25,
+          }}
+        >
+          {CONTENT.closing.statement}
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: { xs: "0.88rem", md: "0.95rem" },
+            lineHeight: 1.5,
+            color: NOIR.frost,
+            opacity: 0.85,
+          }}
+        >
+          {CONTENT.closing.subline}
+        </Typography>
+      </Box>
+
       <Box
-        aria-hidden={reduced ? true : undefined}
-        style={{
-          display: reduced ? "none" : "block",
-          transform: reduced
-            ? undefined
-            : "translateX(calc(var(--closure-textshift, 0) * -1 * var(--closure-textshift-vw, 0vw)))",
-        }}
+        component={Link}
+        to="/contact"
         sx={{
-          position: "relative",
-          zIndex: 4,
-          textAlign: "center",
-          pointerEvents: "none",
-          px: 3,
-          maxWidth: "800px",
-          mx: "auto",
-          "--closure-textshift-vw": { xs: "0vw", md: "18vw" },
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1.25,
+          px: 4,
+          py: 1.85,
+          mt: 0.5,
+          bgcolor: NOIR.gold,
+          color: NOIR.navyField,
+          fontFamily: MONO,
+          fontSize: "0.8rem",
+          fontWeight: 800,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          borderRadius: "100px",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+          boxShadow: "0 8px 24px rgba(255, 199, 44, 0.25)",
+          transition: "transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+          "&:hover": {
+            bgcolor: NOIR.white,
+            transform: "scale(1.03)",
+            boxShadow: "0 10px 30px rgba(255, 199, 44, 0.35)",
+          },
         }}
       >
-        <Box
-          style={{
-            opacity: reduced ? 1 : "var(--closure-intro-opacity, 0)",
-          }}
-          sx={{ position: "relative", display: "inline-block", mb: 1.5 }}
-        >
-          {/* Blurred backdrop so navy "HERE"/"PHITOPOLIS" stay legible over the navy P mark.
-              Bound to the same wrapper as the text, so backdrop and text fade in lockstep. */}
+        {CONTENT.closing.farewell} →
+      </Box>
+    </Box>
+  );
+}
+
+/** The intro line + headline. `withBackdrop` adds the blurred white plate that
+ *  keeps navy text legible over the navy canvas P (mode A only — nothing sits
+ *  behind the text in the stacked modes). */
+function HeadlineBlock({ withBackdrop }: { withBackdrop: boolean }) {
+  return (
+    <>
+      <Box sx={{ position: "relative", display: "inline-block", mb: 1.5 }}>
+        {withBackdrop ? (
           <Box
+            aria-hidden
             sx={{
               position: "absolute",
               top: "50%",
@@ -192,33 +224,27 @@ export function ClosingLatticeSection() {
               pointerEvents: "none",
             }}
           />
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: { xs: "0.72rem", md: "0.82rem" },
-              fontWeight: 800,
-              letterSpacing: "0.20em",
-              textTransform: "uppercase",
-              m: 0,
-            }}
-          >
-            <Box component="span" sx={{ color: NOIR.navyField }}>HERE</Box>{" "}
-            <Box component="span" sx={{ color: NOIR.gold }}>AT</Box>{" "}
-            <Box component="span" sx={{ color: NOIR.navyField }}>PHITOPOLIS</Box>
-          </Typography>
-        </Box>
-
-        <Box
-          style={{
-            opacity: reduced ? 1 : "var(--closure-headline-opacity, 0)",
-          }}
+        ) : null}
+        <Typography
           sx={{
-            position: "relative",
-            display: "inline-block",
+            fontFamily: MONO,
+            fontSize: { xs: "0.72rem", md: "0.82rem" },
+            fontWeight: 800,
+            letterSpacing: "0.20em",
+            textTransform: "uppercase",
+            m: 0,
           }}
         >
-          {/* Same blurred backdrop treatment as the intro line, above. */}
+          <Box component="span" sx={{ color: NOIR.navyField }}>HERE</Box>{" "}
+          <Box component="span" sx={{ color: NOIR.gold }}>AT</Box>{" "}
+          <Box component="span" sx={{ color: NOIR.navyField }}>PHITOPOLIS</Box>
+        </Typography>
+      </Box>
+
+      <Box sx={{ position: "relative", display: "inline-block" }}>
+        {withBackdrop ? (
           <Box
+            aria-hidden
             sx={{
               position: "absolute",
               top: "50%",
@@ -234,148 +260,257 @@ export function ClosingLatticeSection() {
               pointerEvents: "none",
             }}
           />
-          <Typography
-            variant="h2"
-            component="h2"
-            sx={{
-              fontSize: { xs: "2.2rem", sm: "3.5rem", md: "4.5rem" },
-              lineHeight: 1.1,
-              letterSpacing: "-0.03em",
-              fontWeight: 800,
-              color: NOIR.navyField,
-            }}
-          >
-            We create exciting technologies
-          </Typography>
-        </Box>
+        ) : null}
+        <Typography
+          variant="h2"
+          component="h2"
+          sx={{
+            fontSize: { xs: "2.2rem", sm: "3rem", md: "4.5rem" },
+            lineHeight: 1.1,
+            letterSpacing: "-0.03em",
+            fontWeight: 800,
+            color: NOIR.navyField,
+          }}
+        >
+          We create exciting technologies
+        </Typography>
       </Box>
+    </>
+  );
+}
 
-      {/* 3. Final Statement and CTA — sits beside the settled P mark at md+
-          (using its published --hp-px/--hp-py/--hp-pw screen box), and as a
-          bottom sheet on mobile where the P doesn't pan horizontally. */}
+/**
+ * Main closing lattice section.
+ *
+ * Hosts the secondary closure canvas plus the choreographed headline -> CTA
+ * hand-off. Mode selection: `staticLayout` (reduced motion OR mobile) renders
+ * a stacked layout and creates NO ScrollTrigger.
+ */
+export function ClosingLatticeSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const closureHandleRef = useRef<HeroCanvasHandle>(null);
+  const reduced = useReducedMotion();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  // reduced === true -> mode C. mobile (non-reduced) -> mode B. Otherwise -> mode A.
+  const staticLayout = reduced === true || isMobile;
+
+  useGSAP(
+    () => {
+      // No ScrollTrigger under reduced motion or on mobile — those modes are
+      // static by design.
+      if (staticLayout || !containerRef.current) return;
+
+      const el = containerRef.current;
+
+      // Start every scrub var at the phase-1 entrance state so the first paint
+      // matches the pin start (the DOM fallbacks below keep the CTA lit if this
+      // trigger never runs at all).
+      el.style.setProperty("--closure-headline-opacity", "0");
+      el.style.setProperty("--closure-cta-opacity", "0");
+      el.style.setProperty("--closure-cta-pointer", "none");
+
+      const scrollTrigger = ScrollTrigger.create({
+        trigger: el,
+        pin: true,
+        start: "top top",
+        // Retuned from 1.3 -> 2.0: five disjoint phases need the room.
+        end: () => `+=${String(window.innerHeight * CLOSING_PIN_VH)}`,
+        scrub: SCROLL_SPEED,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        refreshPriority: refreshPriorityFor(sectionOrder("closing")),
+        onUpdate: (self) => {
+          const p = self.progress;
+
+          // The canvas never sees past PHASE_MOVE_END — it must not enter the
+          // top hero's later gunshot/smoke/container-transform phases.
+          const heroProgress = Math.min((p / P_SETTLE_END) * PHASE_MOVE_END, PHASE_MOVE_END);
+          closureHandleRef.current?.setProgress(heroProgress);
+
+          // Headline: rises 0→1, holds, then falls 1→0 — all before the CTA
+          // window opens. Expressed as the difference of two clamped ramps so
+          // it is continuous and self-bounded to [0, 1].
+          const headlineOpacity =
+            clamp01((p - HEADLINE_IN_START) / (HEADLINE_IN_END - HEADLINE_IN_START)) -
+            clamp01((p - HEADLINE_OUT_START) / (HEADLINE_OUT_END - HEADLINE_OUT_START));
+
+          const ctaOpacity = clamp01((p - CTA_IN_START) / (CTA_IN_END - CTA_IN_START));
+          const ctaPointer = p >= CTA_POINTER_AT ? "auto" : "none";
+
+          el.style.setProperty("--closure-headline-opacity", headlineOpacity.toFixed(3));
+          el.style.setProperty("--closure-cta-opacity", ctaOpacity.toFixed(3));
+          el.style.setProperty("--closure-cta-pointer", ctaPointer);
+        },
+      });
+
+      return () => {
+        scrollTrigger.kill();
+      };
+    },
+    { scope: containerRef, dependencies: [reduced, isMobile] },
+  );
+
+  // ── Mode C: reduced motion — settled final frame ──────────────────────────
+  if (reduced === true) {
+    return (
       <Box
-        style={{
-          opacity: reduced ? 1 : "var(--closure-cta-opacity, 0)",
-          pointerEvents: (reduced ? "auto" : "var(--closure-cta-pointer, none)") as React.CSSProperties["pointerEvents"],
-        }}
+        ref={containerRef}
+        data-testid="closing-lattice-section"
         sx={{
-          position: "absolute",
-          bottom: { xs: 24, sm: 36, md: "auto" },
-          top: { xs: "auto", md: "50%" },
-          right: { xs: "auto", md: "auto" },
-          left: {
-            xs: "50%",
-            md: "calc(var(--hp-px, 0.3) * 100% + var(--hp-pw, 0.2) * 50% + 32px)",
-          },
-          transform: { xs: "translateX(-50%)", md: "translateY(-50%)" },
-          width: { xs: "calc(100% - 32px)", md: "auto" },
-          maxWidth: { xs: "560px", md: 440 },
-          zIndex: 6,
+          position: "relative",
+          width: "100%",
+          height: "100vh",
+          minHeight: { xs: "auto", md: 680 },
+          bgcolor: NOIR.white,
+          color: NOIR.navyField,
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 2.5,
-          p: { xs: 3, sm: 3.5, md: 4.5 },
-          borderRadius: "28px",
-          bgcolor: "rgba(6, 18, 38, 0.94)",
-          border: "1px solid rgba(255, 199, 44, 0.22)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          boxShadow: "0 24px 70px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 199, 44, 0.06) inset",
-          overflow: "hidden",
+          justifyContent: "center",
+          alignItems: "center",
+          px: { xs: 2, md: 6 },
+          py: { xs: 10, md: 0 },
         }}
       >
-        {/* Faint gold glow anchored to the top-left corner — an inviting
-            accent rather than a flat navy card. */}
-        <Box
-          aria-hidden
-          sx={{
-            position: "absolute",
-            top: -60,
-            left: -60,
-            width: 220,
-            height: 220,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,199,44,0.16) 0%, rgba(255,199,44,0) 70%)",
-            pointerEvents: "none",
-          }}
-        />
+        <Box sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+          <HeroCanvas
+            handleRef={closureHandleRef}
+            varsHostRef={containerRef}
+            mode="closure"
+            showLogo
+            initialZoomProgress={1}
+          />
+        </Box>
+
+        {/* One wrapper carries BOTH `display: none` and `opacity: 0` so the
+            reduced-motion assertion has a single element to resolve. */}
+        <Box aria-hidden="true" style={{ display: "none", opacity: 0 }}>
+          <HeadlineBlock withBackdrop={false} />
+        </Box>
 
         <Box
           sx={{
+            position: "relative",
+            zIndex: 6,
+            width: "100%",
+            maxWidth: 560,
             display: "flex",
-            alignItems: "center",
-            gap: 1,
-            fontFamily: MONO,
-            fontSize: "0.7rem",
-            fontWeight: 800,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: NOIR.gold,
-          }}
-        >
-          <Box sx={{ width: 16, height: "1px", bgcolor: NOIR.gold }} />
-          Let&apos;s Build Together
-        </Box>
-
-        <Box>
-          <Typography
-            variant="h3"
-            component="h3"
-            sx={{
-              fontSize: { xs: "1.5rem", sm: "1.9rem", md: "2.25rem" },
-              lineHeight: 1.15,
-              letterSpacing: "-0.02em",
-              fontWeight: 800,
-              color: NOIR.white,
-              mb: 1.25,
-            }}
-          >
-            {CONTENT.closing.statement}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: "0.88rem", md: "0.95rem" },
-              lineHeight: 1.5,
-              color: NOIR.frost,
-              opacity: 0.85,
-            }}
-          >
-            {CONTENT.closing.subline}
-          </Typography>
-        </Box>
-
-        <Box
-          component={Link}
-          to="/contact"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
             justifyContent: "center",
-            gap: 1.25,
-            px: 4,
-            py: 1.85,
-            mt: 0.5,
-            bgcolor: NOIR.gold,
-            color: NOIR.navyField,
-            fontFamily: MONO,
-            fontSize: "0.8rem",
-            fontWeight: 800,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            borderRadius: "100px",
-            textDecoration: "none",
-            whiteSpace: "nowrap",
-            boxShadow: "0 8px 24px rgba(255, 199, 44, 0.25)",
-            transition: "transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
-            "&:hover": {
-              bgcolor: NOIR.white,
-              transform: "scale(1.03)",
-              boxShadow: "0 10px 30px rgba(255, 199, 44, 0.35)",
-            },
           }}
         >
-          {CONTENT.closing.farewell} →
+          <ClosingCtaCard fullWidth style={{ opacity: 1, pointerEvents: "auto" }} />
+        </Box>
+      </Box>
+    );
+  }
+
+  // ── Mode B: mobile static — bespoke single-column stack ───────────────────
+  if (isMobile) {
+    return (
+      <Box
+        ref={containerRef}
+        data-testid="closing-lattice-section"
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: "auto",
+          minHeight: "auto",
+          bgcolor: NOIR.white,
+          color: NOIR.navyField,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          gap: { xs: 5 },
+          px: { xs: 3 },
+          py: { xs: 10 },
+        }}
+      >
+        {/* Compact canvas band — the P sits small, top-centre. */}
+        <Box aria-hidden sx={{ position: "relative", width: "100%", height: { xs: 240 } }}>
+          <HeroCanvas
+            handleRef={closureHandleRef}
+            mode="closure"
+            showLogo
+            initialZoomProgress={1}
+          />
+        </Box>
+
+        <Box sx={{ position: "relative", zIndex: 4, color: NOIR.navyField }}>
+          <HeadlineBlock withBackdrop={false} />
+        </Box>
+
+        <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
+          <ClosingCtaCard fullWidth />
+        </Box>
+      </Box>
+    );
+  }
+
+  // ── Mode A: desktop scrub ─────────────────────────────────────────────────
+  return (
+    <Box
+      ref={containerRef}
+      data-testid="closing-lattice-section"
+      sx={{
+        position: "relative",
+        width: "100%",
+        height: "100vh",
+        minHeight: { md: 680 },
+        bgcolor: NOIR.white,
+        color: NOIR.navyField,
+        overflow: "hidden",
+      }}
+    >
+      {/* Canvas — absolutely behind everything. The P pans left, under the
+          left column; it never sits under the right column. */}
+      <Box sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+        <HeroCanvas
+          handleRef={closureHandleRef}
+          varsHostRef={containerRef}
+          mode="closure"
+          showLogo
+          initialZoomProgress={0}
+        />
+      </Box>
+
+      {/* Layout grid: headline left, CTA right, canvas behind. Real flow — the
+          CTA is NOT positioned off a canvas var, so no first-paint snap. */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 4,
+          height: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr minmax(0, 460px)",
+          alignItems: "center",
+          columnGap: { md: 6, lg: 10 },
+          px: { md: 6, lg: 10 },
+          maxWidth: 1400,
+          mx: "auto",
+        }}
+      >
+        {/* Left: headline block. Single opacity var for the whole block. */}
+        <Box
+          style={{ opacity: "var(--closure-headline-opacity, 0)" }}
+          sx={{ textAlign: "left", pointerEvents: "none" }}
+        >
+          <HeadlineBlock withBackdrop />
+        </Box>
+
+        {/* Right: CTA card, in normal flow. */}
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end" }}
+        >
+          <ClosingCtaCard
+            style={{
+              opacity: "var(--closure-cta-opacity, 1)",
+              pointerEvents: "var(--closure-cta-pointer, auto)" as React.CSSProperties["pointerEvents"],
+            }}
+          />
         </Box>
       </Box>
     </Box>
