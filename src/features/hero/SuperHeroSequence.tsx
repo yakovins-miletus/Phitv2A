@@ -49,7 +49,7 @@ import { HERO_WALL_TILES } from "./heroWallTiles";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
-import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
+import { useReducedMotion, usePreloaderReady, useEntranceSettled } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { HERO_PIN_DISTANCE } from "@/shared/motion/heroPin";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
@@ -213,6 +213,13 @@ export function HeroSignalCore() {
   const canvasHandleRef = useRef<HeroCanvasHandle | null>(null);
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
+  // The intro must fully clear before the hero owns the scroll. Until the
+  // entrance phase machine reaches "open" the pin is not created at all, so
+  // scrolling under the preloader can never advance the hero timeline or write
+  // `--hp-*` vars mid-intro (the "components bypassing each other" bug). The
+  // seed effect below still paints the settled state, so a non-scrolling or
+  // reduced-motion visitor is unaffected.
+  const entranceSettled = useEntranceSettled();
 
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
 
@@ -470,6 +477,11 @@ export function HeroSignalCore() {
   useGSAP(
     () => {
       if (reduced) return;
+      // Do not build the pin/timeline until the intro has fully cleared. This
+      // effect re-runs when `entranceSettled` flips true (it is in the deps),
+      // and `useGSAP` reverts the previous (empty) context first, so the pin is
+      // created exactly once, after "open".
+      if (!entranceSettled) return;
 
       const el = containerRef.current;
       if (!el) return;
@@ -608,8 +620,15 @@ export function HeroSignalCore() {
           }
         },
       });
+
+      // The pin is created after the intro's rectangular reveal has already
+      // begun uncovering the page, so layout under it may have shifted since
+      // first paint. One post-commit refresh re-resolves this pin's start/end
+      // (and, via refreshPriority 0, everything downstream) against the real
+      // settled layout.
+      requestAnimationFrame(() => ScrollTrigger.refresh());
     },
-    { scope: pinRef, dependencies: [reduced] }
+    { scope: pinRef, dependencies: [reduced, entranceSettled] }
   );
 
   // Every continuous value now lives in a CSS custom property written by the driver

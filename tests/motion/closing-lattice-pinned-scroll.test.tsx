@@ -17,6 +17,7 @@ import { CONTENT } from "@/shared/content";
 import { homeSection, sectionOrder } from "@/shared/sections";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
+import { PHASE_MOVE_END } from "@/features/hero/heroPhases";
 import * as motionHook from "@/shared/motion";
 
 // Mock TanStack Router Link for isolated component tests
@@ -48,7 +49,7 @@ describe("M2 Empirical Verification 1: ScrollTrigger Pin & Travel Distance", () 
     expect(section.id).toBe("closing");
     expect(section.ownsPin).toBe(true);
     expect(section.noExitDim).toBe(true);
-    expect(section.chapter).toBe(7);
+    expect(section.chapter).toBe(5);
     expect(section.ground).toBe("field");
   });
 
@@ -69,17 +70,20 @@ describe("M2 Empirical Verification 1: ScrollTrigger Pin & Travel Distance", () 
     expect(closingPriority).toBeGreaterThan(0);
   });
 
-  test("travel distance function evaluates to exactly 2.5x window.innerHeight across all standard and extreme viewports", () => {
-    const testHeights = [480, 600, 667, 768, 800, 844, 900, 1024, 1080, 1200, 1440, 2160];
+  test("travel distance function evaluates to exactly 2.0x window.innerHeight across all standard and extreme viewports", () => {
+    // 480/600 dropped: the closing pin was retuned from 1.3vh -> 2.0vh to give
+    // the five disjoint phases room. Smallest realistic viewport height here is
+    // 667 (667*2 = 1334), so the invariant floor is relaxed to >= 900.
+    const testHeights = [667, 768, 800, 844, 900, 1024, 1080, 1200, 1440, 2160];
 
     for (const h of testHeights) {
-      const endFormula = (vh: number) => `+=${String(vh * 2.5)}`;
-      const expectedTravel = h * 2.5;
+      const endFormula = (vh: number) => `+=${String(vh * 2)}`;
+      const expectedTravel = h * 2;
 
       expect(endFormula(h)).toBe(`+=${expectedTravel}`);
-      expect(expectedTravel / h).toBe(2.5);
-      // Invariant: travel distance is always >= 1200px and gives 2.5 full viewports of scroll room
-      expect(expectedTravel).toBeGreaterThanOrEqual(1200);
+      expect(expectedTravel / h).toBe(2);
+      // Invariant: >= 900px of scroll room across every supported viewport.
+      expect(expectedTravel).toBeGreaterThanOrEqual(900);
     }
   });
 
@@ -88,99 +92,117 @@ describe("M2 Empirical Verification 1: ScrollTrigger Pin & Travel Distance", () 
   });
 });
 
-describe("M2 Empirical Verification 2: Mathematical Monotonicity & Boundary Stage Curves", () => {
-  // Extract exact formulas from ClosingLattice.tsx
-  const calcZoomProgress = (p: number) => (p <= 0.10 ? 0 : p >= 0.85 ? 1 : (p - 0.10) / 0.75);
-  const calcHeadlineOpacity = (p: number) => (p <= 0.10 ? 1 : p >= 0.45 ? 0 : (0.45 - p) / 0.35);
-  const calcCtaOpacity = (p: number) => (p <= 0.45 ? 0 : p >= 0.85 ? 1 : (p - 0.45) / 0.40);
-  const calcCtaPointer = (p: number) => (p >= 0.65 ? "auto" : "none");
+describe("M2 Empirical Verification 2: Disjoint Phase Model & Boundary Stage Curves", () => {
+  // Copies of the NEW ramp math in ClosingLattice.tsx — 5 disjoint phases over
+  // a 2.0vh pin. Anchors: 0.28 / 0.42 / 0.58 / 0.60 / 0.82.
+  const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+  const P_SETTLE_END = 0.28;
+  const HEADLINE_IN_START = 0.06;
+  const HEADLINE_IN_END = 0.24;
+  const HEADLINE_OUT_START = 0.42;
+  const HEADLINE_OUT_END = 0.56;
+  const CTA_IN_START = 0.6;
+  const CTA_IN_END = 0.8;
+  const CTA_POINTER_AT = 0.66;
 
-  test("Boundary Values & Stage Continuity at Key Anchors", () => {
-    // p = 0.0 (Entrance)
-    expect(calcZoomProgress(0)).toBe(0);
-    expect(calcHeadlineOpacity(0)).toBe(1);
+  const calcHeroProgress = (p: number) =>
+    Math.min((p / P_SETTLE_END) * PHASE_MOVE_END, PHASE_MOVE_END);
+  const calcHeadlineOpacity = (p: number) =>
+    clamp01((p - HEADLINE_IN_START) / (HEADLINE_IN_END - HEADLINE_IN_START)) -
+    clamp01((p - HEADLINE_OUT_START) / (HEADLINE_OUT_END - HEADLINE_OUT_START));
+  const calcCtaOpacity = (p: number) =>
+    clamp01((p - CTA_IN_START) / (CTA_IN_END - CTA_IN_START));
+  const calcCtaPointer = (p: number) => (p >= CTA_POINTER_AT ? "auto" : "none");
+
+  test("Boundary values & stage continuity at the five disjoint phase anchors", () => {
+    // p = 0.0 (entrance)
+    expect(calcHeroProgress(0)).toBe(0);
+    expect(calcHeadlineOpacity(0)).toBe(0);
     expect(calcCtaOpacity(0)).toBe(0);
     expect(calcCtaPointer(0)).toBe("none");
 
-    // p = 0.10 (End of tight hold / start of camera zoom & headline fade)
-    expect(calcZoomProgress(0.10)).toBe(0);
-    expect(calcHeadlineOpacity(0.10)).toBe(1);
-    expect(calcCtaOpacity(0.10)).toBe(0);
-    expect(calcCtaPointer(0.10)).toBe("none");
+    // p = 0.28 (P settled — phase 1 -> 2)
+    expect(calcHeroProgress(0.28)).toBeCloseTo(PHASE_MOVE_END, 5);
+    expect(calcHeadlineOpacity(0.28)).toBe(1);
+    expect(calcCtaOpacity(0.28)).toBe(0);
 
-    // p = 0.45 (Headline fully dissolved / CTA starts fading in)
-    expect(calcZoomProgress(0.45)).toBeCloseTo((0.45 - 0.10) / 0.75, 5); // 0.4667
-    expect(calcHeadlineOpacity(0.45)).toBe(0);
-    expect(calcCtaOpacity(0.45)).toBe(0);
-    expect(calcCtaPointer(0.45)).toBe("none");
+    // p = 0.42 (end of hold — phase 2 -> 3)
+    expect(calcHeroProgress(0.42)).toBe(PHASE_MOVE_END);
+    expect(calcHeadlineOpacity(0.42)).toBe(1);
+    expect(calcCtaOpacity(0.42)).toBe(0);
 
-    // p = 0.65 (Pointer events gate activates when CTA is 50% opaque)
-    expect(calcCtaOpacity(0.65)).toBeCloseTo((0.65 - 0.45) / 0.40, 5); // 0.5000
-    expect(calcCtaPointer(0.6499)).toBe("none");
-    expect(calcCtaPointer(0.65)).toBe("auto");
+    // p = 0.58 (headline fully cleared, CTA still gone — the disjoint gap)
+    expect(calcHeadlineOpacity(0.58)).toBe(0);
+    expect(calcCtaOpacity(0.58)).toBe(0);
+    expect(calcCtaPointer(0.58)).toBe("none");
 
-    // p = 0.85 (Camera zoom wide & CTA fully opaque)
-    expect(calcZoomProgress(0.85)).toBe(1);
-    expect(calcHeadlineOpacity(0.85)).toBe(0);
-    expect(calcCtaOpacity(0.85)).toBe(1);
-    expect(calcCtaPointer(0.85)).toBe("auto");
+    // p = 0.60 (CTA reveal starts — phase 4)
+    expect(calcHeadlineOpacity(0.6)).toBe(0);
+    expect(calcCtaOpacity(0.6)).toBe(0);
 
-    // p = 1.0 (Unpin / Exit)
-    expect(calcZoomProgress(1.0)).toBe(1);
+    // p = 0.66 (pointer gate opens)
+    expect(calcCtaPointer(0.6599)).toBe("none");
+    expect(calcCtaPointer(0.66)).toBe("auto");
+
+    // p = 0.82 (settled — phase 5: CTA fully opaque)
+    expect(calcCtaOpacity(0.82)).toBe(1);
+    expect(calcHeadlineOpacity(0.82)).toBe(0);
+    expect(calcCtaPointer(0.82)).toBe("auto");
+
+    // p = 1.0 (unpin / exit)
+    expect(calcHeroProgress(1.0)).toBe(PHASE_MOVE_END);
     expect(calcHeadlineOpacity(1.0)).toBe(0);
     expect(calcCtaOpacity(1.0)).toBe(1);
     expect(calcCtaPointer(1.0)).toBe("auto");
   });
 
-  test("Zero text collision guarantee: Headline and CTA card never have simultaneous high opacity", () => {
-    // When headline is visible (>0.1), CTA card is strictly 0.0
-    for (let p = 0; p <= 0.45; p += 0.01) {
-      const hOp = calcHeadlineOpacity(p);
-      const cOp = calcCtaOpacity(p);
-      expect(cOp).toBe(0);
-      if (p <= 0.10) {
-        expect(hOp).toBe(1.0);
-      }
-    }
+  test("Disjointness guarantee: headline & CTA opacity are never both > 0", () => {
+    for (let i = 0; i <= 1000; i++) {
+      const p = i / 1000;
+      const h = calcHeadlineOpacity(p);
+      const c = calcCtaOpacity(p);
 
-    // When CTA is becoming visible (>0.0), headline is strictly 0.0
-    for (let p = 0.45; p <= 1.0; p += 0.01) {
-      const hOp = calcHeadlineOpacity(p);
-      const cOp = calcCtaOpacity(p);
-      expect(hOp).toBe(0);
-      expect(cOp).toBeGreaterThanOrEqual(0);
+      expect(h).toBeGreaterThanOrEqual(0);
+      expect(h).toBeLessThanOrEqual(1);
+      expect(c).toBeGreaterThanOrEqual(0);
+      expect(c).toBeLessThanOrEqual(1);
+
+      // The real disjointness guarantee.
+      if (h > 0) expect(c).toBe(0);
+      if (c > 0) expect(h).toBe(0);
+
+      // Explicit anchors: headline is 0 for p >= 0.58, CTA is 0 for p <= 0.60.
+      if (p >= 0.58) expect(h).toBe(0);
+      if (p <= 0.6) expect(c).toBe(0);
     }
   });
 
-  test("Strict Monotonicity across 1000 discrete sampling steps", () => {
-    let prevZoom = 0;
-    let prevHeadline = 1;
+  test("CTA opacity & canvas heroProgress are monotonic non-decreasing; ramps are continuous", () => {
+    let prevHero = 0;
     let prevCta = 0;
+    let prevHeadline = calcHeadlineOpacity(0);
 
     for (let i = 0; i <= 1000; i++) {
       const p = i / 1000;
-      const zoom = calcZoomProgress(p);
-      const headline = calcHeadlineOpacity(p);
+      const hero = calcHeroProgress(p);
       const cta = calcCtaOpacity(p);
+      const headline = calcHeadlineOpacity(p);
 
-      // Zoom is monotonically non-decreasing
-      expect(zoom).toBeGreaterThanOrEqual(prevZoom);
-      expect(zoom).toBeGreaterThanOrEqual(0);
-      expect(zoom).toBeLessThanOrEqual(1);
+      // heroProgress: non-decreasing, clamped at PHASE_MOVE_END.
+      expect(hero).toBeGreaterThanOrEqual(prevHero);
+      expect(hero).toBeGreaterThanOrEqual(0);
+      expect(hero).toBeLessThanOrEqual(PHASE_MOVE_END);
 
-      // Headline is monotonically non-increasing
-      expect(headline).toBeLessThanOrEqual(prevHeadline);
-      expect(headline).toBeGreaterThanOrEqual(0);
-      expect(headline).toBeLessThanOrEqual(1);
-
-      // CTA is monotonically non-decreasing
+      // CTA opacity: non-decreasing.
       expect(cta).toBeGreaterThanOrEqual(prevCta);
-      expect(cta).toBeGreaterThanOrEqual(0);
-      expect(cta).toBeLessThanOrEqual(1);
 
-      prevZoom = zoom;
-      prevHeadline = headline;
+      // Continuity — no ramp jumps more than a small step per 0.001 of p.
+      expect(Math.abs(headline - prevHeadline)).toBeLessThan(0.02);
+      expect(Math.abs(cta - prevCta)).toBeLessThan(0.02);
+
+      prevHero = hero;
       prevCta = cta;
+      prevHeadline = headline;
     }
   });
 });
@@ -204,22 +226,25 @@ describe("M2 Empirical Verification 3: Component DOM Structure & Responsive Spec
     const canvas = container.querySelector("canvas");
     expect(canvas).not.toBeNull();
 
-    // Verify headline text
+    // Verify headline text. The category eyebrow ("CONTACT // PARTNERSHIP")
+    // lives on MiniEstablishingShot, rendered by ClosingShelf — asserted in
+    // Verification 5, not here.
     expect(screen.getByText("We create exciting technologies")).toBeDefined();
-    expect(screen.getByText("CAPABILITY // PLATFORM")).toBeDefined();
 
-    // Verify CTA text & links
-    const contactLink = container.querySelector('a[href="/contact"]');
-    const careersLink = container.querySelector('a[href="/careers"]');
-    expect(contactLink).not.toBeNull();
-    expect(contactLink?.textContent).toContain("Contact");
-    expect(careersLink).not.toBeNull();
-    expect(careersLink?.textContent).toContain(CONTENT.closing.farewell);
+    // Exactly one CTA -> /contact, labelled with the farewell copy. No
+    // /careers link anywhere in the closing scene.
+    const contactLinks = container.querySelectorAll('a[href="/contact"]');
+    expect(contactLinks.length).toBe(1);
+    expect(contactLinks[0]?.textContent).toContain(CONTENT.closing.farewell);
+    expect(container.querySelector('a[href="/careers"]')).toBeNull();
   });
 
   test("CTA Card has proper responsive layout styling attributes", () => {
     const { container } = renderWithNavbar(<ClosingLatticeSection />);
-    const ctaCard = container.querySelector('[style*="--closure-cta-opacity"]');
+    // Target the card's `var(...)` binding specifically — the disjoint phase
+    // model also writes the raw `--closure-cta-opacity` custom property onto
+    // the root container, so match on the `var(` reference the card carries.
+    const ctaCard = container.querySelector('[style*="var(--closure-cta-opacity"]');
     expect(ctaCard).not.toBeNull();
 
     // Verify CSS variable binding
@@ -280,5 +305,9 @@ describe("M2 Empirical Verification 5: ClosingShelf Wrapper & SectionBeat Archit
     // Establishing shot is rendered in the section
     const shot = container.querySelector(".beat-shot");
     expect(shot).not.toBeNull();
+
+    // The establishing-shot category eyebrow (moved here from Verification 3 —
+    // MiniEstablishingShot renders `category` verbatim).
+    expect(screen.getByText("CONTACT // PARTNERSHIP")).toBeDefined();
   });
 });

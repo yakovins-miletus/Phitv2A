@@ -100,73 +100,92 @@ const WARM_ROUTES = [
 ] as const;
 
 /**
- * The assets actually on the home hero's default-render critical path.
+ * Route-aware warm-up manifest — signal tiers.
  *
- * This used to be `ALL_ASSETS.slice(0, 15)` — the first 15 entries of a
- * filesystem-walk-ordered glob, which is arbitrary: nothing guaranteed a
- * hero-relevant file landed in that slice, and on most builds none did.
+ * The preloader shows on a genuine first load only, so the landing `pathname`
+ * IS the route the visitor arrived on. Warm *that* route's default scroll path
+ * properly instead of a one-size-fits-all list that under-served `/` and
+ * mis-served `/about` / `/blog`.
  *
- * Traced from `SuperHeroSequence.tsx` (the default, non-toggled hero — mode
- * defaults to "legacy" per `heroModeStore.ts`):
- *   - `HeroCanvas.tsx` (the legacy 2D canvas, mounted whenever the "monolith"
- *     3D toggle is off, which is the default) eagerly fetches exactly one
- *     network image on mount — `/phitopolis_logo_hero.svg`, the P-mark logo
- *     mask (`loadLogoMask(LOGO_SRC)`) — non-blocking for first paint by its
- *     own design (`paintStill()` runs before the fetch even starts), but it
- *     is still the one real eager image request the default hero makes, so
- *     it deserves to win the warmup race rather than lose it to an arbitrary
- *     glob slice.
- *   - The hero's 25-photo drift wall (`HeroImageWall.tsx` / `heroWallTiles.ts`)
- *     is deliberately NOT here. Its own header comment states it is "fetched
- *     at fetchPriority='low' after the hero's LCP" and it does not mount at
- *     all until the reader scrolls ~60% through the pin
- *     (`SuperHeroSequence.tsx`'s `stage.gunshot`/`wallMounted`) — it is
- *     below-the-fold-in-time, not hero-critical-on-load, and forcing it into
- *     the preloader would regress every route's warmup for imagery most
- *     visitors won't reach before the preloader has long since released.
- *   - Monolith-mode-only imagery (`ParallaxHeroBg.tsx`'s `/images/hero-sky-bg.jpg`,
- *     the R3F gallery's textures, the hero background video) is excluded for
- *     the same reason as the drift wall, plus one more: monolith is an
- *     opt-in mode a visitor switches into via the command palette, off by
- *     default, so none of it is on the default page-load path at all. See
- *     the `useBackgroundVideo`/`R3FHeroCanvas` scoping note on
- *     `useWarmupSignals` below.
+ * Two tiers per {@link LoadSignal}:
+ *  - **blocking** (absent/`undefined` on the signal): the reveal waits on it.
+ *    Fonts (added in `Preloader`) + the landing route's above-fold-critical
+ *    assets.
+ *  - **background** (`blocking: false`): keeps warming without holding the
+ *    overlay — `WARM_ROUTES` precompiles, the three.js/ServiceGlobe chunk, and
+ *    lower/other-route imagery.
  *
- * This list is intentionally tiny — the whole point is that hero-critical
- * assets get preloaded in *full*, not capped, so it must stay short enough
- * that "in full" is cheap. It also runs on every route (`useWarmupSignals`
- * is called from `AppShellInner`, not gated to `/`), so anything added here
- * is paid for by every first-time visitor, including ones landing on
- * `/about` or `/blog` who will never see the hero at all.
+ * Every path below was checked against the filesystem (`public/…`) and against
+ * what the component actually renders. Deliberately absent:
+ *  - `/images/topHalfHero.webp` / `botHalfHero.webp` — the old split-pane hero,
+ *    replaced by `HeroImageWall`; nothing renders them any more.
+ *  - `/images/pillars/*.webp` (`OperatingPillars`) — do not exist on disk
+ *    (`content.ts` notes this); warming 404s is worse than nothing.
+ *  - The hero drift wall (`fetchPriority=low`, mounts ~60% into the hero pin).
+ *  - `/videos/hero-night-to-dawn.*` + poster — gated behind `useVideoBg`, which
+ *    is hard-coded `false` in `SuperHeroSequence.tsx`, so the video background
+ *    is currently dead code; no video signal is warmed. If it is re-enabled,
+ *    add a `blocking: false` range-fetch of the first ~256KB here.
+ *  - `/about`'s `daily-life.mp4` (62MB, IntersectionObserver-gated far down the
+ *    page) and `JourneyTimeline`'s hotlinked WordPress images — left to their
+ *    own components.
  */
-/**
- * Explicit Section-Based Asset Manifest for Lusion-style Preloader Warmup.
- * Replaces arbitrary glob slicing with intentional tiering:
- *  - Tier 1 (Hero Critical): Logo vector, key hero imagery.
- *  - Tier 2 (Services & Capabilities): Core discipline banners.
- *  - Tier 3 (About & Institutional Foundations): Key above-fold brand assets.
- */
-const SECTION_MANIFEST: readonly string[] = [
-  "/phitopolis_logo_hero.svg",
-  "/images/botHalfHero.webp",
-  "/images/topHalfHero.webp",
-  "/images/quant-research-banner.webp",
-  "/images/software-engineer-banner.webp",
-  "/images/ops-support-banner.webp",
-  "/images/data-science-banner.webp",
-  "/images/AboutPageHero.webp",
-  "/images/ecotower-bgc.webp",
-  "/images/grads/FocusedProgramming.webp",
-  "/images/blog/ateneo-career-talk-2025/01.webp",
-  "/images/blog/csr-activity-repainting-community-spaces/01.webp",
-  // WS-13: About page hero gallery tiles (real assets, not dummy load)
+
+/** Home hero critical path: the legacy 2D `HeroCanvas` fetches exactly one
+ *  network image on mount — `/phitopolis_logo_hero.svg`, the P-mark logo mask.
+ *  Everything else the hero draws is `<canvas>` / inline SVG / CSS. */
+const HOME_BLOCKING: readonly string[] = ["/phitopolis_logo_hero.svg"];
+
+/** Home below-fold is canvas / inline SVG / CSS — there is no raster imagery on
+ *  the default `/` scroll path to warm. */
+const HOME_BACKGROUND_IMAGES: readonly string[] = [];
+
+/** About hero, above the fold: the dusk-skyline background behind the headline
+ *  (`BackgroundReveal` → `/images/about-hero-bg.webp`), the gold-framed primary
+ *  photo (`HeroGallery` → `/images/AboutPage1.webp`) and the first three
+ *  right-hand strip tiles (`HeroGallery`'s `STRIP_TILES`). */
+const ABOUT_BLOCKING: readonly string[] = [
+  "/images/about-hero-bg.webp",
+  "/images/AboutPage1.webp",
   "/images/hero-wall/phitopolis-datathon-2k25-the-grads-all-star-showdown-02.webp",
   "/images/hero-wall/inspiring-the-next-generation-of-quants-our-talks-at-the-google-developers-student-club-dlsu-01.webp",
   "/images/hero-wall/phitopolis-external-talk-01.webp",
-  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
-  "/images/hero-wall/likhapolis-pagbibigay-kulay-at-saya-02.webp",
-  "/images/hero-wall/csr-activity-repainting-community-spaces-01.webp",
 ];
+
+/** About hero, the remaining three strip tiles — on screen in the first
+ *  viewport but lower in the stack, so warmed without holding the reveal. */
+const ABOUT_BACKGROUND_IMAGES: readonly string[] = [
+  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
+  "/images/hero-wall/data-ops-training-in-clark-pampanga-04.webp",
+  "/images/hero-wall/immersion-in-dataops-a-journey-behind-the-scenes-of-data-operations-01.webp",
+];
+
+export interface RouteManifest {
+  /** Reveal-gating assets for this landing route. */
+  blocking: readonly string[];
+  /** Assets warmed in the background; never hold the overlay. */
+  background: readonly string[];
+  /** Warm the three.js / `ServiceGlobe` chunk into the module cache (home
+   *  only — the scene still renders lazily behind its own `useInView`). */
+  warmGlobe: boolean;
+}
+
+/** The per-landing-route asset split. Routes with no bespoke manifest
+ *  (`/blog`, `/services`, `/contact`, …) block on fonts + their own
+ *  already-loading route chunk only; everything else is background. */
+export function resolveRouteManifest(pathname: string): RouteManifest {
+  if (pathname === "/") {
+    return { blocking: HOME_BLOCKING, background: HOME_BACKGROUND_IMAGES, warmGlobe: true };
+  }
+  if (pathname === "/about") {
+    return { blocking: ABOUT_BLOCKING, background: ABOUT_BACKGROUND_IMAGES, warmGlobe: false };
+  }
+  return { blocking: [], background: [], warmGlobe: false };
+}
+
+function labelForAsset(url: string): string {
+  return (url.split("/").pop() || "ASSET").toUpperCase().substring(0, 15);
+}
 
 function preloadAsset(url: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
@@ -215,26 +234,95 @@ function preloadAsset(url: string): Promise<void> {
   });
 }
 
-function useWarmupSignals(active: boolean): LoadSignal[] {
+/** A {@link LoadSignal} whose work is deferred: `promise` is created up front
+ *  (so the array has its full length and identity from first render) but the
+ *  underlying work only begins when `__start` is called from a mount effect —
+ *  used for route warm-ups, whose `router.preloadRoute()` must not run during
+ *  render. `__start` is absent on signals that start themselves. */
+interface DeferredLoadSignal extends LoadSignal {
+  __start?: () => void;
+}
+
+function useWarmupSignals(active: boolean, pathname: string): LoadSignal[] {
   const router = useRouter();
-  const [signals] = useState<LoadSignal[]>(() => {
+
+  // The signal array is built once, at first render, so Preloader's one-time
+  // snapshot of `warmup` captures every signal (routes + manifest + fonts) and
+  // its progress bar stays paced against real work.
+  //
+  // The catch: router.preloadRoute() synchronously dispatches into TanStack
+  // Router's Transitioner state, so calling it during render (which a useState
+  // lazy initializer is) makes React warn "Cannot update a component
+  // (Transitioner) while rendering a different component (AppShellInner)".
+  // So each route signal ships a settled-but-not-started promise plus a
+  // `__start` thunk; the mount effect below fires the actual preloadRoute()
+  // after commit, where a cross-component state update is legal, and resolves
+  // the signal's promise when the preload settles.
+  //
+  // preloadAsset() is plain fetch()/Image() — no React state — so the manifest
+  // signals still kick off straight from the initializer, unchanged.
+  //
+  // `active` only goes false -> true once (the preloader shows, then never
+  // again this session), so [active] with no cleanup is sufficient.
+  const [signals] = useState<DeferredLoadSignal[]>(() => {
     if (!active) return [];
 
-    const routeSignals = WARM_ROUTES.map((route) => ({
-      label: route.label,
-      promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
-    }));
+    const manifest = resolveRouteManifest(pathname);
 
-    const manifestSignals = SECTION_MANIFEST.map((url) => {
-      const filename = url.split('/').pop() || 'ASSET';
+    // Route precompiles never gate the reveal — best-effort warm work.
+    const routeSignals: DeferredLoadSignal[] = WARM_ROUTES.map((route) => {
+      let resolve!: () => void;
+      const promise = new Promise<void>((r) => {
+        resolve = r;
+      });
       return {
-        label: filename.toUpperCase().substring(0, 15),
-        promise: preloadAsset(url),
+        label: route.label,
+        blocking: false,
+        promise,
+        __start: () => {
+          router
+            .preloadRoute({ to: route.to })
+            .catch(() => undefined)
+            .finally(resolve);
+        },
       };
     });
 
-    return [...routeSignals, ...manifestSignals];
+    const blockingAssetSignals: DeferredLoadSignal[] = manifest.blocking.map((url) => ({
+      label: labelForAsset(url),
+      promise: preloadAsset(url),
+    }));
+
+    const backgroundAssetSignals: DeferredLoadSignal[] = manifest.background.map((url) => ({
+      label: labelForAsset(url),
+      blocking: false,
+      promise: preloadAsset(url),
+    }));
+
+    // Warm the three.js/ServiceGlobe chunk into the module cache on `/` only.
+    // Kept a dynamic import() expression so the bundler still code-splits it —
+    // no static import at module scope. The scene still renders lazily behind
+    // its own useInView gate in MissionStatement.
+    const chunkSignals: DeferredLoadSignal[] = manifest.warmGlobe
+      ? [
+          {
+            label: "GLOBE",
+            blocking: false,
+            promise: import("@/features/hero/description/ServiceGlobe")
+              .then(() => undefined)
+              .catch(() => undefined),
+          },
+        ]
+      : [];
+
+    return [...blockingAssetSignals, ...backgroundAssetSignals, ...chunkSignals, ...routeSignals];
   });
+
+  useEffect(() => {
+    if (!active) return;
+    signals.forEach((signal) => signal.__start?.());
+  }, [active, signals]);
+
   return signals;
 }
 
@@ -484,8 +572,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const entranceTimersRef = useRef<number[]>([]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [megaNavOpen, setMegaNavOpen] = useState(false);
-  const warmup = useWarmupSignals(showPreloader);
   const { pathname } = useLocation();
+  const warmup = useWarmupSignals(showPreloader, pathname);
   const onContactPage = pathname === "/contact";
   const closeMobileNav = () => {
     setMobileNavOpen(false);

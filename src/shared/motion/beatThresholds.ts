@@ -40,15 +40,23 @@ export const BEAT_START = "top 75%";
  * already a quarter of the way up the viewport, so correctly-placed content
  * was seen snapping down ~90px and dimming to ~0.15 before re-animating.
  *
- * "top bottom" arms as the section's top edge reaches the bottom of the
- * viewport — 0% visible — so the from-vars land unseen and the reveal plays as
- * the section scrolls in.
+ * "top bottom+=45%" arms while the section's top edge is still ~0.45
+ * viewport-heights BELOW the fold — 0% visible, with runway to spare. Plain
+ * "top bottom" was not early enough: upstream pinned tracks push the moment
+ * ScrollTrigger reports entry to when the section box is already well inside
+ * the viewport (measured: services y=87, process y=71, candidates y=47), so
+ * the from-vars — written on first render because the content tween is
+ * `immediateRender: false` — landed in front of the reader and the 0.45s
+ * `CONTENT_ENTER_DURATION` tween had no offscreen scroll distance to run
+ * before the section was being read. Firing 45% of a viewport early gives the
+ * from-vars a guaranteed-unseen landing and the reveal real scroll runway to
+ * complete in.
  *
  * `BEAT_START` remains the threshold for everything else (the exit range is
  * still expressed relative to it); this constant governs only when the
  * entrance timeline is armed.
  */
-export const BEAT_ENTER_START = "top bottom";
+export const BEAT_ENTER_START = "top bottom+=45%";
 
 /**
  * Exit-dim range, for the scrubbed recede that Phase 3+ will create as a

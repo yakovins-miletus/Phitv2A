@@ -77,9 +77,10 @@
 /**
  * Arriving home is a different event from moving between interior pages, so it
  * gets a different gesture: the outgoing page pulls back further and the hero
- * opens through a circular aperture from the centre — the same optical language
- * as the intro's exit mask, deliberately, so the site has one idea about how
- * things are revealed rather than two unrelated ones.
+ * opens through a rectangular aperture from the centre — a centred rectangle
+ * growing to full-bleed. This deliberately mirrors the intro's rectangular exit
+ * reveal in `Preloader.tsx`, so the site has one idea about how things are
+ * revealed rather than two unrelated ones.
  *
  * Set by `data-route-transition="home"` on <html> for the duration of the
  * navigation. Longer (0.9s) because this is an arrival, not a step sideways.
@@ -109,11 +110,11 @@
 
 @keyframes fresko-home-aperture {
   from {
-    clip-path: circle(0% at 50% 50%);
+    clip-path: inset(50% 50% 50% 50%);
     transform: scale(1.06);
   }
   to {
-    clip-path: circle(75% at 50% 50%);
+    clip-path: inset(0 0 0 0);
     transform: scale(1);
   }
 }

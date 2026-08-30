@@ -129,3 +129,79 @@ before citing them. Still-relevant, structural facts:
 - Driving scroll in headless verification must use `page.mouse.wheel()` (or
   equivalent), never `window.scrollTo` — Lenis ignores programmatic scroll
   and a script using it will report false failures.
+
+## Open rework — CLOSED 2026-08-30
+
+All three areas below were rebuilt and merged. Cycle summary + the remaining
+maintainer verification steps:
+[`docs/open-rework-cycle-2026-08-30/handoff.md`](docs/open-rework-cycle-2026-08-30/handoff.md).
+Each per-area handoff now carries a `## Resolution` block at its top.
+
+1. **Preloader full-preload** → `LoadSignal.blocking?` tiers (reveal gates only on
+   the blocking set), route-aware `resolveRouteManifest(pathname)` in
+   `AppShell.tsx` replacing `SECTION_MANIFEST`, ServiceGlobe chunk
+   background-warmed. `/`'s below-fold is canvas/SVG/CSS so there is no raster
+   imagery to race — the "decoded asset store" idea was evaluated and dropped.
+   [`docs/preloader-full-preload/handoff.md`](docs/preloader-full-preload/handoff.md)
+
+2. **Web intro** → beat-sequenced `Preloader.tsx` (`BEAT_S = 0.26s`, 4 phases,
+   `SETTLE_HOLD_MS` replacing `POST_100_BEAT_MS`), rectangular `clip-path` reveal
+   unified with `viewTransitions.css` `fresko-home-aperture`, hero pin
+   ScrollTrigger gated on `useEntranceSettled()`. `Preloader.tsx` stays
+   `motion/react`-only.
+   [`docs/web-intro-rework/handoff.md`](docs/web-intro-rework/handoff.md)
+
+3. **Home closing section** → `ClosingLattice.tsx` rebuilt into 3 render modes
+   (desktop 5-phase disjoint scrub / bespoke mobile static stack / reduced-motion
+   final frame); CTA in a grid column, no `--hp-px` snap; pin 1.3vh → 2.0vh.
+   [`docs/closing-section-rebuild/handoff.md`](docs/closing-section-rebuild/handoff.md)
+
+**Still open (next session):** run `tests/preview-cdp.test.ts` + LCP re-measure +
+`ladder-probe.js` parity, screencast-verify the intro/closing motion in a real
+browser, and the `/images/pillars/*` 404 + `useVideoBg` dead-code items. See the
+cycle handoff.
+
+## Motion library versions & the root-level GSAP/Lenis skills
+
+GSAP appears in **21 source files**. Library versions in use:
+
+| Library | Version | Role |
+|---|---|---|
+| `gsap` | 3.15.0 | Primary animation engine. **All former Club/premium plugins are free and installed** — ScrollTrigger, ScrollSmoother, SplitText, MorphSVG, DrawSVG, Flip, Draggable, Inertia, Observer, CustomEase/Bounce/Wiggle, GSDevTools. |
+| `@gsap/react` | 2.1.2 | `useGSAP()` hook — the required pattern for GSAP in components (27 usages). |
+| `lenis` | 1.3.25 | Smooth scroll, **home route only**. |
+| `motion` | 12.x | Micro-interactions (separate from GSAP; don't mix on the same element). |
+| `@react-three/fiber` + `three` | 9.x / 0.185 | 3D hero and playground scenes. |
+
+**[../../StrictHandbookMotion.md](../../StrictHandbookMotion.md)** (at the Project Armstrong root) has the copy-paste audit prompt for reviewing GSAP/Lenis usage against content-order, accessibility, and lifecycle rules — use it before any large motion refactor.
+
+### Official GSAP agent skills (installed at the Project Armstrong root)
+
+The root `.claude/skills/gsap-*` are the **official GreenSock skills**, MIT-licensed, vendored from
+[github.com/greensock/gsap-skills](https://github.com/greensock/gsap-skills) (commit `aed9cfd`).
+Seven are installed — `gsap-core`, `gsap-react`, `gsap-scrolltrigger`, `gsap-timeline`,
+`gsap-plugins`, `gsap-performance`, `gsap-utils`. `gsap-frameworks` is deliberately **not**
+installed: it covers Vue/Svelte/Nuxt, and nothing in this workspace uses those.
+
+They load automatically when animation work comes up, or invoke one directly (e.g. `/gsap-scrolltrigger`).
+There is **no official GSAP MCP server** — GreenSock ships skills, not an MCP; the "GSAP MCP"
+packages on npm/LobeHub are unaffiliated community projects. Use these skills instead.
+
+To refresh them later:
+
+```bash
+npx skills add https://github.com/greensock/gsap-skills --skill gsap-react
+```
+
+### Lenis skill (hand-authored, no official one exists)
+
+The root `.claude/skills/lenis/` is **not vendored from an upstream skill** — darkroom.engineering
+(Lenis's maintainer) publishes no `.claude-plugin`, skill, or MCP. The only third-party
+"Lenis MCP/skill" results found online are unaffiliated, low-adoption personal repos
+(0-star MCP server, an unrelated-named skill repo) — deliberately not installed;
+running a stranger's MCP server means running their code for no real benefit over
+reading the docs. Instead the skill was authored directly from the
+[official README](https://github.com/darkroomengineering/lenis) (MIT) and scoped to
+this repo's actual usage — including the one live gap found while writing it:
+**`lenis/dist/lenis.css` is never imported**, despite the README recommending it.
+Not fixed automatically — flag it if you're touching `stopLenis()`/`startLenis()`.

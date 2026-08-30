@@ -248,13 +248,10 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
               {/* @ts-expect-error - R3F line */}
               <line geometry={meridianGeom}>
                 <lineBasicMaterial
-                  color={
-                    isPrime
-                      ? NOIR.goldDark
-                      : GROUND.dark
-                        ? "rgba(255, 255, 255, 0.18)"
-                        : "rgba(10, 42, 102, 0.14)"
-                  }
+                  // Solid colours only — THREE.Color drops any alpha in the
+                  // string (and warns once per frame doing it). The line's
+                  // transparency is the `opacity` prop below.
+                  color={isPrime ? NOIR.goldDark : GROUND.dark ? NOIR.frost : NOIR.navyField}
                   transparent
                   opacity={isPrime ? 0.75 : 0.22}
                 />
@@ -275,16 +272,17 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
               {/* @ts-expect-error - R3F line */}
               <line geometry={parallelGeoms[i]}>
                 <lineBasicMaterial
+                  // Solid colours only (see meridian note above) — `opacity` carries the fade.
                   color={
                     isEquator
                       ? NOIR.goldDark
                       : isTropic
                         ? GROUND.dark
-                          ? "rgba(255, 199, 44, 0.35)"
-                          : "rgba(10, 42, 102, 0.24)"
+                          ? NOIR.gold
+                          : NOIR.navyField
                         : GROUND.dark
-                          ? "rgba(255, 255, 255, 0.12)"
-                          : "rgba(10, 42, 102, 0.08)"
+                          ? NOIR.frost
+                          : NOIR.navyField
                   }
                   transparent
                   opacity={isEquator ? 0.75 : isTropic ? 0.45 : 0.22}
@@ -333,7 +331,7 @@ function GlobeModel({ reduced }: { reduced: boolean }) {
       <group ref={astrolabeGroup} rotation={[0.41, 0.35, 0]}>
         <Line
           points={astrolabeMain}
-          color={GROUND.dark ? "rgba(255, 255, 255, 0.22)" : "rgba(10, 42, 102, 0.2)"}
+          color={GROUND.dark ? NOIR.frost : NOIR.navyField}
           transparent
           opacity={0.4}
           lineWidth={1}

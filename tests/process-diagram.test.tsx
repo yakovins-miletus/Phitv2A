@@ -25,9 +25,11 @@ test("the composition renders all three growth phases", () => {
 
   const headings = screen.getAllByRole("heading", { level: 3 });
   expect(headings).toHaveLength(CONTENT.process.phases.length);
-  expect(headings[0]?.textContent).toBe("Discover & Research");
-  expect(headings[1]?.textContent).toBe("Build");
-  expect(headings[2]?.textContent).toBe("Operate");
+  // Three-phase growth model (CONTENT.process.phases) — timeline-named, not the
+  // old generic Discover/Build/Operate labels.
+  expect(headings[0]?.textContent).toBe("2019: The Foundation");
+  expect(headings[1]?.textContent).toBe("2020-2025: The Expansion");
+  expect(headings[2]?.textContent).toBe("2026: The Powerhouse");
 });
 
 test("renders custom process model phases correctly", () => {

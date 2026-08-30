@@ -80,6 +80,16 @@ const BEAT_FAILSAFE_MS = 2000;
  *  trigger takes the no-animation path instead of snapping. */
 const ENTER_ANIMATE_TOLERANCE_PX = 24;
 
+/** Multiplier on |self.getVelocity()| (px/s, the entrance trigger's own scroll
+ *  velocity) to project how far the
+ *  page will travel in the next beat of scrolling — ≈120ms of lead — used as
+ *  the "already effectively on screen" distance when the trigger fires. Tuned
+ *  empirically: high enough that a fast flick past a section takes the
+ *  no-animation path (from-vars never painted, nothing to snap), low enough
+ *  that a readable-paced entrance from below still plays the full reveal.
+ *  Clamped to [ENTER_ANIMATE_TOLERANCE_PX, 480]. */
+const VELOCITY_LEAD_FACTOR = 0.12;
+
 
 /** Announce → content overlap, in seconds.
  *
@@ -287,13 +297,20 @@ export function SectionBeat({
           // Measured live: services fired at y=87, process at y=71,
           // candidates at y=47 into view.
           //
-          // So: decide at fire time. Genuinely entering from below (top still
-          // at the fold) plays the reveal. Anything already meaningfully on
-          // screen jumps straight to lit — no from-vars are ever painted, and
-          // there is nothing to snap.
-          onEnter: () => {
+          // So: decide at fire time, against a velocity-scaled lead distance.
+          // The faster the reader is scrolling, the further the section will
+          // have travelled before the 0.45s reveal could matter — so project
+          // that travel (|velocity| * VELOCITY_LEAD_FACTOR, ≈120ms of lead,
+          // clamped to [ENTER_ANIMATE_TOLERANCE_PX, 480]) and treat anything
+          // already within `lead` of the fold as "on screen": jump straight to
+          // lit, from-vars never painted, nothing to snap. Only a genuine
+          // entrance from below at a readable pace — top still more than `lead`
+          // below the fold — plays the full cinematic reveal.
+          onEnter: (self) => {
+            const v = Math.abs(self.getVelocity());
+            const lead = gsap.utils.clamp(ENTER_ANIMATE_TOLERANCE_PX, 480, v * VELOCITY_LEAD_FACTOR);
             const top = root.getBoundingClientRect().top;
-            if (top < window.innerHeight - ENTER_ANIMATE_TOLERANCE_PX) tl.progress(1);
+            if (top < window.innerHeight - lead) tl.progress(1);
             else tl.play();
           },
           // NO `invalidateOnRefresh` here — it is load-bearing that this is

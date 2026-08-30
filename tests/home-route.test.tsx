@@ -26,15 +26,16 @@ test("home route loads via the router: hero, services, new visual sections", asy
   // (This used to assert `getByText("R&D firm")`, which passed only because the
   // deck split its exec summary on that literal to colour it gold — an assertion
   // on a styling implementation detail, not on the copy being present.)
+  // "global markets" is wrapped in a gold <span>, so the sentence is split
+  // across text nodes — match a contiguous tail fragment.
   expect(
-    screen.getByText(/we view global markets as the ultimate intellectual puzzle/i),
+    screen.getByText(/as the ultimate intellectual puzzle/i),
   ).toBeInTheDocument();
   expect(
     screen.getByRole("heading", { name: /THE QUANTITATIVE R&D PARTNER FOR GLOBAL MARKETS/i }),
   ).toBeInTheDocument();
-  expect(
-    screen.getByRole("heading", { name: /our three operating pillars/i }),
-  ).toBeInTheDocument();
+  // Targets the OperatingPillars section eyebrow ("02 / OPERATING PILLARS"), not a heading role.
+  expect(screen.getByText(/operating pillars/i)).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Research Pillar" })).toBeInTheDocument();
 
   // Beat 4 was cut: no leadership bio and no in-hero CTA.
@@ -69,5 +70,6 @@ test("home route loads via the router: hero, services, new visual sections", asy
   ).not.toBeInTheDocument();
   // US-1 AC-4: a contact CTA in the opening view — the hero's
   // "Start a conversation" CTA (see content.ts `cta`).
-  expect(screen.getByRole("link", { name: /start a conversation/i })).toBeInTheDocument();
+  // The CTA now renders in more than one place (hero + closing); assert at least one exists.
+  expect(screen.getAllByRole("link", { name: /start a conversation/i }).length).toBeGreaterThan(0);
 });
