@@ -22,7 +22,7 @@ interface ProcessDiagramProps {
 }
 
 // 4 Core Department Colors / Hues (Using variations of white/gold/transparent for minimalist aesthetic)
-const CORE_COLORS = [
+const CORE_COLORS: readonly [string, string, string, string] = [
   NOIR.gold, // Research
   NOIR.white, // Engineering
   "#4ADE80", // Data (Using the live indicator green for contrast, or just a different shade)
@@ -31,9 +31,9 @@ const CORE_COLORS = [
 
 // Helper to draw the network
 const renderNetwork = (stage: 'foundation' | 'expansion' | 'powerhouse', reduced: boolean) => {
-  let nodes: { id: number; cx: number; cy: number; r: number; fill: string }[] = [];
-  let links: [number, number][] = [];
-  
+  let nodes: { id: number; cx: number; cy: number; r: number; fill: string }[];
+  let links: [number, number][];
+
   if (stage === 'foundation') {
     // 2019: 4 tight core nodes
     nodes = [
@@ -90,17 +90,22 @@ const renderNetwork = (stage: 'foundation' | 'expansion' | 'powerhouse', reduced
   return (
     <svg viewBox="-100 -100 200 200" width="100%" height="100%" style={{ overflow: "visible" }}>
       {/* Links */}
-      {links.map(([from, to], i) => (
+      {links.map(([from, to], i) => {
+        const a = nodes[from];
+        const b = nodes[to];
+        if (!a || !b) return null;
+        return (
         <motion.line
           key={`link-${i}`}
-          x1={nodes[from].cx} y1={nodes[from].cy}
-          x2={nodes[to].cx} y2={nodes[to].cy}
+          x1={a.cx} y1={a.cy}
+          x2={b.cx} y2={b.cy}
           stroke="rgba(255,255,255,0.15)"
           strokeWidth="1.5"
           animate={reduced ? {} : { strokeOpacity: [0.15, 0.4, 0.15] }}
           transition={{ duration: 2 + Math.random(), repeat: Infinity, delay: i * 0.1 }}
         />
-      ))}
+        );
+      })}
 
       {/* Signals (Data Packets) */}
       {!reduced && links.map(([from, to], i) => {
@@ -108,11 +113,14 @@ const renderNetwork = (stage: 'foundation' | 'expansion' | 'powerhouse', reduced
         if (stage === 'foundation' && i > 2) return null;
         if (stage === 'expansion' && i > 6) return null;
 
+        const a = nodes[from];
+        const b = nodes[to];
+        if (!a || !b) return null;
         const dur = stage === 'foundation' ? 3 : stage === 'expansion' ? 2 : 1.5;
         return (
           <React.Fragment key={`packet-group-${i}`}>
-            <path id={`path-${stage}-${i}`} d={`M ${nodes[from].cx} ${nodes[from].cy} L ${nodes[to].cx} ${nodes[to].cy}`} display="none" />
-            <motion.circle r={stage === 'powerhouse' ? "2" : "1.5"} fill={nodes[from].fill}>
+            <path id={`path-${stage}-${i}`} d={`M ${a.cx} ${a.cy} L ${b.cx} ${b.cy}`} display="none" />
+            <motion.circle r={stage === 'powerhouse' ? "2" : "1.5"} fill={a.fill}>
               <animateMotion dur={`${dur + Math.random()}s`} repeatCount="indefinite">
                 <mpath href={`#path-${stage}-${i}`} />
               </animateMotion>

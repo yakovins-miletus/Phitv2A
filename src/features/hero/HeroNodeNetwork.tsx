@@ -234,7 +234,8 @@ export function HeroNodeNetwork({ paused }: HeroNodeNetworkProps) {
     // Update and draw Hubs
     for (let i = 0; i < hubs.length; i++) {
       const hub = hubs[i];
-      
+      if (!hub) continue;
+
       // Float gently around their anchor point using a Lissajous curve
       hub.x = hub.anchorX + Math.cos(time + hub.timeOffset) * 30;
       hub.y = hub.anchorY + Math.sin(time * 0.8 + hub.timeOffset) * 20 + yDrift * 100;
@@ -273,8 +274,10 @@ export function HeroNodeNetwork({ paused }: HeroNodeNetworkProps) {
     // Update and draw Orbiters & Connections
     for (let i = 0; i < orbiters.length; i++) {
       const orbiter = orbiters[i];
+      if (!orbiter) continue;
       const hub = hubs[orbiter.hubIndex];
-      
+      if (!hub) continue;
+
       // Update orbital angle
       orbiter.angle += orbiter.angularVelocity * speedMultiplier;
 
@@ -294,8 +297,8 @@ export function HeroNodeNetwork({ paused }: HeroNodeNetworkProps) {
 
       // Optional: draw lines between orbiters of the same hub if they are close
       for (let j = i + 1; j < orbiters.length; j++) {
-        if (orbiters[j].hubIndex === orbiter.hubIndex) {
-          const other = orbiters[j];
+        const other = orbiters[j];
+        if (other && other.hubIndex === orbiter.hubIndex) {
           const ox2 = hub.x + Math.cos(other.angle) * other.orbitRadius;
           const oy2 = hub.y + Math.sin(other.angle) * other.orbitRadius;
           const dx = ox - ox2;
