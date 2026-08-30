@@ -1,95 +1,66 @@
-import { useState } from "react";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
+import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import CloseIcon from "@mui/icons-material/Close";
 import CookieOutlinedIcon from "@mui/icons-material/CookieOutlined";
 import { AnimatePresence, motion } from "motion/react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { NOIR } from "@/shared/theme/palette";
-import { MONO } from "@/shared/theme/theme";
-
-const STORAGE_KEY = "phitopolis_cookie_notice_dismissed";
-
-function readDismissed(): boolean {
-  if (typeof window === "undefined") return true; // SSR/build: never render
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === "1";
-  } catch {
-    // Storage can throw in locked-down contexts (private mode quotas, etc.) —
-    // fail open to "not dismissed" rather than crash the banner.
-    return false;
-  }
-}
+import {
+  ANALYTICS_PROVIDER_ENABLED,
+  setAnalyticsConsent,
+  useAnalyticsConsent,
+} from "@/shared/consent";
 
 /**
- * CookieNotice — a minimal, dismissible banner disclosing the site's actual
- * storage/tracking posture.
+ * CookieNotice — the GDPR consent gate for analytics.
  *
- * As of this component's authoring, a grep of `src/` for `document.cookie`
- * found zero matches: the site sets no cookies. `localStorage`/`sessionStorage`
- * are used only for first-party UI state (hero background persistence, the
- * admin debug-overlay toggle, "seen the preloader this session") — never for
- * tracking or third-party identifiers. `@vercel/analytics` and
- * `@vercel/speed-insights` are wired into `__root.tsx` but gated off in
- * production (see `useVercelAnalytics` there) unless the site is served from
- * a `*.vercel.app` host or `VITE_ANALYTICS=on` is set.
+ * ── What the site actually stores ───────────────────────────────────────────
  *
- * Because none of that is asserted here as settled legal fact, the banner's
- * copy is left as an awaiting-content slot rather than a claim — do not fill
- * it in without confirming current practice at ship time, and keep it in
- * sync with whatever `/privacy` ends up saying under "Cookies & Similar
- * Technologies".
+ * A grep of `src/` for `document.cookie` finds zero matches: the site sets no
+ * cookies. `localStorage`/`sessionStorage` are used only for first-party UI
+ * state (hero background persistence, the admin debug-overlay toggle, "seen the
+ * preloader this session") — never for tracking or third-party identifiers.
+ * `@vercel/analytics` and `@vercel/speed-insights` are wired into `__root.tsx`
+ * but gated off in production (see `useVercelAnalytics` there) unless served
+ * from a `*.vercel.app` host or `VITE_ANALYTICS=on`.
  *
- * ── BEFORE LAUNCH ────────────────────────────────────────────────────────────
+ * ── Why this usually renders nothing ────────────────────────────────────────
  *
- * **Replace `NOTICE_COPY` below with counsel-approved language** describing the
- * site's actual cookie and storage practices, and drop the `DRAFT` chip once it
- * has been reviewed.
+ * There is no Google Analytics yet — no script, no measurement ID, no `gtag`.
+ * This component is the consent UI that a future GA integration will sit
+ * behind. It renders only when BOTH:
+ *   1. `ANALYTICS_PROVIDER_ENABLED` is true (an analytics provider exists), and
+ *   2. the visitor has not yet chosen (`useAnalyticsConsent()` is `null`).
+ * Today (1) is false, so this renders `null` — correct, and it removes the old
+ * DRAFT banner from the live site.
  *
- * That instruction used to be the banner's *rendered copy* — three sentences of
- * developer TODO shown to every visitor. Measured 2026-08-23: it covered the
- * hero's CTAs at 1440x900 and took roughly a third of the viewport at 390x844,
- * so the first thing anyone saw was the site apologising for itself. It is a
- * note to us, so it lives here, in a comment, where notes to us belong.
+ * ── No dismiss-only path ────────────────────────────────────────────────────
  *
- * What renders instead states only what is certainly true — that the notice is
- * not final — and makes no claim about cookies either way, which is exactly the
- * restraint the paragraph above asks for. Deliberately NOT added: an
- * Accept/Reject pair. The wiring here is dismiss-only (`STORAGE_KEY`), so
- * consent buttons would imply a choice was recorded when none is.
+ * The previous version had an X button and a `phitopolis_cookie_notice_dismissed`
+ * flag that recorded no consent — its own header called that out as the
+ * anti-pattern to avoid. That is gone. "Decline" IS the negative choice; both
+ * buttons write a real value via `setAnalyticsConsent`, and the card dismisses
+ * because that state flip removes it, not via a separate flag.
+ *
+ * Keep this component's copy in sync with whatever `/privacy` ends up saying
+ * under "Cookies & Similar Technologies".
  */
-
-/** The one user-facing line. Says the notice is provisional and nothing more —
- *  no claim about what is or isn't set, because that is not settled yet (see
- *  the note above). Swap for counsel-approved copy before launch. */
-const NOTICE_COPY = "Our cookie and storage notice is being finalised.";
 export function CookieNotice() {
   const reduced = useReducedMotion();
-  // This is a CSR-only app (see the comment on SITE_URL in shared/seo.ts), so
-  // there is no server-rendered markup to hydrate and no mismatch risk in
-  // reading localStorage straight from the lazy initializer below.
-  const [dismissed, setDismissed] = useState<boolean>(() => readDismissed());
+  const consent = useAnalyticsConsent();
 
-  const dismiss = () => {
-    setDismissed(true);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      // Best-effort — if storage is unavailable the banner simply reappears
-      // next visit, which is a safe failure mode for a notice, not a defect.
-    }
-  };
+  // Nothing to consent to (no provider), or the choice is already made.
+  const show = ANALYTICS_PROVIDER_ENABLED && consent === null;
 
   return (
     <AnimatePresence>
-      {dismissed ? null : (
+      {show ? (
         <motion.div
           role="region"
-          aria-label="Cookie and storage notice"
+          aria-label="Cookie consent"
           initial={reduced ? false : { y: 32, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={reduced ? { opacity: 0 } : { y: 32, opacity: 0 }}
@@ -101,11 +72,9 @@ export function CookieNotice() {
             bottom: 0,
             zIndex: 1400, // theme.zIndex.snackbar — same tier CommandPalette uses
             display: "flex",
-            // Docked to the trailing edge on desktop rather than centred. As a
-            // centred 720px bar it sat directly over the home hero's CTA row
-            // ("WHAT WE DO", "EXPLORE COMMUNITY"), which are the page's primary
-            // actions and were partly unclickable behind it. Full width still on
-            // mobile, where there is no room to dock and nothing beside it.
+            // Docked to the trailing edge on desktop rather than centred, so it
+            // clears the home hero's CTA row. Full width on mobile, where there
+            // is no room to dock and nothing beside it.
             justifyContent: "flex-end",
             padding: "16px",
             pointerEvents: "none",
@@ -124,80 +93,72 @@ export function CookieNotice() {
               color: NOIR.frost,
               boxShadow: "var(--glass-shadow-3)",
               px: { xs: 2, md: 2.5 },
-              // Halved now that the copy is a single line instead of a
-              // heading-plus-paragraph stack.
-              py: { xs: 1, md: 1.125 },
+              py: { xs: 1.5, md: 1.75 },
             }}
           >
-            {/* One row, one line. `alignItems: center` (not flex-start) because
-                there is no longer a heading + paragraph stack to top-align. */}
-            <Stack direction="row" spacing={1.75} alignItems="center">
-              <CookieOutlinedIcon sx={{ color: NOIR.gold, flexShrink: 0, fontSize: "1.15rem" }} />
+            <Stack direction="row" spacing={1.75} alignItems="flex-start">
+              <CookieOutlinedIcon
+                sx={{ color: NOIR.gold, flexShrink: 0, fontSize: "1.15rem", mt: 0.25 }}
+              />
 
-              {/* Chip, copy and link share ONE inline flow rather than sitting
-                  in a flex row. As flex siblings the chip wrapped onto its own
-                  line at 390px, which left the cookie icon centred against the
-                  second line and the whole bar looking misassembled. Inline,
-                  the chip is just the first word of the sentence and wraps with
-                  it. */}
-              <Typography
-                variant="body2"
-                sx={{ flex: 1, minWidth: 0, color: `rgba(${NOIR.whiteRgb}, 0.85)` }}
-              >
-                {/* The honesty marker, reduced from a full headline to a chip.
-                    Remove it once the copy has been reviewed. */}
-                <Box
-                  component="span"
-                  sx={{
-                    display: "inline-block",
-                    fontFamily: MONO,
-                    fontSize: "0.625rem",
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    color: NOIR.gold,
-                    border: `1px solid ${NOIR.gold}55`,
-                    borderRadius: "var(--r-pill)",
-                    px: 0.875,
-                    py: 0.125,
-                    mr: 1,
-                    // Nudges the pill's optical centre onto the text baseline —
-                    // `vertical-align: middle` alone rides high next to
-                    // lowercase copy.
-                    verticalAlign: "1px",
-                  }}
+              <Stack spacing={1.25} sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: `rgba(${NOIR.whiteRgb}, 0.85)` }}
                 >
-                  Draft
-                </Box>
-                {NOTICE_COPY}{" "}
-                <RouterLink
-                  to="/privacy"
-                  sx={{
-                    color: NOIR.frost,
-                    textUnderlineOffset: "3px",
-                    "&:hover": { color: NOIR.gold },
-                  }}
-                >
-                  Privacy Policy
-                </RouterLink>
-              </Typography>
+                  We use analytics cookies to understand how visitors use this
+                  site. Essential local storage (interface preferences) is always
+                  on.{" "}
+                  <RouterLink
+                    to="/privacy"
+                    sx={{
+                      color: NOIR.frost,
+                      textUnderlineOffset: "3px",
+                      "&:hover": { color: NOIR.gold },
+                    }}
+                  >
+                    Privacy Policy
+                  </RouterLink>
+                </Typography>
 
-              <IconButton
-                aria-label="Dismiss cookie notice"
-                onClick={dismiss}
-                size="small"
-                sx={{
-                  color: `rgba(${NOIR.whiteRgb}, 0.7)`,
-                  flexShrink: 0,
-                  "&:hover": { color: NOIR.gold, bgcolor: `rgba(${NOIR.whiteRgb}, 0.06)` },
-                }}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    aria-label="Accept analytics cookies"
+                    onClick={() => setAnalyticsConsent("granted")}
+                    size="small"
+                    variant="contained"
+                    sx={{
+                      bgcolor: NOIR.gold,
+                      color: NOIR.navyDeep,
+                      fontWeight: 700,
+                      "&:hover": { bgcolor: NOIR.gold, filter: "brightness(1.08)" },
+                    }}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    aria-label="Decline analytics cookies"
+                    onClick={() => setAnalyticsConsent("denied")}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      color: `rgba(${NOIR.whiteRgb}, 0.85)`,
+                      borderColor: `rgba(${NOIR.whiteRgb}, 0.3)`,
+                      "&:hover": {
+                        borderColor: NOIR.gold,
+                        color: NOIR.gold,
+                        bgcolor: `rgba(${NOIR.whiteRgb}, 0.06)`,
+                      },
+                    }}
+                  >
+                    Decline
+                  </Button>
+                </Stack>
+              </Stack>
             </Stack>
           </Box>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }
