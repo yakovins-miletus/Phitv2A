@@ -48,7 +48,7 @@ describe("M2 Empirical Verification 1: ScrollTrigger Pin & Travel Distance", () 
     expect(section.id).toBe("closing");
     expect(section.ownsPin).toBe(true);
     expect(section.noExitDim).toBe(true);
-    expect(section.chapter).toBe(7);
+    expect(section.chapter).toBe(5);
     expect(section.ground).toBe("field");
   });
 
