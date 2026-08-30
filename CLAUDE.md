@@ -130,38 +130,36 @@ before citing them. Still-relevant, structural facts:
   equivalent), never `window.scrollTo` — Lenis ignores programmatic scroll
   and a script using it will report false failures.
 
-## Open rework (design/UX requirements, with handoffs)
+## Open rework — CLOSED 2026-08-30
 
-Three areas are known-deficient and have dedicated handoff docs. Read the
-handoff before touching the area; each carries the current-state map,
-invariants, and verification steps.
+All three areas below were rebuilt and merged. Cycle summary + the remaining
+maintainer verification steps:
+[`docs/open-rework-cycle-2026-08-30/handoff.md`](docs/open-rework-cycle-2026-08-30/handoff.md).
+Each per-area handoff now carries a `## Resolution` block at its top.
 
-1. **Preloader must fully preload the landing route.** By the time the intro
-   reveal finishes, everything a reader scrolls through on `/` (and on `/about`
-   when it's the landing route) must be cached **and decoded** — no image
-   pop-in, no late webfont shift, no first-scroll hitch. `SECTION_MANIFEST`
-   (`AppShell.tsx`) is currently 19 hand-curated assets and misses the hero
-   video, all below-fold home imagery, and R3F chunks. The reveal must gate on
-   the home-critical signal set (failsafe still absolute). →
+1. **Preloader full-preload** → `LoadSignal.blocking?` tiers (reveal gates only on
+   the blocking set), route-aware `resolveRouteManifest(pathname)` in
+   `AppShell.tsx` replacing `SECTION_MANIFEST`, ServiceGlobe chunk
+   background-warmed. `/`'s below-fold is canvas/SVG/CSS so there is no raster
+   imagery to race — the "decoded asset store" idea was evaluated and dropped.
    [`docs/preloader-full-preload/handoff.md`](docs/preloader-full-preload/handoff.md)
 
-2. **The web intro is beat-sequenced, and its reveal is rectangular.** Target
-   timeline: 3 opening beats → progress `0→100` → 2 settle beats + a buffer →
-   2 rectangular-reveal beats. Replace the circular `radial-gradient` exit mask
-   in `Preloader.tsx` **and** the `circle()` `fresko-home-aperture` keyframe in
-   `viewTransitions.css` with a rectangular reveal, kept unified. The hero must
-   not create its ScrollTrigger until `useEntranceSettled()` — today it only
-   gates opacity, so its timeline state advances under the intro ("components
-   bypassing each other"). `Preloader.tsx` stays `motion/react`-only. →
+2. **Web intro** → beat-sequenced `Preloader.tsx` (`BEAT_S = 0.26s`, 4 phases,
+   `SETTLE_HOLD_MS` replacing `POST_100_BEAT_MS`), rectangular `clip-path` reveal
+   unified with `viewTransitions.css` `fresko-home-aperture`, hero pin
+   ScrollTrigger gated on `useEntranceSettled()`. `Preloader.tsx` stays
+   `motion/react`-only.
    [`docs/web-intro-rework/handoff.md`](docs/web-intro-rework/handoff.md)
 
-3. **The home closing section needs a rebuild.** Elements overlap (headline and
-   CTA have overlapping opacity windows; the CTA is anchored to a canvas CSS var
-   that's undefined on first paint and snaps), mobile is a squeezed desktop, the
-   establishing shot has no eyebrow, and 2 `closing-lattice-pinned-scroll` tests
-   fail. Rebuild into a clean phase order with a proper single-CTA reveal and a
-   bespoke mobile layout. →
+3. **Home closing section** → `ClosingLattice.tsx` rebuilt into 3 render modes
+   (desktop 5-phase disjoint scrub / bespoke mobile static stack / reduced-motion
+   final frame); CTA in a grid column, no `--hp-px` snap; pin 1.3vh → 2.0vh.
    [`docs/closing-section-rebuild/handoff.md`](docs/closing-section-rebuild/handoff.md)
+
+**Still open (next session):** run `tests/preview-cdp.test.ts` + LCP re-measure +
+`ladder-probe.js` parity, screencast-verify the intro/closing motion in a real
+browser, and the `/images/pillars/*` 404 + `useVideoBg` dead-code items. See the
+cycle handoff.
 
 ## Motion library versions & the root-level GSAP/Lenis skills
 
