@@ -37,8 +37,11 @@ export const NAV_ANCHORS = {
   BLOG_HERO: 'blog-hero',
   /** The About page's blog section (relocated from home — PRD-home-client-focus §US-2). */
   ABOUT_BLOG_SECTION: 'about-blog-section',
-  /** Home page: the global-markets wager beat. Navy ground (deep), navbar must go dark. */
-  GLOBAL_MARKETS: 'global-markets',
+  /** Home page: the global-markets wager beat. Navy ground (deep), navbar must go dark.
+   *  Anchor id is deliberately distinct from the `global-markets` *section* id
+   *  (SectionBeat) — the two registries must stay disjoint (see
+   *  anchor-namespaces.test.ts). */
+  GLOBAL_MARKETS: 'home-global-markets',
   /** The Home page's closing shelf — light (white) ground, so the navbar must go dark-chrome. */
   HOME_CLOSING: 'home-closing',
   /** AppShell's footer, on every route. */

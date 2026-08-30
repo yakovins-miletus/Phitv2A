@@ -24,8 +24,10 @@ test("reduced motion: no preloader overlay mounts, hero text is present immediat
 
   expect(screen.queryByTestId("preloader")).not.toBeInTheDocument();
   expect(screen.getByText("[ SCROLL TO EXPLORE ↓ ]")).toBeInTheDocument();
+  // "global markets" is wrapped in a gold <span>, so the sentence is split
+  // across text nodes — match a contiguous tail fragment.
   expect(
-    screen.getByText(/we view global markets as the ultimate intellectual puzzle/i),
+    screen.getByText(/as the ultimate intellectual puzzle/i),
   ).toBeInTheDocument();
 });
 
@@ -188,7 +190,13 @@ test("reduced motion: use-case narrative stacks vertically, all slides reachable
   expect(screen.getByText("Algorithmic Signal Generation")).toBeInTheDocument();
   expect(screen.getByText("Cloud-Native Infrastructure")).toBeInTheDocument();
   expect(screen.getByText("Global Technical Operations")).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /noise, model, signal/i })).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /sources, pipeline stages/i })).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /follow-the-sun coverage/i })).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: /raw noise passing through model gate into resolved predictive signal/i }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: /multi-source ingestion cards connecting to feature compute matrix/i }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: /operations terminal console with contextual callouts/i }),
+  ).toBeInTheDocument();
 });
