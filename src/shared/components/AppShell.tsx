@@ -215,17 +215,57 @@ function preloadAsset(url: string): Promise<void> {
   });
 }
 
+/** A {@link LoadSignal} whose work is deferred: `promise` is created up front
+ *  (so the array has its full length and identity from first render) but the
+ *  underlying work only begins when `__start` is called from a mount effect —
+ *  used for route warm-ups, whose `router.preloadRoute()` must not run during
+ *  render. `__start` is absent on signals that start themselves. */
+interface DeferredLoadSignal extends LoadSignal {
+  __start?: () => void;
+}
+
 function useWarmupSignals(active: boolean): LoadSignal[] {
   const router = useRouter();
-  const [signals] = useState<LoadSignal[]>(() => {
+
+  // The signal array is built once, at first render, so Preloader's one-time
+  // snapshot of `warmup` captures every signal (routes + manifest + fonts) and
+  // its progress bar stays paced against real work.
+  //
+  // The catch: router.preloadRoute() synchronously dispatches into TanStack
+  // Router's Transitioner state, so calling it during render (which a useState
+  // lazy initializer is) makes React warn "Cannot update a component
+  // (Transitioner) while rendering a different component (AppShellInner)".
+  // So each route signal ships a settled-but-not-started promise plus a
+  // `__start` thunk; the mount effect below fires the actual preloadRoute()
+  // after commit, where a cross-component state update is legal, and resolves
+  // the signal's promise when the preload settles.
+  //
+  // preloadAsset() is plain fetch()/Image() — no React state — so the manifest
+  // signals still kick off straight from the initializer, unchanged.
+  //
+  // `active` only goes false -> true once (the preloader shows, then never
+  // again this session), so [active] with no cleanup is sufficient.
+  const [signals] = useState<DeferredLoadSignal[]>(() => {
     if (!active) return [];
 
-    const routeSignals = WARM_ROUTES.map((route) => ({
-      label: route.label,
-      promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
-    }));
+    const routeSignals: DeferredLoadSignal[] = WARM_ROUTES.map((route) => {
+      let resolve!: () => void;
+      const promise = new Promise<void>((r) => {
+        resolve = r;
+      });
+      return {
+        label: route.label,
+        promise,
+        __start: () => {
+          router
+            .preloadRoute({ to: route.to })
+            .catch(() => undefined)
+            .finally(resolve);
+        },
+      };
+    });
 
-    const manifestSignals = SECTION_MANIFEST.map((url) => {
+    const manifestSignals: DeferredLoadSignal[] = SECTION_MANIFEST.map((url) => {
       const filename = url.split('/').pop() || 'ASSET';
       return {
         label: filename.toUpperCase().substring(0, 15),
@@ -235,6 +275,12 @@ function useWarmupSignals(active: boolean): LoadSignal[] {
 
     return [...routeSignals, ...manifestSignals];
   });
+
+  useEffect(() => {
+    if (!active) return;
+    signals.forEach((signal) => signal.__start?.());
+  }, [active, signals]);
+
   return signals;
 }
 
