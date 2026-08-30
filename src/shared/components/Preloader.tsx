@@ -31,13 +31,19 @@ import { EASE_OUT_EXPO } from "@/shared/motion/easing";
  * The hairline is the only geometric act and it is driven by real resolved
  * signals — if it moves slowly, something genuinely is slow.
  *
- * THE EXIT is an expanding circular mask: a hole opens at the centre and grows
- * past the corners, so the site is revealed through the intro rather than
+ * THE EXIT is an expanding rectangular hole: a centred rectangle opens and
+ * grows past the corners, so the site is revealed through the intro rather than
  * having the intro removed from in front of it. Deliberately the same optical
- * idea as the home-arrival transition in `viewTransitions.css`, so the site has
- * one notion of how things are revealed instead of two unrelated ones. It is
- * not a handoff — nothing is shared with the hero, and the hero's own entrance
- * runs independently.
+ * idea as the home-arrival transition in `viewTransitions.css` (also a
+ * rectangular aperture), so the site has one notion of how things are revealed
+ * instead of two unrelated ones. It is not a handoff — nothing is shared with
+ * the hero, and the hero's own entrance runs independently.
+ *
+ * THE BEAT MODEL. Every duration is a multiple of `BEAT_S`. The timeline:
+ * 3 opening beats (wordmark, hairline, status+readout) played concurrently with
+ * the loading bar → progress 0→100 paced by real signals → 2 settle beats of
+ * hold (`SETTLE_HOLD_MS`) → 2 reveal beats (`OUT_DURATION_S`). Escape and the
+ * settle cap both skip straight to the reveal with no hold.
  *
  * ENGINEERING INVARIANTS (kept from the previous revision — these were right):
  *  - `motion/react`, never gsap. This module is on the first-paint path and
@@ -53,64 +59,46 @@ import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
 
 /**
- * The intro's *floor* — what it costs when there is nothing whatever to warm.
- *
- * Measured on a warm localhost, where every signal resolves before the entrance
- * gate even opens, the first draft sat on screen for 1.14s (0.42 entrance +
- * 0.72 exit). That is the exact failure the previous cockpit version had: time
- * spent on choreography rather than on loading, paid by the visitors who needed
- * it least. Trimmed to a ~0.92s floor, which still reads as deliberate rather
- * than as a flash.
- *
- * Both numbers are animation lengths, not waits — the settle gate between them
- * collapses to zero the moment the warm-up finishes.
+ * The beat unit. Every duration in this module is a multiple of it, so the
+ * whole intro's pacing is tunable from one constant. `0.26s` is brisk enough
+ * that three opening beats + two settle beats read as deliberate rather than
+ * slow on a ~200KB site.
  */
-const IN_DURATION_S = 0.34;
+const BEAT_S = 0.26;
+
+/**
+ * The reveal — 2 beats plus a little slack. An animation length, not a wait.
+ */
 const OUT_DURATION_S = 0.58;
 
 /**
- * Pre-roll beat: a short brand hold (wordmark, hairline) before the progress
- * counter appears. This allows the number to arrive into an established frame
- * instead of popping in immediately. The wordmark and hairline are visible
- * during this beat; the counter (readout) delays its entrance.
- *
- * Target warm-cache intro duration: ~1.5s total
- *  - 0.34s entrance (wordmark + hairline)
- *  - 0.30s pre-roll hold (counter hidden)
- *  - 0.58s exit (mask reveal)
- *  - 0.20s post-100 beat (pause at 100% before exit)
- *  - Paced progress easing across signals (0.5s per update)
- *
- * This 1.5s duration is deliberately modest: on a 200KB site it reads as
- * considered, not as a stall. Lusion buys length with genuinely heavy WebGL;
- * this site should not hide behind fabricated work.
+ * Settle hold: 2 beats of stillness after 100% — a "resolved" beat (the READY
+ * state registering) and a deliberate buffer beat — before the reveal starts.
+ * The pause is what makes the reveal feel intentional rather than abrupt. Only
+ * applied on a natural completion; Escape and the settle cap both skip it.
+ * Replaces the old bare `POST_100_BEAT_MS = 200`.
  */
-const PRE_ROLL_DURATION_S = 0.3;
-
-/**
- * Post-100 beat: a brief pause after progress reaches 100% before the exit
- * sequence (mask reveal) starts. This gives the "READY" state a moment to
- * register visually before the site is revealed.
- */
-const POST_100_BEAT_MS = 200;
+const SETTLE_HOLD_MS = 2 * BEAT_S * 1000; // 520
 
 /**
  * Settle cap, and the one number that encodes the warm-up bargain.
  *
- * The previous revision capped settle at 800ms as part of a 1.5s total budget.
- * That budget was written for a transition, not for a preloader whose whole job
- * is to finish warming four route chunks plus a twelve-image manifest — at
- * 800ms it would routinely give up partway and the navigations it was supposed
- * to make instant would still fetch.
- *
  * 1800ms is the compromise: long enough that a cold load usually completes the
  * warm-up, short enough that a stalled CDN costs under two seconds. Exit fires
- * the *instant* signals resolve, so a warm cache still leaves in ~450ms — the
- * cap is a ceiling, never a wall. Escape always skips. The post-100 beat adds
- * 200ms, so the new effective cap is ~2000ms before exit.
+ * the *instant* signals resolve, so a warm cache still leaves quickly — the cap
+ * is a ceiling, never a wall. When it bites it fires the reveal directly, with
+ * no settle hold. Escape always skips.
  */
 const MAX_SETTLE_MS = 1800;
-const BEAT_FAILSAFE_MS = 2600;
+
+/**
+ * Unconditional unmount ceiling. Nothing may leave the overlay mounted. Raised
+ * from 2600 for the beat-sequenced timeline: the worst non-forced path is
+ * entranceDone (2*BEAT_S = 520) waiting on a signal that resolves just under
+ * the cap (~1790) → +SETTLE_HOLD (520) → +OUT (580) ≈ 2900ms; 3400 clears that
+ * with margin while staying an absolute ceiling.
+ */
+const BEAT_FAILSAFE_MS = 3400;
 
 const WORDMARK = "PHITOPOLIS";
 
@@ -217,27 +205,24 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     const root = rootRef.current;
 
     /**
-     * The expanding hole.
+     * The expanding rectangular hole.
      *
-     * A `clip-path: circle()` would contract the overlay to a dot at the
-     * centre — the opposite reading. To open a hole you need a mask whose
-     * transparent region grows, which means animating a radial-gradient stop.
+     * A `clip-path: circle()` (or `inset()` shrinking the overlay) would
+     * contract the overlay to a point — the opposite reading. To open a hole
+     * you clip the overlay to an outer rectangle with an inner rectangle
+     * subtracted (a bridged polygon → nonzero-winding hole) and grow the inner
+     * one from the centre point out past the corners.
      *
-     * Driven by `animate(from, to, { onUpdate })` writing the style directly,
-     * rather than by handing Motion a `--custom-property` target: an unregistered
-     * custom property has no interpolation type, so relying on the CSS engine to
-     * tween it is undefined behaviour across browsers. A number tween plus a
-     * manual write is explicit and portable.
+     * Driven by `animate(from, to, { onUpdate })` writing the style string
+     * directly, rather than by handing Motion a `--custom-property` target: an
+     * unregistered custom property has no interpolation type, so relying on the
+     * CSS engine to tween it is undefined behaviour across browsers. A number
+     * tween plus a manual write is explicit and portable.
      *
-     * Radius reaches the far corner (half the diagonal) with 6% of slack, so the
-     * last frame is genuinely clear of the viewport rather than leaving a
-     * vignette in the corners.
+     * `g` is the hole's half-extent as a fraction of each axis; it reaches 0.53
+     * (6% of slack past the edge) so the last frame is genuinely clear of the
+     * viewport rather than leaving a frame around the corners.
      */
-    const reach =
-      typeof window === "undefined"
-        ? 1200
-        : (Math.hypot(window.innerWidth, window.innerHeight) / 2) * 1.06;
-
     const out: Promise<unknown>[] = [];
 
     if (stageRef.current) {
@@ -253,15 +238,18 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     }
 
     if (root) {
-      root.style.willChange = "mask-image, -webkit-mask-image";
+      root.style.willChange = "clip-path";
       out.push(
-        animate(0, reach, {
+        animate(0, 1, {
           duration: OUT_DURATION_S,
           ease: EASE_OUT_EXPO,
-          onUpdate: (r) => {
-            const g = `radial-gradient(circle at 50% 50%, transparent ${r}px, #000 ${r}px)`;
-            root.style.webkitMaskImage = g;
-            root.style.maskImage = g;
+          onUpdate: (t) => {
+            const g = t * 0.53; // half-extent of the hole as a fraction (+6% slack)
+            const a = (0.5 - g) * 100; // near edge % (goes negative past t≈0.94 — fine)
+            const b = (0.5 + g) * 100; // far edge %
+            root.style.clipPath =
+              `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ` +
+              `${a}% ${a}%, ${a}% ${b}%, ${b}% ${b}%, ${b}% ${a}%, ${a}% ${a}%)`;
           },
         }).then(() => {}),
       );
@@ -285,78 +273,81 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     }
   }, [reduced, finish]);
 
-  // IN beat. `entranceStartedRef` latches so the null→false flip of
-  // `useReducedMotion` cannot restart it; the early return below is keyed on
-  // `reduced === true` so that same flip cannot strand it either.
+  // PHASE A — OPENING. Three staggered beats, one element per beat.
+  // `entranceStartedRef` latches so the null→false flip of `useReducedMotion`
+  // cannot restart it; the early return below is keyed on `reduced === true` so
+  // that same flip cannot strand it either.
   useEffect(() => {
     if (reduced === true) return;
     if (entranceStartedRef.current) return;
     entranceStartedRef.current = true;
 
+    // Beat 1 (t=0): the wordmark letters stagger in.
     const letters = letterRefs.current.filter((el): el is HTMLSpanElement => el !== null);
     if (letters.length > 0) {
       animate(
         letters,
         { opacity: [0, 1], y: [14, 0] },
-        { delay: stagger(0.022), duration: 0.4, ease: EASE_OUT_EXPO },
+        { delay: stagger(0.022), duration: BEAT_S, ease: EASE_OUT_EXPO },
       );
     }
+    // Beat 2 (t=BEAT_S): the hairline rule draws.
     if (ruleRef.current) {
       animate(
         ruleRef.current,
         { opacity: [0, 1], scaleX: [0.4, 1] },
-        { duration: 0.5, delay: 0.12, ease: EASE_OUT_EXPO },
+        { duration: BEAT_S, delay: BEAT_S, ease: EASE_OUT_EXPO },
       );
     }
-    // PRE-ROLL BEAT: delay the readout (progress counter) appearance until after
-    // the wordmark and hairline are established. This gives the counter room to
-    // appear into a stable frame rather than competing with the entrance.
+    // Beat 3 (t=2*BEAT_S): the mono status label + 00% readout fade in. A
+    // supporting beat — it gates nothing.
     if (readoutRef.current) {
-      animate(
-        readoutRef.current,
-        { opacity: [0, 1] },
-        { duration: 0.3, delay: 0.22 + PRE_ROLL_DURATION_S }
-      );
+      animate(readoutRef.current, { opacity: [0, 1] }, { duration: BEAT_S, delay: 2 * BEAT_S });
     }
 
-    const entranceTimer = window.setTimeout(
-      () => setEntranceDone(true),
-      (IN_DURATION_S + PRE_ROLL_DURATION_S) * 1000
-    );
+    // `entranceDone` opens once the wordmark + hairline are established (2 beats
+    // in). Beat 3 finishing is not required.
+    const entranceTimer = window.setTimeout(() => setEntranceDone(true), 2 * BEAT_S * 1000);
     return () => window.clearTimeout(entranceTimer);
   }, [reduced]);
 
-  // PACED PROGRESS: The fill is the progress bar. scaleX only — no width animation,
-  // no reflow. Duration increased from 0.28s to 0.5s to create a visible easing
-  // effect as the bar approaches its true value. The displayed percentage never
-  // exceeds the real resolved/total progress.
+  // PHASE B — LOADING. The fill is the progress bar. scaleX only — no width
+  // animation, no reflow. The per-update `BEAT_S` easing is the "reads as
+  // loading, not a flash" guarantee: the bar visibly travels to its new value
+  // even when signals resolve instantly. The displayed percentage never exceeds
+  // the real resolved/total progress.
   useEffect(() => {
     if (fillRef.current) {
-      animate(fillRef.current, { scaleX: progressPercent / 100 }, { duration: 0.5, ease: "easeOut" });
+      animate(
+        fillRef.current,
+        { scaleX: progressPercent / 100 },
+        { duration: BEAT_S, ease: "easeOut" },
+      );
     }
   }, [progressPercent]);
 
-  // SETTLE + POST-100 BEAT. After entrance is done and warmup is complete,
-  // wait for a brief post-100 beat before starting the exit (mask reveal).
-  // The cap only bites when something is genuinely stuck.
+  // PHASE C — SETTLE. After entrance is done and warmup is complete, hold for
+  // SETTLE_HOLD_MS (2 beats) before starting the reveal. The cap only bites
+  // when something is genuinely stuck, and when it does it fires the reveal
+  // directly with no hold.
   useEffect(() => {
     if (reduced === true) return;
     if (!entranceDone) return;
 
     if (forced) {
-      // Escape means skip, immediately — the post-100 beat is a grace note for
-      // a real completion, not something an impatient visitor should have to
-      // sit through. Bypass it entirely rather than letting `isComplete`
-      // (which is also true when forced) route Escape through the same delay
-      // as a natural finish.
+      // Escape means skip, immediately — the settle hold is a grace note for a
+      // real completion, not something an impatient visitor should have to sit
+      // through. Bypass it entirely rather than letting `isComplete` (which is
+      // also true when forced) route Escape through the same delay as a natural
+      // finish.
       triggerExit();
       return;
     }
 
     if (isComplete && !completedAt100Ref.current) {
-      // We've hit 100%. Mark it and wait for the post-100 beat before exiting.
+      // We've hit 100%. Mark it and hold for the settle beats before revealing.
       completedAt100Ref.current = true;
-      const postBeatTimeout = window.setTimeout(triggerExit, POST_100_BEAT_MS);
+      const postBeatTimeout = window.setTimeout(triggerExit, SETTLE_HOLD_MS);
       return () => {
         window.clearTimeout(postBeatTimeout);
         // Reset the latch on cleanup: this ref means "a post-100 timer is

@@ -81,18 +81,18 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       expect(sessionStorage.getItem(PRELOADER_SESSION_KEY)).toBe("1");
     });
 
-    it("reschedules the post-100-beat exit when `reduced` flips inside the 200ms window (post-100 timer race)", async () => {
-      // Reproduces the bug fixed alongside this test: the SETTLE + POST-100
-      // BEAT effect (Preloader.tsx) sets `completedAt100Ref.current = true`
-      // when it schedules the 200ms postBeatTimeout, but pre-fix never reset
-      // it. If `reduced` (or `triggerExit`, which itself depends on
+    it("reschedules the post-100-beat exit when `reduced` flips inside the SETTLE_HOLD_MS (520ms) window (post-100 timer race)", async () => {
+      // Reproduces the bug fixed alongside this test: the SETTLE effect
+      // (Preloader.tsx) sets `completedAt100Ref.current = true` when it
+      // schedules the SETTLE_HOLD_MS (520ms) postBeatTimeout, but pre-fix never
+      // reset it. If `reduced` (or `triggerExit`, which itself depends on
       // `[reduced, finish]`) changes identity before that timer fires, the
       // effect re-runs: cleanup cancels the pending timer, and the re-entrant
       // run falls into the dead `if (completedAt100Ref.current) return;`
       // branch — triggerExit() never fires again on this path. Only the
-      // independent 2600ms BEAT_FAILSAFE_MS effect rescues it, which is why
-      // this test asserts a tight window well under that failsafe: a pass
-      // here proves the real exit path fired, not the failsafe.
+      // independent BEAT_FAILSAFE_MS (3400ms) effect rescues it, which is why
+      // this test asserts a window well under that failsafe: a pass here proves
+      // the real exit path fired, not the failsafe.
       let reducedVal: boolean | null = null;
       vi.spyOn(motion, "useReducedMotion").mockImplementation(() => reducedVal);
 
@@ -130,21 +130,21 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       await new Promise((r) => setTimeout(r, 700));
 
       // Complete the warmup inside act(): isComplete flips true, and the
-      // SETTLE effect schedules the 200ms postBeatTimeout + latches
+      // SETTLE effect schedules the 520ms postBeatTimeout + latches
       // completedAt100Ref.
       act(() => {
         resolveSig();
       });
       await screen.findByText("100%");
 
-      // Still inside the 200ms window: flip `reduced` (null -> false) and
+      // Still inside the 520ms window: flip `reduced` (null -> false) and
       // rerender. This changes both `reduced` itself and `triggerExit`
       // (dependent on `[reduced, finish]`) in the SETTLE effect's deps,
       // forcing the exact re-run this test targets. Note `reduced` becomes
       // `false`, not `true` — so unlike the null->true test above,
       // `triggerExit` does NOT take the reduced-motion fast path and instead
-      // runs the full ~0.58s (`OUT_DURATION_S`) mask-reveal animation before
-      // calling `finish()`, which is why the assertion below budgets for
+      // runs the full ~0.58s (`OUT_DURATION_S`) rectangular reveal animation
+      // before calling `finish()`, which is why the assertion below budgets for
       // that animation rather than using a bare ~500ms window.
       reducedVal = false;
       rerender(
@@ -157,20 +157,20 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
         </Providers>
       );
 
-      // Tight window: comfortably covers the real path (200ms post-100 beat
-      // + ~580ms exit animation + scheduling slack ~= 1s) while staying well
-      // clear of BEAT_FAILSAFE_MS (2600ms measured from mount) — a pass
-      // proves the rescheduled post-100 timer fired, not the failsafe.
+      // Window: covers the real path (700ms pre-wait + 520ms settle hold +
+      // ~580ms exit animation + scheduling slack) while staying clear of
+      // BEAT_FAILSAFE_MS (3400ms measured from mount) — a pass proves the
+      // rescheduled post-100 timer fired, not the failsafe.
       await waitFor(
         () => {
           expect(onStartExit).toHaveBeenCalled();
           expect(onDone).toHaveBeenCalled();
         },
-        { timeout: 1500 }
+        { timeout: 2500 }
       );
 
       const elapsed = Date.now() - startTime;
-      expect(elapsed).toBeLessThan(2200);
+      expect(elapsed).toBeLessThan(3000);
     });
   });
 
@@ -252,10 +252,13 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       expect(await screen.findByText("100%")).toBeInTheDocument();
       expect(screen.getByText("READY")).toBeInTheDocument();
 
+      // Intro is beat-sequenced now: the warm floor is deliberately raised to
+      // ~2*BEAT_S (520, entranceDone) + SETTLE_HOLD_MS (520) + OUT (580) ≈ 1.6s.
+      // Bumped 1500 -> 2200 for slack.
       await waitFor(() => {
         expect(onStartExit).toHaveBeenCalled();
         expect(onDone).toHaveBeenCalled();
-      }, { timeout: 1500 });
+      }, { timeout: 2200 });
     });
 
     it("slow warmup (resolving mid-flight) dynamically progresses and exits as soon as complete", async () => {
@@ -308,9 +311,12 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       // Even though the promise rejected, it counts as settled -> 100%
       expect(await screen.findByText("100%")).toBeInTheDocument();
 
+      // Beat-sequenced warm floor (~1.6s: entranceDone 520 + SETTLE_HOLD 520 +
+      // OUT 580); bumped 1500 -> 2200. Contract under test (rejection still
+      // counts, overlay unlocks) is unchanged.
       await waitFor(() => {
         expect(onDone).toHaveBeenCalled();
-      }, { timeout: 1500 });
+      }, { timeout: 2200 });
     });
   });
 
@@ -415,10 +421,13 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       // Parent re-renders with fresh function references
       rerender(<Preloader onDone={newOnDone} onStartExit={newOnStartExit} />);
 
+      // Beat-sequenced warm floor (~1.6s); bumped 1500 -> 2200. The
+      // latest-callback contract itself is unchanged — only the exit timing is
+      // slower now.
       await waitFor(() => {
         expect(newOnStartExit).toHaveBeenCalled();
         expect(newOnDone).toHaveBeenCalled();
-      }, { timeout: 1500 });
+      }, { timeout: 2200 });
 
       expect(oldOnDone).not.toHaveBeenCalled();
       expect(oldOnStartExit).not.toHaveBeenCalled();
