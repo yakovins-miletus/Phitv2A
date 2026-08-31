@@ -10,7 +10,8 @@ import { NOIR } from "@/shared/theme/palette";
 import { CHAPTERS, type ChapterIndex } from "@/shared/sections";
 import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
 import { heroTotalHeight } from "@/shared/motion/heroPin";
-import { useReducedMotion } from "@/shared/motion";
+import { useReducedMotion, useHeroCascadeStep } from "@/shared/motion";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { getLenis } from "./smoothScrollControls";
 import { useNavbar } from "./navbarHooks";
 
@@ -54,6 +55,10 @@ export function EyeFlow() {
   const [activeChapter, setActiveChapter] = useState<ChapterIndex>(0);
   const indicatorTop = useTransform(normalizedProgress, [0, 1], [0, RAIL_HEIGHT]);
   const reduced = useReducedMotion();
+  // Step 4 of the post-intro hero cascade. On a warm/repeat visit this is
+  // already 5 — the rail keeps its long-standing always-on behaviour,
+  // unchanged. See `useHeroCascadeStep`'s docblock.
+  const heroStep = useHeroCascadeStep();
 
   /**
    * Chapter/progress tracking — cached offsets, not per-frame layout.
@@ -222,7 +227,15 @@ export function EyeFlow() {
         position: "fixed",
         right: 24,
         top: "50%",
-        transform: "translateY(-50%)",
+        // Step 4 of the post-intro hero cascade — drops in from above,
+        // composed with the existing vertical-centring transform rather than
+        // replacing it: the offset is added inside the same translateY, so
+        // centring is never clobbered mid-entrance. Had no entrance at all
+        // before this; on a warm/repeat visit `heroStep` is already 5, so
+        // this resolves to the plain `translateY(-50%)` centring instantly.
+        opacity: heroStep >= 4 ? 1 : 0,
+        transform: heroStep >= 4 ? "translateY(-50%)" : "translateY(calc(-50% - 24px))",
+        transition: `opacity 0.6s ${EASE_OUT_EXPO_CSS}, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
         display: { xs: "none", lg: "flex" },
         alignItems: "center",
         gap: 2,
@@ -236,7 +249,10 @@ export function EyeFlow() {
           flexDirection: "column",
           gap: 2,
           textAlign: "right",
-          pointerEvents: "auto",
+          // Gated alongside the entrance above — an invisible rail should
+          // never be clickable, the same rule the hero's own button cluster
+          // follows (`SuperHeroSequence.tsx`'s `.hero-directory`).
+          pointerEvents: heroStep >= 4 ? "auto" : "none",
         }}
       >
         {/* Flat list — six chapters, one act. The act header is gone: a

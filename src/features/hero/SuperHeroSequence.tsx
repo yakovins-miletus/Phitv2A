@@ -48,7 +48,7 @@ import { HERO_WALL_TILES } from "./heroWallTiles";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
-import { useReducedMotion, usePreloaderReady, useEntranceSettled } from "@/shared/motion";
+import { useReducedMotion, usePreloaderReady, useEntranceSettled, useHeroCascadeStep } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { HERO_PIN_DISTANCE } from "@/shared/motion/heroPin";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
@@ -212,6 +212,11 @@ export function HeroSignalCore() {
   const canvasHandleRef = useRef<HeroCanvasHandle | null>(null);
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
+  // The post-intro hero cascade — 0..5, canvas is step 1, motto step 3,
+  // buttons step 5. See `useHeroCascadeStep`'s docblock: defaults to 5 (fully
+  // revealed) on a warm/repeat visit, so `heroStep >= N` reproduces today's
+  // simultaneous entrance unchanged there.
+  const heroStep = useHeroCascadeStep();
   // The intro must fully clear before the hero owns the scroll. Until the
   // entrance phase machine reaches "open" the pin is not created at all, so
   // scrolling under the preloader can never advance the hero timeline or write
@@ -772,8 +777,14 @@ export function HeroSignalCore() {
               position: "absolute",
               inset: 0,
               zIndex: 4,
-              opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
-              transition: "opacity 0.6s ease-out",
+              // Step 1 of the post-intro hero cascade, and the one element
+              // that rises (bottom→top) rather than drops — every other step
+              // enters from above. `ready && heroStep >= 1`: on a warm/repeat
+              // visit `heroStep` is already 5, so this is exactly `ready`,
+              // today's behaviour unchanged.
+              opacity: ready && heroStep >= 1 ? (reduced ? 0.4 : 0.95) : 0,
+              transform: heroStep >= 1 ? "translateY(0)" : "translateY(32px)",
+              transition: `opacity 0.6s ease-out, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
             }}
           >
             {/* `containerRef` (`#hero`), not `cardRef`: the mode badge and the
@@ -954,9 +965,15 @@ export function HeroSignalCore() {
             left: HERO_GUTTER,
             zIndex: 7,
             maxWidth: { xs: "calc(100% - 32px)", sm: "440px", md: "520px" },
-            opacity: ready ? "var(--hp-panel, 1)" : 0,
+            // Step 3 of the post-intro hero cascade — drops in from above,
+            // alongside the existing scroll-driven opacity. Was opacity-only
+            // at a 2.4s fade (a holdover from the old reveal-through-the-hole
+            // design); now one step in a ~0.7s-cadence cascade, so the
+            // transition shortens to match.
+            opacity: ready && heroStep >= 3 ? "var(--hp-panel, 1)" : 0,
+            transform: heroStep >= 3 ? "translateY(0)" : "translateY(-24px)",
             pointerEvents: "none",
-            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
+            transition: `opacity 0.7s ${EASE_OUT_EXPO_CSS}, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
           <Typography
@@ -988,11 +1005,15 @@ export function HeroSignalCore() {
             display: "flex",
             flexDirection: "column",
             gap: 1.2,
-            opacity: ready ? "var(--hp-panel, 1)" : 0,
-            pointerEvents: ready && stage.panelInteractive ? "auto" : "none",
-            transform: ready ? "translateY(0)" : "translateY(16px)",
-            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}, transform 2.4s ${EASE_OUT_EXPO_CSS}`,
-            transitionDelay: ready ? "0.45s" : "0s",
+            // Step 5 — the last step. Was `translateY(16px) → 0`, which is
+            // actually a RISE (16px below rest, moving up); flipped to drop
+            // from above like every other step except the canvas. The old
+            // `transitionDelay: 0.45s` staggered this after the motto by
+            // hand; the cascade supplies that stagger now, so it's gone.
+            opacity: ready && heroStep >= 5 ? "var(--hp-panel, 1)" : 0,
+            pointerEvents: ready && heroStep >= 5 && stage.panelInteractive ? "auto" : "none",
+            transform: heroStep >= 5 ? "translateY(0)" : "translateY(-24px)",
+            transition: `opacity 0.7s ${EASE_OUT_EXPO_CSS}, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
             maxWidth: { xs: "calc(100% - 64px)", md: "850px" },
           }}
         >

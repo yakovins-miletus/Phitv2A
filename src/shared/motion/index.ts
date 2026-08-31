@@ -28,6 +28,25 @@ export function useEntranceSettled(): boolean {
   return useContext(EntrancePhaseContext) === "open";
 }
 
+/**
+ * The post-intro hero cascade: 0 (nothing revealed) through 5 (fully
+ * revealed) — canvas → navbar → motto → chapter rail → buttons, each
+ * unlocking one step at a time. Defaults to 5 so anything outside AppShell
+ * (tests, portals) never gates.
+ *
+ * Deliberately NOT part of `EntrancePhase`. That phase machine replays its
+ * `hero → header → open` cascade on every in-app route change (see
+ * `AppShell.tsx`'s `[pathname]`-keyed effect) — it exists to restage
+ * below-fold reveal components per route. This cascade plays exactly once,
+ * driven only by the Preloader's genuine `onDone`, and only when the
+ * visitor actually saw the intro this page load (never on a warm/repeat
+ * visit, never replayed on navigation).
+ */
+export const HeroCascadeContext = createContext<number>(5);
+export function useHeroCascadeStep(): number {
+  return useContext(HeroCascadeContext);
+}
+
 /** Device capability tiering — gates cost, where usePointerFine gates affordances. */
 export { useDeviceTier, useIsLowPowerDevice, type DeviceTier } from "./useDeviceTier";
 

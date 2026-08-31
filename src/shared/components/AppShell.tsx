@@ -12,7 +12,7 @@ import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
+import { EntrancePhaseContext, HeroCascadeContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { motion } from "motion/react";
@@ -581,6 +581,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<EntrancePhase>(() => (reduced === true ? "open" : "covered"));
   const releasedRef = useRef(reduced === true);
   const hadPreloaderRef = useRef(showPreloader);
+  // The post-intro hero cascade — see `useHeroCascadeStep`'s docblock for why
+  // this is independent of `phase`/`EntrancePhaseContext`. Starts fully
+  // revealed (5) on a warm/repeat visit; starts at 0 and is stepped up by
+  // `handlePreloaderDone` only when the real intro played.
+  const [heroCascadeStep, setHeroCascadeStep] = useState(() => (showPreloader ? 0 : 5));
+  const heroCascadeTimersRef = useRef<number[]>([]);
 
   // useReducedMotion() can resolve asynchronously — its type is
   // `boolean | null`, and it is null until the media-query listener has run.
@@ -603,6 +609,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     hadPreloaderRef.current = false;
     setShowPreloader(false);
     setPhase("open");
+    setHeroCascadeStep(5);
   }, [reduced]);
   const entranceTimersRef = useRef<number[]>([]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -625,6 +632,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   const handlePreloaderDone = useCallback(() => {
     setShowPreloader(false);
+    // The post-intro hero cascade — only for a visitor who genuinely saw the
+    // preloader this page load. `onDone` fires after the full 2s aperture
+    // reveal has completed (Preloader.tsx's `finish()`, called once every
+    // exit tween has resolved), so step 1 begins from a fully-revealed page,
+    // not mid-reveal.
+    if (hadPreloaderRef.current) {
+      const STEP_MS = 700; // ~0.6–1s pacing, matching the intro's own rhythm
+      [1, 2, 3, 4, 5].forEach((step, i) => {
+        heroCascadeTimersRef.current.push(
+          window.setTimeout(() => setHeroCascadeStep(step), i * STEP_MS),
+        );
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -638,6 +658,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
       timers.length = 0;
     };
   }, [releaseEntrance]);
+
+  useEffect(() => {
+    const timers = heroCascadeTimersRef.current;
+    return () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      timers.length = 0;
+    };
+  }, []);
 
   // The overscroll-to-navigate machine that used to live here is gone.
   // It accumulated "scroll pressure" from non-passive wheel/touchmove listeners —
@@ -766,6 +794,7 @@ const NAV_DARK = {
 
   return (
     <EntrancePhaseContext.Provider value={phase}>
+    <HeroCascadeContext.Provider value={heroCascadeStep}>
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         {showPreloader ? (
           <Preloader
@@ -826,9 +855,16 @@ const NAV_DARK = {
               ? (isOverDarkSection ? NAV_DARK.shadow : "0 2px 20px rgba(0,0,0,0.03)")
               : "none",
             pt: isNotch || isStandardOrGlass ? 0 : 1,
-            pointerEvents: showPreloader ? "none" : (isStandardOrGlass ? "auto" : "none"),
-            transform: navHidden || showPreloader ? "translateY(-120%)" : "translateY(0%)",
-            opacity: showPreloader ? 0 : 1,
+            // `heroCascadeStep < 2`: step 2 of the post-intro cascade (see
+            // `useHeroCascadeStep`). On a warm/repeat visit this starts at 5
+            // and never gates anything here; on the genuine intro path it
+            // holds the navbar hidden until the canvas (step 1) has had its
+            // beat, instead of dropping in the instant the preloader unmounts.
+            pointerEvents:
+              showPreloader || heroCascadeStep < 2 ? "none" : (isStandardOrGlass ? "auto" : "none"),
+            transform:
+              navHidden || showPreloader || heroCascadeStep < 2 ? "translateY(-120%)" : "translateY(0%)",
+            opacity: showPreloader || heroCascadeStep < 2 ? 0 : 1,
             transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s ${EASE_OUT_EXPO_CSS}, border-color 0.6s ${EASE_OUT_EXPO_CSS}, box-shadow 0.6s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
@@ -1263,6 +1299,7 @@ const NAV_DARK = {
         </Box>
 
       </Box>
+    </HeroCascadeContext.Provider>
     </EntrancePhaseContext.Provider>
   );
 }
