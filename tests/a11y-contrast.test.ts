@@ -353,6 +353,46 @@ describe("hero motto over the 3D playground's sky", () => {
   });
 });
 
+describe("island-v2 navbar pill (dark mode)", () => {
+  // AppShell's `NAV_ISLAND_V2.surface` = rgba(duskNavyRgb, 0.72). The pill was
+  // originally a neutral grey (`charcoal`, #1E1E1E) specifically to avoid
+  // disappearing into the home page's own navy sections; switching it to a
+  // navy risked quietly regressing both concerns (blending into the page,
+  // and text contrast), so both are pinned here against the raw token —
+  // alpha over an already-dark section only ever darkens further, so the
+  // opaque token is the worst case for contrast.
+  test("white text clears AAA", () => {
+    const ratio = contrast(NOIR.white, NOIR.duskNavy);
+    expect(ratio, `white on duskNavy — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(7);
+  });
+
+  test("the muted secondary/nav-caption alphas (0.7, 0.9) clear AA", () => {
+    for (const alpha of [0.7, 0.9]) {
+      const ratio = contrast(whiteOver(NOIR.duskNavy, alpha), NOIR.duskNavy);
+      expect(ratio, `white@${alpha} on duskNavy — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_BODY);
+    }
+  });
+
+  test("brand gold (active/hover Contact text) clears AA", () => {
+    const ratio = contrast(NOIR.gold, NOIR.duskNavy);
+    expect(ratio, `gold on duskNavy — ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  test("duskNavy is lighter than the existing dark navies it must stand out against", () => {
+    // The whole point of not reusing NAV_DARK's navyDeep: a navy-on-navy pill
+    // disappeared into the page. If duskNavy ever drifted as dark as (or
+    // darker than) those grounds, the pill would silently regress into the
+    // original bug with a different hex.
+    for (const [name, ground] of Object.entries({
+      navyDeep: NOIR.navyDeep,
+      navyInk: NOIR.navyInk,
+      navyDark: NOIR.navyDark,
+    })) {
+      expect(luminance(NOIR.duskNavy), `duskNavy vs ${name}`).toBeGreaterThan(luminance(ground));
+    }
+  });
+});
+
 describe("palette integrity", () => {
   test("every token is a full-length hex", () => {
     for (const [key, value] of Object.entries(NOIR)) {
