@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { blogPostsQuery, type BlogPostSummary } from "@/features/blog/api";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
+import { resolveApiUrl } from "@/shared/api/client";
 import { Reveal } from "@/shared/components/Reveal";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -143,7 +144,7 @@ function SideArticleCard({
               // before the section enters view, so nothing pops in.
               loading="lazy"
               decoding="async"
-              src={post.image_url}
+              src={resolveApiUrl(post.image_url)}
               alt=""
               className="blogcard-thumb"
               sx={{
@@ -325,7 +326,7 @@ export function BlogSection() {
                     // home page pulls (the featured post's full-size frame).
                     loading="lazy"
                     decoding="async"
-                    src={featuredPost.image_url}
+                    src={resolveApiUrl(featuredPost.image_url)}
                     alt=""
                     sx={{
                       position: "absolute",

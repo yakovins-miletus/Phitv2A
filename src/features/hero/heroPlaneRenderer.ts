@@ -83,7 +83,6 @@ import {
   skylineStretch,
 } from "./heroPointer";
 import { getLogoAspect, getLogoImage } from "./heroLogoMask";
-import { drawLogoConverge } from "./heroLogoParticles";
 
 const TAU = Math.PI * 2;
 
@@ -703,6 +702,14 @@ function drawNodeGlow(
   color: Rgb,
   mode: "hero" | "closure" = "hero",
 ): void {
+  // Closure mode settles the P beside static "Here at Phitopolis" / CTA copy
+  // and reads as a resting composition, not an active scene — a travelling
+  // signal pulse lighting up a node right behind the mark (visible through
+  // its hollow swash) read as a stray blurred halo bleeding through the
+  // logo. The signal *lines* still animate in closure (drawSignals above);
+  // only their proximity glow on nearby nodes is switched off here.
+  if (mode === "closure") return;
+
   // Proximity glow on 4 primary service nodes
   for (let i = 0; i < SERVICE_NODES.length; i++) {
     const node = SERVICE_NODES[i]!;
@@ -724,31 +731,10 @@ function drawNodeGlow(
     ctx.fill();
   }
 
-  // Proximity glow on outer application nodes (closure mode only)
-  if (mode !== "hero") {
-    for (let i = 0; i < APPLICATION_NODES.length; i++) {
-      const node = APPLICATION_NODES[i]!;
-      const dist = Math.hypot(px - node.cx, py - node.cy);
-      if (dist >= 90) continue;
-
-      const intensity = (1 - dist / 90) * 0.38;
-      if (intensity <= 0.01) continue;
-
-      const isGold = node.appType === "analytics" || node.appType === "risk" || node.appType === "execution";
-      const glowColor = isGold ? RGB_GOLD : RGB_STEEL;
-
-      const p = project(cam, node.cx, node.cy, node.elevation);
-      const r = 54 * cam.scale;
-      const g = ctx.createRadialGradient(p.sx, p.sy, 10 * cam.scale, p.sx, p.sy, r);
-      g.addColorStop(0, rgba(glowColor, intensity * 0.85));
-      g.addColorStop(0.4, rgba(glowColor, intensity * 0.28));
-      g.addColorStop(1, rgba(glowColor, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(p.sx, p.sy, r, 0, TAU);
-      ctx.fill();
-    }
-  }
+  // Application-node proximity glow used to run in closure mode too; now
+  // dead code, since the early return above skips this whole function for
+  // closure and `mode` is therefore always "hero" by this point. Removed
+  // rather than left behind as an unreachable branch.
 }
 
 /* ── Blocks ── */
@@ -1445,7 +1431,6 @@ function drawLogo(
   w: number,
   h: number,
   rendererState: PlaneRendererState = defaultPlaneRendererState,
-  mode: "hero" | "closure" = "hero",
 ): void {
   const image = getLogoImage();
   const box = rendererState.logoScreenBox;
@@ -1478,21 +1463,12 @@ function drawLogo(
   const cx = PLANE_SIZE / 2 - (mobile ? 0 : state.moveLeft * shift);
   const cy = PLANE_SIZE / 2 - (mobile ? state.moveLeft * shift : 0);
 
-  // P exit animation's opacity, needed here too: once the mark has dropped out
-  // (progress 0.86 → 0.89, see `pExitProgress` in heroVars.ts) there is nothing
-  // on screen for DOM chrome to anchor against, so the screen box below stops
-  // publishing rather than reporting a stale position under an invisible mark.
-  //
-  // Closure mode never runs that phase of the sequence — `pexit`/`atenter` are
-  // hero-only fields on the shared `HeroFrameState`, and the closure scroll
-  // handler clamps its own progress well before they'd ever go nonzero. But
-  // `HeroCanvas.tsx`'s static/reduced-motion path hardcodes `progress = 1` for
-  // closure specifically to land the P in its settled (flattened, panned)
-  // resting frame — which happens to sit squarely inside the hero's own
-  // container-transform window. Gating on `mode` here, not just relying on
-  // the caller to keep `pexit`/`atenter` at 0, is what actually prevents the
-  // P fading out and a ghost gold "AT" glyph fading in behind it.
-  const pOpacity = mode === "closure" ? 1 : Math.max(0, 1 - state.pexit);
+  // The mark stays fully solid through the whole sequence now — the P never
+  // fades out and no "AT" glyph fades in behind it (that swap read as a
+  // confusing mid-scroll wordmark change and has been removed). `state.pexit`/
+  // `state.atenter` are still computed upstream (parity-locked in
+  // heroPhases.ts/heroScene.ts) but are simply not consumed here any more.
+  const pOpacity = 1;
 
   // Publish the mark's screen box for `SuperHeroSequence.tsx`'s DOM chrome
   // (`getLogoScreenBox`, above).
@@ -1575,68 +1551,19 @@ function drawLogo(
   const layers = Math.max(1, Math.min(P_MAX_LAYERS, Math.round(lift / P_LAYER_STEP)));
   const layerSprites = ensureLogoLayers(image);
 
-  // Closure mode only: while the P is mid-pan (0 < moveLeft < 1 — exactly the
-  // window between the flatten finishing and the pan settling), the mark
-  // converges from scattered particles into its solid form instead of the
-  // ordinary layered blit below. Before the pan starts and once it settles,
-  // it's the same solid mark as ever — this is a transition effect for the
-  // move itself, not a permanent replacement of the mark (unlike the footer's
-  // `LogoParticleField`, which stays particles). `flatten` is already 1
-  // throughout this window (`PHASE_FLATTEN_END` < pan start), so there is no
-  // 3D depth to preserve — a flat, screen-space draw is the correct one.
-  const isConverging = mode === "closure" && state.moveLeft > 0 && state.moveLeft < 1;
-
-  if (pOpacity > 0.001 && isConverging) {
-    const centre = project(cam, cx, cy, 0);
-    const drew = drawLogoConverge(ctx, centre.sx, centre.sy, lw * cam.scale, state.moveLeft);
-    if (!drew) {
-      // Image not decoded yet (shouldn't happen in practice — closure mode
-      // never mounts before `loadLogoMask` resolves — but fall back to the
-      // solid mark rather than drawing nothing).
-      drawImageOnPlane(ctx, cam, image, cx, cy, 0, lw, lh);
-    }
-  } else if (pOpacity > 0.001) {
-    // P exit animation: drop down & fade out (pexit: 0 -> 1). Ported unchanged.
-    // `pOpacity` itself is computed above, alongside the screen-box publish.
-    const pDropY = mode === "closure" ? 0 : state.pexit * 60;
-    const pScale = mode === "closure" ? 1 : 1 - state.pexit * 0.15;
-    ctx.save();
-    for (let i = 0; i < layers; i++) {
-      const z = (i / Math.max(1, layers)) * lift;
-      const ratio = layers > 1 ? i / (layers - 1) : 1;
-      const spriteIndex = Math.min(LOGO_LAYERS - 1, Math.round(ratio * (LOGO_LAYERS - 1)));
-      // Every layer is fully opaque. The ported code drew the side stack at 0.8 so that
-      // eight sparse copies blended into a gradient; at the derived layer count the
-      // copies overlap, and translucency there compounds into a muddy grey wall with the
-      // ground showing through it. The darkening is already baked per sprite
-      // (`ensureLogoLayers`) — the wall's shading comes from that, not from alpha.
-      ctx.globalAlpha = pOpacity;
-      drawImageOnPlane(ctx, cam, layerSprites[spriteIndex]!, cx, cy + pDropY, z, lw * pScale, lh * pScale);
-    }
-    ctx.restore();
+  ctx.save();
+  for (let i = 0; i < layers; i++) {
+    const z = (i / Math.max(1, layers)) * lift;
+    const ratio = layers > 1 ? i / (layers - 1) : 1;
+    const spriteIndex = Math.min(LOGO_LAYERS - 1, Math.round(ratio * (LOGO_LAYERS - 1)));
+    // Every layer is fully opaque. The ported code drew the side stack at 0.8 so that
+    // eight sparse copies blended into a gradient; at the derived layer count the
+    // copies overlap, and translucency there compounds into a muddy grey wall with the
+    // ground showing through it. The darkening is already baked per sprite
+    // (`ensureLogoLayers`) — the wall's shading comes from that, not from alpha.
+    drawImageOnPlane(ctx, cam, layerSprites[spriteIndex]!, cx, cy, z, lw, lh);
   }
-
-  // AT text entrance animation: slide down into view & fade in (atenter: 0 -> 1) at
-  // the exact same centre coordinates. Ported unchanged, including the shadow —
-  // `shadowBlur` here is the pre-lattice renderer's own text-legibility shadow, not
-  // a new blur layer this rebuild introduced.
-  if (mode !== "closure" && state.atenter > 0.001) {
-    const atOpacity = state.atenter;
-    const atSlideY = (1 - state.atenter) * -60;
-    const atScale = 0.85 + state.atenter * 0.15;
-
-    const pCenter = project(cam, cx, cy + atSlideY, lift);
-    ctx.save();
-    ctx.globalAlpha = atOpacity;
-    ctx.font = `900 ${Math.round(80 * cam.scale * atScale)}px Inter, sans-serif`;
-    ctx.fillStyle = rgba(RGB_GOLD, 1);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.shadowColor = rgba(RGB_SHADOW, 0.3);
-    ctx.shadowBlur = 10;
-    ctx.fillText("AT", pCenter.sx, pCenter.sy);
-    ctx.restore();
-  }
+  ctx.restore();
 }
 
 /* ═══════════════════════════════════ Entry ═══════════════════════════════════ */
@@ -1759,7 +1686,7 @@ export function drawPlaneFrame(
 
   const shouldDrawLogo = options?.showLogo ?? (mode === "hero");
   if (shouldDrawLogo) {
-    drawLogo(ctx, cam, state, w, h, rState, mode);
+    drawLogo(ctx, cam, state, w, h, rState);
   } else {
     rState.logoScreenBox.visible = false;
   }
