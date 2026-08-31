@@ -41,11 +41,11 @@ describe("Challenger 1 M1 — 1. Scene Geometry & Center of Mass Invariants", ()
     expect(GRID_OFFSET * 2 + 22 * GRID_CELL).toBe(PLANE_SIZE);
   });
 
-  test("exact count of application nodes is 6", () => {
-    expect(APPLICATION_NODES).toHaveLength(6);
+  test("exact count of application nodes is 10", () => {
+    expect(APPLICATION_NODES).toHaveLength(10);
   });
 
-  test("center of mass of 6 outer application nodes is exactly (630, 630)", () => {
+  test("center of mass of the outer application nodes is exactly (630, 630)", () => {
     const sum = APPLICATION_NODES.reduce(
       (acc, node) => ({ x: acc.x + node.cx, y: acc.y + node.cy }),
       { x: 0, y: 0 }
@@ -121,7 +121,7 @@ describe("Challenger 1 M1 — 2. Stress Test Projections Across Required Viewpor
   }
 
   for (const vp of requiredViewports) {
-    test(`${vp.name} (${vp.w}x${vp.h}): 100% of all corners of all 6 application nodes contained at wide scale (mode="closure", p=1)`, () => {
+    test(`${vp.name} (${vp.w}x${vp.h}): 100% of all corners of all application nodes contained at wide scale (mode="closure", p=1)`, () => {
       const wideScale = calcWideViewScale(vp.w, vp.h);
       const cam = makeCamera(0, vp.w / 2, vp.h * HORIZON, wideScale, 0, 0);
 
@@ -151,7 +151,7 @@ describe("Challenger 1 M1 — 2. Stress Test Projections Across Required Viewpor
         }
       }
 
-      expect(totalCornersChecked).toBe(6 * 12);
+      expect(totalCornersChecked).toBe(APPLICATION_NODES.length * 12);
 
       const marginL = minX;
       const marginR = vp.w - maxX;

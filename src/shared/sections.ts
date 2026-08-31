@@ -189,11 +189,15 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   },
   { id: "services", label: "Capabilities", chapter: 3, ground: "void", establishScale: "mini" },
   {
+    // Vertical scroll of near-full-viewport blocks with a sticky crossfading
+    // 3D-isometric background per use case (UseCasesNarrative / UseCaseBackdrop).
+    // No longer `ownsPin` — the old pinned horizontal scrub is gone — but still
+    // `noExitDim`: the scrubbed exit dim would fade a full-bleed image and its
+    // copy to 25% right as the reader reaches the third use case.
     id: "use-cases",
     label: "Architectural Use-Cases",
     chapter: 3,
     ground: "panel",
-    ownsPin: true,
     noExitDim: true,
     establishScale: "mini",
   },

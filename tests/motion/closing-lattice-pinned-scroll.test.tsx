@@ -18,6 +18,19 @@ import { homeSection, sectionOrder } from "@/shared/sections";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import { PHASE_MOVE_END } from "@/features/hero/heroPhases";
+import {
+  CLOSING_PIN_VH,
+  CLOSURE_ZOOM_HOLD,
+  VIGNETTE_IN_END,
+  VIGNETTE_IN_START,
+  ZOOM_MAX,
+  closingHeroProgressFor,
+  closingZoomFor,
+  ctaOpacityFor,
+  ctaPointerFor,
+  headlineOpacityFor,
+  vignetteOpacityFor,
+} from "@/features/home/components/closing-scene/closingPhases";
 import * as motionHook from "@/shared/motion";
 
 // Mock TanStack Router Link for isolated component tests
@@ -70,18 +83,20 @@ describe("M2 Empirical Verification 1: ScrollTrigger Pin & Travel Distance", () 
     expect(closingPriority).toBeGreaterThan(0);
   });
 
-  test("travel distance function evaluates to exactly 2.0x window.innerHeight across all standard and extreme viewports", () => {
-    // 480/600 dropped: the closing pin was retuned from 1.3vh -> 2.0vh to give
-    // the five disjoint phases room. Smallest realistic viewport height here is
-    // 667 (667*2 = 1334), so the invariant floor is relaxed to >= 900.
+  test("travel distance function evaluates to exactly 3.0x window.innerHeight across all standard and extreme viewports", () => {
+    // Pin retuned 1.3vh -> 2.0vh -> 2.6vh -> 3.0vh: the buffered spine (settle+
+    // vignette / buffer / headline build / buffer / recede / buffer / CTA rise)
+    // needs the room. Smallest realistic viewport height here is 667
+    // (667*3 ≈ 2001), so the invariant floor stays >= 900.
+    expect(CLOSING_PIN_VH).toBe(3.0);
     const testHeights = [667, 768, 800, 844, 900, 1024, 1080, 1200, 1440, 2160];
 
     for (const h of testHeights) {
-      const endFormula = (vh: number) => `+=${String(vh * 2)}`;
-      const expectedTravel = h * 2;
+      const endFormula = (vh: number) => `+=${String(vh * CLOSING_PIN_VH)}`;
+      const expectedTravel = h * CLOSING_PIN_VH;
 
       expect(endFormula(h)).toBe(`+=${expectedTravel}`);
-      expect(expectedTravel / h).toBe(2);
+      expect(expectedTravel / h).toBeCloseTo(3.0, 10);
       // Invariant: >= 900px of scroll room across every supported viewport.
       expect(expectedTravel).toBeGreaterThanOrEqual(900);
     }
@@ -93,67 +108,59 @@ describe("M2 Empirical Verification 1: ScrollTrigger Pin & Travel Distance", () 
 });
 
 describe("M2 Empirical Verification 2: Disjoint Phase Model & Boundary Stage Curves", () => {
-  // Copies of the NEW ramp math in ClosingLattice.tsx — 5 disjoint phases over
-  // a 2.0vh pin. Anchors: 0.28 / 0.42 / 0.58 / 0.60 / 0.82.
-  const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-  const P_SETTLE_END = 0.28;
-  const HEADLINE_IN_START = 0.06;
-  const HEADLINE_IN_END = 0.24;
-  const HEADLINE_OUT_START = 0.42;
-  const HEADLINE_OUT_END = 0.56;
-  const CTA_IN_START = 0.6;
-  const CTA_IN_END = 0.8;
-  const CTA_POINTER_AT = 0.66;
+  // Exercises the real pure ramp math from `closingPhases.ts` — a buffered
+  // "cinematic hand-off" over a 3.0vh pin. Disjoint gap: headline is 0 for
+  // p >= 0.70, CTA is 0 for p <= 0.80.
+  const calcHeroProgress = closingHeroProgressFor;
+  const calcHeadlineOpacity = headlineOpacityFor;
+  const calcCtaOpacity = ctaOpacityFor;
+  const calcCtaPointer = ctaPointerFor;
 
-  const calcHeroProgress = (p: number) =>
-    Math.min((p / P_SETTLE_END) * PHASE_MOVE_END, PHASE_MOVE_END);
-  const calcHeadlineOpacity = (p: number) =>
-    clamp01((p - HEADLINE_IN_START) / (HEADLINE_IN_END - HEADLINE_IN_START)) -
-    clamp01((p - HEADLINE_OUT_START) / (HEADLINE_OUT_END - HEADLINE_OUT_START));
-  const calcCtaOpacity = (p: number) =>
-    clamp01((p - CTA_IN_START) / (CTA_IN_END - CTA_IN_START));
-  const calcCtaPointer = (p: number) => (p >= CTA_POINTER_AT ? "auto" : "none");
-
-  test("Boundary values & stage continuity at the five disjoint phase anchors", () => {
+  test("Boundary values & stage continuity at the buffered phase anchors", () => {
     // p = 0.0 (entrance)
-    expect(calcHeroProgress(0)).toBe(0);
     expect(calcHeadlineOpacity(0)).toBe(0);
     expect(calcCtaOpacity(0)).toBe(0);
     expect(calcCtaPointer(0)).toBe("none");
+    expect(closingZoomFor(0)).toBe(0);
 
-    // p = 0.28 (P settled — phase 1 -> 2)
-    expect(calcHeroProgress(0.28)).toBeCloseTo(PHASE_MOVE_END, 5);
-    expect(calcHeadlineOpacity(0.28)).toBe(1);
-    expect(calcCtaOpacity(0.28)).toBe(0);
+    // p = 0.25 (buffer after P/vignette settle — nothing has moved yet)
+    expect(calcHeadlineOpacity(0.25)).toBe(0);
+    expect(calcCtaOpacity(0.25)).toBe(0);
 
-    // p = 0.42 (end of hold — phase 2 -> 3)
-    expect(calcHeroProgress(0.42)).toBe(PHASE_MOVE_END);
-    expect(calcHeadlineOpacity(0.42)).toBe(1);
-    expect(calcCtaOpacity(0.42)).toBe(0);
+    // p = 0.46 (headline fully built)
+    expect(calcHeadlineOpacity(0.46)).toBe(1);
+    expect(calcCtaOpacity(0.46)).toBe(0);
 
-    // p = 0.58 (headline fully cleared, CTA still gone — the disjoint gap)
-    expect(calcHeadlineOpacity(0.58)).toBe(0);
+    // p = 0.58 (end of hold buffer — recede starts)
+    expect(calcHeadlineOpacity(0.58)).toBe(1);
     expect(calcCtaOpacity(0.58)).toBe(0);
-    expect(calcCtaPointer(0.58)).toBe("none");
 
-    // p = 0.60 (CTA reveal starts — phase 4)
-    expect(calcHeadlineOpacity(0.6)).toBe(0);
-    expect(calcCtaOpacity(0.6)).toBe(0);
+    // p = 0.70 (headline fully receded, CTA still gone — the disjoint gap)
+    expect(calcHeadlineOpacity(0.7)).toBe(0);
+    expect(calcCtaOpacity(0.7)).toBe(0);
+    expect(calcCtaPointer(0.7)).toBe("none");
 
-    // p = 0.66 (pointer gate opens)
-    expect(calcCtaPointer(0.6599)).toBe("none");
-    expect(calcCtaPointer(0.66)).toBe("auto");
+    // p = 0.80 (CTA reveal starts)
+    expect(calcHeadlineOpacity(0.8)).toBe(0);
+    expect(calcCtaOpacity(0.8)).toBe(0);
 
-    // p = 0.82 (settled — phase 5: CTA fully opaque)
-    expect(calcCtaOpacity(0.82)).toBe(1);
-    expect(calcHeadlineOpacity(0.82)).toBe(0);
-    expect(calcCtaPointer(0.82)).toBe("auto");
+    // p = 0.87 (pointer gate opens)
+    expect(calcCtaPointer(0.8699)).toBe("none");
+    expect(calcCtaPointer(0.87)).toBe("auto");
+
+    // p = 0.93 (settled — CTA fully opaque)
+    expect(calcCtaOpacity(0.93)).toBe(1);
+    expect(calcHeadlineOpacity(0.93)).toBe(0);
+    expect(calcCtaPointer(0.93)).toBe("auto");
 
     // p = 1.0 (unpin / exit)
-    expect(calcHeroProgress(1.0)).toBe(PHASE_MOVE_END);
     expect(calcHeadlineOpacity(1.0)).toBe(0);
     expect(calcCtaOpacity(1.0)).toBe(1);
     expect(calcCtaPointer(1.0)).toBe("auto");
+
+    // The scrubbed-camera helpers are retained (unused by Mode A) — sanity only.
+    expect(calcHeroProgress(1.0)).toBe(PHASE_MOVE_END);
+    expect(closingZoomFor(1.0)).toBeCloseTo(ZOOM_MAX, 10);
   });
 
   test("Disjointness guarantee: headline & CTA opacity are never both > 0", () => {
@@ -171,21 +178,23 @@ describe("M2 Empirical Verification 2: Disjoint Phase Model & Boundary Stage Cur
       if (h > 0) expect(c).toBe(0);
       if (c > 0) expect(h).toBe(0);
 
-      // Explicit anchors: headline is 0 for p >= 0.58, CTA is 0 for p <= 0.60.
-      if (p >= 0.58) expect(h).toBe(0);
-      if (p <= 0.6) expect(c).toBe(0);
+      // Explicit anchors: headline is 0 for p >= 0.70, CTA is 0 for p <= 0.80.
+      if (p >= 0.7) expect(h).toBe(0);
+      if (p <= 0.8) expect(c).toBe(0);
     }
   });
 
-  test("CTA opacity & canvas heroProgress are monotonic non-decreasing; ramps are continuous", () => {
+  test("CTA opacity, canvas heroProgress & camera zoom are monotonic non-decreasing; ramps are continuous", () => {
     let prevHero = 0;
     let prevCta = 0;
+    let prevZoom = 0;
     let prevHeadline = calcHeadlineOpacity(0);
 
     for (let i = 0; i <= 1000; i++) {
       const p = i / 1000;
       const hero = calcHeroProgress(p);
       const cta = calcCtaOpacity(p);
+      const zoom = closingZoomFor(p);
       const headline = calcHeadlineOpacity(p);
 
       // heroProgress: non-decreasing, clamped at PHASE_MOVE_END.
@@ -196,14 +205,47 @@ describe("M2 Empirical Verification 2: Disjoint Phase Model & Boundary Stage Cur
       // CTA opacity: non-decreasing.
       expect(cta).toBeGreaterThanOrEqual(prevCta);
 
+      // Camera zoom: non-decreasing, clamped at ZOOM_MAX.
+      expect(zoom).toBeGreaterThanOrEqual(prevZoom);
+      expect(zoom).toBeLessThanOrEqual(ZOOM_MAX + 1e-9);
+
       // Continuity — no ramp jumps more than a small step per 0.001 of p.
       expect(Math.abs(headline - prevHeadline)).toBeLessThan(0.02);
       expect(Math.abs(cta - prevCta)).toBeLessThan(0.02);
+      expect(Math.abs(zoom - prevZoom)).toBeLessThan(0.02);
 
       prevHero = hero;
       prevCta = cta;
+      prevZoom = zoom;
       prevHeadline = headline;
     }
+  });
+
+  test("vignette opacity ramps 0 -> 1 just past the establishing header, then holds; the held camera pull-back is a partial zoom", () => {
+    expect(vignetteOpacityFor(0)).toBe(0);
+    expect(vignetteOpacityFor(VIGNETTE_IN_START)).toBe(0);
+    expect(vignetteOpacityFor(VIGNETTE_IN_END)).toBe(1);
+    expect(vignetteOpacityFor(1)).toBe(1);
+
+    // Fades in early (before the headline word-build completes) so the scene
+    // has atmosphere by the time the statement lands.
+    expect(VIGNETTE_IN_END).toBeLessThan(0.44);
+
+    let prev = 0;
+    for (let i = 0; i <= 1000; i++) {
+      const p = i / 1000;
+      const v = vignetteOpacityFor(p);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+      expect(v).toBeGreaterThanOrEqual(prev); // monotonic non-decreasing
+      expect(Math.abs(v - prev)).toBeLessThan(0.02); // continuous
+      prev = v;
+    }
+
+    // Mode A holds a wide-ish framing so the extended node lattice reads and the
+    // 3D P doesn't collide with the right-hand headline stage.
+    expect(CLOSURE_ZOOM_HOLD).toBeGreaterThan(0.5);
+    expect(CLOSURE_ZOOM_HOLD).toBeLessThanOrEqual(1);
   });
 });
 
@@ -216,20 +258,23 @@ describe("M2 Empirical Verification 3: Component DOM Structure & Responsive Spec
     vi.restoreAllMocks();
   });
 
-  test("renders ClosingLatticeSection with HeroCanvas in closure mode and headline", () => {
+  test("renders ClosingLatticeSection (desktop Mode A) with the headline and the closure canvas behind it", () => {
     const { container } = renderWithNavbar(<ClosingLatticeSection />);
 
     const section = container.querySelector('[data-testid="closing-lattice-section"]');
     expect(section).not.toBeNull();
 
-    // Verify canvas is present
-    const canvas = container.querySelector("canvas");
-    expect(canvas).not.toBeNull();
+    // Mode A anchors the closure P + node lattice behind the stage, held solid
+    // and 3D (canvas progress pinned at 0 — never the particle-converge window).
+    expect(container.querySelector("canvas")).not.toBeNull();
 
-    // Verify headline text. The category eyebrow ("CONTACT // PARTNERSHIP")
-    // lives on MiniEstablishingShot, rendered by ClosingShelf — asserted in
+    // Verify headline text. Mode A splits the <h2> into per-word spans
+    // (SplitText), so match on the heading element's text content, not a single
+    // text node. The category eyebrow ("CONTACT // PARTNERSHIP") lives on
+    // MiniEstablishingShot, rendered by ClosingShelf — asserted in
     // Verification 5, not here.
-    expect(screen.getByText("We create exciting technologies")).toBeDefined();
+    const heading = container.querySelector("h2");
+    expect(heading?.textContent).toContain("We create exciting technologies");
 
     // Exactly one CTA -> /contact, labelled with the farewell copy. No
     // /careers link anywhere in the closing scene.

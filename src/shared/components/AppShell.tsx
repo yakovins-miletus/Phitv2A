@@ -134,14 +134,22 @@ const WARM_ROUTES = [
  *  Everything else the hero draws is `<canvas>` / inline SVG / CSS. */
 const HOME_BLOCKING: readonly string[] = ["/phitopolis_logo_hero.svg"];
 
-/** Home below-fold raster: `OperatingPillars` (`#hero-pillars`, ~6 screens down)
- *  renders three `<img>` backgrounds from `content.ts`. Warmed in the background
- *  so they are cache-hot by the time the section scrolls in, without holding the
- *  overlay. Everything else on the `/` path is canvas / inline SVG / CSS. */
+/** Home below-fold raster, all warmed in the background so they are cache-hot by
+ *  the time their section scrolls in, without holding the overlay:
+ *   - `OperatingPillars` (`#hero-pillars`, ~6 screens down) — three `<img>`
+ *     backgrounds from `content.ts`.
+ *   - `UseCasesNarrative` (`#use-cases`) — one full-bleed 3D-isometric
+ *     background per use case, crossfaded on scroll.
+ *   - `ProcessDiagram` (`#process`) — one isometric growth-timeline illustration.
+ *  Everything else on the `/` path is canvas / inline SVG / CSS. */
 const HOME_BACKGROUND_IMAGES: readonly string[] = [
   "/images/pillars/research.webp",
   "/images/pillars/development.webp",
   "/images/pillars/support.webp",
+  "/images/use-cases/uc-1.webp",
+  "/images/use-cases/uc-2.webp",
+  "/images/use-cases/uc-3.webp",
+  "/images/process/growth-timeline.webp",
 ];
 
 /** About hero, above the fold: the dusk-skyline background behind the headline

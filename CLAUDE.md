@@ -105,11 +105,15 @@ Key pieces, in the order you'll need them:
   color per section, choreo variant, kicker label). The page is modeled as
   two "acts" (`services`, `people`) of ten chapters total.
 
-Two beats opt out of the normal `.stage-inner` wrapping via the `bare` prop
-(`UseCasesNarrative`, `DailyLifeSection`) because their `children` is itself a
-pinned ScrollTrigger — GSAP requires `containerAnimation` for a trigger whose
-ancestor moves, and that disables pinning/snapping, which isn't acceptable
-there. `bare` beats must also pass `noExitDim`.
+`DailyLifeSection` opts out of the normal `.stage-inner` wrapping via the `bare`
+prop because its `children` is itself a pinned ScrollTrigger — GSAP requires
+`containerAnimation` for a trigger whose ancestor moves, and that disables
+pinning/snapping, which isn't acceptable there. `bare` beats must also pass
+`noExitDim`. The reverse isn't required: `use-cases` is a normal (non-bare) beat
+that still sets `noExitDim` — its vertical full-bleed backgrounds shouldn't dim
+out under the reader on the way to the last block. (It used to be `bare` +
+`ownsPin` for a pinned horizontal scrub; that was replaced by
+`UseCasesNarrative` / `UseCaseBackdrop`'s sticky-crossfade vertical layout.)
 
 ## Known scroll/motion gap areas (check before assuming a bug is new)
 

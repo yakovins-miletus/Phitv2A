@@ -148,6 +148,14 @@ export const APPLICATION_NODE_SIZE = 52;
 /**
  * Purely decorative application nodes situated on the outer margin ring representing developed applications.
  * Rendered as large, flat, low-profile rounded rectangles (104x58px, 6px elevation) and symmetrically placed around (630, 630).
+ *
+ * These render only in non-hero modes (`heroPlaneRenderer` `collectApplicationNode`
+ * / `drawNodeGlow` are `mode !== "hero"` gated), so the set is effectively the
+ * closing scene's lattice. The `app-edge-*` ring (cells 1 / 29) sits further out
+ * than the `app-*` corners (cell 2) — the closing camera's held pull-back frames
+ * them near the edge, where the canvas radial mask dissolves them. Decoupled from
+ * `SIGNAL_LOOPS`: extra nodes need no signal-spur entry. Center-of-mass stays
+ * (630, 630); every node has a point-symmetric partner through the centre.
  */
 export const APPLICATION_NODES: readonly ApplicationNodeSpec[] = [
   { id: "app-alpha", label: "Alpha Analytics", cx: 2 * GRID_CELL, cy: 2 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "analytics", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
@@ -156,6 +164,10 @@ export const APPLICATION_NODES: readonly ApplicationNodeSpec[] = [
   { id: "app-risk", label: "Risk Fortress", cx: 28 * GRID_CELL, cy: 28 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "risk", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
   { id: "app-router", label: "Order Router", cx: 15 * GRID_CELL, cy: 1 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "execution", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
   { id: "app-telemetry", label: "Telemetry Hub", cx: 15 * GRID_CELL, cy: 29 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "telemetry", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-edge-w", label: "West Gateway", cx: 1 * GRID_CELL, cy: 15 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "pipeline", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-edge-e", label: "East Gateway", cx: 29 * GRID_CELL, cy: 15 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "trading", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-far-nw", label: "North-West Grid", cx: 1 * GRID_CELL, cy: 1 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "analytics", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
+  { id: "app-far-se", label: "South-East Grid", cx: 29 * GRID_CELL, cy: 29 * GRID_CELL, elevation: APP_NODE_ELEVATION, appType: "risk", width: APP_NODE_WIDTH, height: APP_NODE_HEIGHT, radius: APP_NODE_RADIUS },
 ] as const;
 
 /* ───────────────────────────── Signal circuits ───────────────────────────── */

@@ -7,13 +7,23 @@ describe("resolveRouteManifest — route-aware warm-up manifest", () => {
     const m = resolveRouteManifest("/");
     expect(m.blocking).toContain("/phitopolis_logo_hero.svg");
     expect(m.warmGlobe).toBe(true);
-    // The one below-fold raster on `/`: OperatingPillars' three backgrounds,
-    // warmed in the background so they never extend the intro.
+    // The below-fold rasters on `/`: OperatingPillars' three backgrounds, the
+    // three UseCasesNarrative crossfade backgrounds, and the ProcessDiagram
+    // growth-timeline illustration — all warmed in the background tier so they
+    // never extend the intro.
     expect(m.background).toEqual([
       "/images/pillars/research.webp",
       "/images/pillars/development.webp",
       "/images/pillars/support.webp",
+      "/images/use-cases/uc-1.webp",
+      "/images/use-cases/uc-2.webp",
+      "/images/use-cases/uc-3.webp",
+      "/images/process/growth-timeline.webp",
     ]);
+    // Every below-fold raster is background tier, never blocking.
+    for (const u of m.background) {
+      expect(m.blocking).not.toContain(u);
+    }
     expect(m.blocking).not.toEqual(expect.arrayContaining(["/images/pillars/research.webp"]));
   });
 

@@ -245,14 +245,15 @@ function AboutPage() {
             Act I → Act II handover on home) is paired with DailyLifeSection
             via SectionBeat, which renders `bare` because `daily-life`
             declares `ownsPin: true` in ABOUT_SECTIONS (sections.ts). The pin
-            is DailyLifeSection's own (`trigger: sectionRef.current`,
+            is DailyLifeSection's own (`trigger: containerRef.current`, pinned
+            for DAILY_LIFE_PIN_VH viewport-heights,
             refreshPriorityFor(sectionOrder("daily-life")) — see
-            DailyLifeSection.tsx); `bare` guarantees it is never a descendant
-            of anything SectionBeat transforms, so the pin geometry — and
-            therefore AC-2's "pins, plays and releases exactly as it did on
-            the home page" — is unaffected by the move. Order is /about's own
-            first beat order (index 0 in ABOUT_SECTIONS), independent of
-            home's numbering.
+            DailyLifeSection.tsx): the video starts inset on the left and
+            scrubs out to a full-bleed frame, holds fullscreen for a scroll
+            buffer, then releases. `bare` guarantees it is never a descendant
+            of anything SectionBeat transforms, so that pin geometry is
+            unaffected by the move. Order is /about's own first beat order
+            (index 0 in ABOUT_SECTIONS), independent of home's numbering.
 
             Wrapped in its own opaque navy Box for the same reason the Blog
             + Academy zone below is: the "Parallax Overlay Sheet" this whole

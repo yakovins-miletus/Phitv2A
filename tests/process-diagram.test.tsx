@@ -32,6 +32,18 @@ test("the composition renders all three growth phases", () => {
   expect(headings[2]?.textContent).toBe("2026: The Powerhouse");
 });
 
+test("the growth story is one illustration, not one figure per phase", () => {
+  renderWithProviders(<ProcessDiagram model={CONTENT.process} />);
+
+  const imgs = screen.getAllByRole("img");
+  expect(imgs).toHaveLength(1);
+  expect(
+    screen.getByRole("img", {
+      name: /four departments .* growing from a small 2019 cluster .* 2026/i,
+    }),
+  ).toBeInTheDocument();
+});
+
 test("renders custom process model phases correctly", () => {
   const customModel: ProcessModel = {
     phases: [

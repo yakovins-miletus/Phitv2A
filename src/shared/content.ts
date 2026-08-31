@@ -1,7 +1,7 @@
 /** Site copy, sourced from sourceoftruthv2.md (Phitsite workspace root).
  *  Voice: cinematic but precise. One register: confident, declarative,
  *  quant-noir. Service and use-case ids are lookup keys for ServiceDrawer
- *  and UseCasesNarrative diagrams; never change them without updating both.
+ *  and UseCasesNarrative backgrounds; never change them without updating both.
  *
  *  THREE-LAYER CONTENT CONTRACT (home page). Every home section delivers:
  *    L0 `gunshot` — one claim, <=12 words, carries a number or a named
@@ -448,27 +448,64 @@ export const CONTENT = {
       blurb: "What happens when you take a group of professionals fresh out of a monthly spotlight meeting and arm them with virtual boomerangs? Pure, glorious chaos"
     }
   ],
+  // Each use case is a vertical, near-full-viewport block on the home page; its
+  // `image` is a full-bleed soft 3D-isometric background that crossfades in as
+  // the block reaches the middle of the viewport (see `UseCasesNarrative` /
+  // `UseCaseBackdrop`). `side` places the copy column and must match the image's
+  // text-safe negative space; alternating sides stops three full-bleed images
+  // reading as a slideshow. `imageAlt` is the accessible description that
+  // replaced the old inline SignalDiagram / PipelineDiagram / FollowTheSunDiagram.
   useCases: [
     {
       id: "uc-1",
       title: "Algorithmic Signal Generation",
       tag: "Quantitative Finance",
+      caseTag: "CASE 01 // QUANTITATIVE R&D",
       line: "Statistical models and machine learning applied to noisy market data, built to find signal that holds up out of sample",
-      stats: ["STATISTICAL MODELING", "APPLIED ML"]
+      stats: ["STATISTICAL MODELING", "APPLIED ML"],
+      specs: [
+        { num: "01", name: "High-Frequency Market Sampling" },
+        { num: "02", name: "Multi-Factor Noise Filtering" },
+        { num: "03", name: "Out-of-Sample Alpha Validation" }
+      ],
+      image: "/images/use-cases/uc-1.webp",
+      imageAlt:
+        "Soft isometric clay model of a quantitative research studio: navy data blocks stepping upward, a gold marker ribbon threading left to right into one rising line, frosted noise shapes clearing toward the right",
+      side: "left" as const
     },
     {
       id: "uc-2",
       title: "Cloud-Native Infrastructure",
       tag: "Full-Stack & Data",
+      caseTag: "CASE 02 // DISTRIBUTED SYSTEMS",
       line: "Event-driven pipelines and cloud systems built to ingest, process, and serve high-volume market and operational data",
-      stats: ["CLOUD-NATIVE", "DATA PIPELINES"]
+      stats: ["CLOUD-NATIVE", "DATA PIPELINES"],
+      specs: [
+        { num: "01", name: "Multi-Region Ingestion Mesh" },
+        { num: "02", name: "Zero-Loss Event Stream Normalization" },
+        { num: "03", name: "Sub-Millisecond Dissemination" }
+      ],
+      image: "/images/use-cases/uc-2.webp",
+      imageAlt:
+        "Soft isometric clay model of a data pipeline: navy intake pavilions on the left, pale channels merging into one causeway, rounded service pods fanning out on the right, two frost cloud slabs floating above",
+      side: "right" as const
     },
     {
       id: "uc-3",
       title: "Global Technical Operations",
       tag: "DevOps & Support",
+      caseTag: "CASE 03 // TECHNICAL OPERATIONS",
       line: "Technical teams working alongside clients across time zones, keeping systems monitored and supported around the clock",
-      stats: ["24/7 COVERAGE", "SYSTEM MONITORING"]
+      stats: ["24/7 COVERAGE", "SYSTEM MONITORING"],
+      specs: [
+        { num: "01", name: "Around-the-Clock Live Monitoring" },
+        { num: "02", name: "Daily Shift Handover" },
+        { num: "03", name: "Automated System Recovery" }
+      ],
+      image: "/images/use-cases/uc-3.webp",
+      imageAlt:
+        "Soft isometric clay model of a pale globe with navy continents on an off-white plinth, three small navy operations desks around it, a soft gold arc across the globe marking a working day",
+      side: "left" as const
     }
   ],
   /**

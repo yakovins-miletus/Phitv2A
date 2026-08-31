@@ -235,11 +235,20 @@ describe("Challenger 2 — Assertion 2: Out-and-Back Loops 3..8 Outer Node Conne
     }
   });
 
-  test("All 6 outer application nodes are covered by distinct out-and-back loops", () => {
+  test("the 6 signal-wired application nodes are each covered by a distinct out-and-back loop", () => {
     const coveredAppIds = new Set(expectedOutAndBackSpecs.map((s) => s.appId));
     expect(coveredAppIds.size).toBe(6);
+    // Each spur target must resolve to a real node.
+    for (const id of coveredAppIds) {
+      expect(APPLICATION_NODES.some((n) => n.id === id), `Spur target ${id} must be a real node`).toBe(true);
+    }
+    // The original app-* ring is signal-wired; the further-out app-edge-* /
+    // app-far-* closing-lattice nodes are decorative only (no spur — they
+    // dissolve into the frame edge under the canvas radial mask).
     for (const app of APPLICATION_NODES) {
-      expect(coveredAppIds.has(app.id), `Outer node ${app.id} must be covered`).toBe(true);
+      const isWired = coveredAppIds.has(app.id);
+      const isDecorative = app.id.startsWith("app-edge-") || app.id.startsWith("app-far-");
+      expect(isWired || isDecorative, `Node ${app.id} must be wired or explicitly decorative`).toBe(true);
     }
   });
 });

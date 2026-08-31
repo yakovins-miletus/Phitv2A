@@ -147,16 +147,16 @@ function HomePage() {
           anchor={NAV_ANCHORS.HOME_BRIDGE_USECASES}
         />
 
-        {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
-            via SectionBeat, which renders `bare` because `use-cases`
-            declares `ownsPin: true` in HOME_SECTIONS (sections.ts). The pin
-            is UseCasesNarrative's own (`trigger: wrap.current`,
-            refreshPriorityFor(sectionOrder("use-cases")) — see
-            UseCasesNarrative.tsx); `bare` guarantees it is never a descendant
-            of anything SectionBeat transforms, so the pin geometry is
-            unaffected by the shot/beat wrapper around it. */}
+        {/* Mini Establishing Shot 2: Use Cases. `use-cases` is now a normal
+            (non-bare) beat — the old pinned horizontal scrub is gone, replaced
+            by a vertical scroll of ~90svh blocks with a sticky crossfading
+            background (UseCasesNarrative). `alignItems: "stretch"` because the
+            content is taller than the section and a centered flex row would let
+            it overflow upward. UseCasesNarrative does its own full-bleed
+            breakout out of SectionBeat's Container. */}
         <SectionBeat
           section={homeSection("use-cases")}
+          sx={{ alignItems: "stretch" }}
           establishing={
             <MiniEstablishingShot
               category="PROVEN PRODUCTION PLATFORMS"
