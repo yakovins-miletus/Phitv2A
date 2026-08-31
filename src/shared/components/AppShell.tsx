@@ -751,12 +751,14 @@ const NAV_DARK = {
   shadow: "0 8px 32px rgba(0, 0, 0, 0.28)",
 } as const;
 
-/** island-v2's dark surface — a neutral dark grey, deliberately NOT the brand
- *  navy (`NAV_DARK`). The default floating pill sits over the home page's navy
- *  sections and bar-transition blocks; a navy-on-navy pill disappeared into
- *  them, so v2's chrome is a distinct graphite instead. */
-const NAV_GREY = {
-  surface: `rgba(${NOIR.charcoalRgb}, 0.72)`,
+/** island-v2's dark surface — a soft dark navy, distinct from `NAV_DARK`'s
+ *  deeper brand navy. The floating pill sits over the home page's own navy
+ *  sections and bar-transition blocks; `NOIR.duskNavy` is lighter than
+ *  `navyDeep`/`navyInk`/`navyDark` so the pill still reads as its own surface
+ *  instead of disappearing into them, without falling back to an off-brand
+ *  grey. */
+const NAV_ISLAND_V2 = {
+  surface: `rgba(${NOIR.duskNavyRgb}, 0.72)`,
 } as const;
 
   const [isAtTop, setIsAtTop] = useState(true);
@@ -945,7 +947,7 @@ const NAV_GREY = {
                     ? NOIR.charcoal
                     : isAnyIsland
                     ? (islandOnDark
-                      ? (isIslandV2 ? NAV_GREY.surface : NAV_DARK.surface)
+                      ? (isIslandV2 ? NAV_ISLAND_V2.surface : NAV_DARK.surface)
                       : (isIslandV2 ? "rgba(255, 255, 255, 0.42)" : "rgba(255, 255, 255, 0.5)"))
                     : isOverDarkSection
                       ? NAV_DARK.surface

@@ -159,10 +159,17 @@ export const NOIR = {
   live: "#3AA189",
   /** Dark navy variant — lighter than navyInk, darker than navyField. */
   navyDark: "#081F4D",
-  /** Charcoal grey — near-black for high-contrast text, and the island-v2
-      navbar pill's dark surface (see AppShell `NAV_GREY`). */
+  /** Charcoal grey — near-black for high-contrast text (the navbar "notch"
+      mode's solid background; see AppShell). */
   charcoal: "#1E1E1E",
-  charcoalRgb: "30, 30, 30",
+  /** Soft dark navy — the island-v2 navbar pill's dark surface (see AppShell
+      `NAV_ISLAND_V2`). Lighter than `navyDeep`/`navyInk`/`navyDark` so the
+      floating pill still reads as a distinct surface against the home page's
+      own navy sections and bar-transition blocks, without falling back to an
+      off-brand grey. White text measures 14.9:1 here, `gold` 9.6:1 — both
+      comfortably above the AA floor with headroom to spare. */
+  duskNavy: "#182647",
+  duskNavyRgb: "24, 38, 71",
   /** Very dark navy — darker than navyInk. */
   midnightNavy: "#050D1B",
   /** Blue-grey slate — neutral secondary text on dark grounds. */
