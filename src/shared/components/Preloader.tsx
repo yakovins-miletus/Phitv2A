@@ -11,7 +11,6 @@ import PhitopolisLogo from "./PhitopolisLogo";
 import {
   WIPE_HIDDEN,
   WIPE_SHOWN,
-  WIPE_OUT,
   WIPE_S,
   WIPE_DELAY_S,
   CHAR_STAGGER_S,
@@ -63,9 +62,10 @@ import {
  *           wiping in turn; the mark row and progress row, `layout`-tracked,
  *           animate to their new positions in the same beat.
  *
- * THE EXIT reverses it: the wordmark wipes back out (`WIPE_SHOWN` → `WIPE_OUT`)
- * with the laser riding it, every row fades — then an expanding rectangular
- * hole opens so the site is revealed *through* the intro. Deliberately the
+ * THE EXIT fades everything out as one unit first — the logo, the wordmark,
+ * and every row dissolve together at the same rate, fully, before anything
+ * else happens — then an expanding rectangular hole opens onto the now-empty
+ * ground so the site is revealed *through* the intro. Deliberately the
  * same optical idea as `fresko-home-aperture` in `viewTransitions.css`, so the
  * site has one notion of how things are revealed instead of two unrelated ones.
  *
@@ -311,29 +311,19 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     // reveal. Onto a screen that's already empty, not one still dissolving.
     const fadeOut: Promise<unknown>[] = [];
 
-    // The wordmark wipes back out with the laser riding the closing edge —
-    // the one specific per-glyph effect, kept from every previous revision.
-    if (wordRef.current) {
-      fadeOut.push(
-        animate(
-          wordRef.current,
-          { clipPath: WIPE_OUT },
-          { duration: EXIT_FADE_S, ease: EASE_IN_OUT_QUART },
-        ).then(() => {}),
-      );
-    }
-    if (laserRef.current) {
-      const w = wordRef.current?.clientWidth ?? 300;
-      animate(
-        laserRef.current,
-        { x: [0, w], opacity: [0.9, 0] },
-        { duration: EXIT_FADE_S, ease: EASE_IN_OUT_QUART },
-      );
-    }
+    // The wordmark and the P logo dissolve together, at the same rate, as
+    // one unit — no separate wipe-out on the wordmark. A clip-path wipe and
+    // an opacity fade don't resolve at a matched visual rate, so giving the
+    // wordmark its own wipe here made it vanish before the logo beside it
+    // had faded — the two looked like they were leaving on different
+    // schedules instead of one thing fading out together. `wordRef` and
+    // `laserRef` are left alone; they're both descendants of `markRowRef`
+    // below, and the laser is already at rest opacity 0 from its own
+    // entrance sweep, so the row's own opacity is the only animation either
+    // one needs.
 
-    // Every row fades as a whole — belt-and-braces alongside the wordmark's
-    // specific wipe-out, and the only teardown the progress row and (if it
-    // spawned) the description row need.
+    // Every row fades as a whole — the only teardown any of the three rows
+    // (and everything inside them) needs.
     [markRowRef, progressRowRef, statementRowRef].forEach((ref) => {
       if (!ref.current) return;
       fadeOut.push(
