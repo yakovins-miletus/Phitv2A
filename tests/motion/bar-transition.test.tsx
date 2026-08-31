@@ -7,6 +7,7 @@ import * as motionHook from "@/shared/motion";
 import {
   BAR_COUNT,
   BAR_WINDOW,
+  TRANSITION_DONE,
   barClipFor,
   barRevealFor,
 } from "@/shared/components/ground/barPhases";
@@ -19,9 +20,10 @@ function stubReducedMotion(reduce: boolean) {
 }
 
 describe("barPhases", () => {
-  it("has five bars over a half-progress window", () => {
+  it("has five bars and finishes the whole sweep by the section midpoint", () => {
     expect(BAR_COUNT).toBe(5);
-    expect(BAR_WINDOW).toBe(0.5);
+    expect(TRANSITION_DONE).toBeLessThanOrEqual(0.5);
+    expect(BAR_WINDOW).toBeLessThan(TRANSITION_DONE);
   });
 
   it("every bar is 0 at p=0 and 1 at p=1", () => {
@@ -39,10 +41,16 @@ describe("barPhases", () => {
     }
   });
 
-  it("the bottom bar finishes before the top bar starts moving", () => {
-    // bottom bar done at p = BAR_WINDOW; top bar starts at p = 1 - BAR_WINDOW.
+  it("the bottom bar leads and every bar is done by TRANSITION_DONE", () => {
+    // bottom bar (starts first) completes its own window before the top bar.
     expect(barRevealFor(BAR_COUNT - 1, BAR_WINDOW)).toBe(1);
-    expect(barRevealFor(0, 1 - BAR_WINDOW)).toBe(0);
+    expect(barRevealFor(0, BAR_WINDOW)).toBeLessThan(1);
+    // by the midpoint the whole screen has flipped to the new ground.
+    for (let i = 0; i < BAR_COUNT; i += 1) {
+      expect(barRevealFor(i, TRANSITION_DONE)).toBe(1);
+    }
+    // ...and it is NOT yet complete just before that.
+    expect(barRevealFor(0, TRANSITION_DONE - 0.05)).toBeLessThan(1);
   });
 
   it("barClipFor collapses the cover toward the top edge as reveal grows", () => {
@@ -57,14 +65,14 @@ describe("BarTransitionSection", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders exactly BAR_COUNT bars at 70vh", () => {
+  it("renders exactly BAR_COUNT bars at full viewport height", () => {
     stubReducedMotion(false);
     const { container } = render(
       <BarTransitionSection from="panel" to="deep" />,
     );
     const wrap = container.querySelector(".bar-transition-section");
     expect(wrap).not.toBeNull();
-    expect((wrap as HTMLElement).style.height).toBe("70vh");
+    expect((wrap as HTMLElement).style.height).toBe("100vh");
     // one absolute cover div per bar row
     expect(wrap!.querySelectorAll("[class]").length).toBeGreaterThanOrEqual(
       BAR_COUNT,
@@ -78,7 +86,7 @@ describe("BarTransitionSection", () => {
     );
     expect(container.querySelector(".bar-transition-section")).toBeNull();
     const box = container.firstElementChild as HTMLElement;
-    expect(box.style.height).toBe("70vh");
+    expect(box.style.height).toBe("100vh");
     // MUI resolves bgcolor to the literal color; assert the ground is wired.
     expect(GROUNDS.field.bg).toBeTruthy();
   });

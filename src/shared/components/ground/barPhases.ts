@@ -9,6 +9,12 @@
  * (index 0) last. Windows overlap so the sweep reads as one continuous rise
  * rather than five discrete steps.
  *
+ * The whole sweep finishes at `TRANSITION_DONE` (well before `p = 1`), so the
+ * new ground has fully taken the screen by the time the section is centred in
+ * the viewport — not only once it has scrolled entirely past. The tail of the
+ * scrub (p `TRANSITION_DONE`→1) is then just the settled new ground sliding up
+ * as the next section arrives beneath it (same colour, so it reads seamless).
+ *
  * Mirrors the disjoint-ramp style of `closing-scene/closingPhases.ts`: no React
  * state, no GSAP timeline — the component just calls these on every `onUpdate`
  * and writes the result to a CSS custom property.
@@ -17,9 +23,14 @@
 /** Number of horizontal bars. Fixed at every viewport. */
 export const BAR_COUNT = 5;
 
-/** Fraction of total scroll progress a single bar's wipe occupies. Its
- *  neighbours' windows overlap it so the leading edge never stalls. */
-export const BAR_WINDOW = 0.5;
+/** Scrub progress at which every bar has finished its wipe. The section is
+ *  centred in the viewport at p ≈ 0.5, so the transition is visually complete
+ *  by the time the reader is "past the middle" of it. */
+export const TRANSITION_DONE = 0.5;
+
+/** Scroll-progress span of a single bar's wipe. Neighbours overlap so the
+ *  leading edge never stalls. */
+export const BAR_WINDOW = 0.26;
 
 const clamp01 = (n: number): number => (n < 0 ? 0 : n > 1 ? 1 : n);
 
@@ -31,7 +42,8 @@ const clamp01 = (n: number): number => (n < 0 ? 0 : n > 1 ? 1 : n);
  */
 export function barRevealFor(barIndex: number, p: number): number {
   const slot = BAR_COUNT - 1 - barIndex; // bottom bar => slot 0 (starts first)
-  const start = (slot * (1 - BAR_WINDOW)) / (BAR_COUNT - 1);
+  const spread = TRANSITION_DONE - BAR_WINDOW; // total stagger across all bars
+  const start = (slot / (BAR_COUNT - 1)) * spread;
   return clamp01((p - start) / BAR_WINDOW);
 }
 
