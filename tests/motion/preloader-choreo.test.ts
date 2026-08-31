@@ -102,7 +102,7 @@ describe("preloader choreo — constants", () => {
  * pinned here is the internal arithmetic of the table.
  */
 describe("preloader choreo — each sequence fits its slot", () => {
-  const WORDMARK_LEN = 10; // "PHITOPOLIS"
+  const WORDMARK_LEN = 9; // "HITOPOLIS" — the leading "P" is dropped, the logo icon carries it
 
   test("SEQ 1: the mark's rise lands within SEQ_1_LEN_S", () => {
     expect(RISE_S).toBeLessThanOrEqual(SEQ_1_LEN_S);
@@ -158,11 +158,11 @@ describe("preloader choreo — the timeline is ordered and held", () => {
   });
 
   test("the whole intro clears Preloader.tsx's failsafe ceiling", () => {
-    // Mirrors Preloader.tsx: SIGNAL_CAP_AFTER_CHOREO_MS 1500, OUT_DURATION_S
-    // 2.0, BEAT_FAILSAFE_MS 12000. The failsafe must remain unreachable on
-    // every non-forced path, or it truncates the reveal.
-    const worstPathMs = CHOREO_END_S * 1000 + 1500 + POST_HOLD_S * 1000 + 2000;
-    expect(worstPathMs).toBeLessThan(12000);
+    // Mirrors Preloader.tsx: SIGNAL_CAP_AFTER_CHOREO_MS 1500, EXIT_FADE_S
+    // 0.6, OUT_DURATION_S 2.0, BEAT_FAILSAFE_MS 13000. The failsafe must
+    // remain unreachable on every non-forced path, or it truncates the reveal.
+    const worstPathMs = CHOREO_END_S * 1000 + 1500 + POST_HOLD_S * 1000 + 600 + 2000;
+    expect(worstPathMs).toBeLessThan(13000);
   });
 });
 

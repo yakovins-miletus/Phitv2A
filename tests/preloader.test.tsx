@@ -17,7 +17,7 @@ import { mockReducedMotion, renderWithProviders } from "./test-utils";
 // Vitest's 5s default predates the showcase intro.
 vi.setConfig({ testTimeout: 25000 });
 
-const EXIT_WINDOW_MS = CHOREO_END_S * 1000 + POST_HOLD_S * 1000 + 2000 + 1600;
+const EXIT_WINDOW_MS = CHOREO_END_S * 1000 + POST_HOLD_S * 1000 + 2600 + 1600; // 2600 = EXIT_FADE_S (600) + OUT_DURATION_S (2000)
 
 test("preloader ticks on real signals and reaches 100%", async () => {
   // jsdom: document.fonts is undefined and readyState is "complete", so zero

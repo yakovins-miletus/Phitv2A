@@ -108,10 +108,19 @@ const BEAT_S = 0.26;
 
 /**
  * The reveal. A full 2 seconds so the aperture opening genuinely reads as its
- * own moment rather than a quick wipe. An animation length, not a wait; every
- * exit sub-tween below is a fraction of this so they all scale together.
+ * own moment rather than a quick wipe.
  */
 const OUT_DURATION_S = 2.0;
+
+/**
+ * The exit fade — every remaining piece (wordmark, laser, the three rows,
+ * the content block) goes to nothing FIRST, entirely, before the aperture
+ * starts opening. Sequential, not concurrent: the previous shape ran the
+ * fade and the reveal at the same time, so the hole was opening onto content
+ * that was still dissolving. Now the reveal always opens onto a clean,
+ * already-empty ground.
+ */
+const EXIT_FADE_S = 0.6;
 
 /**
  * The buffer held after the choreography lands AND after 100% — a full two
@@ -137,13 +146,18 @@ const SIGNAL_CAP_AFTER_CHOREO_MS = 1500;
  * Unconditional unmount ceiling. Nothing may leave the overlay mounted.
  *
  * The worst non-forced path is CHOREO_END (5100) + the signal cap (1500) +
- * POST_HOLD (2000) + OUT (2000) ≈ 10600ms; 12000 clears that with margin
- * while staying an absolute ceiling. `tests/motion/preloader-choreo.test.ts`
- * pins the arithmetic.
+ * POST_HOLD (2000) + the exit fade (600) + OUT (2000) ≈ 11200ms; 13000
+ * clears that with margin while staying an absolute ceiling.
+ * `tests/motion/preloader-choreo.test.ts` pins the arithmetic.
  */
-const BEAT_FAILSAFE_MS = 12000;
+const BEAT_FAILSAFE_MS = 13000;
 
-const WORDMARK = "PHITOPOLIS";
+// The leading "P" is dropped — the P logo icon beside this wordmark already
+// carries it, and repeating it in both the mark and the text read as
+// redundant now that the two sit side by side. `aria-label="Phitopolis"`
+// below still gives the real name to assistive tech regardless of this
+// visual trim (the letters themselves are `aria-hidden`).
+const WORDMARK = "HITOPOLIS";
 
 export interface LoadSignal {
   label: string;
@@ -291,16 +305,20 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     }
 
     const root = rootRef.current;
-    const out: Promise<unknown>[] = [];
+
+    // PHASE 1 — THE FADE. Everything remaining goes to nothing first, fully,
+    // before the aperture opens at all — sequential, not concurrent with the
+    // reveal. Onto a screen that's already empty, not one still dissolving.
+    const fadeOut: Promise<unknown>[] = [];
 
     // The wordmark wipes back out with the laser riding the closing edge —
     // the one specific per-glyph effect, kept from every previous revision.
     if (wordRef.current) {
-      out.push(
+      fadeOut.push(
         animate(
           wordRef.current,
           { clipPath: WIPE_OUT },
-          { duration: OUT_DURATION_S * 0.3, ease: EASE_IN_OUT_QUART },
+          { duration: EXIT_FADE_S, ease: EASE_IN_OUT_QUART },
         ).then(() => {}),
       );
     }
@@ -309,7 +327,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
       animate(
         laserRef.current,
         { x: [0, w], opacity: [0.9, 0] },
-        { duration: OUT_DURATION_S * 0.3, ease: EASE_IN_OUT_QUART },
+        { duration: EXIT_FADE_S, ease: EASE_IN_OUT_QUART },
       );
     }
 
@@ -318,66 +336,64 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     // spawned) the description row need.
     [markRowRef, progressRowRef, statementRowRef].forEach((ref) => {
       if (!ref.current) return;
-      out.push(
-        animate(ref.current, { opacity: 0 }, { duration: OUT_DURATION_S * 0.4, ease: EASE_IN_EXPO }).then(
-          () => {},
-        ),
+      fadeOut.push(
+        animate(ref.current, { opacity: 0 }, { duration: EXIT_FADE_S, ease: EASE_IN_EXPO }).then(() => {}),
       );
     });
 
     if (contentRef.current) {
       // Whatever a per-piece tween misses, the whole content block is gone
-      // before the aperture finishes.
-      out.push(
-        animate(
-          contentRef.current,
-          { opacity: 0 },
-          { duration: OUT_DURATION_S * 0.55, ease: EASE_IN_EXPO },
-        ).then(() => {}),
+      // before phase 2 starts.
+      fadeOut.push(
+        animate(contentRef.current, { opacity: 0 }, { duration: EXIT_FADE_S, ease: EASE_IN_EXPO }).then(
+          () => {},
+        ),
       );
     }
 
-    /**
-     * The expanding rectangular hole.
-     *
-     * A `clip-path: circle()` (or `inset()` shrinking the overlay) would
-     * contract the overlay to a point — the opposite reading. To open a hole
-     * you clip the overlay to an outer rectangle with an inner rectangle
-     * subtracted (a bridged polygon → nonzero-winding hole) and grow the inner
-     * one from the centre point out past the corners.
-     *
-     * Driven by `animate(from, to, { onUpdate })` writing the style string
-     * directly, rather than by handing Motion a `--custom-property` target: an
-     * unregistered custom property has no interpolation type, so relying on the
-     * CSS engine to tween it is undefined behaviour across browsers. A number
-     * tween plus a manual write is explicit and portable.
-     *
-     * `g` is the hole's half-extent as a fraction of each axis; it reaches 0.53
-     * (6% of slack past the edge) so the last frame is genuinely clear of the
-     * viewport rather than leaving a frame around the corners.
-     */
-    if (root) {
+    // PHASE 2 — THE APERTURE. Only begins once phase 1 has fully resolved.
+    const runAperture = () => {
+      /**
+       * The expanding rectangular hole.
+       *
+       * A `clip-path: circle()` (or `inset()` shrinking the overlay) would
+       * contract the overlay to a point — the opposite reading. To open a hole
+       * you clip the overlay to an outer rectangle with an inner rectangle
+       * subtracted (a bridged polygon → nonzero-winding hole) and grow the
+       * inner one from the centre point out past the corners.
+       *
+       * Driven by `animate(from, to, { onUpdate })` writing the style string
+       * directly, rather than by handing Motion a `--custom-property` target:
+       * an unregistered custom property has no interpolation type, so relying
+       * on the CSS engine to tween it is undefined behaviour across browsers.
+       * A number tween plus a manual write is explicit and portable.
+       *
+       * `g` is the hole's half-extent as a fraction of each axis; it reaches
+       * 0.53 (6% of slack past the edge) so the last frame is genuinely clear
+       * of the viewport rather than leaving a frame around the corners.
+       */
+      if (!root) return Promise.resolve();
       root.style.willChange = "clip-path";
-      out.push(
-        animate(0, 1, {
-          duration: OUT_DURATION_S,
-          ease: EASE_OUT_EXPO,
-          onUpdate: (t) => {
-            const g = t * 0.53; // half-extent of the hole as a fraction (+6% slack)
-            const a = (0.5 - g) * 100; // near edge % (goes negative past t≈0.94 — fine)
-            const b = (0.5 + g) * 100; // far edge %
-            root.style.clipPath =
-              `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ` +
-              `${a}% ${a}%, ${a}% ${b}%, ${b}% ${b}%, ${b}% ${a}%, ${a}% ${a}%)`;
-          },
-        }).then(() => {}),
-      );
-    }
+      return animate(0, 1, {
+        duration: OUT_DURATION_S,
+        ease: EASE_OUT_EXPO,
+        onUpdate: (t) => {
+          const g = t * 0.53; // half-extent of the hole as a fraction (+6% slack)
+          const a = (0.5 - g) * 100; // near edge % (goes negative past t≈0.94 — fine)
+          const b = (0.5 + g) * 100; // far edge %
+          root.style.clipPath =
+            `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ` +
+            `${a}% ${a}%, ${a}% ${b}%, ${b}% ${b}%, ${b}% ${a}%, ${a}% ${a}%)`;
+        },
+      }).then(() => {});
+    };
 
     // Belt and braces: the timer resolves even if a Motion promise never
     // settles (a backgrounded tab suspends rAF, so this is not hypothetical).
-    const timer = window.setTimeout(finish, OUT_DURATION_S * 1000 + 60);
-    Promise.all(out)
+    const timer = window.setTimeout(finish, (EXIT_FADE_S + OUT_DURATION_S) * 1000 + 60);
+    Promise.all(fadeOut)
+      .catch(() => undefined)
+      .then(runAperture)
       .catch(() => undefined)
       .then(() => {
         window.clearTimeout(timer);
@@ -706,7 +722,8 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
                     intro ties directly to the sitewide brand mark rather than
                     inventing its own treatment. A logotype is WCAG
                     1.4.3-exempt (`palette.ts`'s `gold` docblock), so this is
-                    unconditional on any ground. */}
+                    unconditional on any ground. Indices 1/2 now that the
+                    leading "P" is gone — "H-IT-OPOLIS". */}
                 {WORDMARK.split("").map((char, i) => (
                   <Box
                     key={`${char}-${i}`}
@@ -718,7 +735,7 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
                     sx={{
                       display: "inline-block",
                       opacity: 0,
-                      color: i === 2 || i === 3 ? NOIR.gold : "inherit",
+                      color: i === 1 || i === 2 ? NOIR.gold : "inherit",
                       willChange: "transform, opacity, filter",
                     }}
                   >

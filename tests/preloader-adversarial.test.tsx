@@ -19,11 +19,13 @@ import { makeTestQueryClient, renderWithProviders } from "./test-utils";
  * Mirrors Preloader.tsx: OUT_DURATION_S 0.58, SIGNAL_CAP_AFTER_CHOREO_MS 1500,
  * BEAT_FAILSAFE_MS 13000.
  */
-const OUT_MS = 2000;
+// EXIT_FADE_S (0.6) + OUT_DURATION_S (2.0): the exit now fades everything out
+// FIRST, fully, then opens the aperture — sequential, not concurrent.
+const OUT_MS = 2600;
 /** Natural exit: choreography, then the post-100 buffer, then the reveal. */
-const WARM_EXIT_MS = CHOREO_END_S * 1000 + POST_HOLD_S * 1000 + OUT_MS; // ~9960
+const WARM_EXIT_MS = CHOREO_END_S * 1000 + POST_HOLD_S * 1000 + OUT_MS; // ~10560
 /** Stalled-signal exit: choreography, then the signal cap, then the reveal. */
-const STALL_EXIT_MS = CHOREO_END_S * 1000 + 1500 + OUT_MS; // ~9460
+const STALL_EXIT_MS = CHOREO_END_S * 1000 + 1500 + OUT_MS; // ~10060
 /** The absolute ceiling. Assertions stay under it so a pass proves the real
  *  exit path fired, not the failsafe. */
 const FAILSAFE_MS = 13000;
@@ -170,9 +172,9 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       // forcing the exact re-run this test targets. Note `reduced` becomes
       // `false`, not `true` — so unlike the null->true test above,
       // `triggerExit` does NOT take the reduced-motion fast path and instead
-      // runs the full ~0.58s (`OUT_DURATION_S`) rectangular reveal animation
-      // before calling `finish()`, which is why the assertion below budgets for
-      // that animation rather than using a bare ~500ms window.
+      // runs the full exit (the EXIT_FADE_S fade, then the OUT_DURATION_S
+      // rectangular reveal) before calling `finish()`, which is why the
+      // assertion below budgets for that rather than a bare ~500ms window.
       reducedVal = false;
       rerender(
         <Providers queryClient={queryClient}>
@@ -185,9 +187,10 @@ describe("Challenger M1 Adversarial Suite — Preloader & Intro", () => {
       );
 
       // Window: covers the real path (the choreography + the 2000ms buffer +
-      // the ~2000ms reveal + scheduling slack) while staying clear of
-      // BEAT_FAILSAFE_MS (13000ms measured from mount) — a pass proves the
-      // rescheduled post-100 timer fired, not the failsafe.
+      // the ~2600ms exit — EXIT_FADE_S then OUT_DURATION_S — + scheduling
+      // slack) while staying clear of BEAT_FAILSAFE_MS (13000ms measured from
+      // mount) — a pass proves the rescheduled post-100 timer fired, not the
+      // failsafe.
       await waitFor(
         () => {
           expect(onStartExit).toHaveBeenCalled();
