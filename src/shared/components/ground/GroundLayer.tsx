@@ -11,15 +11,14 @@ import { GROUND_STOPS, rgbCss, sampleGround, type GroundStop } from "./groundSto
  *
  * One fixed layer behind all content that owns the background colour and
  * tracks which section the user is reading. Each section now paints its own
- * opaque `bgcolor` (see `SectionBeat.tsx`), so this layer is only visible
- * through the transparent `PixelTransitionSection` gaps between sections.
+ * opaque `bgcolor` (see `SectionBeat.tsx`), so this layer is effectively a
+ * safety net behind every section and the `BarTransitionSection` blocks.
  *
- * The per-tile WebGL wipe that used to run here has been extracted into
- * `PixelTransitionSection` — standalone foreground sections in the document
- * flow that render their own inline canvas. This layer no longer runs any
- * animation; it simply sets a flat background color matching the current
- * section so the transition sections have the correct "from" color behind
- * them before the wipe starts.
+ * The per-tile WebGL wipe that used to run here has been extracted — the
+ * inter-section transition is now `BarTransitionSection`, an opaque
+ * document-flow section of five horizontal bars that paints its own two
+ * adjacent ground colours. This layer no longer runs any animation; it simply
+ * sets a flat background color matching the current section.
  *
  * Degradation: under `prefers-reduced-motion`, a single static paint of the
  * first ground, then nothing runs.
@@ -117,8 +116,8 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
       // Flat fill only: read the current section's color, no blend/progress.
       const s = sampleGround(stops, positions, window.scrollY);
       // Use the "from" color (the section we're currently in) as a flat fill.
-      // Progress is ignored — the visible pixel wipe lives in
-      // PixelTransitionSection components in the document flow.
+      // Progress is ignored — the visible transition lives in
+      // BarTransitionSection components in the document flow.
       const css = rgbCss(s.from);
       if (css === lastCss) return;
       lastCss = css;
@@ -175,7 +174,7 @@ export function GroundLayer({ stops = GROUND_STOPS }: GroundLayerProps) {
       sx={{
         position: "fixed",
         inset: 0,
-        // Behind every section and behind PixelTransitionSection canvases.
+        // Behind every section and behind BarTransitionSection blocks.
         zIndex: -1,
         pointerEvents: "none",
         // Painted before the effect runs, so there is never a flash of white.

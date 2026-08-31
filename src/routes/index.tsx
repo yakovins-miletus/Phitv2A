@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
-import { PixelTransitionSection } from "@/shared/components/ground/PixelTransitionSection";
+import { BarTransitionSection } from "@/shared/components/ground/BarTransitionSection";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -119,20 +119,20 @@ function HomePage() {
           <MissionStatement />
         </Box>
 
-        {/* ── Pixel Transition: hero-mission (panel) → global-markets (deep) ── */}
-        <PixelTransitionSection from="panel" to="deep" />
+        {/* ── Bar Transition: hero-mission (panel) → global-markets (deep) ── */}
+        <BarTransitionSection from="panel" to="deep" />
 
         <GlobalMarketsStatement />
 
-        {/* ── Pixel Transition: global-markets (deep) → hero-pillars (void) ── */}
-        <PixelTransitionSection from="deep" to="void" />
+        {/* ── Bar Transition: global-markets (deep) → hero-pillars (void) ── */}
+        <BarTransitionSection from="deep" to="void" />
 
         {/* Operating Pillars — establishing shot now lives inside its own
             SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
         <OperatingPillars />
 
-        {/* ── Pixel Transition: hero-pillars (void) → use-cases (panel) ── */}
-        <PixelTransitionSection from="void" to="panel" />
+        {/* ── Bar Transition: hero-pillars (void) → use-cases (panel) ── */}
+        <BarTransitionSection from="void" to="panel" />
 
         {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
             via SectionBeat, which renders `bare` because `use-cases`
@@ -185,8 +185,8 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          {/* ── Pixel Transition: use-cases (panel) → process (deep) ── */}
-          <PixelTransitionSection from="panel" to="deep" />
+          {/* ── Bar Transition: use-cases (panel) → process (deep) ── */}
+          <BarTransitionSection from="panel" to="deep" />
 
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
@@ -194,8 +194,8 @@ function HomePage() {
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
-          {/* ── Pixel Transition: process (deep) → reach (white) ── */}
-          <PixelTransitionSection from="deep" to="white" />
+          {/* ── Bar Transition: process (deep) → reach (white) ── */}
+          <BarTransitionSection from="deep" to="white" />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own
@@ -207,8 +207,8 @@ function HomePage() {
               put them. */}
           <ReachSection />
 
-          {/* ── Pixel Transition: reach (white) → closing (field) ── */}
-          <PixelTransitionSection from="white" to="field" />
+          {/* ── Bar Transition: reach (white) → closing (field) ── */}
+          <BarTransitionSection from="white" to="field" />
 
           {/* Closing beat — operational footprint / horizon gateway. Mini
               Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,
