@@ -206,14 +206,32 @@ async function isHttpOk(url: string): Promise<boolean> {
  * measured the intro's own exit and reported it as nav-transition jank, and one
  * dispatched wheel events at an overlay that was still up and concluded Lenis
  * was dead. Polling the real condition removes the guess and the race with it.
+ *
+ * DISMISSES VIA ESCAPE rather than waiting out the natural exit. These tests
+ * don't care what the intro looks like — only that it's gone — and the intro's
+ * own choreography has since grown from ~1s to ~9s+ as a deliberate design
+ * choice. Waiting for a *cold* natural exit at that length reintroduced the
+ * exact failure this helper exists to prevent (a still-mounted, still-animating
+ * overlay caught mid-measurement) unless the timeout keeps growing in lockstep
+ * with the pacing. Escape is the same affordance a real visitor has, forces the
+ * overlay's exit immediately regardless of how long the choreography now is,
+ * and keeps this helper correct without retuning it every time the intro is
+ * re-paced.
  */
-async function waitForIntroGone(session: { evaluate: <T>(e: string) => Promise<T> }, timeoutMs = 6000) {
+async function waitForIntroGone(session: { evaluate: <T>(e: string) => Promise<T> }, timeoutMs = 4000) {
   const started = Date.now();
+  let escaped = false;
   while (Date.now() - started < timeoutMs) {
     const gone = await session.evaluate<boolean>(
       `!document.querySelector('[data-testid="preloader"]')`,
     );
     if (gone) return true;
+    if (!escaped) {
+      escaped = true;
+      await session.evaluate(
+        `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`,
+      );
+    }
     await new Promise((r) => setTimeout(r, 40));
   }
   return false;

@@ -21,6 +21,16 @@ const css = (e: CubicBezier) => `cubic-bezier(${e.join(", ")})`;
 export const EASE_OUT_EXPO: CubicBezier = [0.16, 1, 0.3, 1];
 export const EASE_OUT_EXPO_CSS = css(EASE_OUT_EXPO);
 
+/**
+ * Slow start, hard finish — the exit counterpart to EASE_OUT_EXPO.
+ *
+ * Added so the preloader's exits stop reaching for Motion's `"easeIn"` string.
+ * The string curve is a plain quadratic and reads soft against an expo-out
+ * entrance; departures should accelerate away as decisively as arrivals settle.
+ */
+export const EASE_IN_EXPO: CubicBezier = [0.7, 0, 0.84, 0];
+export const EASE_IN_EXPO_CSS = css(EASE_IN_EXPO);
+
 /** Symmetric and heavy at both ends — the page-curtain and preloader wipe. */
 export const EASE_IN_OUT_QUART: CubicBezier = [0.76, 0, 0.24, 1];
 export const EASE_IN_OUT_QUART_CSS = css(EASE_IN_OUT_QUART);

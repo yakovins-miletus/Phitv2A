@@ -5,7 +5,19 @@ import { vi } from "vitest";
 import { Preloader } from "@/shared/components/Preloader";
 import * as motion from "@/shared/motion";
 
+import { CHOREO_END_S, POST_HOLD_S } from "@/shared/components/preloaderChoreo";
 import { mockReducedMotion, renderWithProviders } from "./test-utils";
+
+/**
+ * Real-timer windows derived from the choreography table. The intro is a ~8.5s
+ * showcase: the exit waits on CHOREO_END plus the post-100 buffer plus the
+ * reveal, so re-pacing the intro must widen these automatically rather than
+ * turning them into failsafe tests.
+ */
+// Vitest's 5s default predates the showcase intro.
+vi.setConfig({ testTimeout: 25000 });
+
+const EXIT_WINDOW_MS = CHOREO_END_S * 1000 + POST_HOLD_S * 1000 + 2000 + 1600;
 
 test("preloader ticks on real signals and reaches 100%", async () => {
   // jsdom: document.fonts is undefined and readyState is "complete", so zero
@@ -59,7 +71,7 @@ test("a pending background signal does not hold the reveal", async () => {
       expect(onStartExit).toHaveBeenCalled();
       expect(onDone).toHaveBeenCalled();
     },
-    { timeout: 2500 },
+    { timeout: EXIT_WINDOW_MS },
   );
 });
 
@@ -121,7 +133,7 @@ test("resolves and triggers onDone when useReducedMotion transitions null -> fal
       () => {
         expect(onDone).toHaveBeenCalled();
       },
-      { timeout: 2500 }
+      { timeout: EXIT_WINDOW_MS }
     );
   } finally {
     spy.mockRestore();
@@ -143,13 +155,15 @@ test("unconditional failsafe resolves preloader when a signal hangs indefinitely
   expect(screen.getByTestId("preloader")).toBeInTheDocument();
   expect(screen.getByText("00%")).toBeInTheDocument();
 
-  // Failsafe timer (1500ms) guarantees onDone and onStartExit are invoked
+  // The post-choreography signal cap guarantees onDone and onStartExit are
+  // invoked even though the signal never settles; the unconditional failsafe
+  // (13000ms) sits above it as the last resort.
   await waitFor(
     () => {
       expect(onStartExit).toHaveBeenCalled();
       expect(onDone).toHaveBeenCalled();
     },
-    { timeout: 2500 }
+    { timeout: EXIT_WINDOW_MS }
   );
 });
 
