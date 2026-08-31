@@ -9,6 +9,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+import { EYEFLOW_RAIL_GUTTER } from "@/shared/components/EyeFlow";
 
 const GROUND = GROUNDS[homeSection("global-markets").ground ?? "deep"];
 
@@ -53,6 +54,7 @@ export function GlobalMarketsStatement() {
             maxWidth: "1400px",
             mx: "auto",
             px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            pr: { lg: `calc(80px + ${EYEFLOW_RAIL_GUTTER}px)` },
             display: "flex",
             flexDirection: "column",
             gap: { xs: 8, md: 12 },

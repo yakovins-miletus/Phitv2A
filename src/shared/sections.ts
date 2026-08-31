@@ -19,13 +19,14 @@ export const ACT_LABELS: Record<Act, string> = {
   people: "PEOPLE",
 };
 
-/** Chapter index. Eight chapters, all "services" now that the PEOPLE act
+/** Chapter index. Six chapters, all "services" now that the PEOPLE act
  *  (daily-life, candidates, testimonials, blog) has relocated to /about —
  *  see PRD-home-client-focus §US-1/US-2. The `Act`/`ACT_LABELS` model is kept
  *  (it is shared with /about's own chapter registry below) but on home it
- *  now collapses to a single act: `ACT_GROUPS` in EyeFlow.tsx will render one
- *  group instead of two, which is the correct rail for a one-act page. */
-export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+ *  now collapses to a single act, and EyeFlow.tsx renders a flat list of the
+ *  six chapters with no act header — a one-act page needs no group label.
+ *  ABOUT_CHAPTERS below only uses 0–2, so the narrowing is safe for it. */
+export type ChapterIndex = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface ChapterDef {
   index: ChapterIndex;
@@ -33,34 +34,33 @@ export interface ChapterDef {
   act: Act;
 }
 
-/** Chapters in scroll order, including the detailed hero phases.
+/** Chapters in scroll order.
  *
- *  The first four are positions inside the hero's logo choreography. Their
- *  labels used to be the internal phase names — FLATTEN, ALIGN, REVEAL,
- *  DWELL — which are what the animation code calls them, not anything a
- *  visitor could act on. The chapter rail is visitor-facing navigation, so it
- *  names what is on screen at each position instead. The phase constants in
+ *  Six chapters, rebalanced down from eight (explicit user decision): the four
+ *  hero-phase positions (FLATTEN, ALIGN, REVEAL, DWELL) collapsed into a
+ *  single ORIGIN chapter covering the whole logo choreography plus the signal
+ *  core, because splitting one uninterrupted animation across four rail rows
+ *  gave the reader nothing to navigate between. The phase constants in
  *  `heroScene.ts` (PHASE_FLATTEN_END, DWELL_END and friends) keep the
- *  engineering names; only these display strings changed. */
-// Partial reversal of the WS-02 re-order (explicit user decision):
-// MissionStatement ("who we are") moves back up to run right after the hero,
-// ahead of the global-markets claim, instead of as a support beat after
-// capability has been shown. `QUANTITATIVE R&D` now covers that whole
-// opening trio — hero, MissionStatement, and the lifted global-markets
-// statement — rather than hero+global-markets alone, so there is no longer a
-// separate "WHO WE ARE" chapter; `PRACTICE` still covers everything that
-// shows the work (pillars, use-cases, process).
+ *  engineering names; the rail just no longer mirrors them.
+ *
+ *  Every label names what is on screen at that position — the rail is
+ *  visitor-facing navigation, not a map of the internal beat list:
+ *    ORIGIN      hero (logo choreography → signal core)
+ *    THESIS      MissionStatement + the global-markets wager
+ *    DISCIPLINES the operating pillars
+ *    PROOF       capabilities, use-cases, process — everything showing the work
+ *    REACH       the global footprint
+ *    HORIZON     the closing gateway
+ *  MissionStatement ("who we are") runs right after the hero (partial WS-02
+ *  reversal), which is why THESIS sits second. */
 export const CHAPTERS: readonly ChapterDef[] = [
-  { index: 0, label: "THE MARK", act: "services" },
-  { index: 1, label: "THE GRID", act: "services" },
-  { index: 2, label: "PHITOPOLIS", act: "services" },
-  { index: 3, label: "WHAT WE DO", act: "services" },
-  { index: 4, label: "QUANTITATIVE R&D", act: "services" },
-  { index: 5, label: "PRACTICE", act: "services" },
-  { index: 6, label: "REACH", act: "services" },
-  // Closing beat (operational footprint / horizon gateway) is still the
-  // page's final chapter.
-  { index: 7, label: "HORIZON", act: "services" },
+  { index: 0, label: "ORIGIN", act: "services" },
+  { index: 1, label: "THESIS", act: "services" },
+  { index: 2, label: "DISCIPLINES", act: "services" },
+  { index: 3, label: "PROOF", act: "services" },
+  { index: 4, label: "REACH", act: "services" },
+  { index: 5, label: "HORIZON", act: "services" },
 ];
 
 /** One home-page section: single source of truth for snap points, the left
@@ -162,46 +162,50 @@ export const STAGE_ATTR = "data-stage-section";
 export const HOME_SECTIONS: readonly SectionDef[] = [
   // ── SERVICES ──────────────────────────────────────────────────────────────
   { id: "hero-flatten", label: "Logo Flatten", chapter: 0, ground: "void" },
-  { id: "hero-align", label: "Logo Align", chapter: 1, ground: "void" },
-  { id: "hero-reveal", label: "Wordmark Reveal", chapter: 2, ground: "void" },
-  { id: "hero-dwell", label: "Logo Dwell", chapter: 3, ground: "void" },
-  { id: "hero", label: "Signal Core", chapter: 4, ground: "void" },
+  { id: "hero-align", label: "Logo Align", chapter: 0, ground: "void" },
+  { id: "hero-reveal", label: "Wordmark Reveal", chapter: 0, ground: "void" },
+  { id: "hero-dwell", label: "Logo Dwell", chapter: 0, ground: "void" },
+  { id: "hero", label: "Signal Core", chapter: 0, ground: "void" },
   // Mission core, back up front: runs immediately after the hero again,
   // ahead of the global-markets claim. It still lazy-mounts `ServiceGlobe`
   // behind its own `useInView` gate (900px prefetch margin) — that gate is
   // load-bearing regardless of where in the order the section sits, and
   // firing earlier on scroll now is expected, not a regression — see
   // MissionStatement.tsx.
-  { id: "hero-mission", label: "Core Mission", chapter: 4, ground: "panel" },
+  { id: "hero-mission", label: "Core Mission", chapter: 1, ground: "panel" },
   // The lifted global-markets text blob (WS-02): its own full-viewport beat,
   // now right after MissionStatement — the wager the rest of the page pays
   // off. No establishing shot, no graphic; the words carry it.
-  { id: "global-markets", label: "The Global-Markets Wager", chapter: 4, ground: "deep" },
+  { id: "global-markets", label: "The Global-Markets Wager", chapter: 1, ground: "deep" },
   {
     id: "hero-pillars",
     label: "Operating Pillars",
-    chapter: 5,
+    chapter: 2,
     choreo: "grow-left",
     ground: "void",
     ownsPin: true,
     noExitDim: true,
     establishScale: "major",
   },
-  { id: "services", label: "Capabilities", chapter: 5, ground: "void", establishScale: "mini" },
+  { id: "services", label: "Capabilities", chapter: 3, ground: "void", establishScale: "mini" },
   {
+    // Vertical scroll of near-full-viewport blocks with a sticky crossfading
+    // 3D-isometric background per use case (UseCasesNarrative / UseCaseBackdrop).
+    // No longer `ownsPin` — the old pinned horizontal scrub is gone — but still
+    // `noExitDim`: the scrubbed exit dim would fade a full-bleed image and its
+    // copy to 25% right as the reader reaches the third use case.
     id: "use-cases",
     label: "Architectural Use-Cases",
-    chapter: 5,
+    chapter: 3,
     ground: "panel",
-    ownsPin: true,
     noExitDim: true,
     establishScale: "mini",
   },
-  { id: "process", label: "Growing Into A Development Powerhouse", chapter: 5, ground: "deep", establishScale: "mini" },
+  { id: "process", label: "Growing Into A Development Powerhouse", chapter: 3, ground: "deep", establishScale: "mini" },
   {
     id: "reach",
     label: "Global Footprint",
-    chapter: 6,
+    chapter: 4,
     choreo: "spotlight-clip",
     ground: "white",
     establishScale: "mini",
@@ -213,7 +217,7 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
   {
     id: "closing",
     label: "Horizon Gateway",
-    chapter: 7,
+    chapter: 5,
     choreo: "zoom-center",
     ground: "field",
     ownsPin: true,

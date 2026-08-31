@@ -80,6 +80,15 @@ test("every anchor id is registered in NAV_ANCHORS, none left as bare strings", 
     [...src.matchAll(/useNavbarAnchor\(([^,)]+)/g)]
       // The hook's own definition and its import are not call sites.
       .filter(() => !files[i]!.endsWith("navbarHooks.ts"))
+      // `VideoPageHero` is the shared cinematic header for /blog, /careers and
+      // /services; it forwards a typed `NavAnchorId` prop (`anchor`) straight to
+      // the hook, so the bare-string hazard cannot apply — the id literal lives
+      // at each page's `<VideoPageHero anchor={NAV_ANCHORS.*}>` call site.
+      .filter(() => !files[i]!.endsWith("VideoPageHero.tsx"))
+      // `BarTransitionSection` likewise forwards a typed `NavAnchorId` prop
+      // (`anchor`) straight to the hook; the id literal lives at each
+      // `<BarTransitionSection anchor={NAV_ANCHORS.*}>` in routes/index.tsx.
+      .filter(() => !files[i]!.endsWith("BarTransitionSection.tsx"))
       .map((m) => `${files[i]!.slice(SRC.length + 1)}: ${m[1]!.trim()}`),
   );
 

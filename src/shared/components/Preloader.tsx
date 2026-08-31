@@ -1,12 +1,34 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { animate, stagger } from "motion/react";
+import { animate, motion } from "motion/react";
 
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useReducedMotion } from "@/shared/motion";
-import { EASE_OUT_EXPO } from "@/shared/motion/easing";
+import { useReducedMotion, useIsLowPowerDevice } from "@/shared/motion";
+import { EASE_OUT_EXPO, EASE_IN_OUT_QUART, EASE_IN_EXPO } from "@/shared/motion/easing";
+import PhitopolisLogo from "./PhitopolisLogo";
+import {
+  WIPE_HIDDEN,
+  WIPE_SHOWN,
+  WIPE_S,
+  WIPE_DELAY_S,
+  CHAR_STAGGER_S,
+  CHAR_BLUR_PX,
+  STATEMENT_LINES,
+  STATEMENT_WIPE_S,
+  RISE_Y_PX,
+  RISE_OPACITY_FROM,
+  RISE_S,
+  PROGRESS_RISE_DELAY_S,
+  PUSH_S,
+  SEQ_2_AT_S,
+  CHOREO_END_S,
+  POST_HOLD_S,
+  ESC_HINT_AT_S,
+  ESC_HINT_FADE_S,
+  trackingOffset,
+} from "./preloaderChoreo";
 
 /**
  * The intro.
@@ -18,30 +40,55 @@ import { EASE_OUT_EXPO } from "@/shared/motion/easing";
  * is the deal: the visitor waits once, briefly, and never waits again. An intro
  * that doesn't buy something is a tax, and this one is measured against that.
  *
- * WHAT IT LOOKS LIKE, AND WHY IT LOOKS LIKE SO LITTLE. The previous version was
- * a cockpit: fabricated GPS coordinates (`SYS.LOC // MANILA [14.5995° N ...]`),
- * corner crosshairs, a framed logo plate, "Welcome to Phitopolis", a subtitle,
- * and a progress bar that read 100% within 350ms. Three problems. The telemetry
- * was invented data on a marketing site for a firm whose product is real
- * numbers. The greeting spent the one uninterrupted branded moment on saying
- * hello. And a bar that is full before anyone perceives it is decoration
- * wearing instrumentation's clothes.
+ * WHAT IT LOOKS LIKE, AND WHY. No frame, no bordered panel — everything sits
+ * directly on a soft dark-navy ground. Three blocks, top to bottom: the P
+ * logo beside the wordmark, the description (once it spawns), and the
+ * loading progress. Every block RISES into place from below rather than
+ * fading or wiping flat, and the description's arrival is a genuine layout
+ * reflow — `motion/react`'s `layout` prop — so the mark row and the progress
+ * row visibly push apart to make room for it rather than the description
+ * appearing in a fixed slot between two things that never moved.
  *
- * What is left is three elements: the wordmark, one hairline, and the count.
- * The hairline is the only geometric act and it is driven by real resolved
- * signals — if it moves slowly, something genuinely is slow.
+ * THE COMPOSITION, in play order:
+ *   SEQ 1 — the mark rises. The logo + wordmark row translates up from below
+ *           while the wordmark's own letters resolve inside that same
+ *           window: a clip-path wipe (`WIPE_HIDDEN` → `WIPE_SHOWN`) with a
+ *           1px gold laser riding the edge, per-letter tracking closing
+ *           (`trackingOffset` → 0, transform only) with a small
+ *           `CHAR_BLUR_PX` blur that resolves. The progress row (caliper
+ *           hairline + mono readout) rises in shortly after, sitting close
+ *           beneath.
+ *   SEQ 2 — the description spawns. It rises in with its own two lines
+ *           wiping in turn; the mark row and progress row, `layout`-tracked,
+ *           animate to their new positions in the same beat.
  *
- * THE EXIT is an expanding circular mask: a hole opens at the centre and grows
- * past the corners, so the site is revealed through the intro rather than
- * having the intro removed from in front of it. Deliberately the same optical
- * idea as the home-arrival transition in `viewTransitions.css`, so the site has
- * one notion of how things are revealed instead of two unrelated ones. It is
- * not a handoff — nothing is shared with the hero, and the hero's own entrance
- * runs independently.
+ * THE EXIT fades everything out as one unit first — the logo, the wordmark,
+ * and every row dissolve together at the same rate, fully, before anything
+ * else happens — then an expanding rectangular hole opens onto the now-empty
+ * ground so the site is revealed *through* the intro. Deliberately the
+ * same optical idea as `fresko-home-aperture` in `viewTransitions.css`, so the
+ * site has one notion of how things are revealed instead of two unrelated ones.
  *
- * ENGINEERING INVARIANTS (kept from the previous revision — these were right):
+ * ENGINEERING INVARIANTS (kept from previous revisions — these were right):
  *  - `motion/react`, never gsap. This module is on the first-paint path and
  *    must not drag GSAP into the eager bundle.
+ *  - BLUR STAYS <= 5px. Large blur on display type reads as a smudge, not
+ *    focus; `CHAR_BLUR_PX` is 4 and the choreo parity test pins it `<= 5`.
+ *  - Every piece that RISES rests at `opacity: 0` in its JSX (matching the
+ *    entrance keyframe's own start); nothing pretends to be positioned
+ *    off-screen the way the old rails did, because nothing here travels far
+ *    enough to need that — a rise is a small `y` + opacity, not a flight path.
+ *    The wordmark's and description's CLIP is the one thing that rests LIT
+ *    (`WIPE_SHOWN`, not `WIPE_HIDDEN`) rather than hidden: a tween that never
+ *    runs must leave the text readable, never permanently clipped out — the
+ *    same rule `SectionBeat` follows.
+ *  - `layout` and a hand-authored `transform` NEVER share one element. Motion's
+ *    `layout` prop snapshots an element's box across renders and animates any
+ *    change; an imperative `animate()` writing `transform` on that same node
+ *    would be invisible to that bookkeeping and the two would fight over the
+ *    same CSS property. Every row that both rises AND gets pushed by the
+ *    description's arrival is two elements: an outer `motion.div layout`
+ *    that only ever reflows, and an inner plain `Box` that plays the rise.
  *  - `useReducedMotion()` is compared with `=== true`. It returns
  *    `boolean | null` and is null on first render; bare truthiness here caused
  *    a freeze where the entrance effect re-ran on null→false, killed its own
@@ -53,70 +100,76 @@ import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 export const PRELOADER_SESSION_KEY = "phitopolis:preloaded";
 
 /**
- * The intro's *floor* — what it costs when there is nothing whatever to warm.
- *
- * Measured on a warm localhost, where every signal resolves before the entrance
- * gate even opens, the first draft sat on screen for 1.14s (0.42 entrance +
- * 0.72 exit). That is the exact failure the previous cockpit version had: time
- * spent on choreography rather than on loading, paid by the visitors who needed
- * it least. Trimmed to a ~0.92s floor, which still reads as deliberate rather
- * than as a flash.
- *
- * Both numbers are animation lengths, not waits — the settle gate between them
- * collapses to zero the moment the warm-up finishes.
+ * The beat unit. Every duration in this module is a multiple of it, so the
+ * whole intro's pacing is tunable from one constant. `0.26s` is brisk enough
+ * that the assembly reads as deliberate rather than slow on a ~200KB site.
  */
-const IN_DURATION_S = 0.34;
-const OUT_DURATION_S = 0.58;
+const BEAT_S = 0.26;
 
 /**
- * Pre-roll beat: a short brand hold (wordmark, hairline) before the progress
- * counter appears. This allows the number to arrive into an established frame
- * instead of popping in immediately. The wordmark and hairline are visible
- * during this beat; the counter (readout) delays its entrance.
- *
- * Target warm-cache intro duration: ~1.5s total
- *  - 0.34s entrance (wordmark + hairline)
- *  - 0.30s pre-roll hold (counter hidden)
- *  - 0.58s exit (mask reveal)
- *  - 0.20s post-100 beat (pause at 100% before exit)
- *  - Paced progress easing across signals (0.5s per update)
- *
- * This 1.5s duration is deliberately modest: on a 200KB site it reads as
- * considered, not as a stall. Lusion buys length with genuinely heavy WebGL;
- * this site should not hide behind fabricated work.
+ * The reveal. A full 2 seconds so the aperture opening genuinely reads as its
+ * own moment rather than a quick wipe.
  */
-const PRE_ROLL_DURATION_S = 0.3;
+const OUT_DURATION_S = 2.0;
 
 /**
- * Post-100 beat: a brief pause after progress reaches 100% before the exit
- * sequence (mask reveal) starts. This gives the "READY" state a moment to
- * register visually before the site is revealed.
+ * The exit fade — every remaining piece (wordmark, laser, the three rows,
+ * the content block) goes to nothing FIRST, entirely, before the aperture
+ * starts opening. Sequential, not concurrent: the previous shape ran the
+ * fade and the reveal at the same time, so the hole was opening onto content
+ * that was still dissolving. Now the reveal always opens onto a clean,
+ * already-empty ground.
  */
-const POST_100_BEAT_MS = 200;
+const EXIT_FADE_S = 0.6;
 
 /**
- * Settle cap, and the one number that encodes the warm-up bargain.
+ * The buffer held after the choreography lands AND after 100% — a full two
+ * seconds of stillness before the reveal starts.
  *
- * The previous revision capped settle at 800ms as part of a 1.5s total budget.
- * That budget was written for a transition, not for a preloader whose whole job
- * is to finish warming four route chunks plus a twelve-image manifest — at
- * 800ms it would routinely give up partway and the navigations it was supposed
- * to make instant would still fetch.
- *
- * 1800ms is the compromise: long enough that a cold load usually completes the
- * warm-up, short enough that a stalled CDN costs under two seconds. Exit fires
- * the *instant* signals resolve, so a warm cache still leaves in ~450ms — the
- * cap is a ceiling, never a wall. Escape always skips. The post-100 beat adds
- * 200ms, so the new effective cap is ~2000ms before exit.
+ * This is the "let it register" beat, and it is deliberately long. Only
+ * applied on a natural completion; Escape skips it entirely.
  */
-const MAX_SETTLE_MS = 1800;
-const BEAT_FAILSAFE_MS = 2600;
+const POST_HOLD_MS = POST_HOLD_S * 1000; // 2000
 
-const WORDMARK = "PHITOPOLIS";
+/**
+ * How long the exit will wait for the blocking signals AFTER the choreography
+ * has finished — not from mount.
+ *
+ * This is the one number encoding the warm-up bargain: the choreography no
+ * longer races the load, so the only question left is how long a *stalled*
+ * CDN may hold the reveal once there is nothing left to watch. 1500ms. Exit
+ * fires the instant signals resolve, so this is a ceiling, never a wall.
+ */
+const SIGNAL_CAP_AFTER_CHOREO_MS = 1500;
+
+/**
+ * Unconditional unmount ceiling. Nothing may leave the overlay mounted.
+ *
+ * The worst non-forced path is CHOREO_END (5100) + the signal cap (1500) +
+ * POST_HOLD (2000) + the exit fade (600) + OUT (2000) ≈ 11200ms; 13000
+ * clears that with margin while staying an absolute ceiling.
+ * `tests/motion/preloader-choreo.test.ts` pins the arithmetic.
+ */
+const BEAT_FAILSAFE_MS = 13000;
+
+// The leading "P" is dropped — the P logo icon beside this wordmark already
+// carries it, and repeating it in both the mark and the text read as
+// redundant now that the two sit side by side. `aria-label="Phitopolis"`
+// below still gives the real name to assistive tech regardless of this
+// visual trim (the letters themselves are `aria-hidden`).
+const WORDMARK = "HITOPOLIS";
 
 export interface LoadSignal {
   label: string;
   promise: Promise<unknown>;
+  /**
+   * Whether the reveal must wait on this signal. **Absent / `undefined` ===
+   * blocking** — so a bare `{ label, promise }` (fonts, and every pre-tier
+   * test) still gates the exit with zero changes. Set `blocking: false` for
+   * warm-work that should keep running silently without holding the overlay:
+   * route precompiles, the three.js chunk, deep-scroll / other-route imagery.
+   */
+  blocking?: boolean;
 }
 
 function collectFontSignals(): LoadSignal[] {
@@ -133,30 +186,56 @@ interface PreloaderProps {
 
 export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const reduced = useReducedMotion();
+  const lowPower = useIsLowPowerDevice() === true;
   const [signals] = useState<LoadSignal[]>(() => [...collectFontSignals(), ...(warmup ?? [])]);
-  const [resolved, setResolved] = useState(0);
+  const [blockingResolved, setBlockingResolved] = useState(0);
   const [lastLabel, setLastLabel] = useState("");
   const [forced, setForced] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
   const [exiting, setExiting] = useState(false);
+  // Not rendered until SEQ 2 fires. Mounting this (rather than an
+  // always-present, initially-invisible block) is what the `layout`-tracked
+  // mark/progress rows react to — a genuine reflow, not a simulated one.
+  const [statementSpawned, setStatementSpawned] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // The layout-tracked OUTER wrapper for each row (position/reflow only —
+  // never touched by an imperative transform) and the INNER plain element
+  // that actually plays the rise entrance. Motion's `layout` prop snapshots
+  // an element's box across renders and animates any change it finds; an
+  // imperative `animate()` writing `transform` on that same node, mid-flight,
+  // would be invisible to that bookkeeping and the two would fight over the
+  // same CSS property. Splitting them into outer/inner avoids that entirely:
+  // the outer never has a hand-authored transform, the inner never reflows.
+  const markRowRef = useRef<HTMLDivElement>(null);
+  const markRiseRef = useRef<HTMLDivElement>(null);
+  const progressRowRef = useRef<HTMLDivElement>(null);
+  const progressRiseRef = useRef<HTMLDivElement>(null);
+  const statementRowRef = useRef<HTMLDivElement>(null);
+  const statementRiseRef = useRef<HTMLDivElement>(null);
   const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const ruleRef = useRef<HTMLDivElement>(null);
+  const wordRef = useRef<HTMLDivElement>(null);
+  const laserRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLDivElement>(null);
+  const statementRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const escHintRef = useRef<HTMLDivElement>(null);
 
+  const lowPowerRef = useRef(lowPower);
+  const reducedRef = useRef(reduced);
   const isDoneRef = useRef(false);
   const onDoneRef = useRef(onDone);
   const onStartExitRef = useRef(onStartExit);
-  const entranceStartedRef = useRef(false);
   const exitStartedRef = useRef(false);
   const completedAt100Ref = useRef(false);
 
   useEffect(() => {
     onDoneRef.current = onDone;
     onStartExitRef.current = onStartExit;
+    lowPowerRef.current = lowPower;
+    reducedRef.current = reduced;
   });
 
   const finish = useCallback(() => {
@@ -173,20 +252,31 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     onDoneRef.current();
   }, []);
 
-  const total = Math.max(signals.length, 1);
+  // The reveal gates on the *blocking* tier only (fonts + the landing route's
+  // above-fold-critical assets). Background signals — route precompiles, the
+  // three.js chunk, deep imagery — keep resolving silently and never hold the
+  // overlay; the failsafe and the signal cap stay absolute regardless.
+  const blockingCount = signals.reduce((n, s) => (s.blocking === false ? n : n + 1), 0);
+  const blockingTotal = Math.max(blockingCount, 1);
+  const allBackground = signals.length > 0 && blockingCount === 0;
   const progressPercent =
-    forced || signals.length === 0 ? 100 : Math.min(100, Math.round((resolved / total) * 100));
+    forced || signals.length === 0 || allBackground
+      ? 100
+      : Math.min(100, Math.round((blockingResolved / blockingTotal) * 100));
   const isComplete = progressPercent >= 100 || forced;
 
   // Real signals only. Nothing here is on a timer pretending to be progress.
+  // The bar (progressPercent) tracks the blocking set — what gates is what the
+  // reader sees — while `lastLabel` still ticks off every signal, blocking or
+  // not, so the status line reflects all the work genuinely in flight.
   useEffect(() => {
     if (signals.length === 0) return;
     let mounted = true;
     signals.forEach((sig) => {
       const tick = () => {
         if (!mounted) return;
-        setResolved((prev) => prev + 1);
         setLastLabel(sig.label);
+        if (sig.blocking !== false) setBlockingResolved((prev) => prev + 1);
       };
       sig.promise.then(tick).catch(tick);
     });
@@ -216,61 +306,84 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
 
     const root = rootRef.current;
 
-    /**
-     * The expanding hole.
-     *
-     * A `clip-path: circle()` would contract the overlay to a dot at the
-     * centre — the opposite reading. To open a hole you need a mask whose
-     * transparent region grows, which means animating a radial-gradient stop.
-     *
-     * Driven by `animate(from, to, { onUpdate })` writing the style directly,
-     * rather than by handing Motion a `--custom-property` target: an unregistered
-     * custom property has no interpolation type, so relying on the CSS engine to
-     * tween it is undefined behaviour across browsers. A number tween plus a
-     * manual write is explicit and portable.
-     *
-     * Radius reaches the far corner (half the diagonal) with 6% of slack, so the
-     * last frame is genuinely clear of the viewport rather than leaving a
-     * vignette in the corners.
-     */
-    const reach =
-      typeof window === "undefined"
-        ? 1200
-        : (Math.hypot(window.innerWidth, window.innerHeight) / 2) * 1.06;
+    // PHASE 1 — THE FADE. Everything remaining goes to nothing first, fully,
+    // before the aperture opens at all — sequential, not concurrent with the
+    // reveal. Onto a screen that's already empty, not one still dissolving.
+    const fadeOut: Promise<unknown>[] = [];
 
-    const out: Promise<unknown>[] = [];
+    // The wordmark and the P logo dissolve together, at the same rate, as
+    // one unit — no separate wipe-out on the wordmark. A clip-path wipe and
+    // an opacity fade don't resolve at a matched visual rate, so giving the
+    // wordmark its own wipe here made it vanish before the logo beside it
+    // had faded — the two looked like they were leaving on different
+    // schedules instead of one thing fading out together. `wordRef` and
+    // `laserRef` are left alone; they're both descendants of `markRowRef`
+    // below, and the laser is already at rest opacity 0 from its own
+    // entrance sweep, so the row's own opacity is the only animation either
+    // one needs.
 
-    if (stageRef.current) {
-      // The content clears slightly ahead of the mask so the hole opens onto a
-      // clean field instead of catching the wordmark mid-dissolve.
-      out.push(
-        animate(
-          stageRef.current,
-          { opacity: 0, y: -8 },
-          { duration: OUT_DURATION_S * 0.42, ease: "easeIn" },
-        ).then(() => {}),
+    // Every row fades as a whole — the only teardown any of the three rows
+    // (and everything inside them) needs.
+    [markRowRef, progressRowRef, statementRowRef].forEach((ref) => {
+      if (!ref.current) return;
+      fadeOut.push(
+        animate(ref.current, { opacity: 0 }, { duration: EXIT_FADE_S, ease: EASE_IN_EXPO }).then(() => {}),
+      );
+    });
+
+    if (contentRef.current) {
+      // Whatever a per-piece tween misses, the whole content block is gone
+      // before phase 2 starts.
+      fadeOut.push(
+        animate(contentRef.current, { opacity: 0 }, { duration: EXIT_FADE_S, ease: EASE_IN_EXPO }).then(
+          () => {},
+        ),
       );
     }
 
-    if (root) {
-      root.style.willChange = "mask-image, -webkit-mask-image";
-      out.push(
-        animate(0, reach, {
-          duration: OUT_DURATION_S,
-          ease: EASE_OUT_EXPO,
-          onUpdate: (r) => {
-            const g = `radial-gradient(circle at 50% 50%, transparent ${r}px, #000 ${r}px)`;
-            root.style.webkitMaskImage = g;
-            root.style.maskImage = g;
-          },
-        }).then(() => {}),
-      );
-    }
+    // PHASE 2 — THE APERTURE. Only begins once phase 1 has fully resolved.
+    const runAperture = () => {
+      /**
+       * The expanding rectangular hole.
+       *
+       * A `clip-path: circle()` (or `inset()` shrinking the overlay) would
+       * contract the overlay to a point — the opposite reading. To open a hole
+       * you clip the overlay to an outer rectangle with an inner rectangle
+       * subtracted (a bridged polygon → nonzero-winding hole) and grow the
+       * inner one from the centre point out past the corners.
+       *
+       * Driven by `animate(from, to, { onUpdate })` writing the style string
+       * directly, rather than by handing Motion a `--custom-property` target:
+       * an unregistered custom property has no interpolation type, so relying
+       * on the CSS engine to tween it is undefined behaviour across browsers.
+       * A number tween plus a manual write is explicit and portable.
+       *
+       * `g` is the hole's half-extent as a fraction of each axis; it reaches
+       * 0.53 (6% of slack past the edge) so the last frame is genuinely clear
+       * of the viewport rather than leaving a frame around the corners.
+       */
+      if (!root) return Promise.resolve();
+      root.style.willChange = "clip-path";
+      return animate(0, 1, {
+        duration: OUT_DURATION_S,
+        ease: EASE_OUT_EXPO,
+        onUpdate: (t) => {
+          const g = t * 0.53; // half-extent of the hole as a fraction (+6% slack)
+          const a = (0.5 - g) * 100; // near edge % (goes negative past t≈0.94 — fine)
+          const b = (0.5 + g) * 100; // far edge %
+          root.style.clipPath =
+            `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ` +
+            `${a}% ${a}%, ${a}% ${b}%, ${b}% ${b}%, ${b}% ${a}%, ${a}% ${a}%)`;
+        },
+      }).then(() => {});
+    };
 
     // Belt and braces: the timer resolves even if a Motion promise never
     // settles (a backgrounded tab suspends rAF, so this is not hypothetical).
-    const timer = window.setTimeout(finish, OUT_DURATION_S * 1000 + 60);
-    Promise.all(out)
+    const timer = window.setTimeout(finish, (EXIT_FADE_S + OUT_DURATION_S) * 1000 + 60);
+    Promise.all(fadeOut)
+      .catch(() => undefined)
+      .then(runAperture)
       .catch(() => undefined)
       .then(() => {
         window.clearTimeout(timer);
@@ -285,81 +398,195 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     }
   }, [reduced, finish]);
 
-  // IN beat. `entranceStartedRef` latches so the null→false flip of
-  // `useReducedMotion` cannot restart it; the early return below is keyed on
-  // `reduced === true` so that same flip cannot strand it either.
+  // PHASE A — THE CHOREOGRAPHY. Two disjoint sequences separated by held
+  // stillness, scheduled off one timer set from ./preloaderChoreo's table.
+  //
+  // DEPS ARE `[]` ON PURPOSE. Everything after t=0 is a `setTimeout`, and
+  // this effect's cleanup clears those timers — a sequence firing into an
+  // unmounted tree would animate detached nodes. `reduced` and `lowPower` are
+  // read through refs rather than captured as deps, so this choreography can
+  // never be restarted by a prop or preference settling late (the null→false
+  // flip of `useReducedMotion` in particular — see the invariants above).
   useEffect(() => {
-    if (reduced === true) return;
-    if (entranceStartedRef.current) return;
-    entranceStartedRef.current = true;
+    if (reducedRef.current === true) return;
 
-    const letters = letterRefs.current.filter((el): el is HTMLSpanElement => el !== null);
-    if (letters.length > 0) {
+    const cheap = lowPowerRef.current;
+    const count = WORDMARK.length;
+    const timers: number[] = [];
+    const at = (seconds: number, run: () => void) => {
+      const guarded = () => {
+        if (reducedRef.current === true) return;
+        run();
+      };
+      if (seconds <= 0) {
+        guarded();
+        return;
+      }
+      timers.push(window.setTimeout(guarded, seconds * 1000));
+    };
+
+    /* ── SEQ 1 (t=0) — THE MARK RISES ──────────────────────────────────────
+     * The logo + wordmark row rises from below; the wordmark's own letters
+     * resolve inside the same window rather than waiting for the row to
+     * land — overlapping the two reads as one instrument coming together,
+     * not a row that arrives and then, separately, starts to reveal. */
+    if (markRiseRef.current) {
       animate(
-        letters,
-        { opacity: [0, 1], y: [14, 0] },
-        { delay: stagger(0.022), duration: 0.4, ease: EASE_OUT_EXPO },
+        markRiseRef.current,
+        { y: [RISE_Y_PX, 0], opacity: [RISE_OPACITY_FROM, 1] },
+        { duration: RISE_S, ease: EASE_OUT_EXPO },
       );
     }
-    if (ruleRef.current) {
+
+    if (wordRef.current) {
       animate(
-        ruleRef.current,
-        { opacity: [0, 1], scaleX: [0.4, 1] },
-        { duration: 0.5, delay: 0.12, ease: EASE_OUT_EXPO },
+        wordRef.current,
+        { clipPath: [WIPE_HIDDEN, WIPE_SHOWN] },
+        { duration: WIPE_S, delay: WIPE_DELAY_S, ease: EASE_IN_OUT_QUART },
       );
     }
-    // PRE-ROLL BEAT: delay the readout (progress counter) appearance until after
-    // the wordmark and hairline are established. This gives the counter room to
-    // appear into a stable frame rather than competing with the entrance.
+    if (laserRef.current) {
+      const w = wordRef.current?.clientWidth ?? 300;
+      // Rides the wipe edge for WIPE_S, then fades over ~0.25×WIPE_S.
+      animate(
+        laserRef.current,
+        { x: [0, w, w], opacity: [0.9, 0.9, 0] },
+        { duration: WIPE_S * 1.25, delay: WIPE_DELAY_S, ease: EASE_IN_OUT_QUART, times: [0, 0.8, 1] },
+      );
+    }
+    WORDMARK.split("").forEach((_, i) => {
+      const el = letterRefs.current[i];
+      if (!el) return;
+      animate(
+        el,
+        {
+          x: [trackingOffset(i, count), 0],
+          opacity: [0, 1],
+          ...(cheap ? {} : { filter: [`blur(${CHAR_BLUR_PX}px)`, "blur(0px)"] }),
+        },
+        { duration: WIPE_S, delay: WIPE_DELAY_S + i * CHAR_STAGGER_S, ease: EASE_OUT_EXPO },
+      ).then(() => {
+        // GPU layer hygiene: the letters are static once the wipe lands.
+        el.style.willChange = "auto";
+      });
+    });
+
+    // The progress row rises in shortly after the mark, sitting close
+    // beneath it — before SEQ 2, mark and progress are neighbours; the
+    // description spawning is what pushes them apart.
+    if (progressRiseRef.current) {
+      animate(
+        progressRiseRef.current,
+        { y: [RISE_Y_PX, 0], opacity: [RISE_OPACITY_FROM, 1] },
+        { duration: RISE_S, delay: PROGRESS_RISE_DELAY_S, ease: EASE_OUT_EXPO },
+      );
+    }
     if (readoutRef.current) {
       animate(
         readoutRef.current,
         { opacity: [0, 1] },
-        { duration: 0.3, delay: 0.22 + PRE_ROLL_DURATION_S }
+        { duration: BEAT_S * 1.5, delay: PROGRESS_RISE_DELAY_S, ease: EASE_OUT_EXPO },
       );
     }
 
-    const entranceTimer = window.setTimeout(
-      () => setEntranceDone(true),
-      (IN_DURATION_S + PRE_ROLL_DURATION_S) * 1000
-    );
-    return () => window.clearTimeout(entranceTimer);
-  }, [reduced]);
+    /* ── the ESC affordance, late in the hold before SEQ 2 ─────────────────
+     * The Escape handler has always existed; nothing advertised it. At this
+     * length an invisible skip is not a skip. */
+    at(ESC_HINT_AT_S, () => {
+      const el = escHintRef.current;
+      if (!el) return;
+      animate(el, { opacity: [0, 0.45] }, { duration: ESC_HINT_FADE_S, ease: EASE_OUT_EXPO });
+    });
 
-  // PACED PROGRESS: The fill is the progress bar. scaleX only — no width animation,
-  // no reflow. Duration increased from 0.28s to 0.5s to create a visible easing
-  // effect as the bar approaches its true value. The displayed percentage never
-  // exceeds the real resolved/total progress.
+    /* ── SEQ 2 — THE DESCRIPTION SPAWNS ─────────────────────────────────────
+     * Mounting the block (rather than revealing an always-present one) is
+     * what the `layout`-tracked mark/progress rows react to: this is a real
+     * reflow, not a hand-timed simulation of one. The row's own rise-in and
+     * its two lines' wipe-in are handled by the effect keyed on
+     * `statementSpawned`, once the mount has actually happened. */
+    at(SEQ_2_AT_S, () => setStatementSpawned(true));
+
+    // `entranceDone` means "the composition has played". It is what Phase C's
+    // buffer is measured from.
+    at(CHOREO_END_S, () => setEntranceDone(true));
+
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+    // Genuinely no reactive deps — see the effect's docblock above.
+  }, []);
+
+  // The description's own entrance, keyed on its mount rather than a raw
+  // timer: `statementRefs`/`statementRowRef` are only populated once
+  // conditional rendering has actually put the DOM nodes there, and effects
+  // run after commit, so this is guaranteed to see them.
+  useEffect(() => {
+    if (!statementSpawned) return;
+    if (reducedRef.current === true) return;
+
+    if (statementRiseRef.current) {
+      animate(
+        statementRiseRef.current,
+        { y: [RISE_Y_PX, 0], opacity: [RISE_OPACITY_FROM, 1] },
+        { duration: RISE_S, ease: EASE_OUT_EXPO },
+      );
+    }
+    STATEMENT_LINES.forEach((line, i) => {
+      const el = statementRefs.current[i];
+      if (!el) return;
+      animate(
+        el,
+        { clipPath: [WIPE_HIDDEN, WIPE_SHOWN], opacity: [0, 1] },
+        { duration: STATEMENT_WIPE_S, delay: line.delayS, ease: EASE_IN_OUT_QUART },
+      );
+    });
+  }, [statementSpawned]);
+
+  // PHASE B — LOADING. The fill is the progress bar. scaleX only — no width
+  // animation, no reflow. The per-update `BEAT_S` easing is the "reads as
+  // loading, not a flash" guarantee: the bar visibly travels to its new value
+  // even when signals resolve instantly. The displayed percentage never exceeds
+  // the real resolved/total progress.
   useEffect(() => {
     if (fillRef.current) {
-      animate(fillRef.current, { scaleX: progressPercent / 100 }, { duration: 0.5, ease: "easeOut" });
+      animate(
+        fillRef.current,
+        { scaleX: progressPercent / 100 },
+        { duration: BEAT_S, ease: EASE_OUT_EXPO },
+      );
     }
   }, [progressPercent]);
 
-  // SETTLE + POST-100 BEAT. After entrance is done and warmup is complete,
-  // wait for a brief post-100 beat before starting the exit (mask reveal).
-  // The cap only bites when something is genuinely stuck.
+  // PHASE C — THE BUFFER. The reveal starts at
+  // `max(choreography end, signals resolved) + POST_HOLD_MS`, with the signal
+  // wait capped at `SIGNAL_CAP_AFTER_CHOREO_MS` past the choreography.
+  //
+  // Both terms are already expressed by `entranceDone` (set at CHOREO_END_S)
+  // and `isComplete`, so this reads as: once BOTH are true, hold the buffer.
+  // The cap covers the case where `isComplete` never arrives.
   useEffect(() => {
     if (reduced === true) return;
-    if (!entranceDone) return;
 
     if (forced) {
-      // Escape means skip, immediately — the post-100 beat is a grace note for
-      // a real completion, not something an impatient visitor should have to
-      // sit through. Bypass it entirely rather than letting `isComplete`
-      // (which is also true when forced) route Escape through the same delay
-      // as a natural finish.
+      // Escape means skip, immediately. Checked BEFORE the `entranceDone` gate,
+      // not after: gating Escape on the choreography finishing would make the
+      // skip affordance a lie for exactly the time anyone would want to use
+      // it. The buffer is a grace note for a real completion, and it is
+      // bypassed here rather than letting `isComplete` (also true when
+      // forced) route Escape through the same delay as a natural finish.
       triggerExit();
       return;
     }
 
+    if (!entranceDone) return;
+
     if (isComplete && !completedAt100Ref.current) {
-      // We've hit 100%. Mark it and wait for the post-100 beat before exiting.
+      // Choreography done AND 100%. Hold the full buffer, then reveal.
       completedAt100Ref.current = true;
-      const postBeatTimeout = window.setTimeout(triggerExit, POST_100_BEAT_MS);
+      const bufferTimeout = window.setTimeout(triggerExit, POST_HOLD_MS);
       return () => {
-        window.clearTimeout(postBeatTimeout);
-        // Reset the latch on cleanup: this ref means "a post-100 timer is
+        window.clearTimeout(bufferTimeout);
+        // Reset the latch on cleanup: this ref means "a buffer timer is
         // currently pending", not "completion was ever seen". If `reduced`
         // (or `triggerExit`, itself dependent on `[reduced, finish]`) changes
         // identity before the timer fires, this effect re-runs — resetting
@@ -373,13 +600,14 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
     }
 
     if (completedAt100Ref.current) {
-      // Already scheduled the post-100 beat; don't re-enter this branch.
+      // Already scheduled the buffer; don't re-enter this branch.
       return;
     }
 
-    // Not complete yet; wait for settle cap to fire.
-    const settleTimeout = window.setTimeout(triggerExit, MAX_SETTLE_MS);
-    return () => window.clearTimeout(settleTimeout);
+    // Choreography is done but signals are still out. Give them the cap, then
+    // reveal directly — a stalled CDN doesn't also earn the buffer.
+    const capTimeout = window.setTimeout(triggerExit, SIGNAL_CAP_AFTER_CHOREO_MS);
+    return () => window.clearTimeout(capTimeout);
   }, [entranceDone, isComplete, forced, reduced, triggerExit]);
 
   // Unconditional. Nothing may leave this overlay mounted — not a rejected
@@ -397,6 +625,14 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
   const readout = `${String(progressPercent).padStart(2, "0")}%`;
   const status = isComplete ? "READY" : lastLabel ? `WARMING — ${lastLabel}` : "WARMING";
 
+  const readoutTypeSx = {
+    fontFamily: MONO,
+    fontSize: { xs: 9, md: 10 },
+    letterSpacing: "0.16em",
+    textTransform: "uppercase" as const,
+    fontVariantNumeric: "tabular-nums" as const,
+  };
+
   return (
     <Box
       ref={rootRef}
@@ -405,7 +641,12 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
         position: "fixed",
         inset: 0,
         zIndex: 99999,
-        bgcolor: NOIR.navyInk,
+        // Soft dark navy, not the flatter/harsher `navyInk` on its own: the
+        // same radial-lift shape used everywhere else on this ground
+        // (`SuperHeroSequence.tsx`, `ClosingLattice.tsx`) — `navyDeep`, the
+        // softer of the two, at the centre where the content sits, receding
+        // to `navyInk` at the edges.
+        background: `radial-gradient(ellipse at 50% 42%, ${NOIR.navyDeep} 0%, ${NOIR.navyInk} 78%)`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -413,108 +654,225 @@ export function Preloader({ onDone, onStartExit, warmup }: PreloaderProps) {
         pointerEvents: exiting ? "none" : "auto",
       }}
     >
-      {/* One column, sized by the wordmark. The rule and the readout inherit
-          that width rather than being given one, so the three elements stay
-          optically locked at every viewport without a media query. */}
+      {/* No box, no border, no shadow — every block sits directly on the
+          ground. `contentRef` is a plain wrapper, not a panel: it
+          exists so the exit has one belt-and-braces fade target, and so the
+          three rows share a centred column without each one needing its own
+          alignment. */}
       <Box
-        ref={stageRef}
-        sx={{ display: "inline-flex", flexDirection: "column", alignItems: "stretch", px: 3 }}
+        ref={contentRef}
+        sx={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          px: 3,
+        }}
       >
-        <Typography
-          component="h1"
-          aria-label="Phitopolis"
-          sx={{
-            fontFamily: DISPLAY_FONT,
-            fontWeight: 600,
-            fontSize: { xs: "1.55rem", sm: "2.1rem", md: "2.6rem" },
-            lineHeight: 1,
-            color: NOIR.frost,
-            letterSpacing: "0.34em",
-            // letter-spacing adds a trailing gap after the final glyph, which
-            // would push the block off-centre and desync the rule beneath it.
-            mr: "-0.34em",
-            display: "flex",
-          }}
-        >
-          {WORDMARK.split("").map((char, i) => (
-            <Box
-              key={`${char}-${i}`}
-              component="span"
-              aria-hidden="true"
-              ref={(el: HTMLSpanElement | null) => {
-                letterRefs.current[i] = el;
-              }}
-              sx={{ display: "inline-block", willChange: "transform, opacity" }}
-            >
-              {char}
-            </Box>
-          ))}
-        </Typography>
-
-        {/* The one geometric act. Track plus a scaleX fill — real progress. */}
-        <Box
-          ref={ruleRef}
-          aria-hidden="true"
-          sx={{
-            position: "relative",
-            height: "1px",
-            mt: { xs: 2.5, md: 3 },
-            bgcolor: `rgba(${NOIR.frostRgb}, 0.16)`,
-            transformOrigin: "left center",
-            overflow: "hidden",
-          }}
-        >
+        {/* THE MARK — the P logo beside the wordmark, exactly like the
+            navbar (`AppShell.tsx`: `PhitopolisLogo` + `PH<gold>IT</gold>OPOLIS`).
+            `layout` so this row visibly animates to a new position when the
+            description mounts below it. */}
+        <motion.div ref={markRowRef} layout transition={{ duration: PUSH_S, ease: EASE_OUT_EXPO }}>
+          {/* The rise lives on this INNER element, never on the `layout`-
+              tracked wrapper above — see the refs' docblock. */}
           <Box
-            ref={fillRef}
-            sx={{
-              position: "absolute",
-              inset: 0,
-              bgcolor: NOIR.gold,
-              transformOrigin: "left center",
-              transform: "scaleX(0)",
-              willChange: "transform",
-            }}
-          />
-        </Box>
+            ref={markRiseRef}
+            sx={{ display: "flex", alignItems: "center", gap: "16px", opacity: 0 }}
+          >
+            <PhitopolisLogo
+              color={NOIR.frost}
+              accentColor={NOIR.gold}
+              style={{ height: 32, width: "auto", flexShrink: 0 }}
+            />
+            {/* Rest state is the LIT clip, not the hidden one — the same rule
+                `SectionBeat` follows: the DOM default must be the final state,
+                so a tween that never runs leaves the wordmark readable rather
+                than permanently clipped out. Hiding is done by the letters'
+                own `opacity: 0`, and the wipe supplies `WIPE_HIDDEN` as its own
+                first keyframe. */}
+            <Box ref={wordRef} sx={{ position: "relative", clipPath: WIPE_SHOWN }}>
+              <Typography
+                component="h1"
+                aria-label="Phitopolis"
+                sx={{
+                  fontFamily: DISPLAY_FONT,
+                  fontWeight: 600,
+                  fontSize: { xs: "1.55rem", sm: "2.1rem", md: "2.6rem" },
+                  lineHeight: 1,
+                  color: NOIR.frost,
+                  letterSpacing: "0.34em",
+                  // letter-spacing adds a trailing gap after the final glyph,
+                  // which would push the block off-centre.
+                  mr: "-0.34em",
+                  display: "flex",
+                }}
+              >
+                {/* "IT" gold, same as the nav wordmark — the one place this
+                    intro ties directly to the sitewide brand mark rather than
+                    inventing its own treatment. A logotype is WCAG
+                    1.4.3-exempt (`palette.ts`'s `gold` docblock), so this is
+                    unconditional on any ground. Indices 1/2 now that the
+                    leading "P" is gone — "H-IT-OPOLIS". */}
+                {WORDMARK.split("").map((char, i) => (
+                  <Box
+                    key={`${char}-${i}`}
+                    component="span"
+                    aria-hidden="true"
+                    ref={(el: HTMLSpanElement | null) => {
+                      letterRefs.current[i] = el;
+                    }}
+                    sx={{
+                      display: "inline-block",
+                      opacity: 0,
+                      color: i === 1 || i === 2 ? NOIR.gold : "inherit",
+                      willChange: "transform, opacity, filter",
+                    }}
+                  >
+                    {char}
+                  </Box>
+                ))}
+              </Typography>
+              <Box
+                ref={laserRef}
+                aria-hidden="true"
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  width: "1px",
+                  bgcolor: NOIR.gold,
+                  opacity: 0,
+                  willChange: "transform, opacity",
+                }}
+              />
+            </Box>
+          </Box>
+        </motion.div>
 
-        <Box
-          ref={readoutRef}
-          sx={{
-            mt: 1.25,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            gap: 2,
-          }}
+        {/* THE DESCRIPTION — what the firm does, said in the wordmark's own
+            vocabulary: the same `inset()` wipe, one line per beat. Not
+            rendered until SEQ 2 fires — the mount itself is what pushes the
+            mark and progress rows apart via `layout`. Rest state mirrors the
+            wordmark's: the LIT clip so a failed tween can never leave the
+            copy permanently clipped out, hidden instead by `opacity: 0`,
+            which the wipe supplies as its own first keyframe. */}
+        {statementSpawned && (
+          <motion.div
+            ref={statementRowRef}
+            layout
+            transition={{ duration: PUSH_S, ease: EASE_OUT_EXPO }}
+            style={{ marginTop: "20px" }}
+          >
+            {/* Rise lives on this inner element — see the refs' docblock. */}
+            <Box ref={statementRiseRef} sx={{ opacity: 0, textAlign: "center" }}>
+              {STATEMENT_LINES.map((line, i) => (
+                <Box
+                  key={line.id}
+                  ref={(el: HTMLDivElement | null) => {
+                    statementRefs.current[i] = el;
+                  }}
+                  sx={{ clipPath: WIPE_SHOWN, willChange: "clip-path, opacity" }}
+                >
+                  <Typography
+                    sx={
+                      line.id === "tagline"
+                        ? {
+                            fontFamily: DISPLAY_FONT,
+                            fontWeight: 400,
+                            fontSize: { xs: "0.78rem", sm: "0.86rem", md: "0.95rem" },
+                            lineHeight: 1.45,
+                            letterSpacing: "0.02em",
+                            color: `rgba(${NOIR.frostRgb}, 0.8)`,
+                            maxWidth: "min(80vw, 44ch)",
+                          }
+                        : {
+                            ...readoutTypeSx,
+                            mt: 0.75,
+                            color: `rgba(${NOIR.frostRgb}, 0.4)`,
+                          }
+                    }
+                  >
+                    {line.text}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </motion.div>
+        )}
+
+        {/* THE LOADING PROGRESS — the caliper hairline (`.est-ruler`'s
+            scaleX 0→1 vocabulary; a gold scaleX fill on top is the
+            real-progress bar) plus the mono status/percent readout and the
+            ESC hint. `layout` so this row visibly moves down when the
+            description claims space above it. */}
+        <motion.div
+          ref={progressRowRef}
+          layout
+          transition={{ duration: PUSH_S, ease: EASE_OUT_EXPO }}
+          style={{ marginTop: "28px", width: "min(80vw, 320px)" }}
         >
-          {/* Real signal names, not invented telemetry. Kept small and quiet:
-              it explains the wait to anyone who looks for it and disappears for
-              everyone who doesn't. */}
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: { xs: 8.5, md: 9.5 },
-              letterSpacing: "0.24em",
-              color: `rgba(${NOIR.frostRgb}, 0.34)`,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {status}
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: MONO,
-              fontSize: { xs: 8.5, md: 9.5 },
-              letterSpacing: "0.24em",
-              color: `rgba(${NOIR.frostRgb}, 0.55)`,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {readout}
-          </Typography>
-        </Box>
+          {/* Rise lives on this inner element — see the refs' docblock. */}
+          <Box ref={progressRiseRef} sx={{ opacity: 0 }}>
+            <Box aria-hidden="true" sx={{ position: "relative", height: "1px", overflow: "hidden" }}>
+              <Box
+                ref={trackRef}
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  bgcolor: `rgba(${NOIR.frostRgb}, 0.16)`,
+                }}
+              />
+              <Box
+                ref={fillRef}
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  bgcolor: NOIR.gold,
+                  transformOrigin: "left center",
+                  transform: "scaleX(0)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
+
+            <Box
+              ref={readoutRef}
+              sx={{
+                mt: 1.25,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  ...readoutTypeSx,
+                  color: `rgba(${NOIR.frostRgb}, 0.34)`,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {status}
+              </Typography>
+              <Typography sx={{ ...readoutTypeSx, color: `rgba(${NOIR.frostRgb}, 0.55)` }}>
+                {readout}
+              </Typography>
+            </Box>
+
+            {/* THE SKIP AFFORDANCE. Escape has always forced the exit;
+                nothing said so. Faded in late in the hold before SEQ 2, kept
+                quiet enough to read as instrumentation. */}
+            <Box ref={escHintRef} aria-hidden="true" sx={{ mt: 1.5, opacity: 0, willChange: "opacity" }}>
+              <Typography sx={{ ...readoutTypeSx, color: `rgba(${NOIR.frostRgb}, 0.9)` }}>
+                ESC TO SKIP
+              </Typography>
+            </Box>
+          </Box>
+        </motion.div>
       </Box>
     </Box>
   );

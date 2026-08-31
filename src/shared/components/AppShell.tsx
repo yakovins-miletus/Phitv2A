@@ -12,7 +12,7 @@ import { useLocation, useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { EntrancePhaseContext, useReducedMotion } from "@/shared/motion";
+import { EntrancePhaseContext, HeroCascadeContext, useReducedMotion } from "@/shared/motion";
 import type { EntrancePhase } from "@/shared/motion";
 import { MONO, TYPE_SCALE } from "@/shared/theme/theme";
 import { motion } from "motion/react";
@@ -100,73 +100,135 @@ const WARM_ROUTES = [
 ] as const;
 
 /**
- * The assets actually on the home hero's default-render critical path.
+ * Route-aware warm-up manifest — signal tiers.
  *
- * This used to be `ALL_ASSETS.slice(0, 15)` — the first 15 entries of a
- * filesystem-walk-ordered glob, which is arbitrary: nothing guaranteed a
- * hero-relevant file landed in that slice, and on most builds none did.
+ * The preloader shows on a genuine first load only, so the landing `pathname`
+ * IS the route the visitor arrived on. Warm *that* route's default scroll path
+ * properly instead of a one-size-fits-all list that under-served `/` and
+ * mis-served `/about` / `/blog`.
  *
- * Traced from `SuperHeroSequence.tsx` (the default, non-toggled hero — mode
- * defaults to "legacy" per `heroModeStore.ts`):
- *   - `HeroCanvas.tsx` (the legacy 2D canvas, mounted whenever the "monolith"
- *     3D toggle is off, which is the default) eagerly fetches exactly one
- *     network image on mount — `/phitopolis_logo_hero.svg`, the P-mark logo
- *     mask (`loadLogoMask(LOGO_SRC)`) — non-blocking for first paint by its
- *     own design (`paintStill()` runs before the fetch even starts), but it
- *     is still the one real eager image request the default hero makes, so
- *     it deserves to win the warmup race rather than lose it to an arbitrary
- *     glob slice.
- *   - The hero's 25-photo drift wall (`HeroImageWall.tsx` / `heroWallTiles.ts`)
- *     is deliberately NOT here. Its own header comment states it is "fetched
- *     at fetchPriority='low' after the hero's LCP" and it does not mount at
- *     all until the reader scrolls ~60% through the pin
- *     (`SuperHeroSequence.tsx`'s `stage.gunshot`/`wallMounted`) — it is
- *     below-the-fold-in-time, not hero-critical-on-load, and forcing it into
- *     the preloader would regress every route's warmup for imagery most
- *     visitors won't reach before the preloader has long since released.
- *   - Monolith-mode-only imagery (`ParallaxHeroBg.tsx`'s `/images/hero-sky-bg.jpg`,
- *     the R3F gallery's textures, the hero background video) is excluded for
- *     the same reason as the drift wall, plus one more: monolith is an
- *     opt-in mode a visitor switches into via the command palette, off by
- *     default, so none of it is on the default page-load path at all. See
- *     the `useBackgroundVideo`/`R3FHeroCanvas` scoping note on
- *     `useWarmupSignals` below.
+ * Two tiers per {@link LoadSignal}:
+ *  - **blocking** (absent/`undefined` on the signal): the reveal waits on it.
+ *    Fonts (added in `Preloader`) + the landing route's above-fold-critical
+ *    assets.
+ *  - **background** (`blocking: false`): keeps warming without holding the
+ *    overlay — `WARM_ROUTES` precompiles, the three.js/ServiceGlobe chunk, and
+ *    lower/other-route imagery.
  *
- * This list is intentionally tiny — the whole point is that hero-critical
- * assets get preloaded in *full*, not capped, so it must stay short enough
- * that "in full" is cheap. It also runs on every route (`useWarmupSignals`
- * is called from `AppShellInner`, not gated to `/`), so anything added here
- * is paid for by every first-time visitor, including ones landing on
- * `/about` or `/blog` who will never see the hero at all.
+ * Every path below was checked against the filesystem (`public/…`) and against
+ * what the component actually renders. Deliberately absent:
+ *  - `/images/topHalfHero.webp` / `botHalfHero.webp` — the old split-pane hero,
+ *    replaced by `HeroImageWall`; nothing renders them any more.
+ *  - The hero drift wall (`fetchPriority=low`, mounts ~60% into the hero pin).
+ *  - `/videos/hero-night-to-dawn.*` + poster — gated behind `useVideoBg`, which
+ *    is hard-coded `false` in `SuperHeroSequence.tsx`, so the video background
+ *    is currently dead code; no video signal is warmed. If it is re-enabled,
+ *    add a `blocking: false` range-fetch of the first ~256KB here.
+ *  - `/about`'s `daily-life.mp4` (62MB, IntersectionObserver-gated far down the
+ *    page) and `JourneyTimeline`'s hotlinked WordPress images — left to their
+ *    own components.
  */
-/**
- * Explicit Section-Based Asset Manifest for Lusion-style Preloader Warmup.
- * Replaces arbitrary glob slicing with intentional tiering:
- *  - Tier 1 (Hero Critical): Logo vector, key hero imagery.
- *  - Tier 2 (Services & Capabilities): Core discipline banners.
- *  - Tier 3 (About & Institutional Foundations): Key above-fold brand assets.
- */
-const SECTION_MANIFEST: readonly string[] = [
-  "/phitopolis_logo_hero.svg",
-  "/images/botHalfHero.webp",
-  "/images/topHalfHero.webp",
-  "/images/quant-research-banner.webp",
-  "/images/software-engineer-banner.webp",
-  "/images/ops-support-banner.webp",
-  "/images/data-science-banner.webp",
-  "/images/AboutPageHero.webp",
-  "/images/ecotower-bgc.webp",
-  "/images/grads/FocusedProgramming.webp",
-  "/images/blog/ateneo-career-talk-2025/01.webp",
-  "/images/blog/csr-activity-repainting-community-spaces/01.webp",
-  // WS-13: About page hero gallery tiles (real assets, not dummy load)
+
+/** Home hero critical path: the legacy 2D `HeroCanvas` fetches exactly one
+ *  network image on mount — `/phitopolis_logo_hero.svg`, the P-mark logo mask.
+ *  Everything else the hero draws is `<canvas>` / inline SVG / CSS. */
+const HOME_BLOCKING: readonly string[] = ["/phitopolis_logo_hero.svg"];
+
+/** Home below-fold raster, all warmed in the background so they are cache-hot by
+ *  the time their section scrolls in, without holding the overlay:
+ *   - `OperatingPillars` (`#hero-pillars`, ~6 screens down) — three `<img>`
+ *     backgrounds from `content.ts`.
+ *   - `UseCasesNarrative` (`#use-cases`) — one full-bleed 3D-isometric
+ *     background per use case, crossfaded on scroll.
+ *   - `ProcessDiagram` (`#process`) — one isometric growth-timeline illustration.
+ *  Everything else on the `/` path is canvas / inline SVG / CSS. */
+const HOME_BACKGROUND_IMAGES: readonly string[] = [
+  "/images/pillars/research.webp",
+  "/images/pillars/development.webp",
+  "/images/pillars/support.webp",
+  "/images/use-cases/uc-1.webp",
+  "/images/use-cases/uc-2.webp",
+  "/images/use-cases/uc-3.webp",
+  "/images/process/growth-timeline.webp",
+];
+
+/** About hero, above the fold: the dusk-skyline background behind the headline
+ *  (`BackgroundReveal` → `/images/about-hero-bg.webp`), the gold-framed primary
+ *  photo (`HeroGallery` → `/images/AboutPage1.webp`) and the first three
+ *  right-hand strip tiles (`HeroGallery`'s `STRIP_TILES`). */
+const ABOUT_BLOCKING: readonly string[] = [
+  "/images/about-hero-bg.webp",
+  "/images/AboutPage1.webp",
   "/images/hero-wall/phitopolis-datathon-2k25-the-grads-all-star-showdown-02.webp",
   "/images/hero-wall/inspiring-the-next-generation-of-quants-our-talks-at-the-google-developers-student-club-dlsu-01.webp",
   "/images/hero-wall/phitopolis-external-talk-01.webp",
-  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
-  "/images/hero-wall/likhapolis-pagbibigay-kulay-at-saya-02.webp",
-  "/images/hero-wall/csr-activity-repainting-community-spaces-01.webp",
 ];
+
+/** About hero, the remaining three strip tiles — on screen in the first
+ *  viewport but lower in the stack, so warmed without holding the reveal. */
+const ABOUT_BACKGROUND_IMAGES: readonly string[] = [
+  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
+  "/images/hero-wall/data-ops-training-in-clark-pampanga-04.webp",
+  "/images/hero-wall/immersion-in-dataops-a-journey-behind-the-scenes-of-data-operations-01.webp",
+];
+
+/** Decorative hero-background loops (`VideoPageHero` on each route's hero).
+ *  The poster (always shown) and the `webm` are warmed so the `<video>` plays
+ *  from cache the moment its IntersectionObserver arms — the hero sits at the
+ *  top of each page, so it is wanted immediately. The `mp4` fallback is left
+ *  out: only Safari/iOS uses it, and there the top-of-page hero fetches it via
+ *  the gate on arrival anyway. Background tier: never holds the intro reveal.
+ *  ~0.9–1.8 MB per route (1280w / crf 24). */
+const BLOG_VIDEO_LOOP: readonly string[] = [
+  "/videos/daily-life-blog-loop.webm",
+  "/videos/daily-life-blog-loop-poster.jpg",
+];
+const CAREERS_VIDEO_LOOP: readonly string[] = [
+  "/videos/daily-life-careers-loop.webm",
+  "/videos/daily-life-careers-loop-poster.jpg",
+];
+const SERVICES_VIDEO_LOOP: readonly string[] = [
+  "/videos/daily-life-services-loop.webm",
+  "/videos/daily-life-services-loop-poster.jpg",
+];
+
+export interface RouteManifest {
+  /** Reveal-gating assets for this landing route. */
+  blocking: readonly string[];
+  /** Assets warmed in the background; never hold the overlay. */
+  background: readonly string[];
+  /** Warm the three.js / `ServiceGlobe` chunk into the module cache (home
+   *  only — the scene still renders lazily behind its own `useInView`). */
+  warmGlobe: boolean;
+}
+
+/** The per-landing-route asset split. Routes with no bespoke manifest
+ *  (`/contact`, `/innovation-hub`, …) block on fonts + their own
+ *  already-loading route chunk only; everything else is background. */
+export function resolveRouteManifest(rawPathname: string): RouteManifest {
+  // Router config may or may not keep a trailing slash; match either form.
+  const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
+  if (pathname === "/") {
+    return { blocking: HOME_BLOCKING, background: HOME_BACKGROUND_IMAGES, warmGlobe: true };
+  }
+  if (pathname === "/about") {
+    return { blocking: ABOUT_BLOCKING, background: ABOUT_BACKGROUND_IMAGES, warmGlobe: false };
+  }
+  if (pathname === "/blog") {
+    return { blocking: [], background: BLOG_VIDEO_LOOP, warmGlobe: false };
+  }
+  if (pathname === "/careers") {
+    return { blocking: [], background: CAREERS_VIDEO_LOOP, warmGlobe: false };
+  }
+  if (pathname === "/services") {
+    return { blocking: [], background: SERVICES_VIDEO_LOOP, warmGlobe: false };
+  }
+  return { blocking: [], background: [], warmGlobe: false };
+}
+
+function labelForAsset(url: string): string {
+  return (url.split("/").pop() || "ASSET").toUpperCase().substring(0, 15);
+}
 
 function preloadAsset(url: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
@@ -215,26 +277,95 @@ function preloadAsset(url: string): Promise<void> {
   });
 }
 
-function useWarmupSignals(active: boolean): LoadSignal[] {
+/** A {@link LoadSignal} whose work is deferred: `promise` is created up front
+ *  (so the array has its full length and identity from first render) but the
+ *  underlying work only begins when `__start` is called from a mount effect —
+ *  used for route warm-ups, whose `router.preloadRoute()` must not run during
+ *  render. `__start` is absent on signals that start themselves. */
+interface DeferredLoadSignal extends LoadSignal {
+  __start?: () => void;
+}
+
+function useWarmupSignals(active: boolean, pathname: string): LoadSignal[] {
   const router = useRouter();
-  const [signals] = useState<LoadSignal[]>(() => {
+
+  // The signal array is built once, at first render, so Preloader's one-time
+  // snapshot of `warmup` captures every signal (routes + manifest + fonts) and
+  // its progress bar stays paced against real work.
+  //
+  // The catch: router.preloadRoute() synchronously dispatches into TanStack
+  // Router's Transitioner state, so calling it during render (which a useState
+  // lazy initializer is) makes React warn "Cannot update a component
+  // (Transitioner) while rendering a different component (AppShellInner)".
+  // So each route signal ships a settled-but-not-started promise plus a
+  // `__start` thunk; the mount effect below fires the actual preloadRoute()
+  // after commit, where a cross-component state update is legal, and resolves
+  // the signal's promise when the preload settles.
+  //
+  // preloadAsset() is plain fetch()/Image() — no React state — so the manifest
+  // signals still kick off straight from the initializer, unchanged.
+  //
+  // `active` only goes false -> true once (the preloader shows, then never
+  // again this session), so [active] with no cleanup is sufficient.
+  const [signals] = useState<DeferredLoadSignal[]>(() => {
     if (!active) return [];
 
-    const routeSignals = WARM_ROUTES.map((route) => ({
-      label: route.label,
-      promise: router.preloadRoute({ to: route.to }).catch(() => undefined),
-    }));
+    const manifest = resolveRouteManifest(pathname);
 
-    const manifestSignals = SECTION_MANIFEST.map((url) => {
-      const filename = url.split('/').pop() || 'ASSET';
+    // Route precompiles never gate the reveal — best-effort warm work.
+    const routeSignals: DeferredLoadSignal[] = WARM_ROUTES.map((route) => {
+      let resolve!: () => void;
+      const promise = new Promise<void>((r) => {
+        resolve = r;
+      });
       return {
-        label: filename.toUpperCase().substring(0, 15),
-        promise: preloadAsset(url),
+        label: route.label,
+        blocking: false,
+        promise,
+        __start: () => {
+          router
+            .preloadRoute({ to: route.to })
+            .catch(() => undefined)
+            .finally(resolve);
+        },
       };
     });
 
-    return [...routeSignals, ...manifestSignals];
+    const blockingAssetSignals: DeferredLoadSignal[] = manifest.blocking.map((url) => ({
+      label: labelForAsset(url),
+      promise: preloadAsset(url),
+    }));
+
+    const backgroundAssetSignals: DeferredLoadSignal[] = manifest.background.map((url) => ({
+      label: labelForAsset(url),
+      blocking: false,
+      promise: preloadAsset(url),
+    }));
+
+    // Warm the three.js/ServiceGlobe chunk into the module cache on `/` only.
+    // Kept a dynamic import() expression so the bundler still code-splits it —
+    // no static import at module scope. The scene still renders lazily behind
+    // its own useInView gate in MissionStatement.
+    const chunkSignals: DeferredLoadSignal[] = manifest.warmGlobe
+      ? [
+          {
+            label: "GLOBE",
+            blocking: false,
+            promise: import("@/features/hero/description/ServiceGlobe")
+              .then(() => undefined)
+              .catch(() => undefined),
+          },
+        ]
+      : [];
+
+    return [...blockingAssetSignals, ...backgroundAssetSignals, ...chunkSignals, ...routeSignals];
   });
+
+  useEffect(() => {
+    if (!active) return;
+    signals.forEach((signal) => signal.__start?.());
+  }, [active, signals]);
+
   return signals;
 }
 
@@ -458,6 +589,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<EntrancePhase>(() => (reduced === true ? "open" : "covered"));
   const releasedRef = useRef(reduced === true);
   const hadPreloaderRef = useRef(showPreloader);
+  // The post-intro hero cascade — see `useHeroCascadeStep`'s docblock for why
+  // this is independent of `phase`/`EntrancePhaseContext`. Starts fully
+  // revealed (5) on a warm/repeat visit; starts at 0 and is stepped up by
+  // `handlePreloaderDone` only when the real intro played.
+  const [heroCascadeStep, setHeroCascadeStep] = useState(() => (showPreloader ? 0 : 5));
+  const heroCascadeTimersRef = useRef<number[]>([]);
 
   // useReducedMotion() can resolve asynchronously — its type is
   // `boolean | null`, and it is null until the media-query listener has run.
@@ -480,12 +617,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
     hadPreloaderRef.current = false;
     setShowPreloader(false);
     setPhase("open");
+    setHeroCascadeStep(5);
   }, [reduced]);
   const entranceTimersRef = useRef<number[]>([]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [megaNavOpen, setMegaNavOpen] = useState(false);
-  const warmup = useWarmupSignals(showPreloader);
   const { pathname } = useLocation();
+  const warmup = useWarmupSignals(showPreloader, pathname);
   const onContactPage = pathname === "/contact";
   const closeMobileNav = () => {
     setMobileNavOpen(false);
@@ -502,6 +640,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   const handlePreloaderDone = useCallback(() => {
     setShowPreloader(false);
+    // The post-intro hero cascade — only for a visitor who genuinely saw the
+    // preloader this page load. `onDone` fires after the full 2s aperture
+    // reveal has completed (Preloader.tsx's `finish()`, called once every
+    // exit tween has resolved), so step 1 begins from a fully-revealed page,
+    // not mid-reveal.
+    if (hadPreloaderRef.current) {
+      const STEP_MS = 700; // ~0.6–1s pacing, matching the intro's own rhythm
+      [1, 2, 3, 4, 5].forEach((step, i) => {
+        heroCascadeTimersRef.current.push(
+          window.setTimeout(() => setHeroCascadeStep(step), i * STEP_MS),
+        );
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -515,6 +666,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
       timers.length = 0;
     };
   }, [releaseEntrance]);
+
+  useEffect(() => {
+    const timers = heroCascadeTimersRef.current;
+    return () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      timers.length = 0;
+    };
+  }, []);
 
   // The overscroll-to-navigate machine that used to live here is gone.
   // It accumulated "scroll pressure" from non-passive wheel/touchmove listeners —
@@ -577,6 +736,29 @@ function AppShellInner({ children }: { children: ReactNode }) {
  *  Small on purpose: those routes have no pinned hero to sit over. */
 const NAV_SOLID_AFTER_PX = 50;
 
+/** The "dark mode" navbar surface — used by every non-island mode whenever a
+ *  `data-ground="dark"` anchor is current (`isOverDarkSection`). A single
+ *  cohesive treatment instead of the old per-mode grab-bag (murky
+ *  `rgba(30,30,30,0.28)` on glass/compact, flat navy on standard): a deep
+ *  brand-navy pane, a real blur, a light hairline, and a soft lift — so over a
+ *  dark hero the bar reads as a deliberate dark-mode chrome, not an accident. */
+const NAV_DARK = {
+  surface: `rgba(${NOIR.navyDeepRgb}, 0.74)`,
+  /** Opaque fallback for the genuinely-solid `standard` mode. */
+  surfaceSolid: NOIR.navyDeep,
+  blur: "blur(18px) saturate(140%)",
+  hairline: "1px solid rgba(255, 255, 255, 0.14)",
+  shadow: "0 8px 32px rgba(0, 0, 0, 0.28)",
+} as const;
+
+/** island-v2's dark surface — a neutral dark grey, deliberately NOT the brand
+ *  navy (`NAV_DARK`). The default floating pill sits over the home page's navy
+ *  sections and bar-transition blocks; a navy-on-navy pill disappeared into
+ *  them, so v2's chrome is a distinct graphite instead. */
+const NAV_GREY = {
+  surface: `rgba(${NOIR.charcoalRgb}, 0.72)`,
+} as const;
+
   const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
@@ -609,14 +791,26 @@ const NAV_SOLID_AFTER_PX = 50;
   const isStandard = effectiveMode === "standard";
   const isStandardOrGlass = isStandard || isGlass;
   const isIsland = effectiveMode === "island";
-  
+  // island-v2: island, tightened. Same content as island (logo + wordmark +
+  // nav + Contact + menu) but a narrower, shorter pill, less padding, smaller
+  // type, lighter chrome — the compact/minimal take. Shares the island pill
+  // treatment (blur, radius, rim, always-light) via `isAnyIsland`.
+  const isIslandV2 = effectiveMode === "island-v2";
+  const isAnyIsland = isIsland || isIslandV2;
+
   // The dark mode should accurately reflect the anchors, even at the top.
-  const onDark = (isNotch || isOverDarkSection) && !isIsland;
+  // island / island-v2 used to be exempt (their pill was "always-light"); they
+  // now take the dark-mode treatment too — a deep-navy pill + inverted text —
+  // so the chrome stays legible over the VideoPageHero bands and dark home
+  // sections in every mode.
+  const onDark = isNotch || isOverDarkSection;
+  const islandOnDark = isAnyIsland && isOverDarkSection;
   const isImmersive = effectiveMode === "immersive";
   const footerAnchorRef = useNavbarAnchor(NAV_ANCHORS.SITE_FOOTER, { dark: true });
 
   return (
     <EntrancePhaseContext.Provider value={phase}>
+    <HeroCascadeContext.Provider value={heroCascadeStep}>
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         {showPreloader ? (
           <Preloader
@@ -664,26 +858,36 @@ const NAV_SOLID_AFTER_PX = 50;
               ? "transparent"
               : isStandard
               ? (isOverDarkSection
-                ? NOIR.navyField
+                ? NAV_DARK.surfaceSolid
                 : NOIR.white)
               : "transparent",
             backdropFilter: "none",
             borderBottom: isStandard
               ? (isOverDarkSection
-                ? "1px solid rgba(255, 255, 255, 0.12)"
+                ? NAV_DARK.hairline
                 : "1px solid rgba(0, 0, 0, 0.08)")
               : "none",
             boxShadow: isStandard
-              ? (isOverDarkSection ? "0 4px 30px rgba(0,0,0,0.15)" : "0 2px 20px rgba(0,0,0,0.03)")
+              ? (isOverDarkSection ? NAV_DARK.shadow : "0 2px 20px rgba(0,0,0,0.03)")
               : "none",
             pt: isNotch || isStandardOrGlass ? 0 : 1,
-            pointerEvents: showPreloader ? "none" : (isStandardOrGlass ? "auto" : "none"),
-            transform: navHidden || showPreloader ? "translateY(-120%)" : "translateY(0%)",
-            opacity: showPreloader ? 0 : 1,
+            // `heroCascadeStep < 2`: step 2 of the post-intro cascade (see
+            // `useHeroCascadeStep`). On a warm/repeat visit this starts at 5
+            // and never gates anything here; on the genuine intro path it
+            // holds the navbar hidden until the canvas (step 1) has had its
+            // beat, instead of dropping in the instant the preloader unmounts.
+            pointerEvents:
+              showPreloader || heroCascadeStep < 2 ? "none" : (isStandardOrGlass ? "auto" : "none"),
+            transform:
+              navHidden || showPreloader || heroCascadeStep < 2 ? "translateY(-120%)" : "translateY(0%)",
+            opacity: showPreloader || heroCascadeStep < 2 ? 0 : 1,
             transition: `transform 0.5s ${EASE_OUT_EXPO_CSS}, opacity 0.5s ease, background-color 0.6s ${EASE_OUT_EXPO_CSS}, border-color 0.6s ${EASE_OUT_EXPO_CSS}, box-shadow 0.6s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
-          {/* Glassmorphism Background layer (fades out at bottom) */}
+          {/* Glassmorphism Background layer (fades out at bottom). Over a dark
+              section it takes the shared `NAV_DARK` treatment — deep navy pane,
+              stronger blur, a light hairline seam — so glass mode gets the same
+              deliberate dark-mode chrome as the other modes. */}
           {isGlass && (
             <Box
               sx={{
@@ -693,10 +897,12 @@ const NAV_SOLID_AFTER_PX = 50;
                 right: 0,
                 bottom: 0,
                 zIndex: -1,
-                backdropFilter: "blur(12px) saturate(120%)",
-                WebkitBackdropFilter: "blur(12px) saturate(120%)",
-                bgcolor: isOverDarkSection ? "rgba(30, 30, 30, 0.25)" : "rgba(255, 255, 255, 0.4)",
-                transition: `background-color 0.6s ${EASE_OUT_EXPO_CSS}`,
+                backdropFilter: isOverDarkSection ? NAV_DARK.blur : "blur(12px) saturate(120%)",
+                WebkitBackdropFilter: isOverDarkSection ? NAV_DARK.blur : "blur(12px) saturate(120%)",
+                bgcolor: isOverDarkSection ? NAV_DARK.surface : "rgba(255, 255, 255, 0.4)",
+                borderBottom: isOverDarkSection ? NAV_DARK.hairline : "1px solid transparent",
+                boxShadow: isOverDarkSection ? NAV_DARK.shadow : "none",
+                transition: `background-color 0.6s ${EASE_OUT_EXPO_CSS}, border-color 0.6s ${EASE_OUT_EXPO_CSS}, box-shadow 0.6s ${EASE_OUT_EXPO_CSS}`,
               }}
             />
           )}
@@ -706,14 +912,19 @@ const NAV_SOLID_AFTER_PX = 50;
               sx={{
                 position: "relative",
                 width: "100%",
-                maxWidth: isMinimal 
-                  ? "100vw" 
-                  : (isStandardOrGlass 
-                    ? "1536px" 
-                    : (isNotch 
-                      ? "100vw" 
-                      : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px"))),
-                minHeight: isIsland ? "54px !important" : undefined,
+                // island-v2 is island, tightened: a narrower pill, shorter, less
+                // padding, smaller type. Same content (logo + wordmark + nav +
+                // Contact + menu) — just denser and lighter-weight chrome.
+                maxWidth: isMinimal
+                  ? "100vw"
+                  : (isIslandV2
+                    ? { xs: "1000px", xl: "1200px" }
+                    : (isStandardOrGlass
+                    ? "1536px"
+                    : (isNotch
+                      ? "100vw"
+                      : (derivedIsCompact ? { xs: "1200px", xl: "1536px" } : "1536px")))),
+                minHeight: isIslandV2 ? "46px !important" : (isIsland ? "54px !important" : undefined),
                 pointerEvents: 'auto',
                 // width/margin-top are excluded from the transition list while
                 // liquid — they're driven by per-pointermove React state and
@@ -732,28 +943,30 @@ const NAV_SOLID_AFTER_PX = 50;
                     ? "transparent"
                     : isNotch
                     ? NOIR.charcoal
-                    : isIsland
-                    ? "rgba(255, 255, 255, 0.5)"
+                    : isAnyIsland
+                    ? (islandOnDark
+                      ? (isIslandV2 ? NAV_GREY.surface : NAV_DARK.surface)
+                      : (isIslandV2 ? "rgba(255, 255, 255, 0.42)" : "rgba(255, 255, 255, 0.5)"))
                     : isOverDarkSection
-                      ? "rgba(30, 30, 30, 0.28)"
+                      ? NAV_DARK.surface
                       : (derivedIsCompact ? NOIR.white : "transparent")),
                 backdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
                     ? "none"
-                    : isIsland
+                    : isAnyIsland
                     ? "blur(20px) saturate(160%)"
                     : isOverDarkSection
-                      ? "blur(16px) saturate(140%)"
+                      ? NAV_DARK.blur
                       : "none"),
                 WebkitBackdropFilter: isStandardOrGlass
                   ? "none"
                   : (isMinimal
                     ? "none"
-                    : isIsland
+                    : isAnyIsland
                     ? "blur(20px) saturate(160%)"
                     : isOverDarkSection
-                      ? "blur(16px) saturate(140%)"
+                      ? NAV_DARK.blur
                       : "none"),
                 // No CSS `border` here any more — island used to draw a flat
                 // 1px rgba(255,255,255,0.4) line, but `borderRadius` below had
@@ -775,17 +988,23 @@ const NAV_SOLID_AFTER_PX = 50;
                     ? "0px 0px 24px 24px"
                     : isImmersive
                       ? "28px"
-                      : (isIsland || derivedIsCompact ? "100px" : "0px")),
+                      : (isAnyIsland || derivedIsCompact ? "100px" : "0px")),
                 padding: isMinimal
                   ? { xs: "4px 32px", md: "4px 72px" }
-                  : (isStandardOrGlass
+                  : (isIslandV2
+                    ? { xs: "0px 14px", md: "0px 20px" }
+                    : (isStandardOrGlass
                     ? { xs: "4px 16px", sm: "4px 24px" }
                     : (isNotch
                       ? "2px 20px"
                       : isImmersive
                         ? "6px 24px"
-                        : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" }))),
-                boxShadow: isIsland ? "0 4px 12px rgba(0,0,0,0.06)" : "none",
+                        : (derivedIsCompact ? "0px 32px" : { xs: "4px 16px", sm: "4px 24px" })))),
+                boxShadow: isAnyIsland
+                  ? (islandOnDark
+                    ? NAV_DARK.shadow
+                    : (isIslandV2 ? "0 2px 8px rgba(0,0,0,0.05)" : "0 4px 12px rgba(0,0,0,0.06)"))
+                  : (isOverDarkSection && !isStandardOrGlass && !isMinimal ? NAV_DARK.shadow : "none"),
                 display: "flex",
                 justifyContent: isNotch ? "center" : "center",
                 alignItems: "center",
@@ -802,10 +1021,13 @@ const NAV_SOLID_AFTER_PX = 50;
                   no pointer-follow) - a full-width nav bar sweeping a
                   highlight on every mouse move would be a bigger motion cue
                   than this chrome should make. */}
-              {isIsland && (
+              {isAnyIsland && (
                 <SpecularFx
                   baseColor={NOIR.white}
-                  baseOpacity={1}
+                  // A full-strength white stroke reads as a crisp glass edge on
+                  // the light pill; on the dark pill it would glare, so it drops
+                  // to a soft rim-light instead.
+                  baseOpacity={islandOnDark ? 0.5 : 1}
                   intensity={0}
                   followMouse={false}
                   speed={0}
@@ -828,7 +1050,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   justifyContent: "space-between",
                   alignItems: "center",
                   mx: "auto",
-                  px: isMinimal ? 0 : 0,
+                  px: 0,
                 }}
               >
               <RouterLink
@@ -840,12 +1062,12 @@ const NAV_SOLID_AFTER_PX = 50;
                     navigateWithCurtain("/");
                   }
                 }}
-                sx={{ 
-                  textDecoration: "none", 
-                  flexShrink: 0, 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 1,
+                sx={{
+                  textDecoration: "none",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: isIslandV2 ? 0.75 : 1,
                   position: "relative",
                   overflow: "hidden",
                   p: 0.5,
@@ -855,7 +1077,7 @@ const NAV_SOLID_AFTER_PX = 50;
               >
                 <Box sx={{ color: onDark ? NOIR.white : (derivedIsCompact ? "text.primary" : "primary.main"), display: 'flex' }}>
                   <PhitopolisLogo
-                    style={{ height: (isStandardOrGlass || isIsland) ? 18 : 24, width: 'auto', transition: "height 0.4s ease" }}
+                    style={{ height: isIslandV2 ? 15 : ((isStandardOrGlass || isIsland) ? 18 : 24), width: 'auto', transition: "height 0.4s ease" }}
                     color="currentColor"
                     accentColor={NOIR.gold}
                   />
@@ -869,7 +1091,7 @@ const NAV_SOLID_AFTER_PX = 50;
                     <Typography
                       component="span"
                       variant="h4"
-                      sx={{ color: onDark ? NOIR.white : "primary.main", fontWeight: 800, fontSize: (isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem", letterSpacing: "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
+                      sx={{ color: onDark ? NOIR.white : "primary.main", fontWeight: 800, fontSize: isIslandV2 ? "0.8rem" : ((isStandardOrGlass || isIsland) ? "0.95rem" : "1.15rem"), letterSpacing: isIslandV2 ? "0.06em" : "0.08em", lineHeight: 1.1, transition: "color 0.4s ease, font-size 0.4s ease" }}
                     >
                       PH<Box component="span" sx={{ color: NOIR.gold }}>IT</Box>OPOLIS
                     </Typography>
@@ -893,14 +1115,15 @@ const NAV_SOLID_AFTER_PX = 50;
                 </motion.div>
               </RouterLink>
 
-              {/* Central Navigation Items for Standard, Island, or Glassmorphism Mode */}
-              {(isStandardOrGlass || isIsland) && (
+              {/* Central Navigation Items for Standard / Island / Island-v2 /
+                  Glassmorphism. */}
+              {(isStandardOrGlass || isAnyIsland) && (
                 <Box
                   component="nav"
                   sx={{
                     display: { xs: "none", md: "flex" },
                     alignItems: "center",
-                    gap: 3.5,
+                    gap: isIslandV2 ? 2.25 : 3.5,
                   }}
                 >
                   {NAV_ITEMS.map((item) => {
@@ -918,9 +1141,9 @@ const NAV_SOLID_AFTER_PX = 50;
                         }}
                         sx={{
                           fontFamily: MONO,
-                          fontSize: TYPE_SCALE.caption,
+                          fontSize: isIslandV2 ? "0.72rem" : TYPE_SCALE.caption,
                           fontWeight: 700,
-                          letterSpacing: "0.08em",
+                          letterSpacing: isIslandV2 ? "0.06em" : "0.08em",
                           textDecoration: "none !important",
                           // Bright gold as nav-item TEXT on both grounds — a
                           // deliberate brand call. On dark it measures 9.4:1
@@ -970,7 +1193,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   the other two modes here so all three render this cluster
                   identically; home's own distinct treatment (logo size, no nav
                   items) is untouched — that's decided elsewhere, above. */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: isIslandV2 ? 1 : 1.5 }}>
                 <AnimatedContactButton
                   label="Contact"
                   isActive={onContactPage}
@@ -978,19 +1201,19 @@ const NAV_SOLID_AFTER_PX = 50;
                   sx={{
                     display: { xs: "none", md: "inline-flex" },
                     opacity: 1,
-                    height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px",
-                    fontSize: (isStandardOrGlass || isIsland || isMinimal) ? "0.72rem" : undefined,
-                    fontWeight: (isStandardOrGlass || isIsland || isMinimal) ? 700 : undefined,
-                    fontFamily: (isStandardOrGlass || isIsland || isMinimal) ? MONO : undefined,
-                    letterSpacing: (isStandardOrGlass || isIsland || isMinimal) ? "0.08em" : undefined,
-                    textTransform: (isStandardOrGlass || isIsland || isMinimal) ? "none" : undefined,
+                    height: (isStandardOrGlass || isAnyIsland || isMinimal) ? "24px" : "32px",
+                    fontSize: (isStandardOrGlass || isAnyIsland || isMinimal) ? "0.72rem" : undefined,
+                    fontWeight: (isStandardOrGlass || isAnyIsland || isMinimal) ? 700 : undefined,
+                    fontFamily: (isStandardOrGlass || isAnyIsland || isMinimal) ? MONO : undefined,
+                    letterSpacing: (isStandardOrGlass || isAnyIsland || isMinimal) ? "0.08em" : undefined,
+                    textTransform: (isStandardOrGlass || isAnyIsland || isMinimal) ? "none" : undefined,
                     // Was "2px 0px" - zero horizontal padding, so the specular
                     // rim (traced against this button's own border box) sat
                     // flush against the label glyphs with no breathing room.
                     // A little horizontal room keeps the rim from reading as
                     // "the border is touching the text".
-                    padding: (isStandardOrGlass || isIsland || isMinimal) ? "2px 8px" : undefined,
-                    minWidth: (isStandardOrGlass || isIsland || isMinimal) ? "auto" : undefined,
+                    padding: (isStandardOrGlass || isAnyIsland || isMinimal) ? "2px 8px" : undefined,
+                    minWidth: (isStandardOrGlass || isAnyIsland || isMinimal) ? "auto" : undefined,
                   }}
                 />
 
@@ -1002,7 +1225,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   isImmersiveDark={onDark}
                   ariaLabel="Open navigation menu"
                   noBorder={isStandardOrGlass || isIsland || isMinimal}
-                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isIsland || isMinimal) ? "32px" : "36px" }}
+                  sx={{ display: { xs: "none", md: "inline-flex" }, height: (isStandardOrGlass || isAnyIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isAnyIsland || isMinimal) ? "32px" : "36px" }}
                 />
 
                 {/* Mobile 3-Bar Menu Button */}
@@ -1013,7 +1236,7 @@ const NAV_SOLID_AFTER_PX = 50;
                   isImmersiveDark={onDark}
                   ariaLabel="Open mobile navigation menu"
                   noBorder={isStandardOrGlass || isIsland || isMinimal}
-                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isIsland || isMinimal) ? "32px" : "36px" }}
+                  sx={{ display: { xs: "inline-flex", md: "none" }, height: (isStandardOrGlass || isAnyIsland || isMinimal) ? "24px" : "32px", width: (isStandardOrGlass || isAnyIsland || isMinimal) ? "32px" : "36px" }}
                 />
               </Box>
               </Box>
@@ -1092,6 +1315,7 @@ const NAV_SOLID_AFTER_PX = 50;
         </Box>
 
       </Box>
+    </HeroCascadeContext.Provider>
     </EntrancePhaseContext.Provider>
   );
 }

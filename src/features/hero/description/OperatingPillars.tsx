@@ -13,6 +13,7 @@ import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { useReducedMotion } from "@/shared/motion";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
+import { EYEFLOW_RAIL_GUTTER } from "@/shared/components/EyeFlow";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -88,7 +89,7 @@ export function OperatingPillars() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          py: { xs: 8, md: 6 },
+          py: { xs: 8, md: 3 },
           bgcolor: GROUND.bg,
         }}
       >
@@ -99,6 +100,7 @@ export function OperatingPillars() {
             maxWidth: "1400px",
             mx: "auto",
             px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            pr: { lg: `calc(80px + ${EYEFLOW_RAIL_GUTTER}px)` },
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -175,6 +177,7 @@ export function OperatingPillars() {
             alignItems: "center",
             gap: { xs: 4, md: 6, lg: 8 },
             px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            pr: { lg: `calc(80px + ${EYEFLOW_RAIL_GUTTER}px)` },
             py: { xs: 4, md: 2 },
             width: { xs: "100%", md: "max-content" },
             flexDirection: { xs: "column", md: "row" },
@@ -198,6 +201,7 @@ export function OperatingPillars() {
             maxWidth: "1400px",
             mx: "auto",
             px: { xs: 3, sm: 6, md: 8, lg: 10 },
+            pr: { lg: `calc(80px + ${EYEFLOW_RAIL_GUTTER}px)` },
             display: { xs: "none", md: "flex" },
             alignItems: "center",
             justifyContent: "space-between",
@@ -257,7 +261,7 @@ function CinematicPillarCard({
         position: "relative",
         width: { xs: "100%", sm: "85vw", md: "70vw", lg: "64vw" },
         maxWidth: "960px",
-        height: { xs: "480px", md: "58vh" },
+        height: { xs: "480px", md: "72vh" },
         minHeight: "440px",
         borderRadius: "1.75rem",
         overflow: "hidden",

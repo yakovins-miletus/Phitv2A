@@ -24,8 +24,10 @@ test("reduced motion: no preloader overlay mounts, hero text is present immediat
 
   expect(screen.queryByTestId("preloader")).not.toBeInTheDocument();
   expect(screen.getByText("[ SCROLL TO EXPLORE ↓ ]")).toBeInTheDocument();
+  // "global markets" is wrapped in a gold <span>, so the sentence is split
+  // across text nodes — match a contiguous tail fragment.
   expect(
-    screen.getByText(/we view global markets as the ultimate intellectual puzzle/i),
+    screen.getByText(/as the ultimate intellectual puzzle/i),
   ).toBeInTheDocument();
 });
 
@@ -180,15 +182,22 @@ test("reduced motion: no element is stranded at opacity 0 / visibility hidden an
   expect(hiddenInlineStyle).toEqual([]);
 });
 
-test("reduced motion: use-case narrative stacks vertically, all slides reachable", async () => {
+test("reduced motion: use-case narrative renders every block and its background image", async () => {
   await renderHome();
 
-  // The pinned horizontal scrub never runs under reduce; every slide and its
-  // diagram must still be present in the document.
+  // The section is a plain vertical stack of blocks under reduce (and the same
+  // layout with motion under normal preferences); every block title and every
+  // crossfade background image must be present in the document.
   expect(screen.getByText("Algorithmic Signal Generation")).toBeInTheDocument();
   expect(screen.getByText("Cloud-Native Infrastructure")).toBeInTheDocument();
   expect(screen.getByText("Global Technical Operations")).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /noise, model, signal/i })).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /sources, pipeline stages/i })).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /follow-the-sun coverage/i })).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: /quantitative research studio: navy data blocks stepping upward/i }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: /data pipeline: navy intake pavilions on the left/i }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: /pale globe with navy continents on an off-white plinth/i }),
+  ).toBeInTheDocument();
 });

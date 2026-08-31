@@ -37,8 +37,11 @@ export const NAV_ANCHORS = {
   BLOG_HERO: 'blog-hero',
   /** The About page's blog section (relocated from home — PRD-home-client-focus §US-2). */
   ABOUT_BLOG_SECTION: 'about-blog-section',
-  /** Home page: the global-markets wager beat. Navy ground (deep), navbar must go dark. */
-  GLOBAL_MARKETS: 'global-markets',
+  /** Home page: the global-markets wager beat. Navy ground (deep), navbar must go dark.
+   *  Anchor id is deliberately distinct from the `global-markets` *section* id
+   *  (SectionBeat) — the two registries must stay disjoint (see
+   *  anchor-namespaces.test.ts). */
+  GLOBAL_MARKETS: 'home-global-markets',
   /** The Home page's closing shelf — light (white) ground, so the navbar must go dark-chrome. */
   HOME_CLOSING: 'home-closing',
   /** AppShell's footer, on every route. */
@@ -70,11 +73,29 @@ export const NAV_ANCHORS = {
   SERVICES_PAGE: 'services-page',
   /** The /careers route. Same rationale as SERVICES_PAGE. */
   CAREERS_PAGE: 'careers-page',
+  /** The /careers route's dark cinematic video band, above the light register
+   *  header — the navbar must go light-chrome over it. */
+  CAREERS_HERO: 'careers-hero',
+  /** The /services route's dark cinematic video hero, above the light service
+   *  list — same unified `VideoPageHero` treatment as CAREERS_HERO / BLOG_HERO,
+   *  so the navbar must go light-chrome over it. */
+  SERVICES_HERO: 'services-hero',
   /** The /blog listing page's content area (sidebar + toolbar + post grid),
    *  below BLOG_HERO. Light ground. */
   BLOG_LISTING: 'blog-listing',
   /** The /contact route. One anchor for the whole page, light ground throughout. */
   CONTACT_PAGE: 'contact-page',
+  /** Home page: the `BarTransitionSection` wipe blocks. Each is a full opaque
+   *  viewport between two grounds — without an anchor the navbar lost all
+   *  dark/light state whenever one filled the screen. One id per boundary
+   *  (they are never both under the navbar at once, but unique ids avoid a
+   *  register/deregister race at the handoff). Registered with the DESTINATION
+   *  ground's darkness — see BarTransitionSection. */
+  HOME_BRIDGE_MARKETS: 'home-bridge-markets',
+  HOME_BRIDGE_PILLARS: 'home-bridge-pillars',
+  HOME_BRIDGE_USECASES: 'home-bridge-usecases',
+  HOME_BRIDGE_PROCESS: 'home-bridge-process',
+  HOME_BRIDGE_REACH: 'home-bridge-reach',
 } as const;
 
 export type NavAnchorId = (typeof NAV_ANCHORS)[keyof typeof NAV_ANCHORS];

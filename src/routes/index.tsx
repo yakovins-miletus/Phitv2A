@@ -5,7 +5,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
-import { PixelTransitionSection } from "@/shared/components/ground/PixelTransitionSection";
+import { BarTransitionSection } from "@/shared/components/ground/BarTransitionSection";
+import { NAV_ANCHORS } from "@/shared/components/navbarAnchors";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -119,31 +120,43 @@ function HomePage() {
           <MissionStatement />
         </Box>
 
-        {/* ── Pixel Transition: hero-mission (panel) → global-markets (deep) ── */}
-        <PixelTransitionSection from="panel" to="deep" />
+        {/* ── Bar Transition: hero-mission (panel) → global-markets (deep) ── */}
+        <BarTransitionSection
+          from="panel"
+          to="deep"
+          anchor={NAV_ANCHORS.HOME_BRIDGE_MARKETS}
+        />
 
         <GlobalMarketsStatement />
 
-        {/* ── Pixel Transition: global-markets (deep) → hero-pillars (void) ── */}
-        <PixelTransitionSection from="deep" to="void" />
+        {/* ── Bar Transition: global-markets (deep) → hero-pillars (void) ── */}
+        <BarTransitionSection
+          from="deep"
+          to="void"
+          anchor={NAV_ANCHORS.HOME_BRIDGE_PILLARS}
+        />
 
         {/* Operating Pillars — establishing shot now lives inside its own
             SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
         <OperatingPillars />
 
-        {/* ── Pixel Transition: hero-pillars (void) → use-cases (panel) ── */}
-        <PixelTransitionSection from="void" to="panel" />
+        {/* ── Bar Transition: hero-pillars (void) → use-cases (panel) ── */}
+        <BarTransitionSection
+          from="void"
+          to="panel"
+          anchor={NAV_ANCHORS.HOME_BRIDGE_USECASES}
+        />
 
-        {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
-            via SectionBeat, which renders `bare` because `use-cases`
-            declares `ownsPin: true` in HOME_SECTIONS (sections.ts). The pin
-            is UseCasesNarrative's own (`trigger: wrap.current`,
-            refreshPriorityFor(sectionOrder("use-cases")) — see
-            UseCasesNarrative.tsx); `bare` guarantees it is never a descendant
-            of anything SectionBeat transforms, so the pin geometry is
-            unaffected by the shot/beat wrapper around it. */}
+        {/* Mini Establishing Shot 2: Use Cases. `use-cases` is now a normal
+            (non-bare) beat — the old pinned horizontal scrub is gone, replaced
+            by a vertical scroll of ~90svh blocks with a sticky crossfading
+            background (UseCasesNarrative). `alignItems: "stretch"` because the
+            content is taller than the section and a centered flex row would let
+            it overflow upward. UseCasesNarrative does its own full-bleed
+            breakout out of SectionBeat's Container. */}
         <SectionBeat
           section={homeSection("use-cases")}
+          sx={{ alignItems: "stretch" }}
           establishing={
             <MiniEstablishingShot
               category="PROVEN PRODUCTION PLATFORMS"
@@ -185,8 +198,12 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          {/* ── Pixel Transition: use-cases (panel) → process (deep) ── */}
-          <PixelTransitionSection from="panel" to="deep" />
+          {/* ── Bar Transition: use-cases (panel) → process (deep) ── */}
+          <BarTransitionSection
+            from="panel"
+            to="deep"
+            anchor={NAV_ANCHORS.HOME_BRIDGE_PROCESS}
+          />
 
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
@@ -194,8 +211,12 @@ function HomePage() {
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
-          {/* ── Pixel Transition: process (deep) → reach (white) ── */}
-          <PixelTransitionSection from="deep" to="white" />
+          {/* ── Bar Transition: process (deep) → reach (white) ── */}
+          <BarTransitionSection
+            from="deep"
+            to="white"
+            anchor={NAV_ANCHORS.HOME_BRIDGE_REACH}
+          />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own
@@ -207,8 +228,9 @@ function HomePage() {
               put them. */}
           <ReachSection />
 
-          {/* ── Pixel Transition: reach (white) → closing (field) ── */}
-          <PixelTransitionSection from="white" to="field" />
+          {/* No bar transition into the closing beat — ClosingLattice opens
+              with its own pinned "P + vignette" build, which reads better as a
+              hard cut straight from Reach than after a wipe. */}
 
           {/* Closing beat — operational footprint / horizon gateway. Mini
               Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,

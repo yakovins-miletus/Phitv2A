@@ -25,6 +25,8 @@ import { MONO, DISPLAY_FONT, BODY_FONT, TYPE_SCALE, LINE_HEIGHT, TRACKING } from
 import { NOIR } from "@/shared/theme/palette";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+import { VideoPageHero } from "@/shared/components/VideoPageHero";
+import { CAREERS_LOOP } from "@/shared/components/useBackgroundVideo";
 
 export const Route = createFileRoute("/careers/")({
   head: () =>
@@ -34,6 +36,24 @@ export const Route = createFileRoute("/careers/")({
     ),
   component: CareersIndexPage,
 });
+
+/**
+ * Dark cinematic video header, unified with /blog and /services via
+ * `VideoPageHero`. The headline is a `<p>`, not a heading — the page's real
+ * `<h1>` stays in the register section below.
+ */
+function CareersVideoHero() {
+  return (
+    <VideoPageHero
+      anchor={NAV_ANCHORS.CAREERS_HERO}
+      loop={CAREERS_LOOP}
+      eyebrow="Careers · Phitopolis R&D Manila"
+      headline="See a day here before you decide to spend years."
+      headingComponent="p"
+      lead="Paid engineering internships, technical graduate fellowships, and senior roles — building the platforms Phitopolis runs on."
+    />
+  );
+}
 
 export function CareersIndexPage() {
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.CAREERS_PAGE, { dark: false });
@@ -70,6 +90,8 @@ export function CareersIndexPage() {
   };
 
   return (
+    <>
+    <CareersVideoHero />
     <Box
       ref={anchorRef}
       data-ground="light"
@@ -79,7 +101,7 @@ export function CareersIndexPage() {
         bgcolor: "var(--g-void)",
         background: "var(--g-page)",
         color: "var(--text-1)",
-        pt: { xs: 12, md: 16 },
+        pt: { xs: 6, md: 9 },
         pb: { xs: 10, md: 16 },
         position: "relative",
       }}
@@ -747,5 +769,6 @@ export function CareersIndexPage() {
         onClose={() => setBrochureOpen(false)}
       />
     </Box>
+    </>
   );
 }

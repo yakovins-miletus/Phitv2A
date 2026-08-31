@@ -159,8 +159,10 @@ export const NOIR = {
   live: "#3AA189",
   /** Dark navy variant — lighter than navyInk, darker than navyField. */
   navyDark: "#081F4D",
-  /** Charcoal grey — near-black for high-contrast text. */
+  /** Charcoal grey — near-black for high-contrast text, and the island-v2
+      navbar pill's dark surface (see AppShell `NAV_GREY`). */
   charcoal: "#1E1E1E",
+  charcoalRgb: "30, 30, 30",
   /** Very dark navy — darker than navyInk. */
   midnightNavy: "#050D1B",
   /** Blue-grey slate — neutral secondary text on dark grounds. */

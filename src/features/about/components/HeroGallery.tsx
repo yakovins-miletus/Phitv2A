@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { motion, useInView } from "motion/react";
 
 import { NOIR } from "@/shared/theme/palette";
-import { EASE_OUT_EXPO, EASE_SPRING_SUBTLE_CSS } from "@/shared/motion/easing";
+import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 import { useReducedMotion } from "@/shared/motion";
 
 /**

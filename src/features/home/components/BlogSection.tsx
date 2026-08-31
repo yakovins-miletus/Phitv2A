@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { blogPostsQuery, type BlogPostSummary } from "@/features/blog/api";
 import { FALLBACK_BLOG_PAGE } from "@/features/blog/fallback";
+import { resolveApiUrl } from "@/shared/api/client";
 import { Reveal } from "@/shared/components/Reveal";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -16,7 +17,6 @@ import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstab
 import { aboutSection } from "@/shared/sections";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { resolveImageUrl } from "@/shared/bodyImages";
 
 
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
@@ -39,9 +39,6 @@ function SideArticleCard({
   post: BlogPostSummary;
   index: number;
 }) {
-  // Heimdall stores the original .png/.jpg path while only the .webp twin
-  // exists on disk, so the stored value must be resolved before it is bound.
-  const thumbnail = resolveImageUrl(post.image_url);
   return (
     <Reveal delay={0.15 + index * 0.08} style={{ display: "flex", flex: 1 }}>
       {/* A real anchor, not a clickable <Box>.
@@ -125,7 +122,7 @@ function SideArticleCard({
         />
 
         {/* Thumbnail Image */}
-        {thumbnail && (
+        {post.image_url && (
           <Box
             sx={{
               width: { xs: "100%", sm: 140 },
@@ -147,14 +144,7 @@ function SideArticleCard({
               // before the section enters view, so nothing pops in.
               loading="lazy"
               decoding="async"
-              src={thumbnail.src}
-              onError={(event) => {
-                // Only the .webp twin exists on disk for most stored paths, but if a
-                // twin is missing, degrade to the stored original rather than to a
-                // broken image.
-                const img = event.currentTarget as HTMLImageElement;
-                if (!img.src.endsWith(thumbnail.fallback)) img.src = thumbnail.fallback;
-              }}
+              src={resolveApiUrl(post.image_url)}
               alt=""
               className="blogcard-thumb"
               sx={{
@@ -243,10 +233,6 @@ export function BlogSection() {
 
   if (!featuredPost) return null;
 
-  // Heimdall stores the original .png/.jpg path while only the .webp twin
-  // exists on disk, so the stored value must be resolved before it is bound.
-  const featuredImage = resolveImageUrl(featuredPost.image_url);
-
   return (
     <SectionBeat
       section={aboutSection("blog")}
@@ -332,7 +318,7 @@ export function BlogSection() {
                 }}
               >
                 {/* Background Image */}
-                {featuredImage && (
+                {featuredPost.image_url && (
                   <Box
                     component="img"
                     // Lazy for the same reason as the side cards above: far
@@ -340,14 +326,7 @@ export function BlogSection() {
                     // home page pulls (the featured post's full-size frame).
                     loading="lazy"
                     decoding="async"
-                    src={featuredImage.src}
-                    onError={(event) => {
-                      // Only the .webp twin exists on disk for most stored paths, but if a
-                      // twin is missing, degrade to the stored original rather than to a
-                      // broken image.
-                      const img = event.currentTarget as HTMLImageElement;
-                      if (!img.src.endsWith(featuredImage.fallback)) img.src = featuredImage.fallback;
-                    }}
+                    src={resolveApiUrl(featuredPost.image_url)}
                     alt=""
                     sx={{
                       position: "absolute",

@@ -14,7 +14,6 @@ import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbar } from "@/shared/components/navbarHooks";
 import { HeroCanvas as LegacyHeroCanvas, type HeroCanvasHandle } from "./HeroCanvas";
 import { WORDMARK_INSET_MD, WORDMARK_INSET_SM } from "./heroPlaneRenderer";
-import { useBackgroundVideo, HERO_BG_VIDEO } from "@/shared/components/useBackgroundVideo";
 
 const SANS = "Inter, system-ui, -apple-system, sans-serif";
 
@@ -49,7 +48,7 @@ import { HERO_WALL_TILES } from "./heroWallTiles";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
-import { useReducedMotion, usePreloaderReady } from "@/shared/motion";
+import { useReducedMotion, usePreloaderReady, useEntranceSettled, useHeroCascadeStep } from "@/shared/motion";
 import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { HERO_PIN_DISTANCE } from "@/shared/motion/heroPin";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
@@ -213,122 +212,24 @@ export function HeroSignalCore() {
   const canvasHandleRef = useRef<HeroCanvasHandle | null>(null);
   const reduced = useReducedMotion();
   const ready = usePreloaderReady();
+  // The post-intro hero cascade — 0..5, canvas is step 1, motto step 3,
+  // buttons step 5. See `useHeroCascadeStep`'s docblock: defaults to 5 (fully
+  // revealed) on a warm/repeat visit, so `heroStep >= N` reproduces today's
+  // simultaneous entrance unchanged there.
+  const heroStep = useHeroCascadeStep();
+  // The intro must fully clear before the hero owns the scroll. Until the
+  // entrance phase machine reaches "open" the pin is not created at all, so
+  // scrolling under the preloader can never advance the hero timeline or write
+  // `--hp-*` vars mid-intro (the "components bypassing each other" bug). The
+  // seed effect below still paints the settled state, so a non-scrolling or
+  // reduced-motion visitor is unaffected.
+  const entranceSettled = useEntranceSettled();
 
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
 
   const handleNodeSelect = (index: number) => {
     setSelectedNodeIndex((prev) => (prev === index ? null : index));
   };
-
-  /** Video is only meaningful over the Monolith room — the legacy 2D canvas
-   *  has no notion of a background mode at all. */
-  const useVideoBg = false; // Disabled to use ParallaxHeroBg instead
-  const {
-    containerRef: bgContainerRef,
-    videoRef: bgVideoRef,
-    shouldLoad: bgShouldLoad,
-    posterOnly: bgPosterOnly,
-  } = useBackgroundVideo();
-
-  /**
-   * Ref-based parallax — no React re-renders.
-   *
-   * The old `useState` approach fired `setVideoParallax` on every mousemove,
-   * which is a React setState at 60 fps — 60 commits/sec for a CSS transform
-   * that could have been a direct DOM write. This version stores the target in
-   * a ref, and a rAF loop smoothly interpolates the video element's transform
-   * directly, never touching React state.
-   */
-  const parallaxTarget = useRef({ x: 0, y: 0 });
-  const parallaxCurrent = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (!useVideoBg || reduced) return;
-
-    const onMove = (e: MouseEvent) => {
-      parallaxTarget.current.x = (e.clientX / window.innerWidth - 0.5) * -18;
-      parallaxTarget.current.y = (e.clientY / window.innerHeight - 0.5) * -18;
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-
-    let raf: number;
-    const tick = () => {
-      const cur = parallaxCurrent.current;
-      const tgt = parallaxTarget.current;
-      // Smooth lerp — 8% per frame ≈ 120ms settle at 60fps
-      cur.x += (tgt.x - cur.x) * 0.08;
-      cur.y += (tgt.y - cur.y) * 0.08;
-
-      const video = bgVideoRef.current;
-      if (video) {
-        video.style.transform =
-          `translate3d(${cur.x}px, ${cur.y}px, 0) scale(1.04)`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      cancelAnimationFrame(raf);
-    };
-  }, [useVideoBg, reduced, bgVideoRef]);
-
-  /**
-   * Ping-pong video playback.
-   *
-   * The hero video (`hero-night-to-dawn`) is an 8-second night→dawn
-   * transition. With `loop`, it hard-cuts from dawn back to night — a jarring
-   * snap. This effect lets the video play forward normally (the browser's
-   * native decoder handles it perfectly), then when it reaches the end,
-   * manually scrubs backward using rAF. For a ~300KB fully-buffered clip,
-   * backward seeking is instantaneous.
-   */
-  useEffect(() => {
-    if (!useVideoBg || reduced) return;
-    const video = bgVideoRef.current;
-    if (!video) return;
-
-    // Disable native loop — we own the playback direction
-    const el = video;
-    el.loop = false;
-
-    let direction: 1 | -1 = 1;
-    let rafId: number;
-    let lastTs = 0;
-
-    const step = (ts: number) => {
-      if (lastTs === 0) lastTs = ts;
-      const dt = Math.min((ts - lastTs) / 1000, 0.05); // cap at 50ms
-      lastTs = ts;
-
-      if (video.readyState >= 3 && video.duration > 0) {
-        if (direction === 1) {
-          // Forward: let native playback handle it, just watch for the end
-          if (video.currentTime >= video.duration - 0.08) {
-            direction = -1;
-            video.pause();
-          }
-        } else {
-          // Backward: manually scrub currentTime
-          const next = video.currentTime - dt;
-          if (next <= 0.08) {
-            video.currentTime = 0.08;
-            direction = 1;
-            void video.play().catch(() => {});
-          } else {
-            video.currentTime = next;
-          }
-        }
-      }
-
-      rafId = requestAnimationFrame(step);
-    };
-
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
-  }, [useVideoBg, reduced, bgVideoRef]);
-
 
   const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
   const stageRef = useRef(stage);
@@ -470,6 +371,11 @@ export function HeroSignalCore() {
   useGSAP(
     () => {
       if (reduced) return;
+      // Do not build the pin/timeline until the intro has fully cleared. This
+      // effect re-runs when `entranceSettled` flips true (it is in the deps),
+      // and `useGSAP` reverts the previous (empty) context first, so the pin is
+      // created exactly once, after "open".
+      if (!entranceSettled) return;
 
       const el = containerRef.current;
       if (!el) return;
@@ -608,8 +514,15 @@ export function HeroSignalCore() {
           }
         },
       });
+
+      // The pin is created after the intro's rectangular reveal has already
+      // begun uncovering the page, so layout under it may have shifted since
+      // first paint. One post-commit refresh re-resolves this pin's start/end
+      // (and, via refreshPriority 0, everything downstream) against the real
+      // settled layout.
+      requestAnimationFrame(() => ScrollTrigger.refresh());
     },
-    { scope: pinRef, dependencies: [reduced] }
+    { scope: pinRef, dependencies: [reduced, entranceSettled] }
   );
 
   // Every continuous value now lives in a CSS custom property written by the driver
@@ -856,51 +769,6 @@ export function HeroSignalCore() {
             }}
           />
 
-          {/* Video background mode: the baked night→dawn loop, filling the same
-              area the R3F canvas fills but sitting behind it — the canvas below
-              renders with a transparent clear colour and skips `SkyDome`/
-              `CloudSea` (see `PlaygroundCanvas.tsx`'s `hideSky`) so the mark and
-              its lighting draw on top of this rather than doubling up on it. */}
-          {useVideoBg && (
-            <Box
-              aria-hidden
-              ref={bgContainerRef}
-              sx={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 3,
-                opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
-                transition: "opacity 0.6s ease-out",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                component="video"
-                ref={bgVideoRef}
-                autoPlay
-                muted
-                playsInline
-                preload="none"
-                poster={HERO_BG_VIDEO.poster}
-                sx={{
-                  position: "absolute",
-                  inset: -20,
-                  width: "calc(100% + 40px)",
-                  height: "calc(100% + 40px)",
-                  objectFit: "cover",
-                  willChange: "transform",
-                }}
-              >
-                {bgShouldLoad && !bgPosterOnly && (
-                  <>
-                    <source src={HERO_BG_VIDEO.webm} type="video/webm" />
-                    <source src={HERO_BG_VIDEO.mp4} type="video/mp4" />
-                  </>
-                )}
-              </Box>
-            </Box>
-          )}
-
           {/* The city: streets, buildings, dawn shadows, signal pulses and the P
               mark's own district — one canvas, no DOM per scene object. */}
           <Box
@@ -909,8 +777,14 @@ export function HeroSignalCore() {
               position: "absolute",
               inset: 0,
               zIndex: 4,
-              opacity: ready ? (reduced ? 0.4 : 0.95) : 0,
-              transition: "opacity 0.6s ease-out",
+              // Step 1 of the post-intro hero cascade, and the one element
+              // that rises (bottom→top) rather than drops — every other step
+              // enters from above. `ready && heroStep >= 1`: on a warm/repeat
+              // visit `heroStep` is already 5, so this is exactly `ready`,
+              // today's behaviour unchanged.
+              opacity: ready && heroStep >= 1 ? (reduced ? 0.4 : 0.95) : 0,
+              transform: heroStep >= 1 ? "translateY(0)" : "translateY(32px)",
+              transition: `opacity 0.6s ease-out, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
             }}
           >
             {/* `containerRef` (`#hero`), not `cardRef`: the mode badge and the
@@ -1091,9 +965,15 @@ export function HeroSignalCore() {
             left: HERO_GUTTER,
             zIndex: 7,
             maxWidth: { xs: "calc(100% - 32px)", sm: "440px", md: "520px" },
-            opacity: ready ? "var(--hp-panel, 1)" : 0,
+            // Step 3 of the post-intro hero cascade — drops in from above,
+            // alongside the existing scroll-driven opacity. Was opacity-only
+            // at a 2.4s fade (a holdover from the old reveal-through-the-hole
+            // design); now one step in a ~0.7s-cadence cascade, so the
+            // transition shortens to match.
+            opacity: ready && heroStep >= 3 ? "var(--hp-panel, 1)" : 0,
+            transform: heroStep >= 3 ? "translateY(0)" : "translateY(-24px)",
             pointerEvents: "none",
-            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}`,
+            transition: `opacity 0.7s ${EASE_OUT_EXPO_CSS}, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
           }}
         >
           <Typography
@@ -1125,11 +1005,15 @@ export function HeroSignalCore() {
             display: "flex",
             flexDirection: "column",
             gap: 1.2,
-            opacity: ready ? "var(--hp-panel, 1)" : 0,
-            pointerEvents: ready && stage.panelInteractive ? "auto" : "none",
-            transform: ready ? "translateY(0)" : "translateY(16px)",
-            transition: `opacity 2.4s ${EASE_OUT_EXPO_CSS}, transform 2.4s ${EASE_OUT_EXPO_CSS}`,
-            transitionDelay: ready ? "0.45s" : "0s",
+            // Step 5 — the last step. Was `translateY(16px) → 0`, which is
+            // actually a RISE (16px below rest, moving up); flipped to drop
+            // from above like every other step except the canvas. The old
+            // `transitionDelay: 0.45s` staggered this after the motto by
+            // hand; the cascade supplies that stagger now, so it's gone.
+            opacity: ready && heroStep >= 5 ? "var(--hp-panel, 1)" : 0,
+            pointerEvents: ready && heroStep >= 5 && stage.panelInteractive ? "auto" : "none",
+            transform: heroStep >= 5 ? "translateY(0)" : "translateY(-24px)",
+            transition: `opacity 0.7s ${EASE_OUT_EXPO_CSS}, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
             maxWidth: { xs: "calc(100% - 64px)", md: "850px" },
           }}
         >

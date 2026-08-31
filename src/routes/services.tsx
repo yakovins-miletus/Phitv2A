@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 import { servicesQuery } from "@/features/services/api";
 import type { Service } from "@/features/services/api";
 import { DetailedServiceList } from "@/features/services/components/DetailedServiceList";
 import { ServicesHeroHeader } from "@/features/services/components/ServicesHeroHeader";
+import { ServicesCategoryFilter } from "@/features/services/components/ServicesCategoryFilter";
 import { TechStackSection } from "@/features/services/components/TechStackSection";
 import { Section } from "@/shared/components/Section";
+import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { pageHead } from "@/shared/seo";
 
 const FALLBACK_SERVICES: Service[] = [
@@ -112,41 +116,34 @@ function matchCategory(service: Service, categoryId: string): boolean {
 function ServicesPage() {
   const services = useQuery(servicesQuery());
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const contentRef = useNavbarAnchor(NAV_ANCHORS.SERVICES_PAGE, { dark: false });
 
-  // Genuinely empty case: successful response with zero services published.
-  if (services.isSuccess && services.data.length === 0) {
-    return (
-      <Section>
-        <ServicesHeroHeader
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-        <Typography variant="body1" color="text.secondary" sx={{ py: 6, textAlign: "center" }}>
-          No services are currently published.
-        </Typography>
-        <TechStackSection />
-      </Section>
-    );
-  }
-
+  const isEmptyPublished = services.isSuccess && services.data.length === 0;
   const list = services.data ?? FALLBACK_SERVICES;
   const filtered = list.filter((s) => matchCategory(s, selectedCategory));
-  const showEmptyState = filtered.length === 0;
+  const showEmptyState = isEmptyPublished || filtered.length === 0;
 
   return (
-    <Section>
-      <ServicesHeroHeader
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-      />
-      {showEmptyState ? (
-        <Typography variant="body1" color="text.secondary" sx={{ py: 6, textAlign: "center" }}>
-          No services match this category.
-        </Typography>
-      ) : (
-        <DetailedServiceList services={filtered} />
-      )}
-      <TechStackSection />
-    </Section>
+    <>
+      <ServicesHeroHeader />
+      <Box ref={contentRef} data-ground="light">
+        <Section>
+          {!isEmptyPublished && (
+            <ServicesCategoryFilter
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          )}
+          {showEmptyState ? (
+            <Typography variant="body1" color="text.secondary" sx={{ py: 6, textAlign: "center" }}>
+              {isEmptyPublished ? "No services are currently published." : "No services match this category."}
+            </Typography>
+          ) : (
+            <DetailedServiceList services={filtered} />
+          )}
+          <TechStackSection />
+        </Section>
+      </Box>
+    </>
   );
 }

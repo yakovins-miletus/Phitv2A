@@ -70,11 +70,11 @@ test("every section EyeFlow can land on resolves, including the rail-only one", 
   // SectionBeat (`id={section.id}`) and is home's final chapter (HORIZON)
   // since `blog`, which it used to share a chapter with, relocated to /about
   // (PRD-home-client-focus §US-2). It owns its own chapter's scroll target.
-  // Partial reversal of WS-02: MissionStatement moved back into chapter 4
-  // (alongside hero and global-markets) instead of holding its own "WHO WE
-  // ARE" chapter, so the chapter count shrank and HORIZON is now 7.
+  // The rail was rebalanced 8 chapters -> 6 (ORIGIN/THESIS/DISCIPLINES/PROOF/
+  // REACH/HORIZON): the four hero sub-phase chapters collapsed into ORIGIN (0)
+  // and mission+global-markets fold into THESIS (1), so HORIZON is now 5.
   expect(HOME_SECTIONS.map((s) => s.id)).toContain("closing");
-  expect(homeSection("closing").chapter).toBe(7);
+  expect(homeSection("closing").chapter).toBe(5);
   expect(chapterTarget(homeSection("closing").chapter)).toBe("closing");
 });
 
@@ -89,13 +89,12 @@ test("chapters are contiguous and non-decreasing down the page", () => {
   for (let i = 1; i < chapters.length; i += 1) {
     expect(chapters[i]!).toBeGreaterThanOrEqual(chapters[i - 1]!);
   }
-  // Eight chapters now (0-7) — the PEOPLE-act chapters were pruned along with
-  // their sections when they relocated to /about (PRD-home-client-focus
-  // §US-2). `global-markets` and `hero-mission` share chapter 4 with `hero`
-  // (mission core moved back up front, right after the hero, per the
-  // partial WS-02 reversal), so there is no separate "WHO WE ARE" chapter;
-  // `closing` is chapter 7 (HORIZON).
-  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7]));
+  // Six chapters now (0-5): ORIGIN (all hero sub-phases + hero), THESIS
+  // (hero-mission + global-markets), DISCIPLINES (hero-pillars), PROOF
+  // (services + use-cases + process), REACH (reach), HORIZON (closing). The
+  // rail was rebalanced down from eight so each label is a story beat a
+  // scrolling reader can actually navigate to, not a hero-animation sub-phase.
+  expect(new Set(chapters)).toEqual(new Set([0, 1, 2, 3, 4, 5]));
   // Every declared chapter is actually used by a section, so the rail never
   // renders a label you cannot scroll to.
   expect(new Set(CHAPTERS.map((c) => c.index))).toEqual(new Set(chapters));

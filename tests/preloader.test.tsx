@@ -5,7 +5,19 @@ import { vi } from "vitest";
 import { Preloader } from "@/shared/components/Preloader";
 import * as motion from "@/shared/motion";
 
-import { renderWithProviders } from "./test-utils";
+import { CHOREO_END_S, POST_HOLD_S } from "@/shared/components/preloaderChoreo";
+import { mockReducedMotion, renderWithProviders } from "./test-utils";
+
+/**
+ * Real-timer windows derived from the choreography table. The intro is a ~8.5s
+ * showcase: the exit waits on CHOREO_END plus the post-100 buffer plus the
+ * reveal, so re-pacing the intro must widen these automatically rather than
+ * turning them into failsafe tests.
+ */
+// Vitest's 5s default predates the showcase intro.
+vi.setConfig({ testTimeout: 25000 });
+
+const EXIT_WINDOW_MS = CHOREO_END_S * 1000 + POST_HOLD_S * 1000 + 2600 + 1600; // 2600 = EXIT_FADE_S (600) + OUT_DURATION_S (2000)
 
 test("preloader ticks on real signals and reaches 100%", async () => {
   // jsdom: document.fonts is undefined and readyState is "complete", so zero
@@ -34,6 +46,52 @@ test("warm-up signals drive the bar and the ticking label", async () => {
   resolveSecond();
   expect(await screen.findByText("100%")).toBeInTheDocument();
   expect(screen.getByText("READY")).toBeInTheDocument();
+});
+
+test("a pending background signal does not hold the reveal", async () => {
+  mockReducedMotion(false);
+  const onDone = vi.fn();
+  const onStartExit = vi.fn();
+  const warmup = [
+    { label: "HERO_CRIT", promise: Promise.resolve() },
+    // never resolves — must not gate the exit
+    { label: "ROUTE_WARM", blocking: false, promise: new Promise<void>(() => {}) },
+    { label: "GLOBE", blocking: false, promise: new Promise<void>(() => {}) },
+  ];
+
+  renderWithProviders(
+    <Preloader onDone={onDone} onStartExit={onStartExit} warmup={warmup} />,
+  );
+
+  // Blocking tier (1/1) is done immediately, so the bar reads 100% and the
+  // reveal fires even though two background promises are still pending.
+  expect(await screen.findByText("100%")).toBeInTheDocument();
+  await waitFor(
+    () => {
+      expect(onStartExit).toHaveBeenCalled();
+      expect(onDone).toHaveBeenCalled();
+    },
+    { timeout: EXIT_WINDOW_MS },
+  );
+});
+
+test("progressPercent reflects only the blocking signal set", async () => {
+  mockReducedMotion(false);
+  let resolveCrit!: () => void;
+  const warmup = [
+    { label: "CRIT", promise: new Promise<void>((r) => (resolveCrit = r)) },
+    { label: "BG_A", blocking: false, promise: new Promise<void>(() => {}) },
+    { label: "BG_B", blocking: false, promise: new Promise<void>(() => {}) },
+    { label: "BG_C", blocking: false, promise: new Promise<void>(() => {}) },
+  ];
+
+  renderWithProviders(<Preloader onDone={() => {}} warmup={warmup} />);
+  // 3 of 4 signals are background; the bar ignores them entirely.
+  expect(screen.getByText("00%")).toBeInTheDocument();
+
+  resolveCrit();
+  // 1/1 blocking resolved -> 100%, not 1/4.
+  expect(await screen.findByText("100%")).toBeInTheDocument();
 });
 
 test("Escape skips the preloader", async () => {
@@ -75,7 +133,7 @@ test("resolves and triggers onDone when useReducedMotion transitions null -> fal
       () => {
         expect(onDone).toHaveBeenCalled();
       },
-      { timeout: 2500 }
+      { timeout: EXIT_WINDOW_MS }
     );
   } finally {
     spy.mockRestore();
@@ -97,13 +155,15 @@ test("unconditional failsafe resolves preloader when a signal hangs indefinitely
   expect(screen.getByTestId("preloader")).toBeInTheDocument();
   expect(screen.getByText("00%")).toBeInTheDocument();
 
-  // Failsafe timer (1500ms) guarantees onDone and onStartExit are invoked
+  // The post-choreography signal cap guarantees onDone and onStartExit are
+  // invoked even though the signal never settles; the unconditional failsafe
+  // (13000ms) sits above it as the last resort.
   await waitFor(
     () => {
       expect(onStartExit).toHaveBeenCalled();
       expect(onDone).toHaveBeenCalled();
     },
-    { timeout: 2500 }
+    { timeout: EXIT_WINDOW_MS }
   );
 });
 

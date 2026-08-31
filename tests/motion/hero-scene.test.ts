@@ -81,7 +81,8 @@ describe("scene geometry", () => {
   });
 
   test("outer decorative application nodes are defined as flat rounded rectangles on the outer perimeter ring", () => {
-    expect(APPLICATION_NODES).toHaveLength(6);
+    // 6 original app-* nodes + 4 further-out closing-lattice edge nodes (app-edge-*/app-far-*).
+    expect(APPLICATION_NODES).toHaveLength(10);
     expect(APP_NODE_WIDTH).toBe(104);
     expect(APP_NODE_HEIGHT).toBe(58);
     expect(APP_NODE_RADIUS).toBe(12);

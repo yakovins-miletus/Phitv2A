@@ -14,6 +14,10 @@ export const queryClient = new QueryClient({
           error.problem.status < 500;
         return !isClientError && failureCount < 2;
       },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });

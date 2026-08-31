@@ -30,6 +30,7 @@ export function ClosingShelf() {
       establishing={
         <MiniEstablishingShot
           selfDriven={false}
+          category="CONTACT // PARTNERSHIP"
           title="In closing"
           tracer="Direct line to our technical leadership and quantitative engineering directors."
         />

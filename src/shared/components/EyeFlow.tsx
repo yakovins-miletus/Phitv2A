@@ -1,22 +1,17 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
+import { motion, useMotionValue, useTransform } from "motion/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import {
-  ACT_LABELS,
-  CHAPTERS,
-  actOfChapter,
-  type Act,
-  type ChapterIndex,
-} from "@/shared/sections";
+import { CHAPTERS, type ChapterIndex } from "@/shared/sections";
 import { SCROLL_SPEED, scrollEase } from "@/shared/motion/scrollSpeed";
 import { heroTotalHeight } from "@/shared/motion/heroPin";
-import { useReducedMotion } from "@/shared/motion";
+import { useReducedMotion, useHeroCascadeStep } from "@/shared/motion";
+import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 import { getLenis } from "./smoothScrollControls";
 import { useNavbar } from "./navbarHooks";
 
@@ -24,15 +19,17 @@ gsap.registerPlugin(ScrollTrigger);
 
 const RAIL_HEIGHT = 300;
 
-/** Resize work is debounced by this much before the five section anchors are
+/** Horizontal space the fixed chapter rail occupies at the right edge (`lg`+):
+ *  `right: 24` + the ~150px label column + the `gap: 2` (16px) + the 2px rail,
+ *  rounded up. Full-bleed sections (`maxWidth` >= 1400) must add this as extra
+ *  right padding at `lg` and up so body copy never runs under the rail — see
+ *  GlobalMarketsStatement / OperatingPillars. Narrower sections (`maxWidth`
+ *  1100, the default) clear it already and must NOT add it. */
+export const EYEFLOW_RAIL_GUTTER = 200;
+
+/** Resize work is debounced by this much before the section anchors are
  *  re-measured — matches `HeroCanvas.tsx`'s own resize debounce. */
 const RESIZE_DEBOUNCE_MS = 150;
-
-const ACT_GROUPS: readonly { act: Act; chapters: readonly (typeof CHAPTERS)[number][] }[] = (
-  Object.keys(ACT_LABELS) as Act[]
-)
-  .map((act) => ({ act, chapters: CHAPTERS.filter((c) => c.act === act) }))
-  .filter((group) => group.chapters.length > 0);
 
 export function EyeFlow() {
   /**
@@ -56,19 +53,23 @@ export function EyeFlow() {
   const railAccent = isOverDarkSection ? NOIR.gold : NOIR.navyField;
   const normalizedProgress = useMotionValue(0);
   const [activeChapter, setActiveChapter] = useState<ChapterIndex>(0);
-  const activeAct = actOfChapter(activeChapter);
   const indicatorTop = useTransform(normalizedProgress, [0, 1], [0, RAIL_HEIGHT]);
   const reduced = useReducedMotion();
+  // Step 4 of the post-intro hero cascade. On a warm/repeat visit this is
+  // already 5 — the rail keeps its long-standing always-on behaviour,
+  // unchanged. See `useHeroCascadeStep`'s docblock.
+  const heroStep = useHeroCascadeStep();
 
   /**
    * Chapter/progress tracking — cached offsets, not per-frame layout.
    *
-   * The section anchors (`use-cases`, `reach`, `closing`) only need their
+   * The section anchors (`hero-mission`, `hero-pillars`, `use-cases`,
+   * `reach`, `closing`) only need their
    * *document-relative* Y offset. `window.scrollY + rect.top` is
    * scroll-position-invariant — the two terms cancel — so that number only
    * changes when the layout above the anchor changes: a resize, a pin's
    * spacer being sized, lazy content mounting. It never changes just because
-   * the reader scrolled. The previous version re-read all five
+   * the reader scrolled. The previous version re-read all those
    * `getBoundingClientRect()`s (plus `scrollHeight`) inside `gsap.ticker`,
    * i.e. a forced synchronous layout on every single frame, permanently, on
    * the home route.
@@ -80,39 +81,45 @@ export function EyeFlow() {
    * `resize`. The per-frame `updateProgress` reads only `window.scrollY` (no
    * layout) and does arithmetic against the cached `offsets`.
    *
+   * Chapter 0 (ORIGIN) starts at y=0; the other five chapter starts are the
+   * document offsets of `hero-mission`, `hero-pillars`, `use-cases`, `reach`
+   * and `closing` — the first section declared in each chapter — with a
+   * viewport-height fallback chain if an anchor has not mounted yet.
+   *
    * `daily-life`/`candidates`/`blog` anchors were removed here when those
    * sections relocated to /about (PRD-home-client-focus §US-2) — `closing`
    * (the operational-footprint beat) is now home's final chapter instead.
    */
   useEffect(() => {
     let limit = 0;
-    let offsets: number[] = new Array(9).fill(0);
+    let offsets: number[] = new Array(7).fill(0);
 
     const measure = () => {
       const winH = window.innerHeight;
       const docH = document.documentElement.scrollHeight;
       limit = docH - winH;
 
-      const heroHeight = heroTotalHeight(winH);
-
+      const missionEl = document.getElementById("hero-mission");
+      const pillarsEl = document.getElementById("hero-pillars");
       const useCasesEl = document.getElementById("use-cases");
       const reachEl = document.getElementById("reach");
       const closingEl = document.getElementById("closing");
 
-      const y_useCases = useCasesEl ? window.scrollY + useCasesEl.getBoundingClientRect().top : heroHeight;
+      const heroHeight = heroTotalHeight(winH);
+      const y_mission = missionEl ? window.scrollY + missionEl.getBoundingClientRect().top : 0.60 * heroHeight;
+      const y_pillars = pillarsEl ? window.scrollY + pillarsEl.getBoundingClientRect().top : y_mission + winH;
+      const y_useCases = useCasesEl ? window.scrollY + useCasesEl.getBoundingClientRect().top : y_pillars + winH;
       const y_reach = reachEl ? window.scrollY + reachEl.getBoundingClientRect().top : y_useCases + winH;
       const y_closing = closingEl ? window.scrollY + closingEl.getBoundingClientRect().top : y_reach + winH;
 
       offsets = [
-        0,                        // Ch 0: FLATTEN
-        0.20 * heroHeight,        // Ch 1: ALIGN
-        0.35 * heroHeight,        // Ch 2: REVEAL
-        0.50 * heroHeight,        // Ch 3: DWELL
-        0.60 * heroHeight,        // Ch 4: QUANTITATIVE R&D
-        y_useCases,               // Ch 5: PRACTICE
-        y_reach,                  // Ch 6: REACH
-        y_closing,                // Ch 7: HORIZON
-        limit,                    // End
+        0,             // Ch 0: ORIGIN
+        y_mission,     // Ch 1: THESIS
+        y_pillars,     // Ch 2: DISCIPLINES
+        y_useCases,    // Ch 3: PROOF
+        y_reach,       // Ch 4: REACH
+        y_closing,     // Ch 5: HORIZON
+        limit,         // End
       ];
     };
 
@@ -137,7 +144,7 @@ export function EyeFlow() {
         localP = (y - yStart) / range;
       }
 
-      const totalChapters = 8;
+      const totalChapters = 6;
       const segmentProgress = (intervalIdx + localP) / totalChapters;
       normalizedProgress.set(Math.max(0, Math.min(segmentProgress, 1)));
       setActiveChapter(intervalIdx as ChapterIndex);
@@ -186,38 +193,25 @@ export function EyeFlow() {
   }, [normalizedProgress, reduced]);
 
   const scrollToChapter = (index: ChapterIndex) => {
-    const winH = window.innerHeight;
-    const heroHeight = heroTotalHeight(winH);
+    // Chapter 0 (ORIGIN) is the top of the page — the hero choreography has no
+    // anchor of its own. Chapters 1–5 each target the id of the first section
+    // declared in them.
+    const targets = ["", "hero-mission", "hero-pillars", "use-cases", "reach", "closing"];
 
-    if (index < 5) {
-      const targetY = [
-        0,
-        0.20 * heroHeight,
-        0.35 * heroHeight,
-        0.50 * heroHeight,
-        0.60 * heroHeight,
-      ][index]!;
+    const lenis = getLenis();
 
-      const lenis = getLenis();
+    if (index === 0) {
       if (lenis) {
-        lenis.scrollTo(targetY, { duration: SCROLL_SPEED, easing: scrollEase });
+        lenis.scrollTo(0, { duration: SCROLL_SPEED, easing: scrollEase });
         return;
       }
-      window.scrollTo({ top: targetY, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    const ids = [
-      "", "", "", "", "",
-      "use-cases",
-      "reach",
-      "closing",
-    ];
-
-    const id = ids[index];
+    const id = targets[index];
     if (!id) return;
 
-    const lenis = getLenis();
     if (lenis) {
       lenis.scrollTo(`#${id}`, { duration: SCROLL_SPEED, easing: scrollEase });
       return;
@@ -227,12 +221,21 @@ export function EyeFlow() {
 
   return (
     <Box
-      aria-hidden
+      component="nav"
+      aria-label="Chapter navigation"
       sx={{
         position: "fixed",
         right: 24,
         top: "50%",
-        transform: "translateY(-50%)",
+        // Step 4 of the post-intro hero cascade — drops in from above,
+        // composed with the existing vertical-centring transform rather than
+        // replacing it: the offset is added inside the same translateY, so
+        // centring is never clobbered mid-entrance. Had no entrance at all
+        // before this; on a warm/repeat visit `heroStep` is already 5, so
+        // this resolves to the plain `translateY(-50%)` centring instantly.
+        opacity: heroStep >= 4 ? 1 : 0,
+        transform: heroStep >= 4 ? "translateY(-50%)" : "translateY(calc(-50% - 24px))",
+        transition: `opacity 0.6s ${EASE_OUT_EXPO_CSS}, transform 0.7s ${EASE_OUT_EXPO_CSS}`,
         display: { xs: "none", lg: "flex" },
         alignItems: "center",
         gap: 2,
@@ -246,84 +249,58 @@ export function EyeFlow() {
           flexDirection: "column",
           gap: 2,
           textAlign: "right",
-          pointerEvents: "auto",
+          // Gated alongside the entrance above — an invisible rail should
+          // never be clickable, the same rule the hero's own button cluster
+          // follows (`SuperHeroSequence.tsx`'s `.hero-directory`).
+          pointerEvents: heroStep >= 4 ? "auto" : "none",
         }}
       >
-        {ACT_GROUPS.map(({ act, chapters }) => {
-          const isActiveAct = act === activeAct;
+        {/* Flat list — six chapters, one act. The act header is gone: a
+            one-act page's group label only restated "SERVICES" above the one
+            group it had. Six rows are few enough to show all at once, so the
+            old AnimatePresence collapse of the inactive group is gone too. */}
+        {CHAPTERS.map(({ index, label }) => {
+          const isActiveChapter = index === activeChapter;
           return (
-            <Box key={act} sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-              <Typography
-                onClick={() => scrollToChapter(chapters[0]?.index ?? 0)}
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.24em",
-                  color: isActiveAct ? railAccent : railFg,
-                  // Inactive state is carried by WEIGHT, not by fading the text
-                  // out. `text.secondary` is rgba(10,42,102,0.82); at the old 0.4
-                  // opacity its effective alpha was 0.33, which measures ~2.3:1 on
-                  // the hero's white ground and fails AA for text this size. 0.82
-                  // measures ~5.9:1. The hierarchy still reads, because 800 vs 500
-                  // at 0.24em tracking is a bigger visual step than the fade was.
-                  opacity: isActiveAct ? 1 : 0.82,
-                  fontWeight: isActiveAct ? 800 : 500,
-                  cursor: "pointer",
-                  userSelect: "none",
-                  transition: "color 0.4s ease, opacity 0.4s ease",
-                }}
-              >
-                {ACT_LABELS[act]}
-              </Typography>
-
-              <AnimatePresence initial={false}>
-                {isActiveAct && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    {chapters.map(({ index, label }) => {
-                      const isActiveChapter = index === activeChapter;
-                      return (
-                        <Typography
-                          key={index}
-                          onClick={() => scrollToChapter(index)}
-                          sx={{
-                            fontFamily: MONO,
-                            fontSize: "0.6rem",
-                            letterSpacing: "0.18em",
-                            color: isActiveChapter ? railAccent : railFg,
-                            // Same fix as the act label above: weight carries the
-                            // state, opacity stays above the AA floor. The old
-                            // 0.45/0.2 tiers measured 2.5:1 and 1.4:1.
-                            opacity: isActiveChapter ? 1 : 0.82,
-                            fontWeight: isActiveChapter ? 700 : 500,
-                            cursor: "pointer",
-                            userSelect: "none",
-                            display: "block",
-                            transformOrigin: "right center",
-                            transition: "color 0.4s ease, opacity 0.4s ease, transform 0.3s ease",
-                            "&:hover": {
-                              color: railAccent,
-                              opacity: 1,
-                              transform: "translateX(-4px)",
-                            },
-                          }}
-                        >
-                          {label}
-                        </Typography>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Box>
+            <Typography
+              key={index}
+              component="button"
+              type="button"
+              aria-current={isActiveChapter ? "true" : undefined}
+              onClick={() => scrollToChapter(index)}
+              sx={{
+                border: 0,
+                background: "none",
+                padding: 0,
+                font: "inherit",
+                textAlign: "right",
+                fontFamily: MONO,
+                fontSize: "0.6rem",
+                letterSpacing: "0.18em",
+                color: isActiveChapter ? railAccent : railFg,
+                // Same fix as before: weight carries the state, opacity stays
+                // above the AA floor. The old 0.45/0.2 tiers measured 2.5:1
+                // and 1.4:1.
+                opacity: isActiveChapter ? 1 : 0.82,
+                fontWeight: isActiveChapter ? 700 : 500,
+                cursor: "pointer",
+                userSelect: "none",
+                display: "block",
+                transformOrigin: "right center",
+                transition: "color 0.4s ease, opacity 0.4s ease, transform 0.3s ease",
+                "&:hover": {
+                  color: railAccent,
+                  opacity: 1,
+                  transform: "translateX(-4px)",
+                },
+              }}
+            >
+              {label}
+            </Typography>
           );
         })}
       </Box>
-      <Box sx={{ position: "relative", width: "2px", height: RAIL_HEIGHT, bgcolor: "divider" }}>
+      <Box aria-hidden sx={{ position: "relative", width: "2px", height: RAIL_HEIGHT, bgcolor: "divider" }}>
         <motion.div
           style={{
             scaleY: normalizedProgress,
