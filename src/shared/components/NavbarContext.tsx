@@ -36,8 +36,11 @@ export type NavbarMode =
  * Anchor ids now live here and useNavbarAnchor only accepts one of them.
  */
 export function NavbarProvider({ children }: { children: React.ReactNode }) {
-  // Default navbar treatment
-  const [overrideMode, setOverrideMode] = useState<NavbarMode>('glassmorphism');
+  // Default navbar treatment — the tightened floating pill. On `/` the navbar
+  // is still forced to `minimal` while the pinned hero owns the viewport
+  // (see AppShell `effectiveMode`); this is what it settles into afterwards
+  // and what every other route uses from the top.
+  const [overrideMode, setOverrideMode] = useState<NavbarMode>('island-v2');
   const [autohideEnabled, setAutohideEnabled] = useState(false);
   const [showMotto, setShowMotto] = useState(false);
 

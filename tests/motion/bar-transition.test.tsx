@@ -12,7 +12,19 @@ import {
   barRevealFor,
 } from "@/shared/components/ground/barPhases";
 import { BarTransitionSection } from "@/shared/components/ground/BarTransitionSection";
+import { NAV_ANCHORS, NavbarProvider } from "@/shared/components/NavbarContext";
 import { GROUNDS } from "@/shared/theme/grounds";
+
+const renderBridge = (from: "panel" | "white", to: "deep" | "field") =>
+  render(
+    <NavbarProvider>
+      <BarTransitionSection
+        from={from}
+        to={to}
+        anchor={NAV_ANCHORS.HOME_BRIDGE_MARKETS}
+      />
+    </NavbarProvider>,
+  );
 gsap.registerPlugin(ScrollTrigger);
 
 function stubReducedMotion(reduce: boolean) {
@@ -67,9 +79,7 @@ describe("BarTransitionSection", () => {
 
   it("renders exactly BAR_COUNT bars at full viewport height", () => {
     stubReducedMotion(false);
-    const { container } = render(
-      <BarTransitionSection from="panel" to="deep" />,
-    );
+    const { container } = renderBridge("panel", "deep");
     const wrap = container.querySelector(".bar-transition-section");
     expect(wrap).not.toBeNull();
     expect((wrap as HTMLElement).style.height).toBe("100vh");
@@ -81,9 +91,7 @@ describe("BarTransitionSection", () => {
 
   it("under reduced motion renders a solid band of the target ground", () => {
     stubReducedMotion(true);
-    const { container } = render(
-      <BarTransitionSection from="white" to="field" />,
-    );
+    const { container } = renderBridge("white", "field");
     expect(container.querySelector(".bar-transition-section")).toBeNull();
     const box = container.firstElementChild as HTMLElement;
     expect(box.style.height).toBe("100vh");

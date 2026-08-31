@@ -85,6 +85,17 @@ export const NAV_ANCHORS = {
   BLOG_LISTING: 'blog-listing',
   /** The /contact route. One anchor for the whole page, light ground throughout. */
   CONTACT_PAGE: 'contact-page',
+  /** Home page: the `BarTransitionSection` wipe blocks. Each is a full opaque
+   *  viewport between two grounds — without an anchor the navbar lost all
+   *  dark/light state whenever one filled the screen. One id per boundary
+   *  (they are never both under the navbar at once, but unique ids avoid a
+   *  register/deregister race at the handoff). Registered with the DESTINATION
+   *  ground's darkness — see BarTransitionSection. */
+  HOME_BRIDGE_MARKETS: 'home-bridge-markets',
+  HOME_BRIDGE_PILLARS: 'home-bridge-pillars',
+  HOME_BRIDGE_USECASES: 'home-bridge-usecases',
+  HOME_BRIDGE_PROCESS: 'home-bridge-process',
+  HOME_BRIDGE_REACH: 'home-bridge-reach',
 } as const;
 
 export type NavAnchorId = (typeof NAV_ANCHORS)[keyof typeof NAV_ANCHORS];

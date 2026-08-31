@@ -6,6 +6,7 @@ import { pageHead } from "@/shared/seo";
 import { EyeFlow } from "@/shared/components/EyeFlow";
 import { GroundLayer } from "@/shared/components/ground/GroundLayer";
 import { BarTransitionSection } from "@/shared/components/ground/BarTransitionSection";
+import { NAV_ANCHORS } from "@/shared/components/navbarAnchors";
 import { SmoothScroll } from "@/shared/components/SmoothScroll";
 import { refreshScrollTriggers } from "@/shared/motion/scrollTriggerBridge";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
@@ -120,19 +121,31 @@ function HomePage() {
         </Box>
 
         {/* ── Bar Transition: hero-mission (panel) → global-markets (deep) ── */}
-        <BarTransitionSection from="panel" to="deep" />
+        <BarTransitionSection
+          from="panel"
+          to="deep"
+          anchor={NAV_ANCHORS.HOME_BRIDGE_MARKETS}
+        />
 
         <GlobalMarketsStatement />
 
         {/* ── Bar Transition: global-markets (deep) → hero-pillars (void) ── */}
-        <BarTransitionSection from="deep" to="void" />
+        <BarTransitionSection
+          from="deep"
+          to="void"
+          anchor={NAV_ANCHORS.HOME_BRIDGE_PILLARS}
+        />
 
         {/* Operating Pillars — establishing shot now lives inside its own
             SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
         <OperatingPillars />
 
         {/* ── Bar Transition: hero-pillars (void) → use-cases (panel) ── */}
-        <BarTransitionSection from="void" to="panel" />
+        <BarTransitionSection
+          from="void"
+          to="panel"
+          anchor={NAV_ANCHORS.HOME_BRIDGE_USECASES}
+        />
 
         {/* Mini Establishing Shot 2: Use Cases — paired with UseCasesNarrative
             via SectionBeat, which renders `bare` because `use-cases`
@@ -186,7 +199,11 @@ function HomePage() {
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
           {/* ── Bar Transition: use-cases (panel) → process (deep) ── */}
-          <BarTransitionSection from="panel" to="deep" />
+          <BarTransitionSection
+            from="panel"
+            to="deep"
+            anchor={NAV_ANCHORS.HOME_BRIDGE_PROCESS}
+          />
 
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot
@@ -195,7 +212,11 @@ function HomePage() {
           <ProcessSection />
 
           {/* ── Bar Transition: process (deep) → reach (white) ── */}
-          <BarTransitionSection from="deep" to="white" />
+          <BarTransitionSection
+            from="deep"
+            to="white"
+            anchor={NAV_ANCHORS.HOME_BRIDGE_REACH}
+          />
 
           {/* Global Footprint — closes the SERVICES narrative. Mini
               Establishing Shot 4 now lives inside ReachSection's own
@@ -207,8 +228,9 @@ function HomePage() {
               put them. */}
           <ReachSection />
 
-          {/* ── Bar Transition: reach (white) → closing (field) ── */}
-          <BarTransitionSection from="white" to="field" />
+          {/* No bar transition into the closing beat — ClosingLattice opens
+              with its own pinned "P + vignette" build, which reads better as a
+              hard cut straight from Reach than after a wipe. */}
 
           {/* Closing beat — operational footprint / horizon gateway. Mini
               Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,

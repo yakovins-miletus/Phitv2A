@@ -1,10 +1,13 @@
 import { useRef } from "react";
 import Box from "@mui/material/Box";
+import { useForkRef } from "@mui/material/utils";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 import { useReducedMotion } from "@/shared/motion";
 import { GROUNDS, type GroundName } from "@/shared/theme/grounds";
+import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+import type { NavAnchorId } from "@/shared/components/navbarAnchors";
 import { BAR_COUNT, BAR_CLIP_LIT, barClipFor, barRevealFor } from "./barPhases";
 
 /** Height of the transition section, as a fraction of the viewport. */
@@ -20,6 +23,13 @@ const SECTION_HEIGHT = "100vh";
  * It "cheats" by only ever painting the two adjacent ground colours — no
  * per-pixel sampling of the sections themselves. Pure CSS/DOM, no canvas.
  *
+ * Because the block is a full opaque viewport, it also owns a navbar anchor:
+ * without one the navbar loses all dark/light state while the block fills the
+ * screen. It registers the DESTINATION ground's darkness — by the time the
+ * block's top edge reaches the navbar strip the bottom-to-top sweep is already
+ * complete (`barPhases` `TRANSITION_DONE` ≈ 0.5, i.e. section-centred), so the
+ * top of the block is showing `to`, not `from`.
+ *
  * Degradation:
  *  - `prefers-reduced-motion`: a static solid band of the `to` colour.
  *  - No JS / trigger never fires: the DOM default is the fully-revealed `to`
@@ -28,17 +38,23 @@ const SECTION_HEIGHT = "100vh";
 export function BarTransitionSection({
   from,
   to,
+  anchor,
 }: {
   /** Ground name being left. */
   from: GroundName;
   /** Ground name being entered. */
   to: GroundName;
+  /** Navbar anchor id for this boundary (unique per instance). */
+  anchor: NavAnchorId;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
   const fromColor = GROUNDS[from].bg;
   const toColor = GROUNDS[to].bg;
+
+  const anchorRef = useNavbarAnchor(anchor, { dark: GROUNDS[to].dark });
+  const attachRefs = useForkRef(wrapRef, anchorRef);
 
   useGSAP(
     () => {
@@ -72,6 +88,7 @@ export function BarTransitionSection({
   if (reduced) {
     return (
       <Box
+        ref={attachRefs}
         aria-hidden
         style={{ height: SECTION_HEIGHT }}
         sx={{ width: "100%", bgcolor: toColor }}
@@ -81,7 +98,7 @@ export function BarTransitionSection({
 
   return (
     <Box
-      ref={wrapRef}
+      ref={attachRefs}
       aria-hidden
       className="bar-transition-section"
       style={{ height: SECTION_HEIGHT }}
