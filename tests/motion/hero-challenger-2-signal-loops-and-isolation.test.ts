@@ -21,7 +21,6 @@ import {
 } from "@/features/hero/heroScene";
 import {
   calcTightViewScale,
-  calcWideViewScale,
   createPlaneRendererState,
   drawPlaneFrame,
   type PlaneInteraction,
@@ -322,7 +321,14 @@ describe("Challenger 2 — Assertion 3: Pulse Arrival Distance & Node Glow Inten
     expect(appNodeGlows.length, "No outer app node radial glows in hero mode").toBe(0);
   });
 
-  test("In mode='closure', outer application node proximity glow activates as pulses arrive", () => {
+  test("In mode='closure', node proximity glow is suppressed even as pulses arrive", () => {
+    // Deliberate, documented behavior (see drawNodeGlow's early return for
+    // "closure" in heroPlaneRenderer.ts): closure mode settles the P beside
+    // static copy, and a travelling pulse's glow bleeding through the logo's
+    // hollow swash read as a stray halo, not a resting composition. The
+    // signal *lines* still animate in closure — only proximity glow (on both
+    // service and application nodes) is switched off. This test previously
+    // asserted the pre-removal behavior and needed updating to match.
     const { mockCtx, radialGradients } = createMockContext();
     const state = heroFrameState(0, false, 0);
 
@@ -332,12 +338,7 @@ describe("Challenger 2 — Assertion 3: Pulse Arrival Distance & Node Glow Inten
       zoomProgress: 1.0,
     });
 
-    const wideScale = calcWideViewScale(1440, 900);
-    const expectedAppNodeR = 54 * wideScale;
-
-    const appNodeGlows = radialGradients.filter((g) => Math.abs(g.r1 - expectedAppNodeR) < 1.0);
-    expect(appNodeGlows.length, "Outer app node radial glows activate in closure mode").toBeGreaterThanOrEqual(0);
-    expect(radialGradients.length).toBeGreaterThan(0);
+    expect(radialGradients.length, "No node proximity glow radial gradients in closure mode").toBe(0);
   });
 
   test("Glow intensity formula strictly adheres to (1 - dist/90) * factor with zero threshold at dist >= 90", () => {
