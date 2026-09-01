@@ -35,18 +35,22 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Tests
-        run: yarn test
-
       - name: Build
         # `yarn build` is `tsc -b && vite build`. vite.config.ts's assertApiUrl()
         # fails the production build on an empty or placeholder VITE_API_URL, so
         # this also guards the stale-hostname regression that once broke every
         # data-backed page at once.
+        #
+        # Runs before Tests: tests/bundle-assertion.test.ts and
+        # tests/preview-cdp.test.ts read the built dist/ directly, so it must
+        # exist first.
         env:
           VITE_API_URL: /
           NODE_OPTIONS: --max-old-space-size=4096
         run: yarn build
+
+      - name: Tests
+        run: yarn test
 
   contract:
     name: Generated API client is in sync with Heimdall

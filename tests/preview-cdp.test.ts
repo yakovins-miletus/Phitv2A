@@ -246,7 +246,16 @@ async function waitForHttp(url: string, timeoutMs = 8000): Promise<boolean> {
   return false;
 }
 
-describe("Playwright / CDP E2E & Performance Preview Suite", () => {
+// This suite drives a real, locally-installed Chrome over CDP — there is no
+// Chrome binary at this hardcoded path (or, in general, any Chrome at all)
+// on a Linux CI runner, so it can never pass there. It's a dev-only manual
+// verification harness for a maintainer's Mac, same spirit as
+// `tests/e2e/ladder-probe.js` — skip cleanly rather than fail the build when
+// the expected browser isn't present, instead of only ever running on one
+// specific machine's exact install path.
+const CHROME_AVAILABLE = fs.existsSync(CHROME_PATH);
+
+describe.skipIf(!CHROME_AVAILABLE)("Playwright / CDP E2E & Performance Preview Suite", () => {
   let staticServer: http.Server | null = null;
   let chromeProc: ChildProcess | null = null;
   let cdpSession: CdpSession;
