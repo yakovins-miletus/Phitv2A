@@ -11,7 +11,7 @@ import type { NavAnchorId } from "@/shared/components/navbarAnchors";
 import { BAR_COUNT, BAR_CLIP_LIT, barClipFor, barRevealFor } from "./barPhases";
 
 /** Height of the transition section, as a fraction of the viewport. */
-const SECTION_HEIGHT = "70vh";
+const SECTION_HEIGHT = "60vh";
 
 /**
  * A foreground transition section that sits in the normal document flow between

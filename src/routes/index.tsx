@@ -120,19 +120,19 @@ function HomePage() {
           <MissionStatement />
         </Box>
 
-        {/* ── Bar Transition: hero-mission (base) → global-markets (deep) ── */}
+        {/* ── Bar Transition: hero-mission (panel) → global-markets (deep) ── */}
         <BarTransitionSection
-          from="base"
+          from="panel"
           to="deep"
           anchor={NAV_ANCHORS.HOME_BRIDGE_MARKETS}
         />
 
         <GlobalMarketsStatement />
 
-        {/* ── Bar Transition: global-markets (deep) → hero-pillars (field) ── */}
+        {/* ── Bar Transition: global-markets (deep) → hero-pillars (void) ── */}
         <BarTransitionSection
           from="deep"
-          to="field"
+          to="void"
           anchor={NAV_ANCHORS.HOME_BRIDGE_PILLARS}
         />
 
@@ -140,12 +140,9 @@ function HomePage() {
             SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
         <OperatingPillars />
 
-        {/* ── Bar Transition: hero-pillars (field) → use-cases (base) ── */}
-        <BarTransitionSection
-          from="field"
-          to="base"
-          anchor={NAV_ANCHORS.HOME_BRIDGE_USECASES}
-        />
+        {/* No bar transition here: hero-pillars and use-cases both sit on the
+            same light ground (void/panel) today, so a wipe here was never a
+            real color handoff — removed rather than recolored. */}
 
         {/* Mini Establishing Shot 2: Use Cases. `use-cases` is now a normal
             (non-bare) beat — the old pinned horizontal scrub is gone, replaced
@@ -198,9 +195,9 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          {/* ── Bar Transition: use-cases (base) → process (deep) ── */}
+          {/* ── Bar Transition: use-cases (panel) → process (deep) ── */}
           <BarTransitionSection
-            from="base"
+            from="panel"
             to="deep"
             anchor={NAV_ANCHORS.HOME_BRIDGE_PROCESS}
           />
@@ -211,10 +208,10 @@ function HomePage() {
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
-          {/* ── Bar Transition: process (deep) → reach (floor) ── */}
+          {/* ── Bar Transition: process (deep) → reach (white) ── */}
           <BarTransitionSection
             from="deep"
-            to="floor"
+            to="white"
             anchor={NAV_ANCHORS.HOME_BRIDGE_REACH}
           />
 

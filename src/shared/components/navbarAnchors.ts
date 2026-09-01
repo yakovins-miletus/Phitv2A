@@ -93,7 +93,6 @@ export const NAV_ANCHORS = {
    *  ground's darkness — see BarTransitionSection. */
   HOME_BRIDGE_MARKETS: 'home-bridge-markets',
   HOME_BRIDGE_PILLARS: 'home-bridge-pillars',
-  HOME_BRIDGE_USECASES: 'home-bridge-usecases',
   HOME_BRIDGE_PROCESS: 'home-bridge-process',
   HOME_BRIDGE_REACH: 'home-bridge-reach',
 } as const;
