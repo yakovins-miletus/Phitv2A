@@ -5,7 +5,6 @@ import Typography from "@mui/material/Typography";
 import CookieOutlinedIcon from "@mui/icons-material/CookieOutlined";
 import { AnimatePresence, motion } from "motion/react";
 
-import { useReducedMotion } from "@/shared/motion";
 import { RouterLink } from "@/shared/components/RouterLink";
 import { NOIR } from "@/shared/theme/palette";
 import {
@@ -49,7 +48,6 @@ import {
  * under "Cookies & Similar Technologies".
  */
 export function CookieNotice() {
-  const reduced = useReducedMotion();
   const consent = useAnalyticsConsent();
 
   // Nothing to consent to (no provider), or the choice is already made.
@@ -61,9 +59,9 @@ export function CookieNotice() {
         <motion.div
           role="region"
           aria-label="Cookie consent"
-          initial={reduced ? false : { y: 32, opacity: 0 }}
+          initial={{ y: 32, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={reduced ? { opacity: 0 } : { y: 32, opacity: 0 }}
+          exit={{ y: 32, opacity: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           style={{
             position: "fixed",

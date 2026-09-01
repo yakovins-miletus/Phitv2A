@@ -3,7 +3,7 @@ import type { MotionStyle } from "motion/react";
 import { useRef } from "react";
 import type { ReactNode } from "react";
 
-import { useEntranceSettled, useReducedMotion } from "@/shared/motion";
+import { useEntranceSettled } from "@/shared/motion";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 type Direction = "up" | "down" | "left" | "right";
@@ -48,7 +48,6 @@ export function RevealMask({
   once?: boolean;
   style?: MotionStyle;
 }) {
-  const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
   const inView = useInView(ref, { once, margin: "0px 0px 100px 0px", amount: 0.05 });
@@ -63,7 +62,7 @@ export function RevealMask({
   return (
     <motion.div
       ref={ref}
-      initial={reduced ? false : { clipPath: cfg.hidden, x: hiddenX, y: hiddenY }}
+      initial={{ clipPath: cfg.hidden, x: hiddenX, y: hiddenY }}
       animate={
         shouldAnimate
           ? { clipPath: CLIP_VISIBLE, x: 0, y: 0 }

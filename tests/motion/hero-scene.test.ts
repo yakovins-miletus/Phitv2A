@@ -309,28 +309,28 @@ describe("CSS custom-property bridge", () => {
 
 describe("discrete stage", () => {
   test("stage flags flip at the documented phase boundaries", () => {
-    expect(heroStage(0, false).gunshot).toBe(false);
-    expect(heroStage(DWELL_END + 0.005, false).gunshot).toBe(true);
+    expect(heroStage(0).gunshot).toBe(false);
+    expect(heroStage(DWELL_END + 0.005).gunshot).toBe(true);
 
-    expect(heroStage(SMOKING_START, false).flank).toBe(false);
-    expect(heroStage(SMOKING_START + 0.01, false).flank).toBe(true);
+    expect(heroStage(SMOKING_START).flank).toBe(false);
+    expect(heroStage(SMOKING_START + 0.01).flank).toBe(true);
 
-    expect(heroStage(CONTAINER_START - 0.001, false).container).toBe(false);
-    expect(heroStage(CONTAINER_START, false).container).toBe(true);
+    expect(heroStage(CONTAINER_START - 0.001).container).toBe(false);
+    expect(heroStage(CONTAINER_START).container).toBe(true);
 
-    expect(heroStage(DWELL_END - 0.01, false).navActive).toBe(false);
-    expect(heroStage(DWELL_END, false).navActive).toBe(true);
-    expect(heroStage(GUNSHOT_END, false).navDark).toBe(true);
-    expect(heroStage(0.99, false).navDark).toBe(true);
+    expect(heroStage(DWELL_END - 0.01).navActive).toBe(false);
+    expect(heroStage(DWELL_END).navActive).toBe(true);
+    expect(heroStage(GUNSHOT_END).navDark).toBe(true);
+    expect(heroStage(0.99).navDark).toBe(true);
   });
 
   test("the stage changes only a handful of times across the whole pin", () => {
     // This is the property that makes it safe to keep in React state: if it churned per
     // frame we would be back to the render storm the canvas rewrite removed.
     let changes = 0;
-    let prev = heroStage(0, false);
+    let prev = heroStage(0);
     for (let p = 0; p <= 1.0001; p += 0.001) {
-      const next = heroStage(p, false);
+      const next = heroStage(p);
       if (!sameStage(prev, next)) {
         changes++;
         prev = next;
@@ -340,7 +340,7 @@ describe("discrete stage", () => {
   });
 
   test("sameStage distinguishes every field", () => {
-    const base = heroStage(0, false);
+    const base = heroStage(0);
     const keys = Object.keys(base) as (keyof typeof base)[];
     for (const k of keys) {
       const mutated = { ...base, [k]: !base[k] };

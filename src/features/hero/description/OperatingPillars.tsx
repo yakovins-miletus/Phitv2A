@@ -11,7 +11,6 @@ import { homeSection, sectionOrder } from "@/shared/sections";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
-import { useReducedMotion } from "@/shared/motion";
 import { refreshPriorityFor } from "@/shared/motion/beatThresholds";
 import { EYEFLOW_RAIL_GUTTER } from "@/shared/components/EyeFlow";
 
@@ -34,11 +33,10 @@ export function OperatingPillars() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const reduced = useReducedMotion();
 
   useGSAP(
     () => {
-      if (reduced || !wrapRef.current || !trackRef.current) return;
+      if (!wrapRef.current || !trackRef.current) return;
 
       const track = trackRef.current;
       const wrap = wrapRef.current;
@@ -71,7 +69,7 @@ export function OperatingPillars() {
         tween.scrollTrigger?.kill();
       };
     },
-    { scope: wrapRef, dependencies: [reduced, pillars.length] }
+    { scope: wrapRef, dependencies: [pillars.length] }
   );
 
   return (

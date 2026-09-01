@@ -82,7 +82,7 @@ describe("BarTransitionSection", () => {
     const { container } = renderBridge("panel", "deep");
     const wrap = container.querySelector(".bar-transition-section");
     expect(wrap).not.toBeNull();
-    expect((wrap as HTMLElement).style.height).toBe("100vh");
+    expect((wrap as HTMLElement).style.height).toBe("70vh");
     // one absolute cover div per bar row
     expect(wrap!.querySelectorAll("[class]").length).toBeGreaterThanOrEqual(
       BAR_COUNT,
@@ -94,7 +94,7 @@ describe("BarTransitionSection", () => {
     const { container } = renderBridge("white", "field");
     expect(container.querySelector(".bar-transition-section")).toBeNull();
     const box = container.firstElementChild as HTMLElement;
-    expect(box.style.height).toBe("100vh");
+    expect(box.style.height).toBe("70vh");
     // MUI resolves bgcolor to the literal color; assert the ground is wired.
     expect(GROUNDS.field.bg).toBeTruthy();
   });

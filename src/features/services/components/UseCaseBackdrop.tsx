@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 
 import { NOIR } from "@/shared/theme/palette";
-import { useReducedMotion, useIsLowPowerDevice } from "@/shared/motion";
+import { useIsLowPowerDevice } from "@/shared/motion";
 
 export interface UseCaseBackdropItem {
   id: string;
@@ -36,7 +36,6 @@ interface UseCaseBackdropProps {
  * not set `overflow: hidden`.
  */
 export function UseCaseBackdrop({ items, blockRefs }: UseCaseBackdropProps) {
-  const reduced = useReducedMotion() === true;
   const lowPower = useIsLowPowerDevice();
   const [active, setActive] = useState(0);
 
@@ -76,7 +75,7 @@ export function UseCaseBackdrop({ items, blockRefs }: UseCaseBackdropProps) {
     return () => window.cancelAnimationFrame(raf);
   }, [blockRefs]);
 
-  const instant = reduced || lowPower;
+  const instant = lowPower;
 
   return (
     <Box

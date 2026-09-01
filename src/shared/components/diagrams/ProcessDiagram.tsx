@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { useReducedMotion } from "@/shared/motion";
 
 export interface ProcessPhase {
   id: string;
@@ -39,15 +38,14 @@ const IMG_ALT =
   "Isometric timeline of four departments — quantitative research, software engineering, data science and operations — growing from a small 2019 cluster to a large interconnected 2026 network across three stepped platforms";
 
 export function ProcessDiagram({ model }: ProcessDiagramProps) {
-  const reduced = useReducedMotion() === true;
   const [failed, setFailed] = useState(false);
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1320, mx: "auto" }}>
       <Box
         component={motion.figure}
-        initial={reduced ? {} : { opacity: 0, y: 30 }}
-        whileInView={reduced ? {} : { opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-50px" }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
         sx={{ m: 0, width: "100%" }}

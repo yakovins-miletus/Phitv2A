@@ -7,7 +7,6 @@ import { useGSAP } from "@gsap/react";
 
 import { MONO, DISPLAY_FONT, TYPE_SCALE } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useReducedMotion } from "@/shared/motion";
 import { BEAT_START } from "@/shared/motion/beatThresholds";
 import {
   MINI_ESTABLISH,
@@ -51,11 +50,10 @@ export function MiniEstablishingShot({
   const maskWrapRef = useRef<HTMLDivElement>(null);
   const laserBarRef = useRef<HTMLDivElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
 
   useGSAP(
     () => {
-      if (reduced || !containerRef.current) return;
+      if (!containerRef.current) return;
       // Presentational mode: a parent owns the beat. Build nothing at all.
       if (!selfDriven) return;
 
@@ -112,7 +110,7 @@ export function MiniEstablishingShot({
         ).to(bar, { ...c.laserOut.to, duration: c.laserOut.duration }, c.laserOut.at);
       }
     },
-    { scope: containerRef, dependencies: [reduced, align, dark, selfDriven] },
+    { scope: containerRef, dependencies: [align, dark, selfDriven] },
   );
 
   return (
@@ -170,28 +168,26 @@ export function MiniEstablishingShot({
 
       {/* Mask Container with Laser Sweep */}
       <Box sx={{ position: "relative", width: "100%" }}>
-        {!reduced && (
-          <Box
-            ref={laserBarRef}
-            className="est-laser"
-            aria-hidden="true"
-            sx={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              // Anchored at the left edge; the sweep is a transform (see
-              // `laserSweepX`), never an animated `left`.
-              left: 0,
-              width: "2px",
-              backgroundColor: dark ? NOIR.gold : NOIR.goldDark,
-              boxShadow: dark
-                ? `0 0 12px ${NOIR.gold}`
-                : `0 0 12px ${NOIR.goldDark}`,
-              zIndex: 3,
-              pointerEvents: "none",
-            }}
-          />
-        )}
+        <Box
+          ref={laserBarRef}
+          className="est-laser"
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            // Anchored at the left edge; the sweep is a transform (see
+            // `laserSweepX`), never an animated `left`.
+            left: 0,
+            width: "2px",
+            backgroundColor: dark ? NOIR.gold : NOIR.goldDark,
+            boxShadow: dark
+              ? `0 0 12px ${NOIR.gold}`
+              : `0 0 12px ${NOIR.goldDark}`,
+            zIndex: 3,
+            pointerEvents: "none",
+          }}
+        />
 
         <Box
           ref={maskWrapRef}
@@ -199,7 +195,7 @@ export function MiniEstablishingShot({
           sx={{
             position: "relative",
             zIndex: 1,
-            clipPath: reduced ? "none" : "inset(0% 0% 0% 0%)",
+            clipPath: "inset(0% 0% 0% 0%)",
           }}
         >
           {/* Headline */}

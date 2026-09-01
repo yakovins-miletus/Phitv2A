@@ -22,6 +22,7 @@ export interface BlogListParams {
   q?: string;
   sort?: BlogSort;
   year?: number;
+  month?: number;
 }
 
 /**
@@ -38,10 +39,24 @@ export interface BlogYearFacet {
   count: number;
 }
 
+/**
+ * WS-09's follow-up `month` facet contract (`GET /api/v1/blog-posts/months`)
+ * is live on Heimdall but, same as `BlogYearFacet` above, `schema.d.ts` hasn't
+ * been regenerated against it yet — typed by hand here rather than touched.
+ * Keep this in sync with `app/features/blog/schemas.py::BlogMonthFacet` until
+ * `yarn typegen` picks it up for real.
+ */
+export interface BlogMonthFacet {
+  year: number;
+  month: number;
+  count: number;
+}
+
 export const blogKeys = {
   all: keyRoots.blog,
   list: (params: BlogListParams) => [...blogKeys.all, "list", params] as const,
   years: () => [...blogKeys.all, "years"] as const,
+  months: () => [...blogKeys.all, "months"] as const,
   detail: (slug: string) => [...blogKeys.all, "detail", slug] as const,
 };
 
@@ -78,7 +93,13 @@ export const blogPostsQuery = (params: BlogListParams) =>
               // openapi-fetch's serializer instead of tsc stripping it as
               // "not in type".
               ...(params.year !== undefined ? { year: params.year } : {}),
-            } as operations["list_blog_posts"]["parameters"]["query"] & { year?: number },
+              // `month` isn't in the generated query type yet either (see
+              // BlogMonthFacet comment above) — same widen-the-object trick.
+              ...(params.month !== undefined ? { month: params.month } : {}),
+            } as operations["list_blog_posts"]["parameters"]["query"] & {
+              year?: number;
+              month?: number;
+            },
           },
         }),
       ),
@@ -108,5 +129,21 @@ export const blogYearsQuery = () =>
         throw new Error(`Failed to load blog years (${String(response.status)})`);
       }
       return (await response.json()) as BlogYearFacet[];
+    },
+  });
+
+// Same live-CMS freshness treatment as `blogYearsQuery` above.
+export const blogMonthsQuery = () =>
+  queryOptions({
+    ...CONTENT_FRESHNESS,
+    queryKey: blogKeys.months(),
+    queryFn: async (): Promise<BlogMonthFacet[]> => {
+      // See `blogYearsQuery` above for why the base URL is resolved this way.
+      const apiBase = new URL(import.meta.env.VITE_API_URL, window.location.origin);
+      const response = await fetch(new URL("/api/v1/blog-posts/months", apiBase));
+      if (!response.ok) {
+        throw new Error(`Failed to load blog months (${String(response.status)})`);
+      }
+      return (await response.json()) as BlogMonthFacet[];
     },
   });

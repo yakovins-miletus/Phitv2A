@@ -24,24 +24,18 @@ const ACTIVE_NODE_DATA = [
   { tag: "NODE 04 // TEAM", label: "Global Infrastructure & Trading Operations Team" },
 ] as const;
 /**
- * The gunshot's drift wall — vertical columns of words, replacing the 24 photographs.
+ * The gunshot's drift wall — 24 photographs from the blog library, drifting behind a
+ * perspective tilt. Replaces the two 50vh split panes that auto-panned here.
  *
- * Lazy for the same reason as the gallery above: it drags ~driftWall-derived CSS, none
- * of which a visitor who bounces off the first viewport should pay for. Unlike the
- * gallery it is not behind a toggle — it is on the default scroll path — so the chunk
- * is prefetched during idle (see the effect near the stage latch), and only the *fetch*
- * is deferred, never the decision.
- *
- * VARIANT TOGGLE: change HeroWordWall.tsx line 33 USE_DIFFERENCE_BLEND to false to see
- * VARIANT B (no difference blend, light text). Currently rendering VARIANT A.
+ * Lazy for the same reason as the gallery above: it drags `driftWall.css` and ~2.4MB
+ * of imagery, none of which a visitor who bounces off the first viewport should pay
+ * for. Unlike the gallery it is not behind a toggle — it is on the default scroll
+ * path — so the chunk is prefetched during idle (see the effect near the stage
+ * latch), and only the *fetch* is deferred, never the decision.
  */
-const HeroNodeNetwork = lazy(() =>
-  import("./HeroNodeNetwork").then((m) => ({ default: m.HeroNodeNetwork })),
+const HeroImageWall = lazy(() =>
+  import("./HeroImageWall").then((m) => ({ default: m.HeroImageWall })),
 );
-// Keep HeroImageWall import available for rollback; don't delete until WS-05 has taken the tiles.
-// const HeroImageWall = lazy(() =>
-//   import("./HeroImageWall").then((m) => ({ default: m.HeroImageWall })),
-// );
 import { heroStage, heroVars, sameStage, writeHeroVars, type HeroStage } from "./heroVars";
 import { DWELL_END } from "./heroPhases";
 import { HERO_WALL_TILES } from "./heroWallTiles";
@@ -231,7 +225,7 @@ export function HeroSignalCore() {
     setSelectedNodeIndex((prev) => (prev === index ? null : index));
   };
 
-  const [stage, setStage] = useState<HeroStage>(() => heroStage(0, reduced === true));
+  const [stage, setStage] = useState<HeroStage>(() => heroStage(0));
   const stageRef = useRef(stage);
 
   /**
@@ -353,24 +347,36 @@ export function HeroSignalCore() {
     };
   }, [navActive, navDark, registerAnchor]);
 
-  // Seed the custom properties before first paint so the hero renders its settled state
-  // even if no scroll ever happens (reduced motion, or a user who never scrolls).
+  // Seed the custom properties before first paint so the hero renders its entrance
+  // frame (progress 0) even if no scroll ever happens yet.
+  //
+  // Always seeds the non-reduced branch now. The hero's entrance/drift choreography
+  // is a product decision to always play regardless of `prefers-reduced-motion` — a
+  // reduced-motion visitor used to be seeded straight into `heroVars`' hardcoded
+  // "settled, motionless" frame (and the pin below was never even built for them),
+  // which meant they never saw the entrance at all. Seeding `false` here matches
+  // what every visitor gets, reduced-motion or not.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const isReduced = reduced === true;
-    writeHeroVars(el, heroVars(0, isReduced));
+    writeHeroVars(el, heroVars(0, false));
     if (pinRef.current) {
-      writeHeroVars(pinRef.current, heroVars(0, isReduced));
+      writeHeroVars(pinRef.current, heroVars(0, false));
     }
-    const next = heroStage(0, isReduced);
+    const next = heroStage(0);
     stageRef.current = next;
     setStage(next);
-  }, [reduced]);
+  }, []);
 
   useGSAP(
     () => {
-      if (reduced) return;
+      // Was also gated on `reduced` here — skipping the pin/timeline entirely
+      // for a reduced-motion visitor, who then never got the entrance/drift
+      // choreography at all (only the hardcoded "settled" frame from the seed
+      // effect above). The hero's entrance now always plays regardless of
+      // `prefers-reduced-motion`, so this builds the same scroll-driven pin for
+      // every visitor.
+      //
       // Do not build the pin/timeline until the intro has fully cleared. This
       // effect re-runs when `entranceSettled` flips true (it is in the deps),
       // and `useGSAP` reverts the previous (empty) context first, so the pin is
@@ -411,7 +417,7 @@ export function HeroSignalCore() {
           else if (p < 0.60) setActiveSection("hero-dwell");
           else setActiveSection("hero");
 
-          const next = heroStage(p, false);
+          const next = heroStage(p);
           if (!sameStage(stageRef.current, next)) {
             stageRef.current = next;
             setStage(next);
@@ -522,7 +528,7 @@ export function HeroSignalCore() {
       // settled layout.
       requestAnimationFrame(() => ScrollTrigger.refresh());
     },
-    { scope: pinRef, dependencies: [reduced, entranceSettled] }
+    { scope: pinRef, dependencies: [entranceSettled] }
   );
 
   // Every continuous value now lives in a CSS custom property written by the driver
@@ -564,12 +570,12 @@ export function HeroSignalCore() {
           px: 0,
         }}
       >
-        {/* The gunshot's imagery: a drift wall of vertical word columns, replacing the
-            photo tiles. Latched, not gated on `stage.gunshot` — see the `wallMounted`
-            note above. */}
+        {/* The gunshot's imagery: a drift wall of blog photography, replacing the two
+            50vh split panes that used to auto-pan here. Latched, not gated on
+            `stage.gunshot` — see the `wallMounted` note above. */}
         {wallMounted && (
           <Suspense fallback={null}>
-            <HeroNodeNetwork paused={!stage.wallDrift} />
+            <HeroImageWall paused={!stage.wallDrift} />
           </Suspense>
         )}
 

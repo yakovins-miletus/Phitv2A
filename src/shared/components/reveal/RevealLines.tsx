@@ -5,8 +5,6 @@ import { SplitText } from "gsap/SplitText";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-import { useReducedMotion } from "@/shared/motion";
-
 gsap.registerPlugin(SplitText, ScrollTrigger);
 
 /**
@@ -25,9 +23,6 @@ gsap.registerPlugin(SplitText, ScrollTrigger);
  * `children` is a heading — pass `headingLevel` (matching the wrapped
  * element's own `variant`/`component`) to restore `role="heading"` so
  * heading-navigation still finds it.
- *
- * Reduced motion skips SplitText entirely and renders the plain, settled
- * text — no split markup, no animation.
  */
 export function RevealLines({
   children,
@@ -45,13 +40,12 @@ export function RevealLines({
   headingLevel?: 1 | 2 | 3 | 4 | 5 | 6;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
   const headingProps =
     headingLevel !== undefined ? { role: "heading" as const, "aria-level": headingLevel } : {};
 
   useGSAP(
     () => {
-      if (reduced === true || !ref.current) return;
+      if (!ref.current) return;
 
       const split = SplitText.create(ref.current, {
         type: "lines",
@@ -81,15 +75,13 @@ export function RevealLines({
         split.revert();
       };
     },
-    { scope: ref, dependencies: [reduced, stagger, delay] },
+    { scope: ref, dependencies: [stagger, delay] },
   );
 
-  // Only stamp the heading role while SplitText has actually replaced the
-  // accessible name with its `aria-label`. Under reduced motion `children`
-  // renders untouched, so its own heading tag (if any) is already correct
-  // and doubling the role here would nest a heading inside a heading.
+  // SplitText always replaces the accessible name with its `aria-label`, so
+  // the heading role is stamped unconditionally.
   return (
-    <div ref={ref} className={className} {...(reduced === true ? {} : headingProps)}>
+    <div ref={ref} className={className} {...headingProps}>
       {children}
     </div>
   );

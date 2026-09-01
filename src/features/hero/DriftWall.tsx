@@ -24,11 +24,11 @@
  *    `useReducedMotion()` from `@/shared/motion` — one source of truth per that
  *    module's docblock.
  *
- * The reduced-motion guard below is kept even though `heroStage()` already returns
- * `gunshot: false` under reduce, so this never mounts in that case. That gate lives in
- * a different file, in a function whose reduce branch is one refactor away from
- * changing, and this component is written to be correct standalone. It costs one hook
- * and one boolean.
+ * Reduced-motion no longer gates this component's own rAF loop. Product decision:
+ * the hero's entrance/drift choreography (this wall included) always plays, regardless
+ * of the OS-level reduced-motion preference — `heroStage()` in `heroVars.ts` now always
+ * takes its non-reduced branch too, so `wallDrift`/`gunshot` are never forced off by
+ * that setting either. This file no longer imports `useReducedMotion()`.
  *
  * Scroll causes zero renders here, matching the contract in `HeroCanvas.tsx`: the
  * frame loop writes `transform` straight onto the column tracks and never touches
@@ -43,7 +43,6 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { useReducedMotion } from "@/shared/motion";
 import type { DriftItem } from "./heroWallTiles";
 import "./driftWall.css";
 
@@ -189,8 +188,6 @@ export function DriftWall({
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
 
-  const reduced = useReducedMotion() === true;
-
   /** Measured container box. The initial 0s are never used to size anything — the
    *  guards below treat a zero measurement as "not laid out yet". */
   const [box, setBox] = useState({ width: 0, height: 0 });
@@ -315,9 +312,10 @@ export function DriftWall({
   /**
    * The frame loop.
    *
-   * Stops entirely when paused, when reduced motion is on, or when the tab is hidden
-   * — the contract `HeroCanvas.tsx` sets for everything in this hero: the loop does
-   * not idle. A paused wall costs one contained, un-animated subtree.
+   * Stops entirely when paused, or when the tab is hidden — the contract
+   * `HeroCanvas.tsx` sets for everything in this hero: the loop does not idle. A
+   * paused wall costs one contained, un-animated subtree. Does not stop for
+   * reduced motion: the hero's entrance/drift choreography always plays.
    *
    * Also does not start before the container has been measured. Until the
    * ResizeObserver delivers, `copies` is 1, and one copy cannot wrap seamlessly — it
@@ -325,7 +323,7 @@ export function DriftWall({
    * measurement takes. Static and unmeasured is fine; moving and unmeasured is not.
    */
   useEffect(() => {
-    if (paused || reduced || box.height <= 0) return;
+    if (paused || box.height <= 0) return;
 
     const stop = () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -377,7 +375,7 @@ export function DriftWall({
       document.removeEventListener("visibilitychange", onVisibility);
       stop();
     };
-  }, [paused, reduced, box.height]);
+  }, [paused, box.height]);
 
   const vars: DriftWallVars = {
     "--dw-tile-w": `${String(tileWidth)}px`,

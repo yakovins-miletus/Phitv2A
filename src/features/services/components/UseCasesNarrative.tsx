@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 
-import { useReducedMotion } from "@/shared/motion";
 import { CONTENT } from "@/shared/content";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
@@ -71,12 +70,12 @@ function BlockReveal({ children, disabled }: { children: ReactNode; disabled: bo
 }
 
 export function UseCasesNarrative() {
-  const reduce = useReducedMotion();
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.HOME_USE_CASES, { dark: false });
   const blockRefs = useRef<(HTMLElement | null)[]>([]);
 
   const cases = CONTENT.useCases;
-  const disabled = reduce === true;
+  // Forced on: the reveal always plays, regardless of prefers-reduced-motion.
+  const disabled = false;
 
   return (
     <Box

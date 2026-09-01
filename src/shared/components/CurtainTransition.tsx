@@ -5,7 +5,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 import { NOIR } from "@/shared/theme/palette";
-import { useReducedMotion } from "@/shared/motion";
 
 // Static gsap import + module-scope registerPlugin() are safe here BECAUSE
 // this module is only ever reached through the `lazy()` wrapper exported
@@ -25,11 +24,10 @@ interface CurtainTransitionProps {
 export function CurtainTransition({ rows = 6 }: CurtainTransitionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const slatsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const reduced = useReducedMotion();
 
   useGSAP(
     () => {
-      if (reduced || !containerRef.current) return;
+      if (!containerRef.current) return;
 
       const validSlats = slatsRef.current.filter(Boolean);
       if (validSlats.length === 0) return;
@@ -50,7 +48,7 @@ export function CurtainTransition({ rows = 6 }: CurtainTransitionProps) {
         }
       );
     },
-    { scope: containerRef, dependencies: [reduced, rows] }
+    { scope: containerRef, dependencies: [rows] }
   );
 
   return (
@@ -77,7 +75,7 @@ export function CurtainTransition({ rows = 6 }: CurtainTransitionProps) {
             flex: 1,
             width: "100%",
             bgcolor: NOIR.navyField,
-            transform: reduced ? "none" : "scaleX(1)",
+            transform: "scaleX(1)",
             borderBottom: i < rows - 1 ? "1px solid rgba(255, 199, 44, 0.08)" : "none",
           }}
         />

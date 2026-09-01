@@ -13,7 +13,6 @@ import { aboutSection, sectionOrder } from "@/shared/sections";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { BEAT_START, refreshPriorityFor } from "@/shared/motion/beatThresholds";
-import { useReducedMotion } from "@/shared/motion";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 
@@ -184,12 +183,11 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 
 export function TestimonialsSection() {
   const scopeRef = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.ABOUT_TESTIMONIALS, { dark: false });
 
   useGSAP(
     () => {
-      if (reduced === true || !scopeRef.current) return;
+      if (!scopeRef.current) return;
       const root = scopeRef.current;
 
       gsap.from(".testimonial-card-item", {
@@ -207,7 +205,7 @@ export function TestimonialsSection() {
         },
       });
     },
-    { scope: scopeRef, dependencies: [reduced] },
+    { scope: scopeRef, dependencies: [] },
   );
 
   return (

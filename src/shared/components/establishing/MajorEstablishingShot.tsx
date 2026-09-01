@@ -8,7 +8,6 @@ import { useGSAP } from "@gsap/react";
 
 import { MONO, DISPLAY_FONT } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
-import { useReducedMotion } from "@/shared/motion";
 import { BEAT_START } from "@/shared/motion/beatThresholds";
 import {
   MAJOR_ESTABLISH,
@@ -49,11 +48,10 @@ export function MajorEstablishingShot({
   const maskWrapRef = useRef<HTMLDivElement>(null);
   const laserBarRef = useRef<HTMLDivElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
 
   useGSAP(
     () => {
-      if (reduced || !containerRef.current) return;
+      if (!containerRef.current) return;
       // Presentational mode: a parent owns the beat. Build nothing at all.
       if (!selfDriven) return;
 
@@ -112,7 +110,7 @@ export function MajorEstablishingShot({
         ).to(bar, { ...c.laserOut.to, duration: c.laserOut.duration }, c.laserOut.at);
       }
     },
-    { scope: containerRef, dependencies: [reduced, dark, selfDriven] },
+    { scope: containerRef, dependencies: [dark, selfDriven] },
   );
 
   return (
@@ -177,28 +175,26 @@ export function MajorEstablishingShot({
         {/* Left-to-Right Masked 1-Liner Hero Block */}
         <Box sx={{ position: "relative", width: "100%", overflow: "visible" }}>
           {/* Laser Wipe Beam */}
-          {!reduced && (
-            <Box
-              ref={laserBarRef}
-              className="est-laser"
-              aria-hidden="true"
-              sx={{
-                position: "absolute",
-                top: 0,
-                bottom: 0,
-                // Anchored at the left edge; the sweep is a transform (see
-                // `laserSweepX`), never an animated `left`.
-                left: 0,
-                width: "2px",
-                backgroundColor: dark ? NOIR.gold : NOIR.goldDark,
-                boxShadow: dark
-                  ? `0 0 16px ${NOIR.gold}, 0 0 32px ${NOIR.gold}`
-                  : `0 0 16px ${NOIR.goldDark}, 0 0 28px ${NOIR.goldDark}`,
-                zIndex: 4,
-                pointerEvents: "none",
-              }}
-            />
-          )}
+          <Box
+            ref={laserBarRef}
+            className="est-laser"
+            aria-hidden="true"
+            sx={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              // Anchored at the left edge; the sweep is a transform (see
+              // `laserSweepX`), never an animated `left`.
+              left: 0,
+              width: "2px",
+              backgroundColor: dark ? NOIR.gold : NOIR.goldDark,
+              boxShadow: dark
+                ? `0 0 16px ${NOIR.gold}, 0 0 32px ${NOIR.gold}`
+                : `0 0 16px ${NOIR.goldDark}, 0 0 28px ${NOIR.goldDark}`,
+              zIndex: 4,
+              pointerEvents: "none",
+            }}
+          />
 
           {/* Mask Container */}
           <Box
@@ -207,7 +203,7 @@ export function MajorEstablishingShot({
             sx={{
               position: "relative",
               zIndex: 2,
-              clipPath: reduced ? "none" : "inset(0% 0% 0% 0%)",
+              clipPath: "inset(0% 0% 0% 0%)",
             }}
           >
             {/* GSAP-style Massive 1-Liner Statement */}

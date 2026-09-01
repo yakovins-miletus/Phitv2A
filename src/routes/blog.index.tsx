@@ -34,6 +34,7 @@ interface BlogSearch {
   q?: string | undefined;
   sort?: BlogSort | undefined;
   year?: number | undefined;
+  month?: number | undefined;
 }
 
 function paramsFromSearch(search: BlogSearch): BlogListParams {
@@ -44,6 +45,10 @@ function paramsFromSearch(search: BlogSearch): BlogListParams {
     ...(search.q !== undefined ? { q: search.q } : {}),
     ...(search.sort !== undefined ? { sort: search.sort } : {}),
     ...(search.year !== undefined ? { year: search.year } : {}),
+    // `month` without `year` is silently ignored server-side — only ever
+    // send it alongside `year` so the client's intent matches what the API
+    // actually applies.
+    ...(search.year !== undefined && search.month !== undefined ? { month: search.month } : {}),
   };
 }
 
@@ -72,12 +77,27 @@ export const Route = createFileRoute("/blog/")({
       typeof rawYear === "number" && Number.isInteger(rawYear) && rawYear >= 1000 && rawYear <= 9999
         ? rawYear
         : undefined;
+    // Matches Heimdall's `month` bound (`ge=1, le=12`); dropped client-side
+    // (same as a malformed `year`) rather than round-tripping to a 422. A
+    // `month` with no `year` is meaningless from this UI, so it's dropped too
+    // — `paramsFromSearch` re-enforces the pairing before it ever reaches the
+    // query, but there's no reason to carry a dead param in the URL either.
+    const rawMonth = search["month"];
+    const month =
+      year !== undefined &&
+      typeof rawMonth === "number" &&
+      Number.isInteger(rawMonth) &&
+      rawMonth >= 1 &&
+      rawMonth <= 12
+        ? rawMonth
+        : undefined;
     return {
       ...(offset !== undefined ? { offset } : {}),
       ...(category !== undefined ? { category } : {}),
       ...(q !== undefined ? { q } : {}),
       ...(sort !== undefined ? { sort } : {}),
       ...(year !== undefined ? { year } : {}),
+      ...(month !== undefined ? { month } : {}),
     };
   },
   head: () =>
@@ -119,6 +139,7 @@ function BlogPage() {
       ...(next.q !== undefined ? { q: next.q } : {}),
       ...(next.sort !== undefined && next.sort !== "newest" ? { sort: next.sort } : {}),
       ...(next.year !== undefined ? { year: next.year } : {}),
+      ...(next.year !== undefined && next.month !== undefined ? { month: next.month } : {}),
     };
   };
 
@@ -162,8 +183,14 @@ function BlogPage() {
             <Grid size={{ xs: 12, md: 3 }}>
               <BlogYearRail
                 activeYear={search.year ?? null}
-                onYearChange={(year: number | null) => {
-                  void navigate({ search: buildSearch({ year: year ?? undefined }) });
+                activeMonth={search.month ?? null}
+                onSelectionChange={(year: number | null, month: number | null) => {
+                  void navigate({
+                    search: buildSearch({
+                      year: year ?? undefined,
+                      month: month ?? undefined,
+                    }),
+                  });
                 }}
               />
             </Grid>

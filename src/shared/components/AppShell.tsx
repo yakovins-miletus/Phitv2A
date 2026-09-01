@@ -286,12 +286,25 @@ interface DeferredLoadSignal extends LoadSignal {
   __start?: () => void;
 }
 
-function useWarmupSignals(active: boolean, pathname: string): LoadSignal[] {
+function useWarmupSignals(pathname: string): LoadSignal[] {
   const router = useRouter();
 
+  // Asset/route warmup is a page-load concern, not an intro-overlay concern:
+  // it must happen on every mount of this hook (first visit, repeat visit,
+  // prefers-reduced-motion, whatever) regardless of whether the animated
+  // Preloader is going to render at all. This used to take an `active`
+  // param wired to `showPreloader` and skip building the signal array
+  // entirely when it was false at first render — which meant repeat visits
+  // and reduced-motion visitors (both cases where the intro is
+  // intentionally skipped, see `shouldShowPreloader`) never warmed a single
+  // image, since `useState`'s lazy initializer only ever runs once. Whether
+  // the intro *plays* and whether images *warm* are independent questions;
+  // this hook only answers the second one now.
+  //
   // The signal array is built once, at first render, so Preloader's one-time
-  // snapshot of `warmup` captures every signal (routes + manifest + fonts) and
-  // its progress bar stays paced against real work.
+  // snapshot of `warmup` (when it does render) captures every signal
+  // (routes + manifest + fonts) and its progress bar stays paced against
+  // real work.
   //
   // The catch: router.preloadRoute() synchronously dispatches into TanStack
   // Router's Transitioner state, so calling it during render (which a useState
@@ -304,12 +317,7 @@ function useWarmupSignals(active: boolean, pathname: string): LoadSignal[] {
   //
   // preloadAsset() is plain fetch()/Image() — no React state — so the manifest
   // signals still kick off straight from the initializer, unchanged.
-  //
-  // `active` only goes false -> true once (the preloader shows, then never
-  // again this session), so [active] with no cleanup is sufficient.
   const [signals] = useState<DeferredLoadSignal[]>(() => {
-    if (!active) return [];
-
     const manifest = resolveRouteManifest(pathname);
 
     // Route precompiles never gate the reveal — best-effort warm work.
@@ -362,9 +370,8 @@ function useWarmupSignals(active: boolean, pathname: string): LoadSignal[] {
   });
 
   useEffect(() => {
-    if (!active) return;
     signals.forEach((signal) => signal.__start?.());
-  }, [active, signals]);
+  }, [signals]);
 
   return signals;
 }
@@ -623,7 +630,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [megaNavOpen, setMegaNavOpen] = useState(false);
   const { pathname } = useLocation();
-  const warmup = useWarmupSignals(showPreloader, pathname);
+  const warmup = useWarmupSignals(pathname);
   const onContactPage = pathname === "/contact";
   const closeMobileNav = () => {
     setMobileNavOpen(false);

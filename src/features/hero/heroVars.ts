@@ -208,24 +208,14 @@ const SMOKING_START = 0.74;
 const CONTAINER_START = 0.86;
 const PANEL_POINTER_CUTOFF = 0.2;
 
-/** Derive the discrete stage. Pure, so it can be compared cheaply for equality. */
-export function heroStage(progress: number, reduced: boolean): HeroStage {
-  if (reduced) {
-    return {
-      gunshot: false,
-      chrome: false,
-      wallDrift: false,
-      // flankOpacity is 1 under reduced motion, so the texts mount — but heroVars parks
-      // them at ±240vh, exactly as the original did.
-      flank: true,
-      container: false,
-      borderDone: true,
-      navActive: false,
-      navDark: false,
-      panelInteractive: true,
-    };
-  }
-
+/**
+ * Derive the discrete stage. Pure, so it can be compared cheaply for equality.
+ *
+ * The hero's entrance/drift/reveal choreography is a product decision to always
+ * play, regardless of the OS-level `prefers-reduced-motion` setting, so this
+ * always takes the branch that used to be reserved for `reduced === false`.
+ */
+export function heroStage(progress: number): HeroStage {
   const g = gunshotProgress(progress);
   return {
     gunshot: g > 0.01,

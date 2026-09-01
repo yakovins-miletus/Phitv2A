@@ -18,7 +18,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NavbarMode } from "./NavbarContext";
 import { useNavbar } from "./navbarHooks";
-import { useReducedMotion } from "@/shared/motion";
 import { setHeroBgMode, type HeroBgMode } from "@/features/hero/heroBgModeStore";
 
 export const GROUP_ORDER = ["NAVIGATE", "ACTION", "HERO", "SYSTEM"] as const;
@@ -107,7 +106,6 @@ export function commandHint(
  * call instead.
  */
 export function useCommandExecutor(navigate: (opts: { to: string }) => void) {
-  const reducedMotion = useReducedMotion();
   const { setOverrideMode, toggleAutohide, toggleMotto } = useNavbar();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -140,10 +138,6 @@ export function useCommandExecutor(navigate: (opts: { to: string }) => void) {
 
   const runSignal = useCallback(() => {
     stopTypewriter();
-    if (reducedMotion) {
-      setSignalChars(SIGNAL_TEXT.length);
-      return;
-    }
     setSignalChars(0);
     twTimer.current = window.setInterval(() => {
       setSignalChars((c) => {
@@ -152,7 +146,7 @@ export function useCommandExecutor(navigate: (opts: { to: string }) => void) {
         return next;
       });
     }, 28);
-  }, [reducedMotion, stopTypewriter]);
+  }, [stopTypewriter]);
 
   const copyAddress = useCallback((id: string, address: string) => {
     navigator.clipboard

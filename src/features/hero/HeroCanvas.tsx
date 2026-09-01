@@ -28,7 +28,7 @@
  */
 
 import { useEffect, useImperativeHandle, useRef, type RefObject } from "react";
-import { useReducedMotion, useIsLowPowerDevice, usePointerFine } from "@/shared/motion";
+import { useIsLowPowerDevice, usePointerFine } from "@/shared/motion";
 import {
   CONTAINER_START,
 } from "./heroPhases";
@@ -150,15 +150,16 @@ export function HeroCanvas({
   useEffect(() => {
     onNodeSelectRef.current = onNodeSelect;
   }, [onNodeSelect]);
-  const reduced = useReducedMotion();
   const lowPower = useIsLowPowerDevice();
   // Gates affordances, never cost. A pointer-type change (hybrid devices) must
   // re-wire the listeners, so this feeds the main effect's deps below.
   const pointerFine = usePointerFine();
 
-  // Static means: paint one frame, never animate. Both reduced motion and
-  // low-power devices take this path.
-  const isStatic = reduced === true || lowPower;
+  // Static means: paint one frame, never animate. Low-power devices take this
+  // path as a real performance safeguard. Reduced motion no longer does — the
+  // hero's entrance/drift choreography is a product decision to always play,
+  // regardless of the OS-level `prefers-reduced-motion` setting.
+  const isStatic = lowPower;
   const effectiveShowLogo = showLogo ?? (mode === "hero");
 
   useImperativeHandle(

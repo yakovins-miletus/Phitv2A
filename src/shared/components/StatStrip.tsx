@@ -4,7 +4,6 @@ import Typography from "@mui/material/Typography";
 import { animate, useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
-import { useReducedMotion } from "@/shared/motion";
 import { MONO } from "@/shared/theme/theme";
 
 // Hairline-separated count-up figures — the "by the numbers" rail.
@@ -26,22 +25,21 @@ function formatStat(n: number, decimals: number): string {
 function CountUpNumber({ value, suffix = "" }: { value: number; suffix?: string | undefined }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
-  const reduced = useReducedMotion();
-  const [shown, setShown] = useState(reduced ? value : 0);
+  const [shown, setShown] = useState(0);
   const decimals = Number.isInteger(value) ? 0 : 1;
 
   useEffect(() => {
-    if (!inView || reduced) return;
+    if (!inView) return;
     const controls = animate(0, value, {
       duration: 1.2,
       onUpdate: (latest) => setShown(latest),
     });
     return () => controls.stop();
-  }, [inView, reduced, value]);
+  }, [inView, value]);
 
   return (
     <span ref={ref}>
-      {formatStat(reduced ? value : shown, decimals)}
+      {formatStat(shown, decimals)}
       {suffix}
     </span>
   );

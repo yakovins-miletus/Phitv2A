@@ -3,7 +3,6 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Box, InputBase, Modal, Typography } from "@mui/material";
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
-import { useReducedMotion } from "@/shared/motion";
 import { useHeroBgModeState } from "@/features/hero/heroBgModeStore";
 import {
   GROUP_ORDER,
@@ -27,7 +26,6 @@ const isEditableTarget = (t: EventTarget | null): boolean => {
 
 export function CommandPalette() {
   const { navigateWithCurtain } = useTransitionCurtain();
-  const reducedMotion = useReducedMotion();
   const { mode: heroBgMode } = useHeroBgModeState();
 
   const [open, setOpen] = useState(false);
@@ -142,7 +140,7 @@ export function CommandPalette() {
             boxShadow: `0 24px 64px rgba(${NOIR.navyFieldRgb}, 0.18)`,
             outline: "none",
             overflow: "hidden",
-            animation: reducedMotion ? "none" : "cmdkIn 150ms ease-out",
+            animation: "cmdkIn 150ms ease-out",
             "@keyframes cmdkIn": {
               from: { opacity: 0, transform: "translateX(-50%) translateY(-6px) scale(0.985)" },
               to: { opacity: 1, transform: "translateX(-50%) translateY(0) scale(1)" },

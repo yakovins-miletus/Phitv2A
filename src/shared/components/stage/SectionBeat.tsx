@@ -11,7 +11,6 @@ import { useGSAP } from "@gsap/react";
 import { GROUNDS } from "@/shared/theme/grounds";
 import { STAGE_ATTR, sectionOrder } from "@/shared/sections";
 import type { SectionDef } from "@/shared/sections";
-import { useReducedMotion } from "@/shared/motion";
 import { SCROLL_SPEED } from "@/shared/motion/scrollSpeed";
 import {
   BEAT_ENTER_START,
@@ -242,7 +241,6 @@ export function SectionBeat({
   // ground layer reads exactly what this paints. See SectionDef.ground.
   const surface = section.ground ? GROUNDS[section.ground] : null;
   const ref = useRef<HTMLElement>(null);
-  const reduced = useReducedMotion();
 
   const resolvedOrder = order ?? sectionOrder(section.id);
   const establishScale = section.establishScale;
@@ -258,9 +256,7 @@ export function SectionBeat({
 
   useGSAP(
     () => {
-      // `reduced` is `null` on first render, so it MUST stay in the dependency
-      // array below — otherwise the wrong branch sticks permanently.
-      if (reduced === true || !ref.current) return;
+      if (!ref.current) return;
       const root = ref.current;
       const inner = root.querySelector(".stage-inner");
       if (!inner) return;
@@ -475,7 +471,7 @@ export function SectionBeat({
     },
     {
       scope: ref,
-      dependencies: [reduced, section.choreo, resolvedOrder, establishScale, establishAlign, noExitDim, bare],
+      dependencies: [section.choreo, resolvedOrder, establishScale, establishAlign, noExitDim, bare],
     },
   );
 

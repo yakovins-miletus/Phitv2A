@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 
 import { NOIR } from "@/shared/theme/palette";
-import { useIsLowPowerDevice, usePointerFine, useReducedMotion } from "@/shared/motion";
+import { useIsLowPowerDevice, usePointerFine } from "@/shared/motion";
 
 /**
  * The brand mark as a cursor-reactive particle field.
@@ -111,7 +111,6 @@ function buildField(img: HTMLImageElement, stride: number): Field | null {
 export function LogoParticleField() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reduced = useReducedMotion();
   const lowPower = useIsLowPowerDevice();
   const fine = usePointerFine();
 
@@ -122,9 +121,8 @@ export function LogoParticleField() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // No cursor to react to, or the user asked for less: one static frame, and
-    // never a rAF loop.
-    const staticOnly = reduced === true || !fine;
+    // No cursor to react to: one static frame, and never a rAF loop.
+    const staticOnly = !fine;
     const stride = lowPower ? STRIDE_LOW : STRIDE_HIGH;
 
     let field: Field | null = null;
@@ -273,7 +271,7 @@ export function LogoParticleField() {
       wrap.removeEventListener("pointermove", onPointerMove);
       wrap.removeEventListener("pointerleave", onPointerLeave);
     };
-  }, [reduced, lowPower, fine]);
+  }, [lowPower, fine]);
 
   return (
     <Box

@@ -3,8 +3,6 @@ import Typography from "@mui/material/Typography";
 import { animate, useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
-import { useReducedMotion } from "@/shared/motion";
-
 type KpiUnit = "count" | "percent" | "ratio" | "millions_per_day";
 
 interface MetricCardProps {
@@ -42,19 +40,18 @@ function formatDelta(deltaPct: number): string {
 function CountUpValue({ value, unit }: { value: number; unit: KpiUnit }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
-  const reduced = useReducedMotion();
-  const [shown, setShown] = useState(reduced ? value : 0);
+  const [shown, setShown] = useState(0);
 
   useEffect(() => {
-    if (!inView || reduced) return;
+    if (!inView) return;
     const controls = animate(0, value, {
       duration: 1.2,
       onUpdate: (latest) => setShown(latest),
     });
     return () => controls.stop();
-  }, [inView, reduced, value]);
+  }, [inView, value]);
 
-  return <span ref={ref}>{formatValue(reduced ? value : shown, unit)}</span>;
+  return <span ref={ref}>{formatValue(shown, unit)}</span>;
 }
 
 export function MetricCard({

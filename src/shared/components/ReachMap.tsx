@@ -5,7 +5,6 @@ import { useTheme } from "@mui/material/styles";
 import { motion, useInView } from "motion/react";
 import { useRef, useId, useState } from "react";
 
-import { useReducedMotion } from "@/shared/motion";
 import { MONO } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
 import { WORLD_MAP, WORLD_DOTS_PATH, projectPoint } from "@/shared/components/worldMap";
@@ -53,7 +52,6 @@ function arcPath(from: City, to: City): string {
 
 export function ReachMap() {
   const theme = useTheme();
-  const reduced = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef, { once: true, amount: 0.2 });
   const uid = useId();
@@ -61,7 +59,7 @@ export function ReachMap() {
 
   const land = theme.palette.primary.main;
 
-  const show = reduced === true || inView;
+  const show = inView;
 
   const hq = projectPoint(HQ.lon, HQ.lat);
 
@@ -143,7 +141,7 @@ export function ReachMap() {
                   strokeWidth={isHovered ? 4 : 0}
                   strokeOpacity={isHovered ? 0.4 : 0}
                   filter={`url(#arcGlow-${uid})`}
-                  initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
+                  initial={{ pathLength: 0 }}
                   animate={show ? { pathLength: 1 } : false}
                   transition={{ duration: 1, delay: index * 0.2, ease: "easeInOut" }}
                 />
@@ -155,7 +153,7 @@ export function ReachMap() {
                   strokeOpacity={isHovered ? 1 : 0.45}
                   strokeWidth={isHovered ? 2.5 : 1.25}
                   strokeDasharray={isHovered ? "none" : "6 3"}
-                  initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
+                  initial={{ pathLength: 0 }}
                   animate={show ? { pathLength: 1 } : false}
                   transition={{ duration: 1, delay: index * 0.2, ease: "easeInOut" }}
                 />
@@ -164,7 +162,7 @@ export function ReachMap() {
           })}
 
           {/* Traveling Photon Pulses along Arcs */}
-          {!reduced && inView && REACH.filter((c) => !c.hideArc).map((city, index) => (
+          {inView && REACH.filter((c) => !c.hideArc).map((city, index) => (
             <g key={`pulse-${city.label}`}>
               <circle r="4" fill={NOIR.goldLight} filter={`url(#arcGlow-${uid})`}>
                 <animateMotion
@@ -186,7 +184,7 @@ export function ReachMap() {
           ))}
 
           {/* Manila HQ Concentric Radar Rings */}
-          {!reduced && inView && [0, 1, 2].map((ring) => (
+          {inView && [0, 1, 2].map((ring) => (
             <motion.circle
               key={`radar-${String(ring)}`}
               cx={hq.x}

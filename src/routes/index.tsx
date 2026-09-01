@@ -120,19 +120,19 @@ function HomePage() {
           <MissionStatement />
         </Box>
 
-        {/* ── Bar Transition: hero-mission (panel) → global-markets (deep) ── */}
+        {/* ── Bar Transition: hero-mission (base) → global-markets (deep) ── */}
         <BarTransitionSection
-          from="panel"
+          from="base"
           to="deep"
           anchor={NAV_ANCHORS.HOME_BRIDGE_MARKETS}
         />
 
         <GlobalMarketsStatement />
 
-        {/* ── Bar Transition: global-markets (deep) → hero-pillars (void) ── */}
+        {/* ── Bar Transition: global-markets (deep) → hero-pillars (field) ── */}
         <BarTransitionSection
           from="deep"
-          to="void"
+          to="field"
           anchor={NAV_ANCHORS.HOME_BRIDGE_PILLARS}
         />
 
@@ -140,10 +140,10 @@ function HomePage() {
             SectionBeat, driven on one timeline. See OperatingPillars.tsx. */}
         <OperatingPillars />
 
-        {/* ── Bar Transition: hero-pillars (void) → use-cases (panel) ── */}
+        {/* ── Bar Transition: hero-pillars (field) → use-cases (base) ── */}
         <BarTransitionSection
-          from="void"
-          to="panel"
+          from="field"
+          to="base"
           anchor={NAV_ANCHORS.HOME_BRIDGE_USECASES}
         />
 
@@ -198,9 +198,9 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          {/* ── Bar Transition: use-cases (panel) → process (deep) ── */}
+          {/* ── Bar Transition: use-cases (base) → process (deep) ── */}
           <BarTransitionSection
-            from="panel"
+            from="base"
             to="deep"
             anchor={NAV_ANCHORS.HOME_BRIDGE_PROCESS}
           />
@@ -211,10 +211,10 @@ function HomePage() {
               one-viewport composition it announced. The title is inline now. */}
           <ProcessSection />
 
-          {/* ── Bar Transition: process (deep) → reach (white) ── */}
+          {/* ── Bar Transition: process (deep) → reach (floor) ── */}
           <BarTransitionSection
             from="deep"
-            to="white"
+            to="floor"
             anchor={NAV_ANCHORS.HOME_BRIDGE_REACH}
           />
 

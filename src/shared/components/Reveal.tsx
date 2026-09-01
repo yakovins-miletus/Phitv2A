@@ -3,7 +3,7 @@ import type { MotionStyle } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import { useEntranceSettled, useReducedMotion } from "@/shared/motion";
+import { useEntranceSettled } from "@/shared/motion";
 import { EASE_OUT_EXPO } from "@/shared/motion/easing";
 
 /** Curtain-mask reveal, not a fade: content is uncovered by an animated
@@ -65,28 +65,23 @@ const REVEAL_AMOUNT = "some" as const;
 
 /** Shared scroll-into-view reveal.
  *
- *  Fails open: content becomes visible if the entrance gate stalls, if
- *  IntersectionObserver is unavailable, or if the visitor prefers reduced
- *  motion. The clip animation is an enhancement on top of readable content —
- *  it is never the sole thing standing between the user and the page. */
+ *  Fails open: content becomes visible if the entrance gate stalls or if
+ *  IntersectionObserver is unavailable. The clip animation is an enhancement
+ *  on top of readable content — it is never the sole thing standing between
+ *  the user and the page. */
 export function Reveal({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: MotionStyle }) {
-  const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: REVEAL_AMOUNT });
   const gateExpired = useEntranceFailsafe(ready);
 
-  // `reduced` must be honoured here and not only in `initial`: with
-  // `initial={false}` the element adopts whatever `animate` resolves to on the
-  // first frame, so a hidden `animate` value clipped reduced-motion visitors
-  // exactly as hard as everyone else. StaggerItem below always did honour it.
-  const shouldAnimate = reduced || NO_IO || ((ready || gateExpired) && inView);
+  const shouldAnimate = NO_IO || ((ready || gateExpired) && inView);
   const styleProp = style ? { style } : {};
 
   return (
     <motion.div
       ref={ref}
-      initial={reduced ? false : { clipPath: CLIP_HIDDEN, y: LIFT }}
+      initial={{ clipPath: CLIP_HIDDEN, y: LIFT }}
       animate={shouldAnimate ? { clipPath: CLIP_VISIBLE, y: 0 } : { clipPath: CLIP_HIDDEN, y: LIFT }}
       transition={{
         duration: 0.4,
@@ -123,13 +118,12 @@ function useEntranceFailsafe(ready: boolean): boolean {
  *  Fails open on the same terms as `Reveal` — see the note on
  *  ENTRANCE_FAILSAFE_MS. */
 export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
-  const reduced = useReducedMotion();
   const ready = useEntranceSettled();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px 100px 0px", amount: REVEAL_AMOUNT });
   const gateExpired = useEntranceFailsafe(ready);
 
-  const shouldAnimate = reduced || NO_IO || ((ready || gateExpired) && inView);
+  const shouldAnimate = NO_IO || ((ready || gateExpired) && inView);
 
   return (
     <motion.div
@@ -150,11 +144,10 @@ export function StaggerGroup({ children, delay = 0 }: { children: ReactNode; del
 
 /** Individual item inside a StaggerGroup. Receives variant orchestration from parent. */
 export function StaggerItem({ children }: { children: ReactNode }) {
-  const reduced = useReducedMotion();
   return (
     <motion.div
       variants={{
-        hidden: reduced ? { clipPath: CLIP_VISIBLE, y: 0 } : { clipPath: CLIP_HIDDEN, y: LIFT },
+        hidden: { clipPath: CLIP_HIDDEN, y: LIFT },
         visible: { clipPath: CLIP_VISIBLE, y: 0 },
       }}
       transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}

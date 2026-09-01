@@ -13,7 +13,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { createFileRoute } from "@tanstack/react-router";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 import { CAREER_POSITIONS } from "@/shared/careersData";
 import { Reveal } from "@/shared/components/Reveal";
@@ -61,7 +61,6 @@ export function CareersIndexPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [brochureOpen, setBrochureOpen] = useState(false);
-  const reducedMotion = useReducedMotion();
 
   const categories = [
     { label: "All", count: CAREER_POSITIONS.length },
@@ -610,14 +609,10 @@ export function CareersIndexPage() {
                                 id={`job-peek-${position.id}`}
                                 role="region"
                                 aria-labelledby={`job-tab-${position.id}`}
-                                initial={reducedMotion ? false : { opacity: 0, height: 0 }}
+                                initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: "auto" }}
-                                exit={reducedMotion ? { opacity: 0, height: 0 } : { opacity: 0, height: 0 }}
-                                transition={
-                                  reducedMotion
-                                    ? { duration: 0 }
-                                    : { duration: 0.35, ease: [0.16, 1, 0.3, 1] }
-                                }
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                                 style={{ overflow: "hidden" }}
                               >
                                 <Box

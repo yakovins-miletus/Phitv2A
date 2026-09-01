@@ -339,13 +339,9 @@ function RestingFrame({ trigger }: { trigger: string }) {
  * 1 immediately — a settle animation is exactly the kind of thing that flag asks us
  * not to play.
  */
-function SettleDriver({ settleRef, reduced }: { settleRef: RefObject<number>; reduced: boolean }) {
+function SettleDriver({ settleRef }: { settleRef: RefObject<number> }) {
   const startRef = useRef<number | null>(null);
   useFrame(() => {
-    if (reduced) {
-      settleRef.current = 1;
-      return;
-    }
     const now = performance.now();
     if (startRef.current === null) startRef.current = now;
     const t = Math.min(1, (now - startRef.current) / ENTRANCE_MS);
@@ -645,7 +641,7 @@ export function PlaygroundCanvas({
           reduced={reduced}
           hideSky={hideSky}
         />
-        <SettleDriver key={settleKey} settleRef={settleRef} reduced={reduced} />
+        <SettleDriver key={settleKey} settleRef={settleRef} />
         <RestingFrame trigger={`${settleKey}:${reduced}:${running}`} />
         {/* Fallback is the bare stage, never a spinner: switching tabs must not
             flash an empty frame between one scene unmounting and the next
