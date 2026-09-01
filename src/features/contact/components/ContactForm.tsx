@@ -11,38 +11,9 @@ import { useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import { messageFromError } from "@/shared/api/errors";
+import { MINIMAL_FIELD_SX } from "@/shared/theme/formField";
 
 import { useSubmitContactMessage } from "../api";
-
-/**
- * Underline-at-rest, accent-on-focus. Fields recede until the reader
- * actually engages one — no filled background, no border box, no radius.
- * The `Mui-focused` outline (not just the underline colour) is what makes
- * focus visible without relying on colour alone.
- */
-const lightTextFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    bgcolor: "transparent",
-    color: "text.primary",
-    borderRadius: "4px",
-    "& fieldset": {
-      borderRadius: "4px",
-      borderWidth: "0 0 1px 0",
-      borderColor: "rgba(10, 42, 102, 0.3)",
-    },
-    "&:hover fieldset": { borderColor: "primary.main" },
-    "&.Mui-focused fieldset": { borderWidth: "0 0 2px 0", borderColor: "primary.main" },
-    "&.Mui-focused": {
-      outline: "2px solid var(--accent, #0A2A66)",
-      outlineOffset: "2px",
-    },
-    "&.Mui-error fieldset": { borderWidth: "0 0 2px 0" },
-  },
-  "& .MuiInputLabel-root": {
-    color: "text.secondary",
-    "&.Mui-focused": { color: "primary.main" },
-  },
-};
 
 /** Mirrors the server's ContactMessageIn constraints exactly. */
 const RULES = {
@@ -195,7 +166,8 @@ export function ContactForm() {
               required
               fullWidth
               inputRef={nameRef}
-              sx={lightTextFieldSx}
+              variant="standard"
+              sx={MINIMAL_FIELD_SX}
             />
             <TextField
               id={`${formId}-email`}
@@ -208,7 +180,8 @@ export function ContactForm() {
               required
               fullWidth
               inputRef={emailRef}
-              sx={lightTextFieldSx}
+              variant="standard"
+              sx={MINIMAL_FIELD_SX}
             />
             <TextField
               id={`${formId}-subject`}
@@ -220,7 +193,8 @@ export function ContactForm() {
               required
               fullWidth
               inputRef={subjectRef}
-              sx={lightTextFieldSx}
+              variant="standard"
+              sx={MINIMAL_FIELD_SX}
             />
             <TextField
               id={`${formId}-message`}
@@ -234,7 +208,8 @@ export function ContactForm() {
               required
               fullWidth
               inputRef={messageRef}
-              sx={lightTextFieldSx}
+              variant="standard"
+              sx={MINIMAL_FIELD_SX}
             />
           </Stack>
         </Box>

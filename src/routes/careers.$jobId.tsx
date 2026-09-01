@@ -24,6 +24,7 @@ import { messageFromError } from "@/shared/api/errors";
 import { pageHead } from "@/shared/seo";
 import { MONO, TRACKING } from "@/shared/theme/theme";
 import { NOIR } from "@/shared/theme/palette";
+import { MINIMAL_FIELD_SX } from "@/shared/theme/formField";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
 import { useSubmitContactMessage } from "@/features/contact/api";
@@ -694,6 +695,8 @@ function JobDetailPage() {
                         helperText={errors.fullName ?? " "}
                         fullWidth
                         inputRef={fullNameRef}
+                        variant="standard"
+                        sx={MINIMAL_FIELD_SX}
                       />
 
                       <TextField
@@ -707,6 +710,8 @@ function JobDetailPage() {
                         helperText={errors.email ?? " "}
                         fullWidth
                         inputRef={emailRef}
+                        variant="standard"
+                        sx={MINIMAL_FIELD_SX}
                       />
 
                       <TextField
@@ -720,6 +725,8 @@ function JobDetailPage() {
                         placeholder="e.g. DLSU, Ateneo, UP, or Current Firm"
                         fullWidth
                         inputRef={universityRef}
+                        variant="standard"
+                        sx={MINIMAL_FIELD_SX}
                       />
 
                       <TextField
@@ -734,6 +741,8 @@ function JobDetailPage() {
                         placeholder="Tell us briefly about your technical background or GitHub portfolio..."
                         fullWidth
                         inputRef={coverNoteRef}
+                        variant="standard"
+                        sx={MINIMAL_FIELD_SX}
                       />
 
                       {/* Honeypot */}

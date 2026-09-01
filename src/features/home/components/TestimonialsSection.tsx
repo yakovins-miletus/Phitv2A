@@ -157,7 +157,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
                 fontSize: "1rem",
                 lineHeight: 1.2,
                 letterSpacing: "-0.01em",
-                color: NOIR.navyDeep,
+                color: "secondary.main",
               }}
             >
               {testimonial.name}
@@ -253,7 +253,7 @@ export function TestimonialsSection() {
                   fontSize: { xs: "2.5rem", sm: "3rem", md: "3.5rem" },
                   lineHeight: 1.05,
                   letterSpacing: "-0.035em",
-                  color: NOIR.navyDeep,
+                  color: "primary.main",
                 }}
               >
                 At the core of our business is our people.

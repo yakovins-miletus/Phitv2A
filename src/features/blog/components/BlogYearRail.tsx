@@ -1,8 +1,6 @@
 import { useState } from "react";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { CaretDown } from "@phosphor-icons/react";
@@ -45,11 +43,14 @@ interface BlogYearRailProps {
  * buttons (WS-01 de-containerization). Weight + colour carry selection state;
  * counts sit subordinate to the year in the mono meta-rail treatment.
  *
- * Each year is now an expandable accordion (WS-09 month facet) revealing the
- * months with posts underneath it. Expansion is a separate concern from
- * filtering — opening a year to browse its months doesn't commit to a filter
- * by itself; a row inside must be clicked (either "All in {year}" or a
- * specific month) the same way the top-level "All" row works today.
+ * Each year now discloses (WS-09 month facet) into the months underneath it
+ * — a plain button + `Collapse`, deliberately not MUI `Accordion`/`Paper`,
+ * which bring their own rounded-corner elevation styling that reads as a
+ * boxed card and fights the flat, hairline-only rail this component exists
+ * to be. Expansion is a separate concern from filtering — opening a year to
+ * browse its months doesn't commit to a filter by itself; a row inside must
+ * be clicked (either "All in {year}" or a specific month) the same way the
+ * top-level "All" row works today.
  *
  * Degrades quietly when there are genuinely zero years to filter by — same
  * fails-soft posture as `FALLBACK_BLOG_PAGE`: render nothing (not an error)
@@ -120,56 +121,54 @@ export function BlogYearRail({ activeYear, activeMonth, onSelectionChange }: Blo
         const yearMonths = monthsByYear(facet.year);
 
         return (
-          <Accordion
+          <Box
             key={facet.year}
-            expanded={isExpanded}
-            onChange={(_event, expanding) => {
-              setExpandedYear(expanding ? facet.year : null);
-            }}
-            disableGutters
-            elevation={0}
-            square
             sx={{
-              bgcolor: "transparent",
-              boxShadow: "none",
               borderTop: "1px solid rgba(10, 42, 102, 0.12)",
-              "&:before": { display: "none" },
               "&:last-of-type": {
                 borderBottom: "1px solid rgba(10, 42, 102, 0.12)",
               },
             }}
           >
-            <AccordionSummary
-              expandIcon={
-                <Box
-                  component={CaretDown}
-                  sx={{ fontSize: "0.9rem", color: "text.disabled" }}
-                />
-              }
+            <Box
+              component="button"
+              type="button"
+              onClick={() => {
+                setExpandedYear(isExpanded ? null : facet.year);
+              }}
+              aria-expanded={isExpanded}
               aria-label={`Toggle ${String(facet.year)} months`}
               sx={{
-                px: 0,
+                appearance: "none",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: 1,
+                width: "100%",
+                textAlign: "left",
                 py: 1.75,
-                minHeight: 0,
-                "&.Mui-expanded": { minHeight: 0 },
-                "& .MuiAccordionSummary-content": {
-                  margin: 0,
-                  "&.Mui-expanded": { margin: 0 },
+                px: 0,
+                "&:focus-visible": {
+                  outline: "2px solid var(--accent)",
+                  outlineOffset: 2,
                 },
               }}
             >
-              <Stack direction="row" alignItems="baseline" justifyContent="space-between" spacing={1.5} sx={{ width: "100%" }}>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: TYPE_SCALE.subtitle1,
-                    fontWeight: isYearActive ? 700 : 500,
-                    lineHeight: 1.6,
-                    color: isYearActive ? "var(--accent-ink)" : "text.secondary",
-                  }}
-                >
-                  {facet.year}
-                </Typography>
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: TYPE_SCALE.subtitle1,
+                  fontWeight: isYearActive ? 700 : 500,
+                  lineHeight: 1.6,
+                  color: isYearActive ? "var(--accent-ink)" : "text.secondary",
+                }}
+              >
+                {facet.year}
+              </Typography>
+              <Stack direction="row" alignItems="baseline" spacing={1}>
                 <Typography
                   component="span"
                   sx={{
@@ -182,10 +181,19 @@ export function BlogYearRail({ activeYear, activeMonth, onSelectionChange }: Blo
                 >
                   {facet.count}
                 </Typography>
+                <Box
+                  component={CaretDown}
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "text.disabled",
+                    transform: isExpanded ? "rotate(180deg)" : "none",
+                    transition: "transform 0.2s",
+                  }}
+                />
               </Stack>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 0, pb: 1 }}>
-              <Stack spacing={0} sx={{ pl: 1.5 }}>
+            </Box>
+            <Collapse in={isExpanded} timeout={150}>
+              <Stack spacing={0} sx={{ pl: 1.5, pb: 1 }}>
                 <RailRow
                   label={`All ${String(facet.year)}`}
                   count={null}
@@ -224,8 +232,8 @@ export function BlogYearRail({ activeYear, activeMonth, onSelectionChange }: Blo
                   ))
                 )}
               </Stack>
-            </AccordionDetails>
-          </Accordion>
+            </Collapse>
+          </Box>
         );
       })}
     </Stack>
