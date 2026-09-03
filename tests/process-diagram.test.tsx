@@ -8,8 +8,9 @@ import { renderWithProviders } from "./test-utils";
 // setup.ts stubs matchMedia with prefers-reduced-motion: reduce by default, so
 // these are the deterministic reduced-motion assertions for the section.
 //
-// The diagram is a three-phase ascending growth model (Discover & Research -> Build -> Operate).
-// Under reduced motion, all phases and their copy must be visible statically without motion dependency.
+// The diagram is a three-phase ascending growth collage (2019 -> 2020-2025 -> 2026):
+// one company photo per phase above its caption. Under reduced motion, all phases
+// and their copy must be visible statically without motion dependency.
 
 test("reduced motion: every named phase renders with its copy", () => {
   renderWithProviders(<ProcessDiagram model={CONTENT.process} />);
@@ -32,16 +33,14 @@ test("the composition renders all three growth phases", () => {
   expect(headings[2]?.textContent).toBe("2026: The Powerhouse");
 });
 
-test("the growth story is one illustration, not one figure per phase", () => {
+test("the growth story is one photo per phase, aligned over its caption", () => {
   renderWithProviders(<ProcessDiagram model={CONTENT.process} />);
 
   const imgs = screen.getAllByRole("img");
-  expect(imgs).toHaveLength(1);
-  expect(
-    screen.getByRole("img", {
-      name: /four departments .* growing from a small 2019 cluster .* 2026/i,
-    }),
-  ).toBeInTheDocument();
+  expect(imgs).toHaveLength(CONTENT.process.phases.length);
+  expect(screen.getByRole("img", { name: /2019 .* focused engineering team/i })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /2020 to 2025 .* expansion/i })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /2026 .* whole company/i })).toBeInTheDocument();
 });
 
 test("renders custom process model phases correctly", () => {
@@ -64,4 +63,6 @@ test("an empty phases model renders without crashing", () => {
   const { container } = renderWithProviders(<ProcessDiagram model={emptyModel} />);
 
   expect(container.querySelectorAll("h3")).toHaveLength(0);
+  // Photos are keyed to phases by position, so no phases means no frames.
+  expect(container.querySelectorAll("img")).toHaveLength(0);
 });

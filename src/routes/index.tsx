@@ -195,12 +195,13 @@ function HomePage() {
          * used to continue this zone below Reach — they relocated to /about
          * (PRD-home-client-focus §US-2), so the zone now ends at ClosingShelf. */}
         <Box id="compact-zone">
-          {/* ── Bar Transition: use-cases (panel) → process (deep) ── */}
-          <BarTransitionSection
-            from="panel"
-            to="deep"
-            anchor={NAV_ANCHORS.HOME_BRIDGE_PROCESS}
-          />
+          {/* No bar transition here: ProcessSection is itself a full-bleed navy
+              slab with a gold hairline top border, so the panel → deep handoff
+              already reads as a deliberate hard cut. The 60vh wipe that used to
+              sit here bought nothing but dead scroll between the last use-case
+              card and the "development powerhouse" heading — removed rather
+              than shortened. The navbar keeps its dark state over the slab via
+              ProcessSection's own PROCESS_IMMERSIVE anchor. */}
 
           {/* Problem To Production. Had a Major Establishing Shot 2 here, then
               inside ProcessSection's own SectionBeat; ADR-0002 dropped the shot

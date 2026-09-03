@@ -9,7 +9,7 @@ describe("resolveRouteManifest — route-aware warm-up manifest", () => {
     expect(m.warmGlobe).toBe(true);
     // The below-fold rasters on `/`: OperatingPillars' three backgrounds, the
     // three UseCasesNarrative crossfade backgrounds, and the ProcessDiagram
-    // growth-timeline illustration — all warmed in the background tier so they
+    // growth-collage photos — all warmed in the background tier so they
     // never extend the intro.
     expect(m.background).toEqual([
       "/images/pillars/research.webp",
@@ -18,7 +18,9 @@ describe("resolveRouteManifest — route-aware warm-up manifest", () => {
       "/images/use-cases/uc-1.webp",
       "/images/use-cases/uc-2.webp",
       "/images/use-cases/uc-3.webp",
-      "/images/process/growth-timeline.webp",
+      "/images/grads/FocusedProgramming.webp",
+      "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
+      "/images/timeline/group-pic-final-2048x1687.webp",
     ]);
     // Every below-fold raster is background tier, never blocking.
     for (const u of m.background) {

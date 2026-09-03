@@ -140,7 +140,7 @@ const HOME_BLOCKING: readonly string[] = ["/phitopolis_logo_hero.svg"];
  *     backgrounds from `content.ts`.
  *   - `UseCasesNarrative` (`#use-cases`) — one full-bleed 3D-isometric
  *     background per use case, crossfaded on scroll.
- *   - `ProcessDiagram` (`#process`) — one isometric growth-timeline illustration.
+ *   - `ProcessDiagram` (`#process`) — the three-photo growth collage.
  *  Everything else on the `/` path is canvas / inline SVG / CSS. */
 const HOME_BACKGROUND_IMAGES: readonly string[] = [
   "/images/pillars/research.webp",
@@ -149,7 +149,9 @@ const HOME_BACKGROUND_IMAGES: readonly string[] = [
   "/images/use-cases/uc-1.webp",
   "/images/use-cases/uc-2.webp",
   "/images/use-cases/uc-3.webp",
-  "/images/process/growth-timeline.webp",
+  "/images/grads/FocusedProgramming.webp",
+  "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
+  "/images/timeline/group-pic-final-2048x1687.webp",
 ];
 
 /** About hero, above the fold: the dusk-skyline background behind the headline

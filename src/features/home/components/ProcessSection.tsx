@@ -103,7 +103,14 @@ export function ProcessSection() {
         {/* Full-width growth canvas — see ADR-0002 for the still-binding
             one-viewport / reduced-motion / disqualified-shapes constraints;
             the containment metaphor it chose has been replaced. */}
-        <Box sx={{ width: "100%", px: { xs: 2, md: 6, lg: 8 }, position: "relative", zIndex: 2 }}>
+        <Box
+          sx={{
+            width: "100%",
+            px: { xs: 2, md: 6, lg: 8 },
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
           <Box sx={{ maxWidth: 1320, mx: "auto", mb: { xs: 1.5, md: 3 } }}>
             <Typography
               variant="h2"
@@ -120,7 +127,18 @@ export function ProcessSection() {
               </Box>
             </Typography>
           </Box>
-          <ProcessDiagram model={CONTENT.process} />
+          {/**
+           * Clear the fixed dot-rail nav (ORIGIN/THESIS/DISCIPLINES/…) on the
+           * right. The previous single illustration was `objectFit: contain`
+           * with transparent margins, so the rail's labels sat over empty
+           * pixels; the photo collage bleeds to its frame edge and the labels
+           * landed on top of the 2026 photo. Scoped to the collage rather than
+           * the whole column so the heading keeps its full measure — padding
+           * the shared parent wrapped it onto a second line.
+           */}
+          <Box sx={{ pr: { lg: 16 } }}>
+            <ProcessDiagram model={CONTENT.process} />
+          </Box>
         </Box>
       </Box>
     </SectionBeat>
