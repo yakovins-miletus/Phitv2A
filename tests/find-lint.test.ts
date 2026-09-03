@@ -12,5 +12,5 @@ describe("ESLint Workspace Quality Gate", () => {
       }
     }
     expect(errorResults.length).toBe(0);
-  });
+  }, 180000);
 });

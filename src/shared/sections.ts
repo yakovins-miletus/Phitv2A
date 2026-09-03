@@ -201,7 +201,19 @@ export const HOME_SECTIONS: readonly SectionDef[] = [
     noExitDim: true,
     establishScale: "mini",
   },
-  { id: "process", label: "Growing Into A Development Powerhouse", chapter: 3, ground: "deep", establishScale: "mini" },
+  {
+    // Pinned, scroll-scrubbed year-by-year growth reveal (ProcessScrubStage):
+    // 2019 → 2020-2025 → 2026 with PixelSwap dissolves + a widening frame, then
+    // release. `ownsPin` routes it to `.beat-bare-content`; `noExitDim` skips the
+    // scrubbed exit dim that would fade the pinned stage under the reader.
+    id: "process",
+    label: "Growing Into A Development Powerhouse",
+    chapter: 3,
+    ground: "deep",
+    ownsPin: true,
+    noExitDim: true,
+    establishScale: "mini",
+  },
   {
     id: "reach",
     label: "Global Footprint",

@@ -1,91 +1,120 @@
+import { useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { CONTENT } from "@/shared/content";
 import { ProcessDiagram } from "@/shared/components/diagrams/ProcessDiagram";
 import { NOIR } from "@/shared/theme/palette";
 import { NAV_ANCHORS } from "@/shared/components/NavbarContext";
 import { useNavbarAnchor } from "@/shared/components/navbarHooks";
+import { useStagePresence } from "@/shared/components/stage/stagePresence";
+import { useReducedMotion } from "@/shared/motion";
 import { SectionBeat } from "@/shared/components/stage/SectionBeat";
 import { homeSection } from "@/shared/sections";
+import { ProcessScrubStage } from "./process/ProcessScrubStage";
 
+const HEADLINE = (
+  <Typography
+    variant="h2"
+    sx={{
+      fontSize: { xs: "1.4rem", md: "2.15rem" },
+      fontWeight: 800,
+      lineHeight: 1.15,
+      color: NOIR.frost,
+    }}
+  >
+    From our practices, our business gradually grew into a{" "}
+    <Box component="span" sx={{ color: NOIR.gold }}>
+      development powerhouse.
+    </Box>
+  </Typography>
+);
+
+/** Mobile + reduced-motion: the original static three-up ascending collage,
+ *  minus the pin. */
+function ProcessStaticStack() {
+  return (
+    <Box sx={{ width: "100%", px: { xs: 2, md: 6, lg: 8 }, position: "relative", zIndex: 2 }}>
+      <Box sx={{ maxWidth: 1320, mx: "auto", mb: { xs: 1.5, md: 3 } }}>{HEADLINE}</Box>
+      <Box sx={{ pr: { lg: 16 } }}>
+        <ProcessDiagram model={CONTENT.process} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * "From our practices…" — the growth story.
+ *
+ * `process` declares `ownsPin: true` + `noExitDim: true` in `HOME_SECTIONS`, so
+ * `SectionBeat` renders this in the un-transformed `.beat-bare-content` sibling
+ * (outside its `Container`, no reveal tween, no exit dim). Three render modes:
+ *
+ *   A. Desktop scrub (md+, not reduced) — `ProcessScrubStage`: one pinned
+ *      ScrollTrigger scrubs through 2019 → 2020‑2025 → 2026 with `PixelSwap`
+ *      dissolves and a 60→70→80vw frame, then releases.
+ *   B. Mobile static (down("md")) — `ProcessStaticStack` (the original collage).
+ *   C. Reduced motion — same static collage.
+ *
+ * No `establishing` shot, unlike every other beat on this page (ADR-0002): the
+ * growth composition is itself the establishing image.
+ */
 export function ProcessSection() {
+  const containerRef = useRef<HTMLElement>(null);
   const anchorRef = useNavbarAnchor(NAV_ANCHORS.PROCESS_IMMERSIVE, { dark: true });
 
+  const theme = useTheme();
+  const reduced = useReducedMotion();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const staticLayout = reduced === true || isMobile;
+
+  // Bare / ownsPin beats don't get presence tracking from SectionBeat — register
+  // here so the dot rail still highlights `process` while it's pinned.
+  useStagePresence(containerRef, "process");
+
   return (
-    /**
-     * No `establishing` shot, unlike every other beat on this page.
-     *
-     * `establishScale: "mini"` still reserves 0.5 screens for a title card. The
-     * section as a whole has a one-viewport budget (ADR-0002), so a half-screen
-     * announcement would leave ~218px for the composition it announces — the
-     * measured breakdown at 1440x757 was 80 + 379 (shot) + 695 + 80 = 1234px.
-     * The shot's copy moves inline below, where it sits *in* the composition
-     * rather than in front of it. That is also the better read: the growth
-     * diagram is itself the establishing image, and two announcements for one
-     * screen of content is one too many.
-     *
-     * `ProcessEstablishingShot.tsx` is kept — `/services` is the likely reuse —
-     * but it now has no caller on the home page.
-     */
     <SectionBeat section={homeSection("process")}>
+      {/* id is "process-stage", NOT "process": SectionBeat's own root carries
+          id="process" (the scroll-to anchor). */}
       <Box
-        ref={anchorRef}
+        component="section"
+        ref={containerRef}
+        id="process-stage"
         sx={{
-          bgcolor: NOIR.navyDeep,
-          color: NOIR.frost,
-          zIndex: 1,
-          overflow: "hidden",
-          borderTop: "1px solid rgba(255, 199, 44, 0.2)",
-          borderBottom: "1px solid rgba(255, 199, 44, 0.2)",
-          py: { xs: 3, md: 7 },
-          /**
-           * Break out of SectionBeat's `Container maxWidth="xl"`.
-           *
-           * The old `width: 100vw; ml/mr: calc(50% - 50vw)` version left a visible
-           * gutter down both sides instead of bleeding to the true viewport edge.
-           * `margin-left/right` percentages resolve against the CONTAINING BLOCK's
-           * width — here, the Container's own content-box width (maxWidth minus its
-           * padding), not the viewport — so `50%` was 50% of ~1280px, not of the
-           * 100vw the other half of the expression assumed. The residual offset was
-           * exactly the Container's own gutter, which is why it read as "almost"
-           * full-bleed rather than obviously broken.
-           *
-           * `left: 50%` + `transform: translateX(-50%)` is agnostic to that: `left`
-           * still resolves against the Container's width, landing this box's left
-           * edge on the CONTAINER's horizontal center — but `translateX(-50%)`
-           * resolves against this box's OWN width (100vw), shifting it left by
-           * exactly half the viewport. Since MUI's `Container` is itself centered
-           * in the viewport by default, the container's center IS the viewport's
-           * center, so the two offsets cancel to the true viewport edge regardless
-           * of the Container's maxWidth or padding — no ancestor-width assumption
-           * baked into the math this time.
-           */
           position: "relative",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "100vw",
-          /**
-           * Fill the beat, don't float inside it.
-           *
-           * `SectionBeat` sets `minHeight: 100svh` on the <section> and
-           * `py: { xs: 6, md: 10 }` (48px / 80px) on it — see SectionBeat.tsx:475
-           * and :486. This slab is content-height, so once the section stopped
-           * being 4 viewports tall the navy ended well short of the section's
-           * own box and the whole thing read as a floating panel with white
-           * bands above and below it. Subtracting that padding makes the slab
-           * exactly as tall as the beat and keeps the section at 1.00 screens.
-           *
-           * The two numbers are duplicated here; SectionBeat exports no token
-           * for them. If its `py` changes, this changes with it.
-           */
-          minHeight: { xs: "calc(100svh - 96px)", md: "calc(100svh - 160px)" },
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
+          width: "100%",
+          color: NOIR.frost,
+          borderTop: "1px solid rgba(255, 199, 44, 0.2)",
+          ...(staticLayout
+            ? {
+                minHeight: "auto",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                py: { xs: 6, md: 10 },
+                bgcolor: NOIR.navyDeep,
+                borderBottom: "1px solid rgba(255, 199, 44, 0.2)",
+              }
+            : {
+                // Scrub mode: a plain block wrapper. `.process-stage` (100vh) and
+                // its ScrollTrigger pin-spacer define the height — a flex box
+                // with `overflow: hidden` here CLIPS the pin-spacer's padding, so
+                // the pin range never gets reserved in flow and the bar
+                // transition after it overlaps the still-pinned stage.
+                display: "block",
+                py: 0,
+                // Transparent so ProcessScrubStage's own navy backdrop (which
+                // fades in on lock) reads.
+                bgcolor: "transparent",
+              }),
         }}
       >
-        {/* Industrial Grid Background & Scanlines */}
+        {/* Navbar anchor + industrial grid — on an absolute inset child so the
+            pin's transform never disturbs the anchor rect. */}
+        <Box ref={anchorRef} aria-hidden sx={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
         <Box
           aria-hidden="true"
           sx={{
@@ -100,46 +129,7 @@ export function ProcessSection() {
           }}
         />
 
-        {/* Full-width growth canvas — see ADR-0002 for the still-binding
-            one-viewport / reduced-motion / disqualified-shapes constraints;
-            the containment metaphor it chose has been replaced. */}
-        <Box
-          sx={{
-            width: "100%",
-            px: { xs: 2, md: 6, lg: 8 },
-            position: "relative",
-            zIndex: 2,
-          }}
-        >
-          <Box sx={{ maxWidth: 1320, mx: "auto", mb: { xs: 1.5, md: 3 } }}>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: { xs: "1.4rem", md: "2.15rem" },
-                fontWeight: 800,
-                lineHeight: 1.15,
-                color: NOIR.frost,
-              }}
-            >
-              From our practices, our business gradually grew into a{" "}
-              <Box component="span" sx={{ color: NOIR.gold }}>
-                development powerhouse.
-              </Box>
-            </Typography>
-          </Box>
-          {/**
-           * Clear the fixed dot-rail nav (ORIGIN/THESIS/DISCIPLINES/…) on the
-           * right. The previous single illustration was `objectFit: contain`
-           * with transparent margins, so the rail's labels sat over empty
-           * pixels; the photo collage bleeds to its frame edge and the labels
-           * landed on top of the 2026 photo. Scoped to the collage rather than
-           * the whole column so the heading keeps its full measure — padding
-           * the shared parent wrapped it onto a second line.
-           */}
-          <Box sx={{ pr: { lg: 16 } }}>
-            <ProcessDiagram model={CONTENT.process} />
-          </Box>
-        </Box>
+        {staticLayout ? <ProcessStaticStack /> : <ProcessScrubStage />}
       </Box>
     </SectionBeat>
   );

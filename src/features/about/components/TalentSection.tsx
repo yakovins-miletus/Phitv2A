@@ -56,23 +56,31 @@ export function TalentSection() {
           </Stack>
         </Reveal>
 
-        {/* The hero: the logo wall, grouped Philippine / international. */}
-        <Stack spacing={{ xs: 4, md: 5 }}>
-          <Reveal delay={0.1}>
-            <Stack spacing={2}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.45fr) minmax(360px, 0.95fr)" },
+            gap: { xs: 6, lg: 8 },
+            alignItems: "start",
+          }}
+        >
+          {/* The hero: an enlarged, left-hand logo wall grouped by region. */}
+          <Stack spacing={{ xs: 4, md: 5 }}>
+            <Reveal delay={0.1}>
+              <Stack spacing={2.5}>
               <MetaLabel>Alma Maters — Philippines</MetaLabel>
               <StaggerGroup>
-                <Stack direction="row" spacing={{ xs: 2, md: 3 }} useFlexGap flexWrap="wrap">
+                <Stack direction="row" spacing={{ xs: 2, md: 2.5 }} useFlexGap flexWrap="wrap">
                   {phSchools.map((school) => (
                     <StaggerItem key={school.name}>
                       <Stack
                         direction="row"
-                        spacing={1.25}
+                        spacing={1.5}
                         alignItems="center"
                         title={school.name}
                         sx={{
-                          px: 2,
-                          py: 1.25,
+                          px: 2.25,
+                          py: 1.75,
                           borderRadius: 2,
                           transition: "background-color 0.2s ease-in-out",
                           "&:hover": { bgcolor: "action.hover" },
@@ -85,12 +93,18 @@ export function TalentSection() {
                             loading="lazy"
                             src={school.logo}
                             alt={school.name}
-                            sx={{ width: 32, height: 32, objectFit: "contain", borderRadius: "50%", bgcolor: "white" }}
+                            sx={{
+                              width: school.abbr === "Mapúa" ? 152 : 64,
+                              height: 64,
+                              objectFit: "contain",
+                              borderRadius: school.abbr === "Mapúa" ? 0 : "50%",
+                              bgcolor: school.abbr === "Mapúa" ? "transparent" : "white",
+                            }}
                           />
                         ) : (
-                          <Box sx={{ width: 32, height: 32, borderRadius: "50%", bgcolor: "divider" }} />
+                          <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "divider" }} />
                         )}
-                        <Typography variant="body1" sx={{ fontFamily: MONO, fontSize: "0.95rem", fontWeight: 600, color: "text.primary" }}>
+                        <Typography variant="body1" sx={{ fontFamily: MONO, fontSize: "1.05rem", fontWeight: 600, color: "text.primary" }}>
                           {school.abbr}
                         </Typography>
                       </Stack>
@@ -98,25 +112,25 @@ export function TalentSection() {
                   ))}
                 </Stack>
               </StaggerGroup>
-            </Stack>
-          </Reveal>
+              </Stack>
+            </Reveal>
 
           {intlSchools.length > 0 ? (
             <Reveal delay={0.15}>
-              <Stack spacing={2}>
+              <Stack spacing={2.5}>
                 <MetaLabel>Alma Maters — International</MetaLabel>
                 <StaggerGroup>
-                  <Stack direction="row" spacing={{ xs: 2, md: 3 }} useFlexGap flexWrap="wrap">
+                  <Stack direction="row" spacing={{ xs: 2, md: 2.5 }} useFlexGap flexWrap="wrap">
                     {intlSchools.map((school) => (
                       <StaggerItem key={school.name}>
                         <Stack
                           direction="row"
-                          spacing={1.25}
+                          spacing={1.5}
                           alignItems="center"
                           title={school.name}
                           sx={{
-                            px: 2,
-                            py: 1.25,
+                            px: 2.25,
+                            py: 1.75,
                             borderRadius: 2,
                             transition: "background-color 0.2s ease-in-out",
                             "&:hover": { bgcolor: "action.hover" },
@@ -129,12 +143,12 @@ export function TalentSection() {
                               loading="lazy"
                               src={school.logo}
                               alt={school.name}
-                              sx={{ width: 32, height: 32, objectFit: "contain", borderRadius: "50%", bgcolor: "white" }}
-                            />
-                          ) : (
-                            <Box sx={{ width: 32, height: 32, borderRadius: "50%", bgcolor: "divider" }} />
-                          )}
-                          <Typography variant="body1" sx={{ fontFamily: MONO, fontSize: "0.95rem", fontWeight: 600, color: "text.primary" }}>
+                            sx={{ width: 64, height: 64, objectFit: "contain", borderRadius: "50%", bgcolor: "white" }}
+                          />
+                        ) : (
+                          <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "divider" }} />
+                        )}
+                          <Typography variant="body1" sx={{ fontFamily: MONO, fontSize: "1.05rem", fontWeight: 600, color: "text.primary" }}>
                             {school.name}
                           </Typography>
                         </Stack>
@@ -145,34 +159,34 @@ export function TalentSection() {
               </Stack>
             </Reveal>
           ) : null}
-        </Stack>
+          </Stack>
 
-        {/* Demoted supporting detail: the discipline split. Quiet, compact,
-            legible about its own honesty (95% named + "Other"). */}
-        <Reveal delay={0.2}>
-          <Stack spacing={1.5} sx={{ maxWidth: 640 }}>
+          {/* Supporting detail moves into the right column and remains readable at a glance. */}
+          <Reveal delay={0.2}>
+            <Stack spacing={2} sx={{ maxWidth: 640 }}>
             <MetaLabel>Disciplines</MetaLabel>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 560 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560, fontSize: "1rem", lineHeight: 1.65 }}>
               The named disciplines below account for {namedDisciplinesPct}% of the team; the
               remainder is grouped as "Other" rather than rounded away.
             </Typography>
-            <Stack spacing={1.25} sx={{ pt: 1 }}>
+            <Stack spacing={1.5} sx={{ pt: 1 }}>
               {disciplines.map((discipline) => (
-                <Stack key={discipline.label} direction="row" alignItems="center" spacing={1.5}>
-                  <Typography variant="body2" color="text.secondary" sx={{ flex: 1, fontSize: "0.85rem" }}>
+                <Stack key={discipline.label} direction="row" alignItems="center" spacing={2}>
+                  <Typography variant="body1" color="text.secondary" sx={{ flex: 1, fontSize: "0.98rem" }}>
                     {discipline.label}
                   </Typography>
-                  <Box sx={{ flex: 2, height: 3, borderRadius: 2, bgcolor: "divider", overflow: "hidden" }}>
+                  <Box sx={{ flex: 2, height: 5, borderRadius: 2, bgcolor: "divider", overflow: "hidden" }}>
                     <Box sx={{ width: `${String(discipline.pct)}%`, height: "100%", bgcolor: NOIR.gold }} />
                   </Box>
-                  <Typography variant="body2" sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.78rem", width: 34, textAlign: "right" }}>
+                  <Typography variant="body1" sx={{ fontFamily: MONO, color: "text.secondary", fontSize: "0.9rem", width: 40, textAlign: "right" }}>
                     {discipline.pct}%
                   </Typography>
                 </Stack>
               ))}
             </Stack>
-          </Stack>
-        </Reveal>
+            </Stack>
+          </Reveal>
+        </Box>
       </Stack>
     </Section>
   );

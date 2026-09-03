@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 
 import { NOIR } from "@/shared/theme/palette";
 import { MONO } from "@/shared/theme/theme";
+import { PROCESS_PHOTOS } from "@/features/home/components/process/processPhases";
 
 export interface ProcessPhase {
   id: string;
@@ -40,36 +41,11 @@ interface ProcessDiagramProps {
  * Photos are keyed to phases BY POSITION, not by phase id, so a custom or empty
  * `model` (see the tests) degrades to fewer frames rather than mismatched ones.
  */
-interface CollagePhoto {
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-}
+type CollagePhoto = (typeof PROCESS_PHOTOS)[number];
 
-const PHOTOS: readonly CollagePhoto[] = [
-  {
-    src: "/images/grads/FocusedProgramming.webp",
-    alt: "2019 — a small focused engineering team at work on the core infrastructure",
-    width: 1920,
-    height: 1280,
-  },
-  {
-    src: "/images/hero-wall/expanding-horizons-phitopolis-unveils-its-new-office-02.webp",
-    alt: "2020 to 2025 — the expansion years, the team gathered in the newly opened office",
-    width: 1187,
-    height: 792,
-  },
-  {
-    // The full-company shot, deliberately the widest crowd of the three: the
-    // anniversary-dinner alternative read as a SMALLER group than the phase-2
-    // office photo, which told the growth story backwards.
-    src: "/images/timeline/group-pic-final-2048x1687.webp",
-    alt: "2026 — the whole company gathered in the office, four disciplines in one frame",
-    width: 2048,
-    height: 1687,
-  },
-];
+/** Photos live in `processPhases.ts` — the single source shared with the pinned
+ *  desktop scrub (`ProcessScrubStage`). Keyed to phases BY POSITION. */
+const PHOTOS: readonly CollagePhoto[] = PROCESS_PHOTOS;
 
 /** Frame heights as a fraction of the cap, so the strip ascends 2019 → 2026. */
 const FRAME_SCALE = [0.82, 0.91, 1] as const;
@@ -144,6 +120,69 @@ function CollageFrame({ photo, index }: { photo: CollagePhoto; index: number }) 
   );
 }
 
+/**
+ * The `NN // PHASE` eyebrow + `<h3>` name + caption for one growth phase. Shared
+ * verbatim between the static collage (this file) and the pinned desktop scrub
+ * (`ProcessScrubStage`) so the machine-readable copy is identical in both. The
+ * `<h3>` is the only translatable, testable text — `tests/process-diagram.test`
+ * asserts one per phase.
+ */
+export function PhaseCaption({
+  phase,
+  index,
+  dimmed = false,
+}: {
+  phase: ProcessPhase;
+  index: number;
+  dimmed?: boolean;
+}) {
+  return (
+    <Box
+      sx={{
+        pr: { md: 2 },
+        mt: { xs: 2, md: 4 },
+        opacity: dimmed ? 0.4 : 1,
+        transition: "opacity 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
+    >
+      <Typography
+        sx={{
+          fontFamily: MONO,
+          fontSize: "0.65rem",
+          fontWeight: 700,
+          color: NOIR.gold,
+          letterSpacing: "0.15em",
+          mb: 0.75,
+        }}
+      >
+        {String(index + 1).padStart(2, "0")} // PHASE
+      </Typography>
+      <Typography
+        variant="h3"
+        sx={{
+          fontSize: { xs: "1.1rem", md: "1.25rem" },
+          fontWeight: 800,
+          color: NOIR.frost,
+          mb: 1,
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {phase.name}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "0.85rem",
+          color: "rgba(255,255,255,0.6)",
+          lineHeight: 1.5,
+          maxWidth: "34ch",
+        }}
+      >
+        {phase.caption}
+      </Typography>
+    </Box>
+  );
+}
+
 export function ProcessDiagram({ model }: ProcessDiagramProps) {
   return (
     /**
@@ -167,42 +206,7 @@ export function ProcessDiagram({ model }: ProcessDiagramProps) {
         return (
           <Box key={phase.id}>
             {photo && <CollageFrame photo={photo} index={i} />}
-            <Box sx={{ pr: { md: 2 }, mt: { xs: 2, md: 4 } }}>
-              <Typography
-                sx={{
-                  fontFamily: MONO,
-                  fontSize: "0.65rem",
-                  fontWeight: 700,
-                  color: NOIR.gold,
-                  letterSpacing: "0.15em",
-                  mb: 0.75,
-                }}
-              >
-                {String(i + 1).padStart(2, "0")} // PHASE
-              </Typography>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontSize: { xs: "1.1rem", md: "1.25rem" },
-                  fontWeight: 800,
-                  color: NOIR.frost,
-                  mb: 1,
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {phase.name}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: "0.85rem",
-                  color: "rgba(255,255,255,0.6)",
-                  lineHeight: 1.5,
-                  maxWidth: "34ch",
-                }}
-              >
-                {phase.caption}
-              </Typography>
-            </Box>
+            <PhaseCaption phase={phase} index={i} />
           </Box>
         );
       })}

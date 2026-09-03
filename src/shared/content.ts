@@ -225,7 +225,7 @@ export const CONTENT = {
       { name: "U. of the Philippines", abbr: "UP", logo: "/logos/schools/up.png" },
       { name: "Ateneo de Manila", abbr: "ADMU", logo: "/logos/schools/admu.png" },
       { name: "De La Salle", abbr: "DLSU", logo: "/logos/schools/dlsu.png" },
-      { name: "Mapúa", abbr: "Mapúa", logo: "/logos/schools/mapua.webp" },
+      { name: "Mapúa", abbr: "Mapúa", logo: "/logos/schools/mapua-university.png" },
       { name: "U. of Santo Tomas", abbr: "UST", logo: "/logos/schools/ust.webp" },
       { name: "Polytechnic U. of the Philippines", abbr: "PUP", logo: "/logos/schools/pup.webp" },
       { name: "Adamson", abbr: "Adamson", logo: "/logos/schools/adamson.webp" },
@@ -505,7 +505,10 @@ export const CONTENT = {
       image: "/images/use-cases/uc-3.webp",
       imageAlt:
         "Soft isometric clay model of a pale globe with navy continents on an off-white plinth, three small navy operations desks around it, a soft gold arc across the globe marking a working day",
-      side: "left" as const
+      side: "left" as const,
+      // uc-3's source is near-square with a dead-centre globe; `cover` alone
+      // can't crop it clear of the left-side copy. Bias the subject right.
+      subjectBiasPct: 14
     }
   ],
   /**

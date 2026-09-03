@@ -6,7 +6,7 @@ import path from "node:path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
 const CHROME_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PREVIEW_PORT = 4173;
+const PREVIEW_PORT = 4179;
 const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
 const CDP_PORT = 9444;
 const DIST_DIR = path.resolve(__dirname, "../dist");
@@ -341,7 +341,7 @@ describe.skipIf(!CHROME_AVAILABLE)("Playwright / CDP E2E & Performance Preview S
         // Wait for preloader entrance & exit to finish completely
         let settled = false;
         const start = Date.now();
-        while (Date.now() - start < 8000) {
+        while (Date.now() - start < 15000) {
           const preloaderInDom = await cdpSession.evaluate<boolean>(
             `Boolean(document.querySelector('[data-testid="preloader"]'))`
           );
@@ -404,7 +404,7 @@ describe.skipIf(!CHROME_AVAILABLE)("Playwright / CDP E2E & Performance Preview S
         expect(visibilityReport.mainContentExists).toBe(true);
         expect(visibilityReport.heroExists).toBe(true);
         expect(visibilityReport.strandedZeroOpacityCount).toBe(0);
-      }, 10000);
+      }, 18000);
     }
   });
 

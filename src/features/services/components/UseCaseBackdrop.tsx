@@ -10,6 +10,15 @@ export interface UseCaseBackdropItem {
   imageAlt: string;
   /** Which side the block's copy column sits on — the scrim darkens that side. */
   side: "left" | "right";
+  /**
+   * Extra horizontal bias for this image's subject, in % of the frame. `object-fit:
+   * cover` + `object-position` can only crop as far as the image edge; a positive
+   * value here pushes the subject further toward the copy-free side via a transform
+   * (paired with a slight scale so no bare edge shows). Used for `uc-3`, whose
+   * source is near-square with a dead-centre subject that `cover` can't clear off
+   * the left-side copy on its own.
+   */
+  subjectBiasPct?: number;
 }
 
 interface UseCaseBackdropProps {
@@ -113,6 +122,13 @@ export function UseCaseBackdrop({ items, blockRefs }: UseCaseBackdropProps) {
             opacity: i === active ? 1 : 0,
             transition: instant ? "none" : "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1)",
             willChange: "opacity",
+            ...(item.subjectBiasPct
+              ? {
+                  transform: `translateX(${
+                    item.side === "left" ? item.subjectBiasPct : -item.subjectBiasPct
+                  }%) scale(${1 + Math.abs(item.subjectBiasPct) / 100 + 0.04})`,
+                }
+              : null),
           }}
         />
       ))}

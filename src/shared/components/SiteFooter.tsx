@@ -4,18 +4,9 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import MailIcon from "@mui/icons-material/Mail";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ExploreIcon from "@mui/icons-material/Explore";
-import ContactMailIcon from "@mui/icons-material/ContactMail";
-import CorporateFareIcon from "@mui/icons-material/CorporateFare";
-import TerminalIcon from "@mui/icons-material/Terminal";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import ArticleIcon from "@mui/icons-material/Article";
-import SendIcon from "@mui/icons-material/Send";
-import HomeIcon from "@mui/icons-material/Home";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import MailIcon from "@mui/icons-material/Mail";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { alpha } from "@mui/material/styles";
 
 import { RouterLink, RouterButton } from "@/shared/components/RouterLink";
@@ -27,460 +18,86 @@ import { EASE_OUT_EXPO_CSS } from "@/shared/motion/easing";
 
 interface SiteFooterProps {
   footerAnchorRef: React.RefObject<HTMLElement | null>;
-  /** The next chapter in the site's reading order, or undefined on unknown routes. */
   currentNarration: { next: string; label: string; to?: string } | undefined;
 }
 
-interface ChapterVisualMeta {
-  chapterNum: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  tags: string[];
-}
+const PRIMARY_LINKS = [
+  { label: "Home", to: "/" },
+  { label: "About", to: "/about" },
+  { label: "Services", to: "/services" },
+  { label: "Careers", to: "/careers" },
+  { label: "Journal", to: "/blog" },
+  { label: "Contact", to: "/contact" },
+] as const;
 
-const CHAPTER_VISUAL_MAP: Record<string, ChapterVisualMeta> = {
-  "/about": {
-    chapterNum: "THE FIRM",
-    subtitle: "Origin story and research philosophy.",
-    icon: <CorporateFareIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["Growth", "Research", "HQ"],
-  },
-  "/services": {
-    chapterNum: "CAPABILITIES",
-    subtitle: "High-frequency trading and ML infrastructure.",
-    icon: <TerminalIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["HFT", "ML", "Cloud"],
-  },
-  "/careers": {
-    chapterNum: "TALENT",
-    subtitle: "Graduate fellowships and engineering roles.",
-    icon: <RocketLaunchIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["Graduates", "Quants", "Engineers"],
-  },
-  "/blog": {
-    chapterNum: "INTELLIGENCE",
-    subtitle: "Notes on systems engineering and algorithms.",
-    icon: <ArticleIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["Research", "Insights"],
-  },
-  "/contact": {
-    chapterNum: "DISCOVERY",
-    subtitle: "Connect with our engineering team.",
-    icon: <SendIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["Inquiries", "Partnerships"],
-  },
-  "/": {
-    chapterNum: "MAIN CORE",
-    subtitle: "Return to the primary showcase.",
-    icon: <HomeIcon sx={{ fontSize: 32, color: NOIR.gold }} />,
-    tags: ["System", "Overview"],
-  },
-};
+const footerLabelSx = {
+  color: alpha(NOIR.white, 0.5), fontFamily: MONO, fontSize: "0.69rem", fontWeight: 700,
+  letterSpacing: "0.12em", textTransform: "uppercase",
+} as const;
+
+const contactLinkSx = {
+  alignItems: "center", color: NOIR.white, display: "inline-flex", fontSize: "0.92rem", fontWeight: 600,
+  gap: 0.8, textDecoration: "none !important", transition: "color 180ms ease",
+  "&:hover, &:focus-visible": { color: NOIR.gold },
+} as const;
+
+const legalLinkSx = {
+  color: alpha(NOIR.white, 0.55), fontFamily: MONO, fontSize: "0.7rem", textDecoration: "none !important",
+  transition: "color 180ms ease", "&:hover, &:focus-visible": { color: NOIR.gold },
+} as const;
 
 export function SiteFooter({ footerAnchorRef, currentNarration }: SiteFooterProps) {
   const { navigateWithCurtain } = useTransitionCurtain();
   const currentYear = new Date().getFullYear();
+  const handleInternalNavigation = (to: string) => (event: React.MouseEvent) => {
+    if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      navigateWithCurtain(to);
+    }
+  };
+
   return (
-    <Box
-      component="footer"
-      ref={footerAnchorRef}
-      sx={{
-        bgcolor: NOIR.navyDeep,
-        color: NOIR.white,
-        pt: { xs: 6, md: 8 },
-        pb: { xs: 4, md: 6 },
-        mt: "auto",
-        position: "relative",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        overflow: "hidden",
-      }}
-    >
-      {/* Background Ambient Radial Glow */}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          background: "radial-gradient(circle at 50% 30%, rgba(var(--accent-rgb), 0.08) 0%, transparent 65%), linear-gradient(180deg, rgba(6, 24, 59, 0.95) 0%, #04122E 100%)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-        {/* Upper Main Area: Navigation Pathways on left, Particle P mark on right */}
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", py: { xs: 4, md: 5 } }}>
-          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
-            {/* Left Column: Navigation Pathways (Dominant Element) */}
-            <Grid size={{ xs: 12, md: 7.5, lg: 8 }}>
-              <Stack spacing={2.5}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ExploreIcon sx={{ fontSize: 20, color: NOIR.gold }} />
-                  <Typography
-                    sx={{
-                      fontFamily: MONO,
-                      fontSize: "0.85rem",
-                      letterSpacing: "0.15em",
-                      color: NOIR.gold,
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    PATHWAYS
-                  </Typography>
-                </Box>
-                <Grid container spacing={1.5}>
-                  {[
-                    { label: "Home", to: "/", icon: <HomeIcon sx={{ fontSize: 18 }} /> },
-                    { label: "About", to: "/about", icon: <CorporateFareIcon sx={{ fontSize: 18 }} /> },
-                    { label: "Services", to: "/services", icon: <TerminalIcon sx={{ fontSize: 18 }} /> },
-                    { label: "Careers", to: "/careers", badge: "HIRING", icon: <RocketLaunchIcon sx={{ fontSize: 18 }} /> },
-                    { label: "Blog", to: "/blog", icon: <ArticleIcon sx={{ fontSize: 18 }} /> },
-                    { label: "Contact", to: "/contact", icon: <SendIcon sx={{ fontSize: 18 }} /> },
-                  ].map((link) => (
-                    <Grid size={{ xs: 12, sm: 6 }} key={link.to}>
-                      <Box
-                        component={RouterLink}
-                        to={link.to}
-                        underline="none"
-                        onClick={(e: React.MouseEvent) => {
-                          if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-                            e.preventDefault();
-                            navigateWithCurtain(link.to);
-                          }
-                        }}
-                        sx={{
-                          position: "relative",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          px: 1.5,
-                          py: 1.1,
-                          textDecoration: "none !important",
-                          overflow: "hidden",
-                          transition: "all 0.25s ease",
-                          color: "rgba(255, 255, 255, 0.85)",
-                          "&, &:hover, &:focus, &:active": {
-                            textDecoration: "none !important",
-                          },
-                          "& *": {
-                            textDecoration: "none !important",
-                          },
-                          "& .pathway-icon": {
-                            color: "rgba(255, 255, 255, 0.45)",
-                            transition: "color 0.25s ease",
-                          },
-                          "& .pathway-bar": {
-                            position: "absolute",
-                            bottom: 0,
-                            left: 0,
-                            height: "2px",
-                            width: "0%",
-                            bgcolor: NOIR.gold,
-                            boxShadow: `0 0 8px ${NOIR.gold}`,
-                            transition: `width 0.3s ${EASE_OUT_EXPO_CSS}`,
-                          },
-                          "&:hover": {
-                            color: NOIR.goldLight,
-                            "& .pathway-icon": {
-                              color: NOIR.gold,
-                            },
-                            "& .pathway-bar": {
-                              width: "100%",
-                            },
-                          },
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                          <Box className="pathway-icon" sx={{ display: "flex" }}>
-                            {link.icon}
-                          </Box>
-                          <Typography
-                            sx={{
-                              fontSize: "1.1rem",
-                              fontWeight: 700,
-                              letterSpacing: "-0.01em",
-                              textDecoration: "none !important",
-                            }}
-                          >
-                            {link.label}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          {link.badge && (
-                            <Box
-                              sx={{
-                                px: 1,
-                                py: 0.2,
-                                borderRadius: "4px",
-                                bgcolor: alpha(NOIR.gold, 0.15),
-                                border: `1px solid ${alpha(NOIR.gold, 0.4)}`,
-                                color: NOIR.gold,
-                                fontFamily: MONO,
-                                fontSize: "0.65rem",
-                                fontWeight: 800,
-                                letterSpacing: "0.05em",
-                              }}
-                            >
-                              {link.badge}
-                            </Box>
-                          )}
-                          <ArrowForwardIcon className="pathway-icon" sx={{ fontSize: 16 }} />
-                        </Box>
-                        <Box className="pathway-bar" />
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Stack>
-            </Grid>
-
-            {/* Right Column: Particle P (Preserved on Right) */}
-            <Grid size={{ xs: 12, md: 4.5, lg: 4 }}>
-              <LogoParticleField />
-            </Grid>
-          </Grid>
-        </Box>
-
-        {/* ── 2. HORIZONTAL CONTACT SECTION (JUST ABOVE BOTTOM SYSTEM BAR) ── */}
-        <Box
-          sx={{
-            py: 2.5,
-            px: { xs: 3, sm: 4 },
-            mb: 2,
-            borderRadius: 3,
-            bgcolor: "rgba(255, 255, 255, 0.02)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
-          }}
-        >
-          <Grid container spacing={3} alignItems="center">
-            {/* Contact Header & Action */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Stack spacing={1.2}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ContactMailIcon sx={{ fontSize: 20, color: NOIR.gold }} />
-                  <Typography
-                    sx={{
-                      fontFamily: MONO,
-                      fontSize: "0.85rem",
-                      letterSpacing: "0.15em",
-                      color: NOIR.gold,
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    CONTACT
-                  </Typography>
-                </Box>
-                <RouterButton
-                  to="/contact"
-                  variant="contained"
-                  endIcon={<ArrowForwardIcon />}
-                  sx={{
-                    bgcolor: NOIR.gold,
-                    color: NOIR.navyField,
-                    fontFamily: MONO,
-                    fontWeight: 800,
-                    fontSize: "0.8rem",
-                    py: 0.9,
-                    px: 2.5,
-                    borderRadius: 2.5,
-                    width: "fit-content",
-                    boxShadow: `0 4px 16px ${alpha(NOIR.gold, 0.25)}`,
-                    "&:hover": {
-                      bgcolor: NOIR.goldLight,
-                      boxShadow: `0 6px 20px ${alpha(NOIR.gold, 0.4)}`,
-                    },
-                  }}
-                >
-                  CONTACT US
-                </RouterButton>
-              </Stack>
-            </Grid>
-
-            {/* Location */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.55)", display: "block", mb: 0.5, fontSize: "0.7rem" }}>
-                LOCATION
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                <LocationOnIcon sx={{ color: NOIR.gold, fontSize: "1.1rem", mt: 0.2 }} />
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: "common.white", fontSize: "0.9rem" }}>
-                    BGC Office (Metro Manila)
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.6)", display: "block", fontSize: "0.78rem", lineHeight: 1.3 }}>
-                    27/F Ecotower, 32nd St. cor. 9th Ave, Bonifacio Global City
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Emails */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Stack spacing={0.6}>
-                <Box>
-                  <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.55)", display: "block", fontSize: "0.68rem" }}>
-                    INQUIRIES
-                  </Typography>
-                  <Typography
-                    component="a"
-                    href="mailto:info@phitopolis.com"
-                    sx={{
-                      color: "common.white",
-                      textDecoration: "none !important",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.8,
-                      "&:hover, &:focus": { color: NOIR.gold, textDecoration: "none !important" },
-                    }}
-                  >
-                    <MailIcon sx={{ fontSize: 15, color: NOIR.gold }} />
-                    info@phitopolis.com
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ fontFamily: MONO, color: "rgba(255, 255, 255, 0.55)", display: "block", fontSize: "0.68rem" }}>
-                    CAREERS
-                  </Typography>
-                  <Typography
-                    component="a"
-                    href="mailto:jobs@phitopolis.com"
-                    sx={{
-                      color: "common.white",
-                      textDecoration: "none !important",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.8,
-                      "&:hover, &:focus": { color: NOIR.gold, textDecoration: "none !important" },
-                    }}
-                  >
-                    <MailIcon sx={{ fontSize: 15, color: NOIR.gold }} />
-                    jobs@phitopolis.com
-                  </Typography>
-                </Box>
-              </Stack>
-            </Grid>
-          </Grid>
-        </Box>
-
-        {/* ── 3. BOTTOM SYSTEM BAR (Copyright on left, Overhauled Next Page on Bottom Right) ── */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          spacing={2}
-          sx={{
-            pt: 2,
-            pb: 1,
-            color: "rgba(255, 255, 255, 0.6)",
-          }}
-        >
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={{ xs: 0.5, sm: 2 }}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-          >
-            <Typography variant="caption" sx={{ fontFamily: MONO, fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.8)" }}>
-              © {currentYear} Phitopolis International Corp. All rights reserved.
-            </Typography>
-            <Stack direction="row" spacing={2}>
-              {[
-                { label: "Privacy Policy", to: "/privacy" },
-                { label: "Terms of Service", to: "/terms" },
-              ].map((link) => (
-                <Box
-                  key={link.to}
-                  component={RouterLink}
-                  to={link.to}
-                  underline="none"
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.72rem",
-                    color: "rgba(255, 255, 255, 0.6)",
-                    textDecoration: "none !important",
-                    transition: "color 0.2s ease",
-                    "&:hover, &:focus-visible": { color: NOIR.gold },
-                  }}
-                >
-                  {link.label}
-                </Box>
-              ))}
+    <Box component="footer" ref={footerAnchorRef} sx={{ bgcolor: NOIR.navyDeep, color: NOIR.white, mt: "auto", overflow: "hidden", position: "relative", py: { xs: 6, md: 8 } }}>
+      <Box aria-hidden sx={{ background: `radial-gradient(circle at 82% 12%, ${alpha(NOIR.gold, 0.12)}, transparent 24%), linear-gradient(145deg, ${NOIR.navyDeep}, ${NOIR.navyFloor})`, inset: 0, pointerEvents: "none", position: "absolute" }} />
+      <Container maxWidth="xl" sx={{ position: "relative" }}>
+        <Grid container columnSpacing={{ xs: 4, md: 6, lg: 10 }} rowSpacing={{ xs: 5, md: 4 }}>
+          <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+            <Stack spacing={2.5} sx={{ maxWidth: 410 }}>
+              <Typography component="p" sx={{ color: NOIR.gold, fontFamily: MONO, fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.14em" }}>ABOUT PHITOPOLIS</Typography>
+              <Typography sx={{ fontSize: { xs: "2rem", md: "2.45rem" }, fontWeight: 700, letterSpacing: "-0.045em", lineHeight: 1.02 }}>Making Tomorrow&apos;s Technology, Today</Typography>
+              <Typography sx={{ color: alpha(NOIR.white, 0.68), fontSize: "0.96rem", lineHeight: 1.65, maxWidth: 360 }}>Research and Development FinTech Firm</Typography>
+              <RouterButton to="/contact" variant="contained" endIcon={<ArrowForwardIcon />} sx={{ alignSelf: "flex-start", bgcolor: NOIR.gold, borderRadius: "8px", boxShadow: "none", color: NOIR.navyInk, fontFamily: MONO, fontSize: "0.75rem", fontWeight: 800, px: 2.25, py: 1.05, "&:hover": { bgcolor: NOIR.goldLight, boxShadow: `0 10px 28px ${alpha(NOIR.gold, 0.2)}` }, "&:active": { transform: "translateY(1px)" } }}>Start a conversation</RouterButton>
             </Stack>
-          </Stack>
-
-          {/* Overhauled Next Page Element at Bottom Right */}
-          {currentNarration && (() => {
-            const meta = CHAPTER_VISUAL_MAP[currentNarration.next] ?? {
-              chapterNum: "NEXT",
-              subtitle: "Discover the next phase.",
-              icon: <AutoAwesomeIcon sx={{ fontSize: 16, color: NOIR.gold }} />,
-            };
-
-            return (
-              <Box
-                component={RouterLink}
-                to={currentNarration.next}
-                underline="none"
-                onClick={(e: React.MouseEvent) => {
-                  if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-                    e.preventDefault();
-                    navigateWithCurtain(currentNarration.next);
-                  }
-                }}
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  textDecoration: "none !important",
-                  color: "common.white",
-                  py: 1,
-                  px: 2.5,
-                  borderRadius: "100px",
-                  bgcolor: "rgba(255, 255, 255, 0.04)",
-                  border: `1px solid ${alpha(NOIR.gold, 0.3)}`,
-                  cursor: "pointer",
-                  transition: "all 0.25s ease",
-                  "&, &:hover, &:focus, &:active": {
-                    textDecoration: "none !important",
-                  },
-                  "& *": {
-                    textDecoration: "none !important",
-                  },
-                  "&:hover": {
-                    borderColor: NOIR.gold,
-                    bgcolor: alpha(NOIR.gold, 0.12),
-                    color: NOIR.goldLight,
-                  },
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: MONO,
-                    fontSize: "0.7rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.12em",
-                    color: NOIR.gold,
-                    textTransform: "uppercase",
-                    textDecoration: "none !important",
-                  }}
-                >
-                  NEXT ROUTE • {meta.chapterNum}
-                </Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", textDecoration: "none !important" }}>
-                  {currentNarration.label}
-                </Typography>
-                <ArrowForwardIcon sx={{ fontSize: 16, color: NOIR.gold }} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
+            <Stack spacing={2}>
+              <Typography sx={footerLabelSx}>PATHWAYS</Typography>
+              <Box component="nav" aria-label="Footer navigation" sx={{ display: "grid", gap: 0.35 }}>
+                {PRIMARY_LINKS.map((link) => <Box component={RouterLink} key={link.to} to={link.to} underline="none" onClick={handleInternalNavigation(link.to)} sx={{ alignItems: "center", color: alpha(NOIR.white, 0.8), display: "inline-flex", fontSize: "0.96rem", fontWeight: 600, gap: 0.8, py: 0.45, textDecoration: "none !important", transition: `color 180ms ${EASE_OUT_EXPO_CSS}, transform 180ms ${EASE_OUT_EXPO_CSS}`, width: "fit-content", "&:hover, &:focus-visible": { color: NOIR.gold, transform: "translateX(4px)" } }}>{link.label}<ArrowForwardIcon sx={{ fontSize: 15 }} /></Box>)}
               </Box>
-            );
-          })()}
-        </Stack>
+            </Stack>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+            <Stack spacing={2.25}>
+              <Typography sx={footerLabelSx}>CONTACT</Typography>
+              <Stack spacing={1.65}>
+                <Box><Typography sx={{ ...footerLabelSx, fontSize: "0.62rem", mb: 0.55 }}>INQUIRIES</Typography><Box component="a" href="mailto:info@phitopolis.com" sx={contactLinkSx}><MailIcon sx={{ color: NOIR.gold, fontSize: 17 }} />info@phitopolis.com</Box></Box>
+                <Box><Typography sx={{ ...footerLabelSx, fontSize: "0.62rem", mb: 0.55 }}>CAREERS</Typography><Box component="a" href="mailto:jobs@phitopolis.com" sx={contactLinkSx}><MailIcon sx={{ color: NOIR.gold, fontSize: 17 }} />jobs@phitopolis.com</Box></Box>
+                <Box sx={{ display: "flex", gap: 1, pt: 0.2 }}><LocationOnIcon sx={{ color: NOIR.gold, fontSize: 18, mt: 0.1 }} /><Typography sx={{ color: alpha(NOIR.white, 0.68), fontSize: "0.86rem", lineHeight: 1.55 }}>27/F Ecotower, BGC<br />Metro Manila, Philippines</Typography></Box>
+              </Stack>
+            </Stack>
+          </Grid>
+          <Grid size={{ xs: 12, lg: 2 }} sx={{ display: { xs: "none", lg: "block" } }}><Box sx={{ height: "100%", minHeight: 220, opacity: 0.85, position: "relative" }}><LogoParticleField /></Box></Grid>
+        </Grid>
+        <Box sx={{ borderTop: `1px solid ${alpha(NOIR.white, 0.12)}`, mt: { xs: 5, md: 7 }, pt: 2.25 }}>
+          <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "flex-start", md: "center" }} justifyContent="space-between" spacing={2}>
+            <Stack direction="row" spacing={2.25} sx={{ flexWrap: "wrap" }}>
+              <Typography sx={{ color: alpha(NOIR.white, 0.55), fontFamily: MONO, fontSize: "0.7rem" }}>© {currentYear} Phitopolis International Corp.</Typography>
+              {[{ label: "Privacy", to: "/privacy" }, { label: "Terms", to: "/terms" }].map((link) => <Box component={RouterLink} key={link.to} to={link.to} underline="none" sx={legalLinkSx}>{link.label}</Box>)}
+            </Stack>
+            {currentNarration && <Box component={RouterLink} to={currentNarration.next} underline="none" onClick={handleInternalNavigation(currentNarration.next)} sx={{ alignItems: "center", color: NOIR.white, display: "inline-flex", fontFamily: MONO, fontSize: "0.7rem", fontWeight: 700, gap: 1, letterSpacing: "0.04em", textDecoration: "none !important", transition: `color 180ms ${EASE_OUT_EXPO_CSS}`, "&:hover, &:focus-visible": { color: NOIR.gold } }}>Continue to {currentNarration.label}<ArrowForwardIcon sx={{ fontSize: 16 }} /></Box>}
+          </Stack>
+        </Box>
       </Container>
     </Box>
   );

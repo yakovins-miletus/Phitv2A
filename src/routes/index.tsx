@@ -16,7 +16,7 @@ import { MissionStatement } from "@/features/hero/description/MissionStatement";
 import { OperatingPillars } from "@/features/hero/description/OperatingPillars";
 import { GlobalMarketsStatement } from "@/features/home/components/GlobalMarketsStatement";
 import { UseCasesNarrative } from "@/features/services/components/UseCasesNarrative";
-import { ClosingShelf } from "@/features/home/components/ClosingShelf";
+import { ClosingVideoSection } from "@/features/home/components/ClosingVideoSection";
 import { ProcessSection } from "@/features/home/components/ProcessSection";
 import { ReachSection } from "@/features/home/components/ReachSection";
 import { MiniEstablishingShot } from "@/shared/components/establishing/MiniEstablishingShot";
@@ -230,12 +230,10 @@ function HomePage() {
               with its own pinned "P + vignette" build, which reads better as a
               hard cut straight from Reach than after a wipe. */}
 
-          {/* Closing beat — operational footprint / horizon gateway. Mini
-              Establishing Shot 7 lives inside ClosingShelf's own SectionBeat,
-              which drives it on one timeline. Directly follows Reach now that
-              the PEOPLE act (daily-life/candidates/testimonials/blog) has
-              relocated to /about. */}
-          <ClosingShelf />
+          {/* Closing beat — full-bleed scroll-scrubbed video with centered,
+              horizontally expanded 2-beat reveal sequence (Beat 1: statement,
+              Beat 2: CTA). Directly follows Reach. */}
+          <ClosingVideoSection />
         </Box>
       </Box>
     </>

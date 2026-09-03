@@ -767,7 +767,7 @@ const NAV_DARK = {
  *  instead of disappearing into them, without falling back to an off-brand
  *  grey. */
 const NAV_ISLAND_V2 = {
-  surface: `rgba(${NOIR.duskNavyRgb}, 0.72)`,
+  surface: `rgba(${NOIR.duskNavyRgb}, 0.82)`,
 } as const;
 
   const [isAtTop, setIsAtTop] = useState(true);
@@ -957,7 +957,7 @@ const NAV_ISLAND_V2 = {
                     : isAnyIsland
                     ? (islandOnDark
                       ? (isIslandV2 ? NAV_ISLAND_V2.surface : NAV_DARK.surface)
-                      : (isIslandV2 ? "rgba(255, 255, 255, 0.42)" : "rgba(255, 255, 255, 0.5)"))
+                      : (isIslandV2 ? "rgba(255, 255, 255, 0.72)" : "rgba(255, 255, 255, 0.5)"))
                     : isOverDarkSection
                       ? NAV_DARK.surface
                       : (derivedIsCompact ? NOIR.white : "transparent")),
